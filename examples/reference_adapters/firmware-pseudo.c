@@ -1,4 +1,4 @@
-#include "../adapters/c/urihandler.h"
+#include "../../adapters/c/urihandler.h"
 #include <string.h>
 void led_set(int on);
 void handle_uri(const char* uri) {

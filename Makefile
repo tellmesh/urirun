@@ -25,10 +25,10 @@ test-c: ## Compile and run C adapter tests.
 	/tmp/urihandler-c-test
 
 .PHONY: test-examples
-test-examples: ## Syntax-check examples.
-	$(NODE) --check examples/node-server.js
-	$(PYTHON) -m py_compile examples/python-server.py
-	$(CC) -Wall -Wextra -Werror -Iadapters/c -c examples/firmware-pseudo.c -o /tmp/urihandler-firmware-example.o
+test-examples: ## Syntax-check reference adapter examples.
+	$(NODE) --check examples/reference_adapters/node-server.js
+	$(PYTHON) -m py_compile examples/reference_adapters/python-server.py
+	$(CC) -Wall -Wextra -Werror -Iadapters/c -c examples/reference_adapters/firmware-pseudo.c -o /tmp/urihandler-firmware-example.o
 
 .PHONY: test-v7
 test-v7: ## Run urihandler v7 parameter-binding, docker, and shell checks.
@@ -58,7 +58,8 @@ test-v8: ## Run urihandler v8 schema/decorator, artifact, and MCP/A2A checks.
 	$(PYTHON) v8/examples/docker_uri_flow/test_flow_runner.py
 	$(PYTHON) v8/examples/docker_uri_flow/test_flow_e2e.py
 	PYTHONPATH=adapters/python $(PYTHON) v8/examples/docker_uri_flow/test_service_adapter.py
+	PYTHONPATH=adapters/python $(PYTHON) v8/examples/transports/test_transports.py
 
 .PHONY: clean
 clean: ## Remove local generated cache files.
-	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ v7/examples/python/__pycache__ v8/examples/python/__pycache__ __pycache__
+	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ examples/reference_adapters/__pycache__ v7/examples/python/__pycache__ v8/examples/python/__pycache__ v8/examples/docker_uri_flow/__pycache__ v8/examples/transports/__pycache__ __pycache__

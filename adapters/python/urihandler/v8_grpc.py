@@ -52,10 +52,12 @@ def _loads(data: bytes) -> dict:
 # --------------------------------------------------------------------------- #
 def _route_list(registry: dict) -> dict:
     routes = []
+    bindings: dict = {}
     for route in reglib.flatten_registry_document(registry):
         entry = route["routeEntry"]
         routes.append({"uri": route["uri"], "kind": entry.get("kind"), "adapter": entry.get("adapter")})
-    return {"routes": sorted(routes, key=lambda item: item["uri"])}
+        bindings[route["uri"]] = {"uri": route["uri"], **entry}
+    return {"routes": sorted(routes, key=lambda item: item["uri"]), "bindings": bindings}
 
 
 def serve(registry: dict, host: str = "0.0.0.0", port: int = DEFAULT_PORT, policy: dict | None = None,

@@ -3,7 +3,7 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "adapters" / "python"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "adapters" / "python"))
 
 from urihandler import dispatch
 

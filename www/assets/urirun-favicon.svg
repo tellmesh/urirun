@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="urirun favicon">
+  <defs>
+    <linearGradient id="fav" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#4338CA"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="30" height="30" rx="8" fill="url(#fav)"/>
+  <!-- colon -->
+  <circle cx="9.5" cy="13.2" r="1.9" fill="#A5B4FC"/>
+  <circle cx="9.5" cy="18.8" r="1.9" fill="#A5B4FC"/>
+  <!-- slashes -->
+  <g stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round">
+    <path d="M14.5 20.5 L18.5 11.5"/>
+    <path d="M19.5 20.5 L23.5 11.5"/>
+  </g>
+</svg>

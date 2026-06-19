@@ -1,0 +1,255 @@
+# code2llm | 98f 10314L | json:22,python:21,javascript:15,shell:12,yaml:5,c:3,yml:3,toml:2,typescript:1,php:1,txt:1 | 2026-06-19
+# generated in 0.02s
+# CC̅=3.7 | critical:14/507 | dups:3 | cycles:0
+
+HEALTH[15]:
+  🔴 DUP   3 classes duplicated
+  🟡 CC    resolveParams CC=15 (limit:15)
+  🟡 CC    run CC=19 (limit:15)
+  🟡 CC    resolveParams CC=15 (limit:15)
+  🟡 CC    evaluatePolicy CC=18 (limit:15)
+  🟡 CC    createUriRuntimeV7 CC=32 (limit:15)
+  🟡 CC    dispatch CC=17 (limit:15)
+  🟡 CC    urihandler_parse CC=20 (limit:15)
+  🟡 CC    run CC=15 (limit:15)
+  🟡 CC    expand_binding CC=16 (limit:15)
+  🟡 CC    main CC=21 (limit:15)
+  🟡 CC    serve_mcp CC=15 (limit:15)
+  🟡 CC    evaluate_policy CC=16 (limit:15)
+  🟡 CC    scan_path CC=15 (limit:15)
+  🟡 CC    parse_flow CC=24 (limit:15)
+
+REFACTOR[2]:
+  1. rm duplicates  (-3 dup classes)
+  2. split 14 high-CC methods  (CC>15)
+
+PIPELINES[195]:
+  [1] Src [result]: result
+      PURITY: 100% pure
+  [2] Src [registry]: registry
+      PURITY: 100% pure
+  [3] Src [preview]: preview
+      PURITY: 100% pure
+  [4] Src [result]: result
+      PURITY: 100% pure
+  [5] Src [DEFAULT_TIMEOUT]: DEFAULT_TIMEOUT → match
+      PURITY: 100% pure
+  [6] Src [OUTPUT_LIMIT]: OUTPUT_LIMIT → match
+      PURITY: 100% pure
+  [7] Src [segments]: segments
+      PURITY: 100% pure
+  [8] Src [query]: query
+      PURITY: 100% pure
+  [9] Src [translation]: translation
+      PURITY: 100% pure
+  [10] Src [bucket]: bucket
+      PURITY: 100% pure
+  [11] Src [parts]: parts
+      PURITY: 100% pure
+  [12] Src [merged]: merged → routeRows → registryTree
+      PURITY: 100% pure
+  [13] Src [deny]: deny → globMatch
+      PURITY: 100% pure
+  [14] Src [allow]: allow → globMatch
+      PURITY: 100% pure
+  [15] Src [allowed]: allowed
+      PURITY: 100% pure
+  [16] Src [check]: check → parseUri → match
+      PURITY: 100% pure
+  [17] Src [descriptor]: descriptor
+      PURITY: 100% pure
+  [18] Src [routeEntry]: routeEntry
+      PURITY: 100% pure
+  [19] Src [current]: current
+      PURITY: 100% pure
+  [20] Src [renderCommand]: renderCommand → renderValue
+      PURITY: 100% pure
+  [21] Src [hasPlaceholders]: hasPlaceholders
+      PURITY: 100% pure
+  [22] Src [envFlags]: envFlags → renderValue
+      PURITY: 100% pure
+  [23] Src [tokens]: tokens → runProcess → renderedEnv → renderValue
+      PURITY: 100% pure
+  [24] Src [inner]: inner → renderValue
+      PURITY: 100% pure
+  [25] Src [tree]: tree
+      PURITY: 100% pure
+  [26] Src [decision]: decision
+      PURITY: 100% pure
+  [27] Src [listRoutes]: listRoutes → mergePolicy
+      PURITY: 100% pure
+  [28] Src [compileRegistry]: compileRegistry → compileRegistryDocument → setRoute → translate
+      PURITY: 100% pure
+  [29] Src [segments]: segments
+      PURITY: 100% pure
+  [30] Src [key]: key
+      PURITY: 100% pure
+  [31] Src [current]: current
+      PURITY: 100% pure
+  [32] Src [merged]: merged
+      PURITY: 100% pure
+  [33] Src [escaped]: escaped
+      PURITY: 100% pure
+  [34] Src [allowed]: allowed → matchesAny → globToRegExp
+      PURITY: 100% pure
+  [35] Src [reason]: reason → matchesAny → globToRegExp
+      PURITY: 100% pure
+  [36] Src [createUriRuntimeV7]: createUriRuntimeV7 → compileBindings → entries
+      PURITY: 100% pure
+  [37] Src [activePolicy]: activePolicy → mergePolicy → defaultPolicy
+      PURITY: 100% pure
+  [38] Src [setPolicy]: setPolicy → mergePolicy → defaultPolicy
+      PURITY: 100% pure
+  [39] Src [getPolicy]: getPolicy → mergePolicy → defaultPolicy
+      PURITY: 100% pure
+  [40] Src [listRoutes]: listRoutes → mergePolicy → defaultPolicy
+      PURITY: 100% pure
+  [41] Src [translation]: translation
+      PURITY: 100% pure
+  [42] Src [preview]: preview → parseUri → match
+      PURITY: 100% pure
+  [43] Src [descriptor]: descriptor
+      PURITY: 100% pure
+  [44] Src [entry]: entry
+      PURITY: 100% pure
+  [45] Src [decision]: decision
+      PURITY: 100% pure
+  [46] Src [bindings]: bindings
+      PURITY: 100% pure
+  [47] Src [policy]: policy
+      PURITY: 100% pure
+  [48] Src [render]: render
+      PURITY: 100% pure
+  [49] Src [runtime]: runtime
+      PURITY: 100% pure
+  [50] Src [dry]: dry
+      PURITY: 100% pure
+
+LAYERS:
+  adapters/                       CC̄=4.7    ←in:4  →out:0
+  │ !! v8                         955L  0C   49m  CC=21     ←2
+  │ !! _registry                  679L  0C   41m  CC=14     ←0
+  │ !! _scan                      667L  0C   36m  CC=15     ←0
+  │ v7                         420L  0C   24m  CC=14     ←0
+  │ !! _runtime                   418L  1C   18m  CC=16     ←0
+  │ v8_grpc                    202L  0C   11m  CC=9      ←0
+  │ v8_adopt                   192L  0C    8m  CC=7      ←0
+  │ !! v8_mcp                     176L  0C    9m  CC=15     ←1
+  │ v8_service                 100L  0C    3m  CC=9      ←0
+  │ pyproject.toml              58L  0C    0m  CC=0.0    ←0
+  │ !! urihandler.c                56L  0C    5m  CC=20     ←0
+  │ index.test.js               49L  0C    1m  CC=1      ←0
+  │ __init__                    38L  0C    3m  CC=7      ←0
+  │ index.js                    30L  0C   11m  CC=8      ←4
+  │ urihandler_test.c           18L  0C    2m  CC=2      ←0
+  │ package.json                10L  0C    0m  CC=0.0    ←0
+  │
+  v7/                             CC̄=3.3    ←in:0  →out:0
+  │ !! urihandler-v7.js           331L  0C   54m  CC=19     ←7
+  │ !! uri-runtime-v7.js          238L  0C   47m  CC=32     ←4
+  │ app.js                     185L  0C   35m  CC=7      ←0
+  │ bindings.json               66L  0C    0m  CC=0.0    ←0
+  │ urihandler-v7.test.js       64L  0C    2m  CC=1      ←1
+  │ test.mjs                    54L  0C    9m  CC=1      ←0
+  │ bindings.v7.example.json    44L  0C    0m  CC=0.0    ←0
+  │ http-request.bindings.json    24L  0C    0m  CC=0.0    ←0
+  │ example.js                  22L  0C    3m  CC=1      ←0
+  │ bash-function.bindings.json    22L  0C    0m  CC=0.0    ←0
+  │ example                     21L  0C    0m  CC=0.0    ←0
+  │ new-script.bindings.json    21L  0C    0m  CC=0.0    ←0
+  │ policy.json                 19L  0C    0m  CC=0.0    ←0
+  │ run.sh                      17L  0C    0m  CC=0.0    ←0
+  │ lib.sh                      11L  0C    2m  CC=0.0    ←0
+  │ base.bindings.json           6L  0C    0m  CC=0.0    ←0
+  │ notify.sh                    6L  0C    0m  CC=0.0    ←0
+  │
+  v8/                             CC̄=2.7    ←in:0  →out:0  ×DUP
+  │ !! registry.json             1069L  0C    0m  CC=0.0    ←0
+  │ !! bindings.v8.json           521L  0C    0m  CC=0.0    ←0
+  │ backend                    227L  1C   18m  CC=8      ←0  ×DUP
+  │ !! flow_runner                218L  0C   16m  CC=24     ←0
+  │ app.js                     167L  0C   24m  CC=10     ←0
+  │ transport_lib              152L  0C    8m  CC=6      ←0
+  │ bindings.v8.example.json   151L  0C    0m  CC=0.0    ←0
+  │ worker                      77L  0C    3m  CC=2      ←0
+  │ bindings.json               74L  0C    0m  CC=0.0    ←0
+  │ server                      68L  1C    7m  CC=6      ←0  ×DUP
+  │ server                      64L  1C    5m  CC=6      ←0  ×DUP
+  │ example.php                 64L  1C    4m  CC=2      ←0
+  │ decorators.ts               62L  1C    5m  CC=1      ←0
+  │ server.js                   52L  0C   11m  CC=10     ←0
+  │ scan_and_run                49L  0C    1m  CC=6      ←0
+  │ docker-compose.yml          48L  0C    0m  CC=0.0    ←0
+  │ uri-command.mjs             44L  0C    8m  CC=4      ←0
+  │ cross_service_report.yaml    39L  0C    0m  CC=0.0    ←0
+  │ web-bindings.json           36L  0C    0m  CC=0.0    ←0
+  │ docker-compose.test.yml     34L  0C    0m  CC=0.0    ←0
+  │ docker-compose.test.yml     33L  0C    0m  CC=0.0    ←0
+  │ bindings.json               31L  0C    0m  CC=0.0    ←0
+  │ registry.bindings.json      28L  0C    0m  CC=0.0    ←0
+  │ generate_registry.sh        26L  0C    0m  CC=0.0    ←0
+  │ generate-bindings.mjs       25L  0C    3m  CC=2      ←0
+  │ example                     24L  0C    3m  CC=1      ←0
+  │ rpc-bindings.json           24L  0C    0m  CC=0.0    ←0
+  │ Makefile                    20L  0C    0m  CC=0.0    ←0
+  │ bindings.json               20L  0C    0m  CC=0.0    ←0
+  │ routes.txt                  20L  0C    0m  CC=0.0    ←0
+  │ urihandler.manifest.json    18L  0C    0m  CC=0.0    ←0
+  │ bindings.json               18L  0C    0m  CC=0.0    ←0
+  │ example.mjs                 17L  0C    2m  CC=1      ←0
+  │ Dockerfile                  15L  0C    0m  CC=0.0    ←0
+  │ demo                        15L  0C    0m  CC=0.0    ←0
+  │ test.mjs                    13L  0C    2m  CC=1      ←0
+  │ run.sh                      13L  0C    1m  CC=0.0    ←0
+  │ run_tests.sh                13L  0C    1m  CC=0.0    ←0
+  │ run_tests.sh                13L  0C    1m  CC=0.0    ←0
+  │ Dockerfile                  12L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                  10L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                   9L  0C    0m  CC=0.0    ←0
+  │ write_report.sh              9L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                   9L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                   9L  0C    0m  CC=0.0    ←0
+  │ Makefile                     9L  0C    0m  CC=0.0    ←0
+  │ Dockerfile                   7L  0C    0m  CC=0.0    ←0
+  │ Makefile                     7L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml               6L  0C    0m  CC=0.0    ←0
+  │ package.json                 6L  0C    0m  CC=0.0    ←0
+  │ package.json                 6L  0C    0m  CC=0.0    ←0
+  │ Makefile                     5L  0C    0m  CC=0.0    ←0
+  │ run.sh                       5L  0C    0m  CC=0.0    ←0
+  │ deploy.sh                    3L  0C    0m  CC=0.0    ←0
+  │
+  examples/                       CC̄=2.5    ←in:0  →out:0
+  │ python-server               51L  2C    4m  CC=5      ←0
+  │ node-server.js              43L  0C    5m  CC=4      ←0
+  │ firmware-pseudo.c           12L  0C    2m  CC=7      ←0
+  │
+  ./                              CC̄=0.0    ←in:0  →out:0
+  │ !! goal.yaml                  523L  0C    0m  CC=0.0    ←0
+  │ planfile.yaml              487L  0C    0m  CC=0.0    ←0
+  │ prefact.yaml                94L  0C    0m  CC=0.0    ←0
+  │ Makefile                    65L  0C    0m  CC=0.0    ←0
+  │ project.sh                  63L  0C    0m  CC=0.0    ←0
+  │ package.json                28L  0C    0m  CC=0.0    ←0
+  │ tree.sh                      1L  0C    0m  CC=0.0    ←0
+  │
+  testql-scenarios/               CC̄=0.0    ←in:0  →out:0
+  │ generated-from-pytests.testql.toon.yaml    14L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING:
+                                               v8.examples                  v7.examples              adapters.python                     adapters  examples.reference_adapters
+                  v8.examples                           ──                           16                            9                                                            !! fan-out
+                  v7.examples                          ←16                           ──                           ←7                                                        ←1  hub
+              adapters.python                           ←9                            7                           ──                            4                               hub
+                     adapters                                                                                     ←4                           ──                             
+  examples.reference_adapters                                                         1                                                                                     ──
+  CYCLES: none
+  HUB: v7.examples/ (fan-in=24)
+  HUB: adapters.python/ (fan-in=9)
+  SMELL: v8.examples/ fan-out=25 → split needed
+  SMELL: adapters.python/ fan-out=11 → split needed
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

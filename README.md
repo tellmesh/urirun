@@ -48,7 +48,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `adapters/c/` - C firmware-style reference adapter
 - `v7/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v8/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
-- `examples/` - end-to-end examples
+- `examples/reference_adapters/` - minimal base adapter examples for JS, Python, C/firmware, and browser usage
+- `project/` - generated architecture maps and analysis artifacts, including `map.toon.yaml`
 - `github/` - GitHub integration notes
 
 ## Install

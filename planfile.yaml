@@ -1,0 +1,487 @@
+name: Code Quality Improvement
+project_name: ''
+project_type: prefactoring
+domain: dev-tools
+goal: Improve code quality using prefact
+goals:
+- Fix all prefact-detected issues
+- Improve code maintainability
+- Ensure consistent code style
+quality_gates:
+- metric: Prefact Issues
+  threshold: '0'
+sprints:
+- id: sprint-1
+  name: Code Quality Improvements
+  duration: 2 weeks
+  objectives:
+  - Fix code quality issues
+  task_patterns:
+  - id: ticket-1e8a22f9
+    name: Fix smart-return-type issues
+    description: Resolve 3 smart-return-type issues in adapters/python/urihandler/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/__init__.py
+    rule_id: smart-return-type
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-bfb80289
+    name: Fix duplicate-imports issues
+    description: Resolve 2 duplicate-imports issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: duplicate-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3a5f272d
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e30f4b7a
+    name: Fix string-concat issues
+    description: Resolve 5 string-concat issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: string-concat
+    count: 5
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-5639451d
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f6f58801
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ee8097b5
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/_runtime.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_runtime.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e7a43d6d
+    name: Fix smart-return-type issues
+    description: Resolve 9 smart-return-type issues in adapters/python/urihandler/_registry.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/_registry.py
+    rule_id: smart-return-type
+    count: 9
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-5590d278
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_registry.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-aa4ca803
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_registry.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-024ce67c
+    name: Fix smart-return-type issues
+    description: Resolve 2 smart-return-type issues in adapters/python/urihandler/_scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_scan.py
+    rule_id: smart-return-type
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e1d19c39
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/_scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_scan.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a756a06e
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/_scan.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/_scan.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-0ef971cd
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in adapters/python/urihandler/v7.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v7.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-fd4dbb13
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in adapters/python/urihandler/v7.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v7.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-784e6941
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/v7.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v7.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f87226bf
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/v7.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v7.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d098a065
+    name: Fix unused-imports issues
+    description: Resolve 10 unused-imports issues in adapters/python/urihandler/v8_adopt.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8_adopt.py
+    rule_id: unused-imports
+    count: 10
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a5490199
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/v8_adopt.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_adopt.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-38990151
+    name: Fix smart-return-type issues
+    description: Resolve 5 smart-return-type issues in adapters/python/urihandler/v8_grpc.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8_grpc.py
+    rule_id: smart-return-type
+    count: 5
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4a411d34
+    name: Fix unused-imports issues
+    description: Resolve 6 unused-imports issues in adapters/python/urihandler/v8_grpc.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8_grpc.py
+    rule_id: unused-imports
+    count: 6
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-72b975f4
+    name: Fix magic-numbers issues
+    description: Resolve 3 magic-numbers issues in adapters/python/urihandler/v8_grpc.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_grpc.py
+    rule_id: magic-numbers
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-97895aee
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/v8_grpc.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_grpc.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1a33a69c
+    name: Fix smart-return-type issues
+    description: Resolve 1 smart-return-type issues in adapters/python/urihandler/v8_mcp.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_mcp.py
+    rule_id: smart-return-type
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ec63e6d2
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in adapters/python/urihandler/v8_mcp.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_mcp.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c19aa3e9
+    name: Fix unused-imports issues
+    description: Resolve 10 unused-imports issues in adapters/python/urihandler/v8_mcp.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8_mcp.py
+    rule_id: unused-imports
+    count: 10
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-e1d61dd4
+    name: Fix magic-numbers issues
+    description: Resolve 2 magic-numbers issues in adapters/python/urihandler/v8_mcp.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_mcp.py
+    rule_id: magic-numbers
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-497d146c
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/v8_mcp.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_mcp.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-348117a4
+    name: Fix duplicate-imports issues
+    description: Resolve 2 duplicate-imports issues in adapters/python/urihandler/v8_service.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_service.py
+    rule_id: duplicate-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-48784ac1
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/v8_service.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8_service.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-7dc493f5
+    name: Fix magic-numbers issues
+    description: Resolve 4 magic-numbers issues in adapters/python/urihandler/v8_service.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8_service.py
+    rule_id: magic-numbers
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-b12f017e
+    name: Fix smart-return-type issues
+    description: Resolve 5 smart-return-type issues in adapters/python/urihandler/v8.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urihandler/v8.py
+    rule_id: smart-return-type
+    count: 5
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-00e03318
+    name: Fix string-concat issues
+    description: Resolve 2 string-concat issues in adapters/python/urihandler/v8.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8.py
+    rule_id: string-concat
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-a247e157
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urihandler/v8.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-4d1e8444
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in adapters/python/urihandler/v8.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3d1e91c1
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urihandler/v8.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urihandler/v8.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced

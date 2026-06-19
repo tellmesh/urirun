@@ -1,0 +1,33 @@
+services:
+  web-worker:
+    build:
+      context: ../../..
+      dockerfile: v8/examples/multi_transport/Dockerfile
+    image: urihandler-v8-multi-worker:local
+    environment:
+      WORKER_TRANSPORT: http
+      WORKER_BINDINGS: /app/web-bindings.json
+      WORKER_PORT: "8080"
+    networks: [mt]
+
+  rpc-worker:
+    image: urihandler-v8-multi-worker:local
+    build:
+      context: ../../..
+      dockerfile: v8/examples/multi_transport/Dockerfile
+    environment:
+      WORKER_TRANSPORT: grpc
+      WORKER_BINDINGS: /app/rpc-bindings.json
+      WORKER_PORT: "50051"
+    networks: [mt]
+
+  tester:
+    image: urihandler-v8-multi-worker:local
+    depends_on:
+      - web-worker
+      - rpc-worker
+    command: ["python", "/app/run_multi_test.py"]
+    networks: [mt]
+
+networks:
+  mt:

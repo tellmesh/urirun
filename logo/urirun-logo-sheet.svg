@@ -1,0 +1,97 @@
+<svg width="900" height="660" viewBox="0 0 900 660" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono','SF Mono',ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="tileG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#4338CA"/>
+    </linearGradient>
+    <!-- reusable filled mark, 100x100 -->
+    <g id="markF">
+      <rect x="4" y="4" width="92" height="92" rx="22" fill="url(#tileG)"/>
+      <circle cx="30" cy="42" r="5" fill="#A5B4FC"/>
+      <circle cx="30" cy="58" r="5" fill="#A5B4FC"/>
+      <g stroke="#FFFFFF" stroke-width="9" stroke-linecap="round">
+        <path d="M44 64 L56 36"/>
+        <path d="M60 64 L72 36"/>
+      </g>
+    </g>
+    <!-- reusable mono mark, 100x100 -->
+    <g id="markM">
+      <rect x="6.5" y="6.5" width="87" height="87" rx="21" fill="none" stroke="#0F172A" stroke-width="5"/>
+      <circle cx="30" cy="42" r="5" fill="#0F172A"/>
+      <circle cx="30" cy="58" r="5" fill="#0F172A"/>
+      <g stroke="#6366F1" stroke-width="9" stroke-linecap="round">
+        <path d="M44 64 L56 36"/>
+        <path d="M60 64 L72 36"/>
+      </g>
+    </g>
+  </defs>
+
+  <rect width="900" height="660" fill="#F8FAFC"/>
+  <text x="40" y="50" font-size="13" letter-spacing="4" font-weight="700" fill="#94A3B8">URIRUN — LOGO SYSTEM</text>
+  <line x1="40" y1="64" x2="860" y2="64" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- Box / app icon -->
+  <text x="40" y="98" font-size="12" letter-spacing="2" fill="#64748B">BOX / APP ICON</text>
+  <use href="#markF" transform="translate(40,112) scale(1.1)"/>
+
+  <!-- Mono icon -->
+  <text x="230" y="98" font-size="12" letter-spacing="2" fill="#64748B">MONO / OUTLINE</text>
+  <use href="#markM" transform="translate(230,112) scale(1.1)"/>
+
+  <!-- Favicon sizes -->
+  <text x="430" y="98" font-size="12" letter-spacing="2" fill="#64748B">FAVICON</text>
+  <use href="#markF" transform="translate(430,118) scale(0.48)"/>
+  <use href="#markF" transform="translate(490,140) scale(0.30)"/>
+  <use href="#markF" transform="translate(536,154) scale(0.18)"/>
+  <text x="442" y="232" font-size="10" fill="#94A3B8">48</text>
+  <text x="498" y="232" font-size="10" fill="#94A3B8">32</text>
+  <text x="540" y="232" font-size="10" fill="#94A3B8">16</text>
+
+  <!-- Wordmark -->
+  <text x="640" y="98" font-size="12" letter-spacing="2" fill="#64748B">WORDMARK</text>
+  <text x="640" y="170" font-size="48" font-weight="700" letter-spacing="-1.5">
+    <tspan fill="#0F172A">uri</tspan><tspan fill="#6366F1">run</tspan>
+  </text>
+
+  <line x1="40" y1="248" x2="860" y2="248" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- Horizontal lockup -->
+  <text x="40" y="284" font-size="12" letter-spacing="2" fill="#64748B">HORIZONTAL LOCKUP</text>
+  <use href="#markF" transform="translate(40,300) scale(0.92)"/>
+  <text x="138" y="358" font-size="42" font-weight="700" letter-spacing="-1">
+    <tspan fill="#0F172A">uri</tspan><tspan fill="#6366F1">run</tspan>
+  </text>
+
+  <!-- Stacked lockup -->
+  <text x="500" y="284" font-size="12" letter-spacing="2" fill="#64748B">STACKED LOCKUP</text>
+  <use href="#markF" transform="translate(560,296) scale(0.78)"/>
+  <text x="599" y="392" text-anchor="middle" font-size="32" font-weight="700" letter-spacing="-1">
+    <tspan fill="#0F172A">uri</tspan><tspan fill="#6366F1">run</tspan>
+  </text>
+  <text x="599" y="412" text-anchor="middle" font-size="9" letter-spacing="3" fill="#64748B">URI · SCHEMA · RUN</text>
+
+  <line x1="40" y1="448" x2="860" y2="448" stroke="#E2E8F0" stroke-width="1.5"/>
+
+  <!-- Dark background test -->
+  <text x="40" y="484" font-size="12" letter-spacing="2" fill="#64748B">ON DARK</text>
+  <rect x="40" y="496" width="400" height="130" rx="14" fill="#0F172A"/>
+  <use href="#markF" transform="translate(64,512) scale(0.96)"/>
+  <text x="168" y="576" font-size="40" font-weight="700" letter-spacing="-1">
+    <tspan fill="#FFFFFF">uri</tspan><tspan fill="#818CF8">run</tspan>
+  </text>
+
+  <!-- Palette -->
+  <text x="470" y="484" font-size="12" letter-spacing="2" fill="#64748B">PALETTE</text>
+  <g font-size="11" fill="#475569">
+    <rect x="470" y="500" width="56" height="56" rx="10" fill="#6366F1"/>
+    <text x="470" y="576">#6366F1</text>
+    <rect x="540" y="500" width="56" height="56" rx="10" fill="#4338CA"/>
+    <text x="540" y="576">#4338CA</text>
+    <rect x="610" y="500" width="56" height="56" rx="10" fill="#A5B4FC"/>
+    <text x="610" y="576">#A5B4FC</text>
+    <rect x="680" y="500" width="56" height="56" rx="10" fill="#0F172A"/>
+    <text x="680" y="576">#0F172A</text>
+    <rect x="750" y="500" width="56" height="56" rx="10" fill="#F8FAFC" stroke="#E2E8F0"/>
+    <text x="750" y="576">#F8FAFC</text>
+  </g>
+</svg>

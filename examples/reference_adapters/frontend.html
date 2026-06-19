@@ -3,7 +3,7 @@
   <body>
     <button id="on" data-uri="device://device-01/led/set/on">LED on</button>
     <script type="module">
-      import { dispatch } from "../adapters/js/index.js";
+      import { dispatch } from "../../adapters/js/index.js";
       const registry = {
         device: {
           led_set(target, state, payload, invocation) {

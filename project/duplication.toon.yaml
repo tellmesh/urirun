@@ -1,0 +1,34 @@
+# redup/duplication | 1 groups | 8f 826L | 2026-06-19
+
+SUMMARY:
+  files_scanned: 8
+  total_lines:   826
+  dup_groups:    1
+  dup_fragments: 2
+  saved_lines:   7
+  scan_ms:       2157
+
+HOTSPOTS[2] (files with most duplication):
+  v8/examples/multi_transport/worker.py  dup=7L  groups=1  frags=1  (0.8%)
+  v8/examples/transports/transport_lib.py  dup=7L  groups=1  frags=1  (0.8%)
+
+DUPLICATES[1] (ranked by impact):
+  [adcbcce722c5fe8d]   EXAC  _send  L=7 N=2 saved=7 sim=1.00
+      v8/examples/multi_transport/worker.py:41-47  (_send)
+      v8/examples/transports/transport_lib.py:79-85  (_send)
+
+REFACTOR[1] (ranked by priority):
+  [1] ○ extract_class      → v8/examples/utils/_send.py
+      WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
+      FILES: v8/examples/multi_transport/worker.py, v8/examples/transports/transport_lib.py
+
+QUICK_WINS[1] (low risk, high savings — do first):
+  [1] extract_class      saved=7L  → v8/examples/utils/_send.py
+      FILES: worker.py, transport_lib.py
+
+EFFORT_ESTIMATE (total ≈ 0.2h):
+  easy   _send                               saved=7L  ~14min
+
+METRICS-TARGET:
+  dup_groups:  1 → 0
+  saved_lines: 7 lines recoverable

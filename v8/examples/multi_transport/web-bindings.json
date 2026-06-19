@@ -1,0 +1,36 @@
+{
+  "version": "urihandler.bindings.v8",
+  "bindings": {
+    "web://reports/text/normalize": {
+      "kind": "command",
+      "adapter": "argv-template",
+      "argv": ["python3", "-c", "import sys;print(' '.join(sys.argv[1].split()).lower())", "{text}"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["text"],
+        "properties": { "text": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "meta": { "label": "Normalize (HTTP)" }
+    },
+    "web://reports/text/slugify": {
+      "kind": "command",
+      "adapter": "argv-template",
+      "argv": ["python3", "-c", "import sys,re;print(re.sub(r'[^a-z0-9]+','-',sys.argv[1].lower()).strip('-'))", "{text}"],
+      "inputSchema": {
+        "type": "object",
+        "required": ["text"],
+        "properties": { "text": { "type": "string" } },
+        "additionalProperties": false
+      },
+      "meta": { "label": "Slugify (HTTP)" }
+    },
+    "diag://shared/ping/run": {
+      "kind": "command",
+      "adapter": "argv-template",
+      "argv": ["echo", "web-pong"],
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "meta": { "label": "Ping (HTTP) - intentionally collides with the gRPC worker" }
+    }
+  }
+}

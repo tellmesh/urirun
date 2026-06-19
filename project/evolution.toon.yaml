@@ -1,0 +1,75 @@
+# code2llm/evolution | 221 func | 14f | 2026-06-19
+# generated in 0.00s
+
+NEXT[8] (ranked by impact):
+  [1] !! SPLIT           adapters/python/urihandler/v8.py
+      WHY: 955L, 0 classes, max CC=21
+      EFFORT: ~4h  IMPACT: 20055
+
+  [2] !! SPLIT           adapters/python/urihandler/_scan.py
+      WHY: 667L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 10005
+
+  [3] !! SPLIT           adapters/python/urihandler/_registry.py
+      WHY: 679L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 9506
+
+  [4] !  SPLIT-FUNC      main  CC=21  fan=39
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 819
+
+  [5] !  SPLIT-FUNC      scan_path  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
+
+  [6] !  SPLIT-FUNC      run  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [7] !  SPLIT-FUNC      serve_mcp  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [8] !  SPLIT-FUNC      evaluate_policy  CC=16  fan=8
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 128
+
+
+RISKS[3]:
+  ⚠ Splitting adapters/python/urihandler/v8.py may break 49 import paths
+  ⚠ Splitting adapters/python/urihandler/_registry.py may break 41 import paths
+  ⚠ Splitting adapters/python/urihandler/_scan.py may break 36 import paths
+
+METRICS-TARGET:
+  CC̄:          4.7 → ≤3.3
+  max-CC:      21 → ≤10
+  god-modules: 4 → 0
+  high-CC(≥15): 7 → ≤3
+  hub-types:   0 → ≤0
+
+PATTERNS (language parser shared logic):
+  _extract_declarations() in base.py — unified extraction for:
+    - TypeScript: interfaces, types, classes, functions, arrow funcs
+    - PHP: namespaces, traits, classes, functions, includes
+    - Ruby: modules, classes, methods, requires
+    - C++: classes, structs, functions, #includes
+    - C#: classes, interfaces, methods, usings
+    - Java: classes, interfaces, methods, imports
+    - Go: packages, functions, structs
+    - Rust: modules, functions, traits, use statements
+
+  Shared regex patterns per language:
+    - import: language-specific import/require/using patterns
+    - class: class/struct/trait declarations with inheritance
+    - function: function/method signatures with visibility
+    - brace_tracking: for C-family languages ({ })
+    - end_keyword_tracking: for Ruby (module/class/def...end)
+
+  Benefits:
+    - Consistent extraction logic across all languages
+    - Reduced code duplication (~70% reduction in parser LOC)
+    - Easier maintenance: fix once, apply everywhere
+    - Standardized FunctionInfo/ClassInfo models
+
+HISTORY:
+  prev CC̄=4.7 → now CC̄=4.7

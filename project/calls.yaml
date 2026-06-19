@@ -1,0 +1,4196 @@
+project: /home/tom/github/tellmesh/urihandler
+generated_from: code2llm call graph analysis
+stats:
+  total_nodes: 342
+  total_edges: 396
+  modules_count: 28
+nodes:
+  adapters.python.urihandler.v8._load_many:
+    name: _load_many
+    module: adapters.python.urihandler.v8
+    line: 824
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.get_path:
+    name: get_path
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 70
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  v7.examples.html_uri_app.app.appendLog:
+    name: appendLog
+    module: v7.examples.html_uri_app.app
+    line: 5
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.translate:
+    name: translate
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 25
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 6
+  v8.examples.html_uri_app.backend.registry:
+    name: registry
+    module: v8.examples.html_uri_app.backend
+    line: 48
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler.v8._scan_makefile:
+    name: _scan_makefile
+    module: adapters.python.urihandler.v8
+    line: 712
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  v8.examples.html_uri_app.backend.Handler.do_GET:
+    name: do_GET
+    module: v8.examples.html_uri_app.backend
+    line: 142
+    cyclomatic_complexity: 8
+    calls_out: 21
+    calls_in: 0
+  adapters.python.urihandler._scan.normalize_binding:
+    name: normalize_binding
+    module: adapters.python.urihandler._scan
+    line: 82
+    cyclomatic_complexity: 11
+    calls_out: 12
+    calls_in: 17
+  adapters.python.urihandler.v8_mcp.to_a2a_card:
+    name: to_a2a_card
+    module: adapters.python.urihandler.v8_mcp
+    line: 65
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 2
+  adapters.python.urihandler.v8.merge_binding_document:
+    name: merge_binding_document
+    module: adapters.python.urihandler.v8
+    line: 444
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.json_get:
+    name: json_get
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 158
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.expandBinding:
+    name: expandBinding
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 44
+    cyclomatic_complexity: 10
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler.v7.run_docker_run:
+    name: run_docker_run
+    module: adapters.python.urihandler.v7
+    line: 160
+    cyclomatic_complexity: 5
+    calls_out: 13
+    calls_in: 0
+  adapters.python.urihandler.v8._placeholder_kwargs:
+    name: _placeholder_kwargs
+    module: adapters.python.urihandler.v8
+    line: 76
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler.v8._apply_defaults:
+    name: _apply_defaults
+    module: adapters.python.urihandler.v8
+    line: 160
+    cyclomatic_complexity: 14
+    calls_out: 12
+    calls_in: 3
+  adapters.python.urihandler._scan.scan_python_code:
+    name: scan_python_code
+    module: adapters.python.urihandler._scan
+    line: 369
+    cyclomatic_complexity: 3
+    calls_out: 12
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.hasPlaceholders:
+    name: hasPlaceholders
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 106
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urihandler._runtime.evaluate_policy:
+    name: evaluate_policy
+    module: adapters.python.urihandler._runtime
+    line: 71
+    cyclomatic_complexity: 16
+    calls_out: 19
+    calls_in: 3
+  v7.examples.html_uri_app.app.renderDetail:
+    name: renderDetail
+    module: v7.examples.html_uri_app.app
+    line: 110
+    cyclomatic_complexity: 7
+    calls_out: 12
+    calls_in: 0
+  v8.examples.html_uri_app.backend.main:
+    name: main
+    module: v8.examples.html_uri_app.backend
+    line: 204
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 0
+  v7.examples.html_uri_app.app.badgeFor:
+    name: badgeFor
+    module: v7.examples.html_uri_app.app
+    line: 80
+    cyclomatic_complexity: 5
+    calls_out: 1
+    calls_in: 2
+  v7.examples.html_uri_app.app.active:
+    name: active
+    module: v7.examples.html_uri_app.app
+    line: 101
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v7.resolve_params:
+    name: resolve_params
+    module: adapters.python.urihandler.v7
+    line: 40
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 1
+  examples.reference_adapters.node-server.server:
+    name: server
+    module: examples.reference_adapters.node-server
+    line: 27
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler._scan.build_binding_document:
+    name: build_binding_document
+    module: adapters.python.urihandler._scan
+    line: 158
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 5
+  adapters.python.urihandler._scan.module_ref_for_python:
+    name: module_ref_for_python
+    module: adapters.python.urihandler._scan
+    line: 363
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8_service.call:
+    name: call
+    module: adapters.python.urihandler.v8_service
+    line: 55
+    cyclomatic_complexity: 9
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urihandler._runtime.run_spawn:
+    name: run_spawn
+    module: adapters.python.urihandler._runtime
+    line: 122
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urihandler.v8.parse_param_declaration:
+    name: parse_param_declaration
+    module: adapters.python.urihandler.v8
+    line: 470
+    cyclomatic_complexity: 8
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urihandler._registry._discover_python_module:
+    name: _discover_python_module
+    module: adapters.python.urihandler._registry
+    line: 595
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  v7.examples.js.urihandler-v7.inner:
+    name: inner
+    module: v7.examples.js.urihandler-v7
+    line: 216
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.parseUri:
+    name: parseUri
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 11
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 6
+  adapters.python.urihandler._registry.build_registry_document:
+    name: build_registry_document
+    module: adapters.python.urihandler._registry
+    line: 224
+    cyclomatic_complexity: 10
+    calls_out: 16
+    calls_in: 2
+  v8.examples.transports.transport_lib.available_transports:
+    name: available_transports
+    module: v8.examples.transports.transport_lib
+    line: 151
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._registry._walk_route_entries:
+    name: _walk_route_entries
+    module: adapters.python.urihandler._registry
+    line: 461
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urihandler.v8_mcp.to_mcp_manifest:
+    name: to_mcp_manifest
+    module: adapters.python.urihandler.v8_mcp
+    line: 60
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler.v8_grpc.serve:
+    name: serve
+    module: adapters.python.urihandler.v8_grpc
+    line: 63
+    cyclomatic_complexity: 2
+    calls_out: 17
+    calls_in: 1
+  v8.examples.html_uri_app.backend.env_bool:
+    name: env_bool
+    module: v8.examples.html_uri_app.backend
+    line: 36
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 4
+  adapters.python.urihandler.v8.render_value:
+    name: render_value
+    module: adapters.python.urihandler.v8
+    line: 206
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 3
+  v8.examples.decorators.example.transcode:
+    name: transcode
+    module: v8.examples.decorators.example
+    line: 12
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.mergePolicy:
+    name: mergePolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 115
+    cyclomatic_complexity: 6
+    calls_out: 2
+    calls_in: 7
+  adapters.python.urihandler._scan.now_iso:
+    name: now_iso
+    module: adapters.python.urihandler._scan
+    line: 41
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._scan.load_json:
+    name: load_json
+    module: adapters.python.urihandler._scan
+    line: 45
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 5
+  v7.examples.html_uri_app.uri-runtime-v7.routeKey:
+    name: routeKey
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 32
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  v7.examples.html_uri_app.app.runSelected:
+    name: runSelected
+    module: v7.examples.html_uri_app.app
+    line: 145
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler.v7._env_flags:
+    name: _env_flags
+    module: adapters.python.urihandler.v7
+    line: 111
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 2
+  adapters.python.urihandler.v8_adopt.passthrough_schema:
+    name: passthrough_schema
+    module: adapters.python.urihandler.v8_adopt
+    line: 29
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler.v8.run:
+    name: run
+    module: adapters.python.urihandler.v8
+    line: 274
+    cyclomatic_complexity: 15
+    calls_out: 22
+    calls_in: 1
+  adapters.python.urihandler._scan.list_bindings:
+    name: list_bindings
+    module: adapters.python.urihandler._scan
+    line: 547
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8_mcp.build_tool_index:
+    name: build_tool_index
+    module: adapters.python.urihandler.v8_mcp
+    line: 92
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  v7.examples.js.urihandler-v7.expandBinding:
+    name: expandBinding
+    module: v7.examples.js.urihandler-v7
+    line: 304
+    cyclomatic_complexity: 9
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8_mcp.serve_mcp:
+    name: serve_mcp
+    module: adapters.python.urihandler.v8_mcp
+    line: 104
+    cyclomatic_complexity: 15
+    calls_out: 23
+    calls_in: 1
+  v7.examples.js.urihandler-v7.merged:
+    name: merged
+    module: v7.examples.js.urihandler-v7
+    line: 297
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  v8.examples.html_uri_app.app.schemaFor:
+    name: schemaFor
+    module: v8.examples.html_uri_app.app
+    line: 55
+    cyclomatic_complexity: 4
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urihandler.v8._scan_shell_script:
+    name: _scan_shell_script
+    module: adapters.python.urihandler.v8
+    line: 701
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urihandler.v8._empty_input_schema:
+    name: _empty_input_schema
+    module: adapters.python.urihandler.v8
+    line: 646
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 4
+  v8.examples.docker_uri_flow.node-worker.server.slugify:
+    name: slugify
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 22
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urihandler.v7.expand_bindings:
+    name: expand_bindings
+    module: adapters.python.urihandler.v7
+    line: 324
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  v7.examples.js.urihandler-v7.compileRegistry:
+    name: compileRegistry
+    module: v7.examples.js.urihandler-v7
+    line: 329
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  examples.reference_adapters.firmware-pseudo.led_set:
+    name: led_set
+    module: examples.reference_adapters.firmware-pseudo
+    line: 10
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  v7.examples.js.urihandler-v7.registryTree:
+    name: registryTree
+    module: v7.examples.js.urihandler-v7
+    line: 46
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 3
+  v8.examples.html_uri_app.backend.Handler.log_message:
+    name: log_message
+    module: v8.examples.html_uri_app.backend
+    line: 139
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v8._manifest_candidates:
+    name: _manifest_candidates
+    module: adapters.python.urihandler.v8
+    line: 749
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8.expand_bindings:
+    name: expand_bindings
+    module: adapters.python.urihandler.v8
+    line: 417
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 6
+  adapters.python.urihandler.v7._params_spec:
+    name: _params_spec
+    module: adapters.python.urihandler.v7
+    line: 35
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler._registry.route_from_parts:
+    name: route_from_parts
+    module: adapters.python.urihandler._registry
+    line: 100
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 4
+  adapters.python.urihandler._scan.scan_manifest_files:
+    name: scan_manifest_files
+    module: adapters.python.urihandler._scan
+    line: 190
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urihandler._scan.parse_compose_label_line:
+    name: parse_compose_label_line
+    module: adapters.python.urihandler._scan
+    line: 412
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  v7.examples.js.urihandler-v7.inferKind:
+    name: inferKind
+    module: v7.examples.js.urihandler-v7
+    line: 26
+    cyclomatic_complexity: 10
+    calls_out: 1
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.main:
+    name: main
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 209
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler.v8.uri_command:
+    name: uri_command
+    module: adapters.python.urihandler.v8
+    line: 80
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 3
+  v7.examples.js.urihandler-v7.response:
+    name: response
+    module: v7.examples.js.urihandler-v7
+    line: 234
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 10
+  adapters.python.urihandler.v8_grpc._route_list:
+    name: _route_list
+    module: adapters.python.urihandler.v8_grpc
+    line: 53
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 1
+  v8.examples.transports.transport_lib.serverless_handler:
+    name: serverless_handler
+    module: v8.examples.transports.transport_lib
+    line: 66
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler.v8_mcp._input_schema:
+    name: _input_schema
+    module: adapters.python.urihandler.v8_mcp
+    line: 39
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 2
+  v7.examples.html_uri_app.uri-runtime-v7.match:
+    name: match
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 12
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.service_url:
+    name: service_url
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 87
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 2
+  v7.examples.html_uri_app.uri-runtime-v7.matchesAny:
+    name: matchesAny
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 128
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 3
+  adapters.python.urihandler.v8._load_manifest:
+    name: _load_manifest
+    module: adapters.python.urihandler.v8
+    line: 650
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.normalize_uri:
+    name: normalize_uri
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 110
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 1
+  v7.examples.html_uri_app.app.inputs:
+    name: inputs
+    module: v7.examples.html_uri_app.app
+    line: 114
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.adapter:
+    name: adapter
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 222
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  v7.examples.js.urihandler-v7.evaluatePolicy:
+    name: evaluatePolicy
+    module: v7.examples.js.urihandler-v7
+    line: 91
+    cyclomatic_complexity: 6
+    calls_out: 4
+    calls_in: 4
+  adapters.python.urihandler._scan.load_bindings_from_manifest:
+    name: load_bindings_from_manifest
+    module: adapters.python.urihandler._scan
+    line: 134
+    cyclomatic_complexity: 14
+    calls_out: 16
+    calls_in: 3
+  v7.examples.html_uri_app.app.selected:
+    name: selected
+    module: v7.examples.html_uri_app.app
+    line: 76
+    cyclomatic_complexity: 5
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._scan.scan_makefile:
+    name: scan_makefile
+    module: adapters.python.urihandler._scan
+    line: 318
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 1
+  examples.reference_adapters.firmware-pseudo.handle_uri:
+    name: handle_uri
+    module: examples.reference_adapters.firmware-pseudo
+    line: 4
+    cyclomatic_complexity: 7
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urihandler._registry.flatten_registry_document:
+    name: flatten_registry_document
+    module: adapters.python.urihandler._registry
+    line: 174
+    cyclomatic_complexity: 10
+    calls_out: 11
+    calls_in: 1
+  v7.examples.js.urihandler-v7.allow:
+    name: allow
+    module: v7.examples.js.urihandler-v7
+    line: 94
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.renderValue:
+    name: renderValue
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 95
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 3
+  adapters.python.urihandler.v8._rel:
+    name: _rel
+    module: adapters.python.urihandler.v8
+    line: 639
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 6
+  v8.examples.docker_uri_flow.python-worker.server.dispatch:
+    name: dispatch
+    module: v8.examples.docker_uri_flow.python-worker.server
+    line: 37
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 0
+  v8.examples.html_uri_app.app.iconFor:
+    name: iconFor
+    module: v8.examples.html_uri_app.app
+    line: 149
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler._registry.hash_uri:
+    name: hash_uri
+    module: adapters.python.urihandler._registry
+    line: 58
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 3
+  v7.examples.html_uri_app.app.badge:
+    name: badge
+    module: v7.examples.html_uri_app.app
+    line: 99
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_route_count:
+    name: registry_route_count
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 128
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 1
+  v8.examples.html_uri_app.app.card:
+    name: card
+    module: v8.examples.html_uri_app.app
+    line: 122
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  v7.examples.js.urihandler-v7.globMatch:
+    name: globMatch
+    module: v7.examples.js.urihandler-v7
+    line: 79
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 3
+  adapters.js.match:
+    name: match
+    module: adapters.js
+    line: 2
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler.v8._scan_package_json:
+    name: _scan_package_json
+    module: adapters.python.urihandler.v8
+    line: 655
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler.v7.compile_registry:
+    name: compile_registry
+    module: adapters.python.urihandler.v7
+    line: 331
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler.v8_adopt.npm_package_bindings:
+    name: npm_package_bindings
+    module: adapters.python.urihandler.v8_adopt
+    line: 88
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.json_post:
+    name: json_post
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 163
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  v8.examples.html_uri_app.backend.load_env:
+    name: load_env
+    module: v8.examples.html_uri_app.backend
+    line: 25
+    cyclomatic_complexity: 6
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urihandler._registry._load_sources:
+    name: _load_sources
+    module: adapters.python.urihandler._registry
+    line: 587
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler._registry.uri_handler:
+    name: uri_handler
+    module: adapters.python.urihandler._registry
+    line: 380
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.reason:
+    name: reason
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 151
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 0
+  v8.examples.generators.php.example.UriCommand.bindingFromFunction:
+    name: bindingFromFunction
+    module: v8.examples.generators.php.example
+    line: 24
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 0
+  adapters.python.urihandler.v7._run_process:
+    name: _run_process
+    module: adapters.python.urihandler.v7
+    line: 93
+    cyclomatic_complexity: 1
+    calls_out: 8
+    calls_in: 4
+  v8.examples.decorators.example.echo_message:
+    name: echo_message
+    module: v8.examples.decorators.example
+    line: 7
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._registry.discover_docker_labels:
+    name: discover_docker_labels
+    module: adapters.python.urihandler._registry
+    line: 279
+    cyclomatic_complexity: 14
+    calls_out: 18
+    calls_in: 2
+  adapters.python.urihandler.v8.validate_input:
+    name: validate_input
+    module: adapters.python.urihandler.v8
+    line: 187
+    cyclomatic_complexity: 6
+    calls_out: 13
+    calls_in: 1
+  v7.examples.js.urihandler-v7.mergePolicy:
+    name: mergePolicy
+    module: v7.examples.js.urihandler-v7
+    line: 87
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 4
+  v7.examples.js.urihandler-v7.resolveParams:
+    name: resolveParams
+    module: v7.examples.js.urihandler-v7
+    line: 119
+    cyclomatic_complexity: 15
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler.parse_uri:
+    name: parse_uri
+    module: adapters.python.urihandler
+    line: 6
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  v8.examples.transports.transport_lib.grpc_available:
+    name: grpc_available
+    module: v8.examples.transports.transport_lib
+    line: 143
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.load_registry:
+    name: load_registry
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 140
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.entries:
+    name: entries
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 65
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 3
+  adapters.python.urihandler.v8.model_from_function:
+    name: model_from_function
+    module: adapters.python.urihandler.v8
+    line: 65
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urihandler.v7._proc_env:
+    name: _proc_env
+    module: adapters.python.urihandler.v7
+    line: 84
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urihandler._registry._operation_from_method:
+    name: _operation_from_method
+    module: adapters.python.urihandler._registry
+    line: 338
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.looksDestructive:
+    name: looksDestructive
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 132
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 1
+  v8.examples.html_uri_app.backend.read_json:
+    name: read_json
+    module: v8.examples.html_uri_app.backend
+    line: 40
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  v8.examples.html_uri_app.backend.Handler.do_POST:
+    name: do_POST
+    module: v8.examples.html_uri_app.backend
+    line: 167
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 0
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow:
+    name: parse_flow
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 19
+    cyclomatic_complexity: 24
+    calls_out: 26
+    calls_in: 1
+  adapters.js.buildInvocation:
+    name: buildInvocation
+    module: adapters.js
+    line: 16
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._registry._iter_module_exports:
+    name: _iter_module_exports
+    module: adapters.python.urihandler._registry
+    line: 390
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urihandler.v7.run:
+    name: run
+    module: adapters.python.urihandler.v7
+    line: 215
+    cyclomatic_complexity: 14
+    calls_out: 23
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.routes:
+    name: routes
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 164
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  v7.examples.html_uri_app.app.renderActions:
+    name: renderActions
+    module: v7.examples.html_uri_app.app
+    line: 95
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urihandler._registry.normalize_route_entry:
+    name: normalize_route_entry
+    module: adapters.python.urihandler._registry
+    line: 75
+    cyclomatic_complexity: 8
+    calls_out: 8
+    calls_in: 2
+  adapters.python.urihandler.v8._strip_runtime_only:
+    name: _strip_runtime_only
+    module: adapters.python.urihandler.v8
+    line: 367
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  adapters.python.urihandler._registry.load_json:
+    name: load_json
+    module: adapters.python.urihandler._registry
+    line: 566
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 6
+  v8.examples.html_uri_app.backend.add_log:
+    name: add_log
+    module: v8.examples.html_uri_app.backend
+    line: 65
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 5
+  adapters.python.urihandler.v8.load_registry_arg:
+    name: load_registry_arg
+    module: adapters.python.urihandler.v8
+    line: 564
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler._scan.load_binding_source:
+    name: load_binding_source
+    module: adapters.python.urihandler._scan
+    line: 507
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urihandler.v8_grpc._method:
+    name: _method
+    module: adapters.python.urihandler.v8_grpc
+    line: 103
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urihandler._scan.load_registry_arg:
+    name: load_registry_arg
+    module: adapters.python.urihandler._scan
+    line: 526
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  v8.examples.html_uri_app.app.defaults:
+    name: defaults
+    module: v8.examples.html_uri_app.app
+    line: 78
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler._runtime.run:
+    name: run
+    module: adapters.python.urihandler._runtime
+    line: 215
+    cyclomatic_complexity: 10
+    calls_out: 20
+    calls_in: 1
+  adapters.python.urihandler.v8.render_argv:
+    name: render_argv
+    module: adapters.python.urihandler.v8
+    line: 223
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 1
+  v8.examples.decorators.example.shell_echo:
+    name: shell_echo
+    module: v8.examples.decorators.example
+    line: 17
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v7.run_fetch:
+    name: run_fetch
+    module: adapters.python.urihandler.v7
+    line: 180
+    cyclomatic_complexity: 3
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urihandler.v8.write_or_emit_binding:
+    name: write_or_emit_binding
+    module: adapters.python.urihandler.v8
+    line: 451
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 2
+  adapters.js.dispatch:
+    name: dispatch
+    module: adapters.js
+    line: 22
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  v7.examples.js.urihandler-v7.OUTPUT_LIMIT:
+    name: OUTPUT_LIMIT
+    module: v7.examples.js.urihandler-v7
+    line: 8
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urihandler.v7._binding_pairs:
+    name: _binding_pairs
+    module: adapters.python.urihandler.v7
+    line: 311
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 1
+  v8.examples.html_uri_app.app.classFor:
+    name: classFor
+    module: v8.examples.html_uri_app.app
+    line: 145
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler.v7.load_registry_arg:
+    name: load_registry_arg
+    module: adapters.python.urihandler.v7
+    line: 335
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler._registry.translate:
+    name: translate
+    module: adapters.python.urihandler._registry
+    line: 43
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler._scan.slugify:
+    name: slugify
+    module: adapters.python.urihandler._scan
+    line: 29
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 6
+  adapters.python.urihandler._registry.discover_docker_inspect:
+    name: discover_docker_inspect
+    module: adapters.python.urihandler._registry
+    line: 317
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.setPolicy:
+    name: setPolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 167
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._registry.add_route:
+    name: add_route
+    module: adapters.python.urihandler._registry
+    line: 140
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  adapters.c.urihandler.memcpy:
+    name: memcpy
+    module: adapters.c.urihandler
+    line: 7
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler.build_invocation:
+    name: build_invocation
+    module: adapters.python.urihandler
+    line: 21
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._scan.relpath:
+    name: relpath
+    module: adapters.python.urihandler._scan
+    line: 34
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 9
+  adapters.python.urihandler._runtime.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urihandler._runtime
+    line: 143
+    cyclomatic_complexity: 3
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urihandler.v8.validate_binding_document:
+    name: validate_binding_document
+    module: adapters.python.urihandler.v8
+    line: 593
+    cyclomatic_complexity: 12
+    calls_out: 24
+    calls_in: 2
+  adapters.python.urihandler._runtime.default_policy:
+    name: default_policy
+    module: adapters.python.urihandler._runtime
+    line: 33
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  v7.examples.html_uri_app.app.target:
+    name: target
+    module: v7.examples.html_uri_app.app
+    line: 155
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urihandler._scan._read_toml:
+    name: _read_toml
+    module: adapters.python.urihandler._scan
+    line: 251
+    cyclomatic_complexity: 12
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urihandler.v8_grpc.channel_target:
+    name: channel_target
+    module: adapters.python.urihandler.v8_grpc
+    line: 94
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 3
+  adapters.python.urihandler._registry.flatten_registry_tree:
+    name: flatten_registry_tree
+    module: adapters.python.urihandler._registry
+    line: 154
+    cyclomatic_complexity: 8
+    calls_out: 8
+    calls_in: 3
+  v8.examples.docker_uri_flow.python-worker.server.normalize:
+    name: normalize
+    module: v8.examples.docker_uri_flow.python-worker.server
+    line: 22
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urihandler.v8._input_values:
+    name: _input_values
+    module: adapters.python.urihandler.v8
+    line: 177
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urihandler._runtime.check:
+    name: check
+    module: adapters.python.urihandler._runtime
+    line: 275
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  v7.examples.html_uri_app.app.envelope:
+    name: envelope
+    module: v7.examples.html_uri_app.app
+    line: 146
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urihandler.v8_grpc.list_routes:
+    name: list_routes
+    module: adapters.python.urihandler.v8_grpc
+    line: 152
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 0
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_scalar:
+    name: parse_scalar
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 12
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 5
+  v7.examples.js.urihandler-v7.DEFAULT_TIMEOUT:
+    name: DEFAULT_TIMEOUT
+    module: v7.examples.js.urihandler-v7
+    line: 7
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  v8.examples.html_uri_app.app.routeResponse:
+    name: routeResponse
+    module: v8.examples.html_uri_app.app
+    line: 22
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 0
+  v8.examples.docker_uri_flow.python-worker.server.Handler.do_POST:
+    name: do_POST
+    module: v8.examples.docker_uri_flow.python-worker.server
+    line: 58
+    cyclomatic_complexity: 6
+    calls_out: 11
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7:
+    name: createUriRuntimeV7
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 163
+    cyclomatic_complexity: 32
+    calls_out: 17
+    calls_in: 0
+  v8.examples.html_uri_app.app.renderToolList:
+    name: renderToolList
+    module: v8.examples.html_uri_app.app
+    line: 127
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  adapters.c.urihandler.copy_token:
+    name: copy_token
+    module: adapters.c.urihandler
+    line: 4
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  v8.examples.html_uri_app.backend.dispatch:
+    name: dispatch
+    module: v8.examples.html_uri_app.backend
+    line: 95
+    cyclomatic_complexity: 6
+    calls_out: 14
+    calls_in: 0
+  adapters.python.urihandler._scan.compile_registry_document:
+    name: compile_registry_document
+    module: adapters.python.urihandler._scan
+    line: 169
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 5
+  v7.examples.html_uri_app.app.text:
+    name: text
+    module: v7.examples.html_uri_app.app
+    line: 47
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v8_mcp.tool_name:
+    name: tool_name
+    module: adapters.python.urihandler.v8_mcp
+    line: 32
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 2
+  v8.examples.html_uri_app.backend.binding_document:
+    name: binding_document
+    module: v8.examples.html_uri_app.backend
+    line: 44
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 3
+  v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy:
+    name: evaluatePolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 138
+    cyclomatic_complexity: 18
+    calls_out: 3
+    calls_in: 4
+  adapters.python.urihandler.v7.render_value:
+    name: render_value
+    module: adapters.python.urihandler.v7
+    line: 63
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 6
+  adapters.python.urihandler.v8._binding_pairs:
+    name: _binding_pairs
+    module: adapters.python.urihandler.v8
+    line: 404
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.wait_for_services:
+    name: wait_for_services
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 170
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urihandler._scan.scan_shell_script:
+    name: scan_shell_script
+    module: adapters.python.urihandler._scan
+    line: 343
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  v7.examples.js.urihandler-v7.translate:
+    name: translate
+    module: v7.examples.js.urihandler-v7
+    line: 20
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 3
+  v7.examples.js.urihandler-v7.expandBindings:
+    name: expandBindings
+    module: v7.examples.js.urihandler-v7
+    line: 320
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.preview:
+    name: preview
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 186
+    cyclomatic_complexity: 12
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urihandler.v8._parse_dockerfile_labels:
+    name: _parse_dockerfile_labels
+    module: adapters.python.urihandler.v8
+    line: 736
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler.dispatch:
+    name: dispatch
+    module: adapters.python.urihandler
+    line: 29
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urihandler._scan.scan_path:
+    name: scan_path
+    module: adapters.python.urihandler._scan
+    line: 464
+    cyclomatic_complexity: 15
+    calls_out: 27
+    calls_in: 4
+  adapters.python.urihandler.v8_mcp.call_tool:
+    name: call_tool
+    module: adapters.python.urihandler.v8_mcp
+    line: 96
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urihandler._registry.coerce_route_source:
+    name: coerce_route_source
+    module: adapters.python.urihandler._registry
+    line: 114
+    cyclomatic_complexity: 11
+    calls_out: 14
+    calls_in: 5
+  adapters.python.urihandler._scan.scan_package_json:
+    name: scan_package_json
+    module: adapters.python.urihandler._scan
+    line: 217
+    cyclomatic_complexity: 7
+    calls_out: 14
+    calls_in: 1
+  v7.examples.js.urihandler-v7.run:
+    name: run
+    module: v7.examples.js.urihandler-v7
+    line: 239
+    cyclomatic_complexity: 19
+    calls_out: 9
+    calls_in: 1
+  v7.examples.html_uri_app.app.renderLogs:
+    name: renderLogs
+    module: v7.examples.html_uri_app.app
+    line: 173
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.tokenize:
+    name: tokenize
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 36
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  v7.examples.js.urihandler-v7.setRoute:
+    name: setRoute
+    module: v7.examples.js.urihandler-v7
+    line: 50
+    cyclomatic_complexity: 7
+    calls_out: 3
+    calls_in: 1
+  v8.examples.html_uri_app.app.renderActions:
+    name: renderActions
+    module: v8.examples.html_uri_app.app
+    line: 63
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.activePolicy:
+    name: activePolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 165
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  v7.examples.js.urihandler-v7.defaultAdapter:
+    name: defaultAdapter
+    module: v7.examples.js.urihandler-v7
+    line: 35
+    cyclomatic_complexity: 2
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urihandler.v8_adopt.installed_python_bindings:
+    name: installed_python_bindings
+    module: adapters.python.urihandler.v8_adopt
+    line: 73
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  v7.examples.js.urihandler-v7.renderedEnv:
+    name: renderedEnv
+    module: v7.examples.js.urihandler-v7
+    line: 158
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler._scan.scan_pyproject:
+    name: scan_pyproject
+    module: adapters.python.urihandler._scan
+    line: 280
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 1
+  v7.examples.js.urihandler-v7.compileRegistryDocument:
+    name: compileRegistryDocument
+    module: v7.examples.js.urihandler-v7
+    line: 59
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.resolve_payload:
+    name: resolve_payload
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 77
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urihandler._registry.exec_local_function:
+    name: exec_local_function
+    module: adapters.python.urihandler._registry
+    line: 480
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urihandler._registry.discover_manifest:
+    name: discover_manifest
+    module: adapters.python.urihandler._registry
+    line: 195
+    cyclomatic_complexity: 14
+    calls_out: 19
+    calls_in: 2
+  adapters.python.urihandler.v8.run_argv_template:
+    name: run_argv_template
+    module: adapters.python.urihandler.v8
+    line: 246
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  v7.examples.html_uri_app.app.node:
+    name: node
+    module: v7.examples.html_uri_app.app
+    line: 134
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  adapters.c.urihandler_test.main:
+    name: main
+    module: adapters.c.urihandler_test
+    line: 5
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  v8.examples.docker_uri_flow.node-worker.server.server:
+    name: server
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 30
+    cyclomatic_complexity: 10
+    calls_out: 4
+    calls_in: 0
+  v8.examples.docker_uri_flow.node-worker.server.body:
+    name: body
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.route_key:
+    name: route_key
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 102
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urihandler.v8.command_binding_from_cli:
+    name: command_binding_from_cli
+    module: adapters.python.urihandler.v8
+    line: 524
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  v8.examples.html_uri_app.app.data:
+    name: data
+    module: v8.examples.html_uri_app.app
+    line: 104
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v8_mcp.to_mcp_tools:
+    name: to_mcp_tools
+    module: adapters.python.urihandler.v8_mcp
+    line: 45
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 3
+  adapters.python.urihandler._registry.write_json:
+    name: write_json
+    module: adapters.python.urihandler._registry
+    line: 571
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urihandler.v7.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urihandler.v7
+    line: 134
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urihandler._scan.github_dependency_binding:
+    name: github_dependency_binding
+    module: adapters.python.urihandler._scan
+    line: 203
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urihandler._registry.route_from_uri:
+    name: route_from_uri
+    module: adapters.python.urihandler._registry
+    line: 84
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 6
+  v8.examples.html_uri_app.backend.dispatch_tool:
+    name: dispatch_tool
+    module: v8.examples.html_uri_app.backend
+    line: 119
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  adapters.c.urihandler.urihandler_parse:
+    name: urihandler_parse
+    module: adapters.c.urihandler
+    line: 16
+    cyclomatic_complexity: 20
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler.v8.compile_registry:
+    name: compile_registry
+    module: adapters.python.urihandler.v8
+    line: 424
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 5
+  v8.examples.html_uri_app.backend.routes:
+    name: routes
+    module: v8.examples.html_uri_app.backend
+    line: 52
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler._registry.discover_entry_points:
+    name: discover_entry_points
+    module: adapters.python.urihandler._registry
+    line: 420
+    cyclomatic_complexity: 6
+    calls_out: 12
+    calls_in: 0
+  adapters.python.urihandler.v8._scan_dockerfile:
+    name: _scan_dockerfile
+    module: adapters.python.urihandler.v8
+    line: 756
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urihandler._registry.hydrate_registry:
+    name: hydrate_registry
+    module: adapters.python.urihandler._registry
+    line: 471
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  v8.examples.transports.transport_lib.run_via:
+    name: run_via
+    module: v8.examples.transports.transport_lib
+    line: 111
+    cyclomatic_complexity: 6
+    calls_out: 16
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.getPolicy:
+    name: getPolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 168
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urihandler.v8_adopt.python_package_bindings:
+    name: python_package_bindings
+    module: adapters.python.urihandler.v8_adopt
+    line: 51
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 3
+  adapters.python.urihandler._scan.route_source_to_binding:
+    name: route_source_to_binding
+    module: adapters.python.urihandler._scan
+    line: 119
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 4
+  adapters.python.urihandler._scan.scan_js_code:
+    name: scan_js_code
+    module: adapters.python.urihandler._scan
+    line: 389
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urihandler._registry.parse_uri:
+    name: parse_uri
+    module: adapters.python.urihandler._registry
+    line: 25
+    cyclomatic_complexity: 8
+    calls_out: 16
+    calls_in: 2
+  v7.examples.html_uri_app.app.params:
+    name: params
+    module: v7.examples.html_uri_app.app
+    line: 113
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urihandler.v7.run_docker_exec:
+    name: run_docker_exec
+    module: adapters.python.urihandler.v7
+    line: 144
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  v7.examples.js.urihandler-v7.routeRows:
+    name: routeRows
+    module: v7.examples.js.urihandler-v7
+    line: 67
+    cyclomatic_complexity: 10
+    calls_out: 5
+    calls_in: 2
+  v8.examples.docker_uri_flow.python-worker.server.summary:
+    name: summary
+    module: v8.examples.docker_uri_flow.python-worker.server
+    line: 28
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._runtime._matches_any:
+    name: _matches_any
+    module: adapters.python.urihandler._runtime
+    line: 57
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  v7.examples.html_uri_app.app.executeMode:
+    name: executeMode
+    module: v7.examples.html_uri_app.app
+    line: 78
+    cyclomatic_complexity: 5
+    calls_out: 0
+    calls_in: 5
+  v7.examples.js.urihandler-v7.match:
+    name: match
+    module: v7.examples.js.urihandler-v7
+    line: 11
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  v8.examples.html_uri_app.app.required:
+    name: required
+    module: v8.examples.html_uri_app.app
+    line: 77
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler._scan.load_binding_sources:
+    name: load_binding_sources
+    module: adapters.python.urihandler._scan
+    line: 519
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  v7.examples.html_uri_app.uri-runtime-v7.allowed:
+    name: allowed
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 150
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._runtime.merge_policy:
+    name: merge_policy
+    module: adapters.python.urihandler._runtime
+    line: 45
+    cyclomatic_complexity: 7
+    calls_out: 8
+    calls_in: 3
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow:
+    name: run_flow
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 188
+    cyclomatic_complexity: 8
+    calls_out: 16
+    calls_in: 1
+  v8.examples.html_uri_app.app.escapeHtml:
+    name: escapeHtml
+    module: v8.examples.html_uri_app.app
+    line: 159
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 8
+  v8.examples.docker_uri_flow.node-worker.server.slug:
+    name: slug
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 45
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._scan.emit_json:
+    name: emit_json
+    module: adapters.python.urihandler._scan
+    line: 58
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 5
+  v7.examples.html_uri_app.uri-runtime-v7.defaultPolicy:
+    name: defaultPolicy
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 111
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.compileBindings:
+    name: compileBindings
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 64
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urihandler.v7._has_placeholders:
+    name: _has_placeholders
+    module: adapters.python.urihandler.v7
+    line: 77
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8._schema_for:
+    name: _schema_for
+    module: adapters.python.urihandler.v8
+    line: 155
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler._scan.binding_to_route_source:
+    name: binding_to_route_source
+    module: adapters.python.urihandler._scan
+    line: 106
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v7.expand_binding:
+    name: expand_binding
+    module: adapters.python.urihandler.v7
+    line: 297
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urihandler.v8._scan_pyproject:
+    name: _scan_pyproject
+    module: adapters.python.urihandler.v8
+    line: 683
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  v7.examples.js.urihandler-v7.listRoutes:
+    name: listRoutes
+    module: v7.examples.js.urihandler-v7
+    line: 296
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urihandler._registry.discover_openapi:
+    name: discover_openapi
+    module: adapters.python.urihandler._registry
+    line: 353
+    cyclomatic_complexity: 10
+    calls_out: 14
+    calls_in: 1
+  v7.examples.js.urihandler-v7.runProcess:
+    name: runProcess
+    module: v7.examples.js.urihandler-v7
+    line: 165
+    cyclomatic_complexity: 6
+    calls_out: 3
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.listRoutes:
+    name: listRoutes
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 170
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urihandler.v8.input_schema_from_params:
+    name: input_schema_from_params
+    module: adapters.python.urihandler.v8
+    line: 510
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._runtime.run_local_function:
+    name: run_local_function
+    module: adapters.python.urihandler._runtime
+    line: 190
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 0
+  examples.reference_adapters.node-server.readJson:
+    name: readJson
+    module: examples.reference_adapters.node-server
+    line: 12
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.renderCommand:
+    name: renderCommand
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 102
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  examples.reference_adapters.python-server.Handler.do_POST:
+    name: do_POST
+    module: examples.reference_adapters.python-server
+    line: 20
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urihandler.v8_grpc.call:
+    name: call
+    module: adapters.python.urihandler.v8_grpc
+    line: 125
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 1
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_has_uri:
+    name: registry_has_uri
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 119
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urihandler._registry._get_route_entry:
+    name: _get_route_entry
+    module: adapters.python.urihandler._registry
+    line: 169
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urihandler._registry.resolve_route:
+    name: resolve_route
+    module: adapters.python.urihandler._registry
+    line: 445
+    cyclomatic_complexity: 8
+    calls_out: 15
+    calls_in: 1
+  v7.examples.js.urihandler-v7.deny:
+    name: deny
+    module: v7.examples.js.urihandler-v7
+    line: 93
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urihandler.v8._coerce_default:
+    name: _coerce_default
+    module: adapters.python.urihandler.v8
+    line: 460
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  v8.examples.html_uri_app.app.refreshLogs:
+    name: refreshLogs
+    module: v8.examples.html_uri_app.app
+    line: 103
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urihandler._scan.iter_project_files:
+    name: iter_project_files
+    module: adapters.python.urihandler._scan
+    line: 182
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 1
+  v8.examples.generators.php.example.UriCommand.schemaType:
+    name: schemaType
+    module: v8.examples.generators.php.example
+    line: 13
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  v8.examples.html_uri_app.app.renderForm:
+    name: renderForm
+    module: v8.examples.html_uri_app.app
+    line: 73
+    cyclomatic_complexity: 10
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urihandler._runtime._truncate:
+    name: _truncate
+    module: adapters.python.urihandler._runtime
+    line: 114
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 6
+  adapters.python.urihandler.v8.uri_shell:
+    name: uri_shell
+    module: adapters.python.urihandler.v8
+    line: 144
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  v8.examples.html_uri_app.backend.json_response:
+    name: json_response
+    module: v8.examples.html_uri_app.backend
+    line: 78
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 10
+  adapters.python.urihandler._registry.default_adapter:
+    name: default_adapter
+    module: adapters.python.urihandler._registry
+    line: 62
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  v7.examples.js.urihandler-v7.parseUri:
+    name: parseUri
+    module: v7.examples.js.urihandler-v7
+    line: 10
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 3
+  adapters.python.urihandler.v8.build_binding_document:
+    name: build_binding_document
+    module: adapters.python.urihandler.v8
+    line: 428
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 4
+  v7.examples.js.urihandler-v7.tokens:
+    name: tokens
+    module: v7.examples.js.urihandler-v7
+    line: 198
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler.v8_grpc.stream:
+    name: stream
+    module: adapters.python.urihandler.v8_grpc
+    line: 139
+    cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 0
+  v7.examples.js.urihandler-v7.truncate:
+    name: truncate
+    module: v7.examples.js.urihandler-v7
+    line: 153
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  v7.examples.js.urihandler-v7.executor:
+    name: executor
+    module: v7.examples.js.urihandler-v7
+    line: 262
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 7
+  adapters.python.urihandler.v8_mcp.main:
+    name: main
+    module: adapters.python.urihandler.v8_mcp
+    line: 145
+    cyclomatic_complexity: 9
+    calls_out: 16
+    calls_in: 0
+  adapters.python.urihandler._registry.discover_python_modules:
+    name: discover_python_modules
+    module: adapters.python.urihandler._registry
+    line: 402
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urihandler.v8._read_toml:
+    name: _read_toml
+    module: adapters.python.urihandler.v8
+    line: 674
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  examples.reference_adapters.node-server.writeJson:
+    name: writeJson
+    module: examples.reference_adapters.node-server
+    line: 18
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 1
+  v8.examples.transports.transport_lib.start_http_worker:
+    name: start_http_worker
+    module: v8.examples.transports.transport_lib
+    line: 73
+    cyclomatic_complexity: 1
+    calls_out: 24
+    calls_in: 1
+  adapters.python.urihandler._runtime.list_routes:
+    name: list_routes
+    module: adapters.python.urihandler._runtime
+    line: 320
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  v7.examples.html_uri_app.app.label:
+    name: label
+    module: v7.examples.html_uri_app.app
+    line: 100
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._scan.infer_kind:
+    name: infer_kind
+    module: adapters.python.urihandler._scan
+    line: 66
+    cyclomatic_complexity: 12
+    calls_out: 11
+    calls_in: 2
+  adapters.python.urihandler._registry._default_openapi_route:
+    name: _default_openapi_route
+    module: adapters.python.urihandler._registry
+    line: 342
+    cyclomatic_complexity: 9
+    calls_out: 11
+    calls_in: 1
+  v8.examples.html_uri_app.app.inputType:
+    name: inputType
+    module: v8.examples.html_uri_app.app
+    line: 81
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  v7.examples.js.urihandler-v7.tokenize:
+    name: tokenize
+    module: v7.examples.js.urihandler-v7
+    line: 109
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  adapters.c.urihandler_test.assert:
+    name: assert
+    module: adapters.c.urihandler_test
+    line: 16
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.js.fn:
+    name: fn
+    module: adapters.js
+    line: 27
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 5
+  v8.examples.transports.transport_lib.run_queue:
+    name: run_queue
+    module: v8.examples.transports.transport_lib
+    line: 47
+    cyclomatic_complexity: 1
+    calls_out: 10
+    calls_in: 1
+  v7.examples.js.urihandler-v7.renderValue:
+    name: renderValue
+    module: v7.examples.js.urihandler-v7
+    line: 138
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 4
+  v7.examples.html_uri_app.app.items:
+    name: items
+    module: v7.examples.html_uri_app.app
+    line: 97
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urihandler._scan.scan_docker_compose:
+    name: scan_docker_compose
+    module: adapters.python.urihandler._scan
+    line: 425
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urihandler.v8.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urihandler.v8
+    line: 257
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urihandler._registry.registry_tree:
+    name: registry_tree
+    module: adapters.python.urihandler._registry
+    line: 441
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.js.parseUri:
+    name: parseUri
+    module: adapters.js
+    line: 1
+    cyclomatic_complexity: 8
+    calls_out: 9
+    calls_in: 1
+  v7.examples.html_uri_app.app.escapeHtml:
+    name: escapeHtml
+    module: v7.examples.html_uri_app.app
+    line: 179
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 9
+  adapters.python.urihandler.v8_service.service_base:
+    name: service_base
+    module: adapters.python.urihandler.v8_service
+    line: 36
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.app.updatePreview:
+    name: updatePreview
+    module: v7.examples.html_uri_app.app
+    line: 133
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 1
+  v7.examples.js.urihandler-v7.envFlags:
+    name: envFlags
+    module: v7.examples.js.urihandler-v7
+    line: 177
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
+  v8.examples.docker_uri_flow.shell-worker.server.Handler.do_POST:
+    name: do_POST
+    module: v8.examples.docker_uri_flow.shell-worker.server
+    line: 54
+    cyclomatic_complexity: 6
+    calls_out: 11
+    calls_in: 0
+  v7.examples.html_uri_app.uri-runtime-v7.globToRegExp:
+    name: globToRegExp
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 123
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urihandler._scan.scan_openapi:
+    name: scan_openapi
+    module: adapters.python.urihandler._scan
+    line: 454
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  v7.examples.html_uri_app.app.currentPayload:
+    name: currentPayload
+    module: v7.examples.html_uri_app.app
+    line: 87
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 4
+  adapters.python.urihandler._registry._route_entry_equal:
+    name: _route_entry_equal
+    module: adapters.python.urihandler._registry
+    line: 133
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  v8.examples.transports.transport_lib.run_inprocess:
+    name: run_inprocess
+    module: v8.examples.transports.transport_lib
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urihandler._registry.dispatch_generated:
+    name: dispatch_generated
+    module: adapters.python.urihandler._registry
+    line: 543
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  v8.examples.docker_uri_flow.node-worker.server.readBody:
+    name: readBody
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 13
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  v7.examples.html_uri_app.uri-runtime-v7.dispatch:
+    name: dispatch
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 202
+    cyclomatic_complexity: 17
+    calls_out: 8
+    calls_in: 4
+  v7.examples.js.urihandler-v7.check:
+    name: check
+    module: v7.examples.js.urihandler-v7
+    line: 101
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urihandler._scan.write_json:
+    name: write_json
+    module: adapters.python.urihandler._scan
+    line: 50
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 3
+  v7.examples.html_uri_app.uri-runtime-v7.resolveParams:
+    name: resolveParams
+    module: v7.examples.html_uri_app.uri-runtime-v7
+    line: 76
+    cyclomatic_complexity: 15
+    calls_out: 9
+    calls_in: 3
+  adapters.c.urihandler.is_path_end:
+    name: is_path_end
+    module: adapters.c.urihandler
+    line: 12
+    cyclomatic_complexity: 3
+    calls_out: 0
+    calls_in: 2
+  adapters.python.urihandler.v8._bindings_as_map:
+    name: _bindings_as_map
+    module: adapters.python.urihandler.v8
+    line: 439
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  v8.examples.docker_uri_flow.node-worker.server.send:
+    name: send
+    module: v8.examples.docker_uri_flow.node-worker.server
+    line: 7
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 3
+  v8.examples.docker_uri_flow.python-worker.server.Handler.do_GET:
+    name: do_GET
+    module: v8.examples.docker_uri_flow.python-worker.server
+    line: 49
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urihandler.v8_adopt._command_binding:
+    name: _command_binding
+    module: adapters.python.urihandler.v8_adopt
+    line: 36
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urihandler.v7.run_spawn:
+    name: run_spawn
+    module: adapters.python.urihandler.v7
+    line: 121
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urihandler.v8.render_sequence:
+    name: render_sequence
+    module: adapters.python.urihandler.v8
+    line: 216
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urihandler._registry._emit_json:
+    name: _emit_json
+    module: adapters.python.urihandler._registry
+    line: 579
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 3
+  adapters.python.urihandler.v8.expand_binding:
+    name: expand_binding
+    module: adapters.python.urihandler.v8
+    line: 371
+    cyclomatic_complexity: 16
+    calls_out: 9
+    calls_in: 9
+  adapters.python.urihandler.v8_grpc._validate:
+    name: _validate
+    module: adapters.python.urihandler.v8_grpc
+    line: 108
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urihandler.v7.render_command:
+    name: render_command
+    module: adapters.python.urihandler.v7
+    line: 73
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urihandler._scan.scan_github:
+    name: scan_github
+    module: adapters.python.urihandler._scan
+    line: 497
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  adapters.c.urihandler.memset:
+    name: memset
+    module: adapters.c.urihandler
+    line: 18
+    cyclomatic_complexity: 5
+    calls_out: 0
+    calls_in: 1
+  v8.examples.docker_uri_flow.shell-worker.server.Handler.do_GET:
+    name: do_GET
+    module: v8.examples.docker_uri_flow.shell-worker.server
+    line: 45
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 0
+  v8.examples.docker_uri_flow.orchestrator.flow_runner.validate_flow_registry:
+    name: validate_flow_registry
+    module: v8.examples.docker_uri_flow.orchestrator.flow_runner
+    line: 149
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urihandler.v8.scan_artifacts:
+    name: scan_artifacts
+    module: adapters.python.urihandler.v8
+    line: 793
+    cyclomatic_complexity: 11
+    calls_out: 19
+    calls_in: 4
+  adapters.python.urihandler.v8._iter_files:
+    name: _iter_files
+    module: adapters.python.urihandler.v8
+    line: 631
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 1
+  v7.examples.js.urihandler-v7.renderCommand:
+    name: renderCommand
+    module: v7.examples.js.urihandler-v7
+    line: 145
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urihandler.v8_service._post:
+    name: _post
+    module: adapters.python.urihandler.v8_service
+    line: 45
+    cyclomatic_complexity: 3
+    calls_out: 10
+    calls_in: 1
+  v8.examples.html_uri_app.app.payloadDefaults:
+    name: payloadDefaults
+    module: v8.examples.html_uri_app.app
+    line: 59
+    cyclomatic_complexity: 4
+    calls_out: 0
+    calls_in: 1
+edges:
+- caller: v7.examples.js.urihandler-v7.DEFAULT_TIMEOUT
+  callee: v7.examples.js.urihandler-v7.match
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.OUTPUT_LIMIT
+  callee: v7.examples.js.urihandler-v7.match
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.parseUri
+  callee: v7.examples.js.urihandler-v7.match
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.setRoute
+  callee: v7.examples.js.urihandler-v7.translate
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.setRoute
+  callee: v7.examples.js.urihandler-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.compileRegistryDocument
+  callee: v7.examples.js.urihandler-v7.setRoute
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.routeRows
+  callee: v7.examples.js.urihandler-v7.registryTree
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.evaluatePolicy
+  callee: v7.examples.js.urihandler-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.evaluatePolicy
+  callee: v7.examples.js.urihandler-v7.globMatch
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.merged
+  callee: v7.examples.js.urihandler-v7.routeRows
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.merged
+  callee: v7.examples.js.urihandler-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.deny
+  callee: v7.examples.js.urihandler-v7.globMatch
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.allow
+  callee: v7.examples.js.urihandler-v7.globMatch
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.check
+  callee: v7.examples.js.urihandler-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.check
+  callee: v7.examples.js.urihandler-v7.translate
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.check
+  callee: v7.examples.js.urihandler-v7.registryTree
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.check
+  callee: v7.examples.js.urihandler-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.check
+  callee: v7.examples.js.urihandler-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.renderCommand
+  callee: v7.examples.js.urihandler-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.renderedEnv
+  callee: v7.examples.js.urihandler-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.runProcess
+  callee: v7.examples.js.urihandler-v7.renderedEnv
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.runProcess
+  callee: v7.examples.js.urihandler-v7.truncate
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.envFlags
+  callee: v7.examples.js.urihandler-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.tokens
+  callee: v7.examples.js.urihandler-v7.runProcess
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.inner
+  callee: v7.examples.js.urihandler-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.translate
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.registryTree
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.resolveParams
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.run
+  callee: v7.examples.js.urihandler-v7.executor
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.listRoutes
+  callee: v7.examples.js.urihandler-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.listRoutes
+  callee: v7.examples.js.urihandler-v7.routeRows
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.listRoutes
+  callee: v7.examples.js.urihandler-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.expandBinding
+  callee: v7.examples.js.urihandler-v7.tokenize
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.expandBinding
+  callee: v7.examples.js.urihandler-v7.inferKind
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.expandBinding
+  callee: v7.examples.js.urihandler-v7.defaultAdapter
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.expandBindings
+  callee: v7.examples.js.urihandler-v7.expandBinding
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.compileRegistry
+  callee: v7.examples.js.urihandler-v7.compileRegistryDocument
+  call_type: resolved
+- caller: v7.examples.js.urihandler-v7.compileRegistry
+  callee: v7.examples.js.urihandler-v7.expandBindings
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  callee: v7.examples.html_uri_app.uri-runtime-v7.match
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.routeKey
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.routeKey
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.expandBinding
+  callee: v7.examples.html_uri_app.uri-runtime-v7.tokenize
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.compileBindings
+  callee: v7.examples.html_uri_app.uri-runtime-v7.entries
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.compileBindings
+  callee: v7.examples.html_uri_app.uri-runtime-v7.routeKey
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.compileBindings
+  callee: v7.examples.html_uri_app.uri-runtime-v7.expandBinding
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+  callee: v7.examples.html_uri_app.uri-runtime-v7.entries
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.renderCommand
+  callee: v7.examples.html_uri_app.uri-runtime-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.defaultPolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.entries
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.matchesAny
+  callee: v7.examples.html_uri_app.uri-runtime-v7.globToRegExp
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.matchesAny
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.looksDestructive
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.allowed
+  callee: v7.examples.html_uri_app.uri-runtime-v7.matchesAny
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.reason
+  callee: v7.examples.html_uri_app.uri-runtime-v7.matchesAny
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  callee: v7.examples.html_uri_app.uri-runtime-v7.compileBindings
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  callee: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.routes
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.activePolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.setPolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+  callee: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+  callee: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.renderValue
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.renderCommand
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.preview
+  callee: v7.examples.html_uri_app.uri-runtime-v7.hasPlaceholders
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.translate
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  call_type: resolved
+- caller: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  callee: v7.examples.html_uri_app.uri-runtime-v7.adapter
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.text
+  callee: v7.examples.html_uri_app.app.appendLog
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.selected
+  callee: v7.examples.html_uri_app.app.executeMode
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.badgeFor
+  callee: v7.examples.html_uri_app.app.executeMode
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.renderActions
+  callee: v7.examples.html_uri_app.app.executeMode
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.renderActions
+  callee: v7.examples.html_uri_app.app.badgeFor
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.renderActions
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.items
+  callee: v7.examples.html_uri_app.app.badgeFor
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.items
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.badge
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.label
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.active
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.renderDetail
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.params
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.inputs
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.updatePreview
+  callee: v7.examples.html_uri_app.app.currentPayload
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.node
+  callee: v7.examples.html_uri_app.app.currentPayload
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.runSelected
+  callee: v7.examples.html_uri_app.app.currentPayload
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.runSelected
+  callee: v7.examples.html_uri_app.app.executeMode
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.runSelected
+  callee: v7.examples.html_uri_app.app.renderLogs
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.envelope
+  callee: v7.examples.html_uri_app.app.currentPayload
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.envelope
+  callee: v7.examples.html_uri_app.app.executeMode
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.target
+  callee: v7.examples.html_uri_app.app.renderActions
+  call_type: resolved
+- caller: v7.examples.html_uri_app.app.renderLogs
+  callee: v7.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: adapters.js.parseUri
+  callee: adapters.js.match
+  call_type: resolved
+- caller: adapters.js.dispatch
+  callee: adapters.js.parseUri
+  call_type: resolved
+- caller: adapters.js.dispatch
+  callee: adapters.js.buildInvocation
+  call_type: resolved
+- caller: adapters.js.dispatch
+  callee: adapters.js.fn
+  call_type: resolved
+- caller: adapters.c.urihandler.urihandler_parse
+  callee: adapters.c.urihandler.memset
+  call_type: resolved
+- caller: adapters.c.urihandler.urihandler_parse
+  callee: adapters.c.urihandler.copy_token
+  call_type: resolved
+- caller: adapters.c.urihandler.urihandler_parse
+  callee: adapters.c.urihandler.is_path_end
+  call_type: resolved
+- caller: adapters.c.urihandler.copy_token
+  callee: adapters.c.urihandler.memcpy
+  call_type: resolved
+- caller: adapters.c.urihandler.memcpy
+  callee: adapters.c.urihandler.is_path_end
+  call_type: resolved
+- caller: adapters.c.urihandler_test.main
+  callee: adapters.c.urihandler_test.assert
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_service.call
+  callee: adapters.python.urihandler.v8_service._post
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_service.call
+  callee: adapters.python.urihandler.v8_service.service_base
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.uri_command
+  callee: adapters.python.urihandler.v8.model_from_function
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.uri_command
+  callee: adapters.js.fn
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.uri_command
+  callee: adapters.python.urihandler.v8._placeholder_kwargs
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.uri_shell
+  callee: adapters.python.urihandler.v8.uri_command
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.validate_input
+  callee: adapters.python.urihandler.v8._input_values
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.validate_input
+  callee: adapters.python.urihandler.v8._schema_for
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.validate_input
+  callee: adapters.python.urihandler.v8._apply_defaults
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.render_sequence
+  callee: adapters.python.urihandler.v8.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.render_argv
+  callee: adapters.python.urihandler.v8.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.run_argv_template
+  callee: adapters.python.urihandler.v8.render_argv
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.run_shell_template
+  callee: adapters.python.urihandler.v8.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.run
+  callee: adapters.python.urihandler.v8.validate_input
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.expand_binding
+  callee: adapters.python.urihandler.v8._strip_runtime_only
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.expand_bindings
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.expand_bindings
+  callee: adapters.python.urihandler.v8._binding_pairs
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.compile_registry
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.build_binding_document
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._bindings_as_map
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._bindings_as_map
+  callee: adapters.python.urihandler.v8._strip_runtime_only
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.merge_binding_document
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.merge_binding_document
+  callee: adapters.python.urihandler.v8._bindings_as_map
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.write_or_emit_binding
+  callee: adapters.python.urihandler.v8.merge_binding_document
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.write_or_emit_binding
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.parse_param_declaration
+  callee: adapters.python.urihandler.v8._coerce_default
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.input_schema_from_params
+  callee: adapters.python.urihandler.v8.parse_param_declaration
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.command_binding_from_cli
+  callee: adapters.python.urihandler.v8.input_schema_from_params
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.load_registry_arg
+  callee: adapters.python.urihandler.v8.compile_registry
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.load_registry_arg
+  callee: adapters.python.urihandler.v8.build_binding_document
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.load_registry_arg
+  callee: adapters.python.urihandler.v8.scan_artifacts
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.validate_binding_document
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._load_manifest
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_package_json
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_package_json
+  callee: adapters.python.urihandler.v8._empty_input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_package_json
+  callee: adapters.python.urihandler.v8._rel
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_pyproject
+  callee: adapters.python.urihandler.v8._read_toml
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_pyproject
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_pyproject
+  callee: adapters.python.urihandler.v8._empty_input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_pyproject
+  callee: adapters.python.urihandler.v8._rel
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_shell_script
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_shell_script
+  callee: adapters.python.urihandler.v8._empty_input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_shell_script
+  callee: adapters.python.urihandler.v8._rel
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_makefile
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_makefile
+  callee: adapters.python.urihandler.v8._empty_input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_dockerfile
+  callee: adapters.python.urihandler.v8._rel
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_dockerfile
+  callee: adapters.python.urihandler.v8._parse_dockerfile_labels
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_dockerfile
+  callee: adapters.python.urihandler.v8._manifest_candidates
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_dockerfile
+  callee: adapters.python.urihandler.v8.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._scan_dockerfile
+  callee: adapters.python.urihandler.v8._load_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.scan_artifacts
+  callee: adapters.python.urihandler.v8._iter_files
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.scan_artifacts
+  callee: adapters.python.urihandler.v8._load_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler.v8.scan_artifacts
+  callee: adapters.python.urihandler.v8._scan_package_json
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._load_many
+  callee: adapters.python.urihandler.v8.scan_artifacts
+  call_type: resolved
+- caller: adapters.python.urihandler.v8._load_many
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_adopt._command_binding
+  callee: adapters.python.urihandler.v8_adopt.passthrough_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_adopt.python_package_bindings
+  callee: adapters.python.urihandler.v8_adopt._command_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_adopt.installed_python_bindings
+  callee: adapters.python.urihandler.v8_adopt.python_package_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_adopt.npm_package_bindings
+  callee: adapters.python.urihandler.v8_adopt._command_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.to_mcp_tools
+  callee: adapters.python.urihandler.v8_mcp.tool_name
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.to_mcp_tools
+  callee: adapters.python.urihandler.v8_mcp._input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.to_mcp_manifest
+  callee: adapters.python.urihandler.v8_mcp.to_mcp_tools
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.to_a2a_card
+  callee: adapters.python.urihandler.v8_mcp.tool_name
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.to_a2a_card
+  callee: adapters.python.urihandler.v8_mcp._input_schema
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.build_tool_index
+  callee: adapters.python.urihandler.v8_mcp.to_mcp_tools
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.call_tool
+  callee: adapters.python.urihandler.v8_mcp.build_tool_index
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.serve_mcp
+  callee: adapters.python.urihandler.v8_mcp.to_mcp_tools
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_mcp.main
+  callee: adapters.python.urihandler.v8_mcp.serve_mcp
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.resolve_params
+  callee: adapters.python.urihandler.v7._params_spec
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.render_command
+  callee: adapters.python.urihandler.v7.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v7._proc_env
+  callee: adapters.python.urihandler.v7.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v7._run_process
+  callee: adapters.python.urihandler.v7._proc_env
+  call_type: resolved
+- caller: adapters.python.urihandler.v7._env_flags
+  callee: adapters.python.urihandler.v7.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_spawn
+  callee: adapters.python.urihandler.v7.render_command
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_spawn
+  callee: adapters.python.urihandler.v7._has_placeholders
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_spawn
+  callee: adapters.python.urihandler.v7._run_process
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_shell_template
+  callee: adapters.python.urihandler.v7.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_shell_template
+  callee: adapters.python.urihandler.v7._run_process
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_exec
+  callee: adapters.python.urihandler.v7.render_command
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_exec
+  callee: adapters.python.urihandler.v7._env_flags
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_exec
+  callee: adapters.python.urihandler.v7._run_process
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_run
+  callee: adapters.python.urihandler.v7.render_command
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_run
+  callee: adapters.python.urihandler.v7._env_flags
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_docker_run
+  callee: adapters.python.urihandler.v7._run_process
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run_fetch
+  callee: adapters.python.urihandler.v7.render_value
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.run
+  callee: adapters.python.urihandler.v7.resolve_params
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.expand_bindings
+  callee: adapters.python.urihandler.v7.expand_binding
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.expand_bindings
+  callee: adapters.python.urihandler.v7._binding_pairs
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.compile_registry
+  callee: adapters.python.urihandler.v7.expand_bindings
+  call_type: resolved
+- caller: adapters.python.urihandler.v7.load_registry_arg
+  callee: adapters.python.urihandler.v7.compile_registry
+  call_type: resolved
+- caller: adapters.python.urihandler.dispatch
+  callee: adapters.python.urihandler.parse_uri
+  call_type: resolved
+- caller: adapters.python.urihandler.dispatch
+  callee: adapters.python.urihandler.build_invocation
+  call_type: resolved
+- caller: adapters.python.urihandler.dispatch
+  callee: adapters.js.fn
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.merge_policy
+  callee: adapters.python.urihandler._runtime.default_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.evaluate_policy
+  callee: adapters.python.urihandler._runtime._matches_any
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.run_spawn
+  callee: adapters.python.urihandler._runtime._truncate
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.run_shell_template
+  callee: adapters.python.urihandler._runtime._truncate
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.run_local_function
+  callee: adapters.js.fn
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.run
+  callee: adapters.python.urihandler._runtime.merge_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.run
+  callee: adapters.python.urihandler._runtime.evaluate_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.check
+  callee: adapters.python.urihandler._runtime.merge_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.check
+  callee: adapters.python.urihandler._runtime.evaluate_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.list_routes
+  callee: adapters.python.urihandler._runtime.merge_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._runtime.list_routes
+  callee: adapters.python.urihandler._runtime.evaluate_policy
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.emit_json
+  callee: adapters.python.urihandler._scan.write_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.normalize_binding
+  callee: adapters.python.urihandler._scan.infer_kind
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.binding_to_route_source
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.route_source_to_binding
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_bindings_from_manifest
+  callee: adapters.python.urihandler._scan.route_source_to_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_bindings_from_manifest
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.build_binding_document
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.build_binding_document
+  callee: adapters.python.urihandler._scan.now_iso
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.compile_registry_document
+  callee: adapters.python.urihandler._scan.load_bindings_from_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.compile_registry_document
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.compile_registry_document
+  callee: adapters.python.urihandler._scan.binding_to_route_source
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_manifest_files
+  callee: adapters.python.urihandler._scan.load_bindings_from_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_manifest_files
+  callee: adapters.python.urihandler._scan.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_manifest_files
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.github_dependency_binding
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.github_dependency_binding
+  callee: adapters.python.urihandler._scan.slugify
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_package_json
+  callee: adapters.python.urihandler._scan.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_package_json
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_package_json
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_package_json
+  callee: adapters.python.urihandler._scan.github_dependency_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_pyproject
+  callee: adapters.python.urihandler._scan._read_toml
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_pyproject
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_pyproject
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_pyproject
+  callee: adapters.python.urihandler._scan.github_dependency_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_makefile
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_makefile
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_makefile
+  callee: adapters.python.urihandler._scan.slugify
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_shell_script
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_shell_script
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_shell_script
+  callee: adapters.python.urihandler._scan.slugify
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_python_code
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_python_code
+  callee: adapters.python.urihandler._scan.module_ref_for_python
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_python_code
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_js_code
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_js_code
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_docker_compose
+  callee: adapters.python.urihandler._scan.parse_compose_label_line
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_openapi
+  callee: adapters.python.urihandler._scan.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_openapi
+  callee: adapters.python.urihandler._scan.route_source_to_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_openapi
+  callee: adapters.python.urihandler._scan.relpath
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_path
+  callee: adapters.python.urihandler._scan.iter_project_files
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_path
+  callee: adapters.python.urihandler._scan.scan_manifest_files
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.scan_github
+  callee: adapters.python.urihandler._scan.scan_path
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_binding_source
+  callee: adapters.python.urihandler._scan.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_binding_source
+  callee: adapters.python.urihandler._scan.load_bindings_from_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_binding_source
+  callee: adapters.python.urihandler._scan.scan_path
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_binding_source
+  callee: adapters.python.urihandler._scan.route_source_to_binding
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_binding_sources
+  callee: adapters.python.urihandler._scan.load_binding_source
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_registry_arg
+  callee: adapters.python.urihandler._scan.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_registry_arg
+  callee: adapters.python.urihandler._scan.compile_registry_document
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_registry_arg
+  callee: adapters.python.urihandler._scan.build_binding_document
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.load_registry_arg
+  callee: adapters.python.urihandler._scan.scan_path
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.list_bindings
+  callee: adapters.python.urihandler._scan.load_binding_sources
+  call_type: resolved
+- caller: adapters.python.urihandler._scan.list_bindings
+  callee: adapters.python.urihandler._scan.normalize_binding
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.binding_document
+  callee: v8.examples.html_uri_app.backend.read_json
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.registry
+  callee: adapters.python.urihandler.v8.compile_registry
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.registry
+  callee: v8.examples.html_uri_app.backend.binding_document
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.routes
+  callee: adapters.python.urihandler.v8.expand_bindings
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.routes
+  callee: v8.examples.html_uri_app.backend.binding_document
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch
+  callee: v8.examples.html_uri_app.backend.add_log
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch
+  callee: v8.examples.html_uri_app.backend.env_bool
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch_tool
+  callee: v8.examples.html_uri_app.backend.registry
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch_tool
+  callee: v8.examples.html_uri_app.backend.add_log
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch_tool
+  callee: v8.examples.html_uri_app.backend.env_bool
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.dispatch_tool
+  callee: adapters.python.urihandler.v8_mcp.call_tool
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.log_message
+  callee: v8.examples.html_uri_app.backend.add_log
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.do_GET
+  callee: v8.examples.html_uri_app.backend.json_response
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.do_POST
+  callee: v8.examples.html_uri_app.backend.json_response
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.do_POST
+  callee: v8.examples.html_uri_app.backend.add_log
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.do_POST
+  callee: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.Handler.do_POST
+  callee: v8.examples.html_uri_app.backend.dispatch_tool
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.main
+  callee: v8.examples.html_uri_app.backend.load_env
+  call_type: resolved
+- caller: v8.examples.html_uri_app.backend.main
+  callee: v8.examples.html_uri_app.backend.add_log
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.routeResponse
+  callee: v8.examples.html_uri_app.app.renderActions
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.routeResponse
+  callee: v8.examples.html_uri_app.app.renderForm
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderActions
+  callee: v8.examples.html_uri_app.app.classFor
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderActions
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderActions
+  callee: v8.examples.html_uri_app.app.iconFor
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderForm
+  callee: v8.examples.html_uri_app.app.schemaFor
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderForm
+  callee: v8.examples.html_uri_app.app.payloadDefaults
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderForm
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.required
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.defaults
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.inputType
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.refreshLogs
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.data
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.card
+  callee: v8.examples.html_uri_app.app.renderToolList
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.renderToolList
+  callee: v8.examples.html_uri_app.app.escapeHtml
+  call_type: resolved
+- caller: v8.examples.html_uri_app.app.iconFor
+  callee: v8.examples.html_uri_app.app.classFor
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.shell-worker.server.Handler.do_GET
+  callee: v7.examples.js.urihandler-v7.response
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.shell-worker.server.Handler.do_POST
+  callee: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.shell-worker.server.Handler.do_POST
+  callee: v7.examples.js.urihandler-v7.response
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.node-worker.server.server
+  callee: v8.examples.docker_uri_flow.node-worker.server.send
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.node-worker.server.server
+  callee: v8.examples.docker_uri_flow.node-worker.server.readBody
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.node-worker.server.server
+  callee: v8.examples.docker_uri_flow.node-worker.server.slugify
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.node-worker.server.body
+  callee: v8.examples.docker_uri_flow.node-worker.server.send
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.node-worker.server.slug
+  callee: v8.examples.docker_uri_flow.node-worker.server.send
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.python-worker.server.dispatch
+  callee: v8.examples.docker_uri_flow.python-worker.server.normalize
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.python-worker.server.dispatch
+  callee: v8.examples.docker_uri_flow.python-worker.server.summary
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.python-worker.server.Handler.do_GET
+  callee: v7.examples.js.urihandler-v7.response
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.python-worker.server.Handler.do_POST
+  callee: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.python-worker.server.Handler.do_POST
+  callee: v7.examples.js.urihandler-v7.response
+  call_type: resolved
+- caller: v8.examples.generators.php.example.UriCommand.bindingFromFunction
+  callee: v8.examples.generators.php.example.UriCommand.schemaType
+  call_type: resolved
+- caller: v8.examples.decorators.example.echo_message
+  callee: adapters.python.urihandler.v8.uri_command
+  call_type: resolved
+- caller: v8.examples.decorators.example.transcode
+  callee: adapters.python.urihandler.v8.uri_command
+  call_type: resolved
+- caller: v8.examples.decorators.example.shell_echo
+  callee: adapters.python.urihandler.v8.uri_shell
+  call_type: resolved
+- caller: examples.reference_adapters.node-server.server
+  callee: examples.reference_adapters.node-server.writeJson
+  call_type: resolved
+- caller: examples.reference_adapters.node-server.server
+  callee: examples.reference_adapters.node-server.readJson
+  call_type: resolved
+- caller: examples.reference_adapters.python-server.Handler.do_POST
+  callee: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  call_type: resolved
+- caller: examples.reference_adapters.firmware-pseudo.handle_uri
+  callee: examples.reference_adapters.firmware-pseudo.led_set
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.serve
+  callee: adapters.python.urihandler.v8_grpc._route_list
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.call
+  callee: adapters.python.urihandler.v8_grpc.channel_target
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.call
+  callee: adapters.python.urihandler.v8_grpc._validate
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.call
+  callee: adapters.python.urihandler.v8_grpc._method
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.call
+  callee: v7.examples.js.urihandler-v7.run
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.stream
+  callee: adapters.python.urihandler.v8_grpc.channel_target
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.stream
+  callee: adapters.python.urihandler.v8_grpc._method
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.list_routes
+  callee: adapters.python.urihandler.v8_grpc.channel_target
+  call_type: resolved
+- caller: adapters.python.urihandler.v8_grpc.list_routes
+  callee: adapters.python.urihandler.v8_grpc._method
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.normalize_route_entry
+  callee: adapters.python.urihandler._registry.default_adapter
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.route_from_uri
+  callee: adapters.python.urihandler._registry.parse_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.route_from_uri
+  callee: adapters.python.urihandler._registry.translate
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.route_from_uri
+  callee: adapters.python.urihandler._registry.normalize_route_entry
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.route_from_parts
+  callee: adapters.python.urihandler._registry.route_from_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.coerce_route_source
+  callee: adapters.python.urihandler._registry.route_from_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.add_route
+  callee: adapters.python.urihandler._registry._route_entry_equal
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.flatten_registry_tree
+  callee: adapters.python.urihandler._registry.route_from_parts
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.flatten_registry_document
+  callee: adapters.python.urihandler._registry.flatten_registry_tree
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.flatten_registry_document
+  callee: adapters.python.urihandler._registry._get_route_entry
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_manifest
+  callee: adapters.python.urihandler._registry.flatten_registry_tree
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.build_registry_document
+  callee: adapters.python.urihandler._registry.coerce_route_source
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.build_registry_document
+  callee: adapters.python.urihandler._registry.add_route
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.build_registry_document
+  callee: adapters.python.urihandler._registry.hash_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_docker_inspect
+  callee: adapters.python.urihandler._registry.discover_docker_labels
+  call_type: resolved
+- caller: adapters.python.urihandler._registry._default_openapi_route
+  callee: adapters.python.urihandler._registry._operation_from_method
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_openapi
+  callee: adapters.python.urihandler._registry._default_openapi_route
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_openapi
+  callee: adapters.python.urihandler._registry.route_from_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.uri_handler
+  callee: adapters.python.urihandler._registry.normalize_route_entry
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_python_modules
+  callee: adapters.python.urihandler._registry._iter_module_exports
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_python_modules
+  callee: adapters.python.urihandler._registry.route_from_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.discover_entry_points
+  callee: adapters.python.urihandler._registry.route_from_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.resolve_route
+  callee: adapters.python.urihandler._registry.registry_tree
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.resolve_route
+  callee: adapters.python.urihandler._registry.hash_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.hydrate_registry
+  callee: adapters.python.urihandler._registry._walk_route_entries
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.hydrate_registry
+  callee: adapters.python.urihandler._registry.registry_tree
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.exec_local_function
+  callee: adapters.js.fn
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.dispatch_generated
+  callee: adapters.python.urihandler._registry.parse_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.dispatch_generated
+  callee: adapters.python.urihandler._registry.translate
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.dispatch_generated
+  callee: adapters.python.urihandler._registry.hash_uri
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.dispatch_generated
+  callee: v7.examples.js.urihandler-v7.executor
+  call_type: resolved
+- caller: adapters.python.urihandler._registry.dispatch_generated
+  callee: adapters.python.urihandler._registry.resolve_route
+  call_type: resolved
+- caller: adapters.python.urihandler._registry._emit_json
+  callee: adapters.python.urihandler._registry.write_json
+  call_type: resolved
+- caller: adapters.python.urihandler._registry._load_sources
+  callee: adapters.python.urihandler._registry.load_json
+  call_type: resolved
+- caller: adapters.python.urihandler._registry._load_sources
+  callee: adapters.python.urihandler._registry.discover_manifest
+  call_type: resolved
+- caller: adapters.python.urihandler._registry._discover_python_module
+  callee: adapters.python.urihandler._registry.discover_python_modules
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_scalar
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.resolve_payload
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.get_path
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_has_uri
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.route_key
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_has_uri
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.normalize_uri
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.validate_flow_registry
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_route_count
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.validate_flow_registry
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_has_uri
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.wait_for_services
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.service_url
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.wait_for_services
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.json_get
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.validate_flow_registry
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.wait_for_services
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.load_registry
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.resolve_payload
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.json_post
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.main
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow
+  call_type: resolved
+- caller: v8.examples.docker_uri_flow.orchestrator.flow_runner.main
+  callee: v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  call_type: resolved
+- caller: v8.examples.transports.transport_lib.run_via
+  callee: v8.examples.transports.transport_lib.run_inprocess
+  call_type: resolved
+- caller: v8.examples.transports.transport_lib.run_via
+  callee: v8.examples.transports.transport_lib.run_queue
+  call_type: resolved
+- caller: v8.examples.transports.transport_lib.run_via
+  callee: v8.examples.transports.transport_lib.serverless_handler
+  call_type: resolved
+- caller: v8.examples.transports.transport_lib.run_via
+  callee: v8.examples.transports.transport_lib.start_http_worker
+  call_type: resolved
+- caller: v8.examples.transports.transport_lib.available_transports
+  callee: v8.examples.transports.transport_lib.grpc_available
+  call_type: resolved
+modules:
+  adapters.c.urihandler:
+  - adapters.c.urihandler.copy_token
+  - adapters.c.urihandler.is_path_end
+  - adapters.c.urihandler.memcpy
+  - adapters.c.urihandler.memset
+  - adapters.c.urihandler.urihandler_parse
+  adapters.c.urihandler_test:
+  - adapters.c.urihandler_test.assert
+  - adapters.c.urihandler_test.main
+  adapters.js:
+  - adapters.js.buildInvocation
+  - adapters.js.dispatch
+  - adapters.js.fn
+  - adapters.js.match
+  - adapters.js.parseUri
+  adapters.python.urihandler:
+  - adapters.python.urihandler.build_invocation
+  - adapters.python.urihandler.dispatch
+  - adapters.python.urihandler.parse_uri
+  adapters.python.urihandler._registry:
+  - adapters.python.urihandler._registry._default_openapi_route
+  - adapters.python.urihandler._registry._discover_python_module
+  - adapters.python.urihandler._registry._emit_json
+  - adapters.python.urihandler._registry._get_route_entry
+  - adapters.python.urihandler._registry._iter_module_exports
+  - adapters.python.urihandler._registry._load_sources
+  - adapters.python.urihandler._registry._operation_from_method
+  - adapters.python.urihandler._registry._route_entry_equal
+  - adapters.python.urihandler._registry._walk_route_entries
+  - adapters.python.urihandler._registry.add_route
+  - adapters.python.urihandler._registry.build_registry_document
+  - adapters.python.urihandler._registry.coerce_route_source
+  - adapters.python.urihandler._registry.default_adapter
+  - adapters.python.urihandler._registry.discover_docker_inspect
+  - adapters.python.urihandler._registry.discover_docker_labels
+  - adapters.python.urihandler._registry.discover_entry_points
+  - adapters.python.urihandler._registry.discover_manifest
+  - adapters.python.urihandler._registry.discover_openapi
+  - adapters.python.urihandler._registry.discover_python_modules
+  - adapters.python.urihandler._registry.dispatch_generated
+  - adapters.python.urihandler._registry.exec_local_function
+  - adapters.python.urihandler._registry.flatten_registry_document
+  - adapters.python.urihandler._registry.flatten_registry_tree
+  - adapters.python.urihandler._registry.hash_uri
+  - adapters.python.urihandler._registry.hydrate_registry
+  - adapters.python.urihandler._registry.load_json
+  - adapters.python.urihandler._registry.normalize_route_entry
+  - adapters.python.urihandler._registry.parse_uri
+  - adapters.python.urihandler._registry.registry_tree
+  - adapters.python.urihandler._registry.resolve_route
+  - adapters.python.urihandler._registry.route_from_parts
+  - adapters.python.urihandler._registry.route_from_uri
+  - adapters.python.urihandler._registry.translate
+  - adapters.python.urihandler._registry.uri_handler
+  - adapters.python.urihandler._registry.write_json
+  adapters.python.urihandler._runtime:
+  - adapters.python.urihandler._runtime._matches_any
+  - adapters.python.urihandler._runtime._truncate
+  - adapters.python.urihandler._runtime.check
+  - adapters.python.urihandler._runtime.default_policy
+  - adapters.python.urihandler._runtime.evaluate_policy
+  - adapters.python.urihandler._runtime.list_routes
+  - adapters.python.urihandler._runtime.merge_policy
+  - adapters.python.urihandler._runtime.run
+  - adapters.python.urihandler._runtime.run_local_function
+  - adapters.python.urihandler._runtime.run_shell_template
+  - adapters.python.urihandler._runtime.run_spawn
+  adapters.python.urihandler._scan:
+  - adapters.python.urihandler._scan._read_toml
+  - adapters.python.urihandler._scan.binding_to_route_source
+  - adapters.python.urihandler._scan.build_binding_document
+  - adapters.python.urihandler._scan.compile_registry_document
+  - adapters.python.urihandler._scan.emit_json
+  - adapters.python.urihandler._scan.github_dependency_binding
+  - adapters.python.urihandler._scan.infer_kind
+  - adapters.python.urihandler._scan.iter_project_files
+  - adapters.python.urihandler._scan.list_bindings
+  - adapters.python.urihandler._scan.load_binding_source
+  - adapters.python.urihandler._scan.load_binding_sources
+  - adapters.python.urihandler._scan.load_bindings_from_manifest
+  - adapters.python.urihandler._scan.load_json
+  - adapters.python.urihandler._scan.load_registry_arg
+  - adapters.python.urihandler._scan.module_ref_for_python
+  - adapters.python.urihandler._scan.normalize_binding
+  - adapters.python.urihandler._scan.now_iso
+  - adapters.python.urihandler._scan.parse_compose_label_line
+  - adapters.python.urihandler._scan.relpath
+  - adapters.python.urihandler._scan.route_source_to_binding
+  - adapters.python.urihandler._scan.scan_docker_compose
+  - adapters.python.urihandler._scan.scan_github
+  - adapters.python.urihandler._scan.scan_js_code
+  - adapters.python.urihandler._scan.scan_makefile
+  - adapters.python.urihandler._scan.scan_manifest_files
+  - adapters.python.urihandler._scan.scan_openapi
+  - adapters.python.urihandler._scan.scan_package_json
+  - adapters.python.urihandler._scan.scan_path
+  - adapters.python.urihandler._scan.scan_pyproject
+  - adapters.python.urihandler._scan.scan_python_code
+  - adapters.python.urihandler._scan.scan_shell_script
+  - adapters.python.urihandler._scan.slugify
+  - adapters.python.urihandler._scan.write_json
+  adapters.python.urihandler.v7:
+  - adapters.python.urihandler.v7._binding_pairs
+  - adapters.python.urihandler.v7._env_flags
+  - adapters.python.urihandler.v7._has_placeholders
+  - adapters.python.urihandler.v7._params_spec
+  - adapters.python.urihandler.v7._proc_env
+  - adapters.python.urihandler.v7._run_process
+  - adapters.python.urihandler.v7.compile_registry
+  - adapters.python.urihandler.v7.expand_binding
+  - adapters.python.urihandler.v7.expand_bindings
+  - adapters.python.urihandler.v7.load_registry_arg
+  - adapters.python.urihandler.v7.render_command
+  - adapters.python.urihandler.v7.render_value
+  - adapters.python.urihandler.v7.resolve_params
+  - adapters.python.urihandler.v7.run
+  - adapters.python.urihandler.v7.run_docker_exec
+  - adapters.python.urihandler.v7.run_docker_run
+  - adapters.python.urihandler.v7.run_fetch
+  - adapters.python.urihandler.v7.run_shell_template
+  - adapters.python.urihandler.v7.run_spawn
+  adapters.python.urihandler.v8:
+  - adapters.python.urihandler.v8._apply_defaults
+  - adapters.python.urihandler.v8._binding_pairs
+  - adapters.python.urihandler.v8._bindings_as_map
+  - adapters.python.urihandler.v8._coerce_default
+  - adapters.python.urihandler.v8._empty_input_schema
+  - adapters.python.urihandler.v8._input_values
+  - adapters.python.urihandler.v8._iter_files
+  - adapters.python.urihandler.v8._load_manifest
+  - adapters.python.urihandler.v8._load_many
+  - adapters.python.urihandler.v8._manifest_candidates
+  - adapters.python.urihandler.v8._parse_dockerfile_labels
+  - adapters.python.urihandler.v8._placeholder_kwargs
+  - adapters.python.urihandler.v8._read_toml
+  - adapters.python.urihandler.v8._rel
+  - adapters.python.urihandler.v8._scan_dockerfile
+  - adapters.python.urihandler.v8._scan_makefile
+  - adapters.python.urihandler.v8._scan_package_json
+  - adapters.python.urihandler.v8._scan_pyproject
+  - adapters.python.urihandler.v8._scan_shell_script
+  - adapters.python.urihandler.v8._schema_for
+  - adapters.python.urihandler.v8._strip_runtime_only
+  - adapters.python.urihandler.v8.build_binding_document
+  - adapters.python.urihandler.v8.command_binding_from_cli
+  - adapters.python.urihandler.v8.compile_registry
+  - adapters.python.urihandler.v8.expand_binding
+  - adapters.python.urihandler.v8.expand_bindings
+  - adapters.python.urihandler.v8.input_schema_from_params
+  - adapters.python.urihandler.v8.load_registry_arg
+  - adapters.python.urihandler.v8.merge_binding_document
+  - adapters.python.urihandler.v8.model_from_function
+  - adapters.python.urihandler.v8.parse_param_declaration
+  - adapters.python.urihandler.v8.render_argv
+  - adapters.python.urihandler.v8.render_sequence
+  - adapters.python.urihandler.v8.render_value
+  - adapters.python.urihandler.v8.run
+  - adapters.python.urihandler.v8.run_argv_template
+  - adapters.python.urihandler.v8.run_shell_template
+  - adapters.python.urihandler.v8.scan_artifacts
+  - adapters.python.urihandler.v8.uri_command
+  - adapters.python.urihandler.v8.uri_shell
+  - adapters.python.urihandler.v8.validate_binding_document
+  - adapters.python.urihandler.v8.validate_input
+  - adapters.python.urihandler.v8.write_or_emit_binding
+  adapters.python.urihandler.v8_adopt:
+  - adapters.python.urihandler.v8_adopt._command_binding
+  - adapters.python.urihandler.v8_adopt.installed_python_bindings
+  - adapters.python.urihandler.v8_adopt.npm_package_bindings
+  - adapters.python.urihandler.v8_adopt.passthrough_schema
+  - adapters.python.urihandler.v8_adopt.python_package_bindings
+  adapters.python.urihandler.v8_grpc:
+  - adapters.python.urihandler.v8_grpc._method
+  - adapters.python.urihandler.v8_grpc._route_list
+  - adapters.python.urihandler.v8_grpc._validate
+  - adapters.python.urihandler.v8_grpc.call
+  - adapters.python.urihandler.v8_grpc.channel_target
+  - adapters.python.urihandler.v8_grpc.list_routes
+  - adapters.python.urihandler.v8_grpc.serve
+  - adapters.python.urihandler.v8_grpc.stream
+  adapters.python.urihandler.v8_mcp:
+  - adapters.python.urihandler.v8_mcp._input_schema
+  - adapters.python.urihandler.v8_mcp.build_tool_index
+  - adapters.python.urihandler.v8_mcp.call_tool
+  - adapters.python.urihandler.v8_mcp.main
+  - adapters.python.urihandler.v8_mcp.serve_mcp
+  - adapters.python.urihandler.v8_mcp.to_a2a_card
+  - adapters.python.urihandler.v8_mcp.to_mcp_manifest
+  - adapters.python.urihandler.v8_mcp.to_mcp_tools
+  - adapters.python.urihandler.v8_mcp.tool_name
+  adapters.python.urihandler.v8_service:
+  - adapters.python.urihandler.v8_service._post
+  - adapters.python.urihandler.v8_service.call
+  - adapters.python.urihandler.v8_service.service_base
+  examples.reference_adapters.firmware-pseudo:
+  - examples.reference_adapters.firmware-pseudo.handle_uri
+  - examples.reference_adapters.firmware-pseudo.led_set
+  examples.reference_adapters.node-server:
+  - examples.reference_adapters.node-server.readJson
+  - examples.reference_adapters.node-server.server
+  - examples.reference_adapters.node-server.writeJson
+  examples.reference_adapters.python-server:
+  - examples.reference_adapters.python-server.Handler.do_POST
+  v7.examples.html_uri_app.app:
+  - v7.examples.html_uri_app.app.active
+  - v7.examples.html_uri_app.app.appendLog
+  - v7.examples.html_uri_app.app.badge
+  - v7.examples.html_uri_app.app.badgeFor
+  - v7.examples.html_uri_app.app.currentPayload
+  - v7.examples.html_uri_app.app.envelope
+  - v7.examples.html_uri_app.app.escapeHtml
+  - v7.examples.html_uri_app.app.executeMode
+  - v7.examples.html_uri_app.app.inputs
+  - v7.examples.html_uri_app.app.items
+  - v7.examples.html_uri_app.app.label
+  - v7.examples.html_uri_app.app.node
+  - v7.examples.html_uri_app.app.params
+  - v7.examples.html_uri_app.app.renderActions
+  - v7.examples.html_uri_app.app.renderDetail
+  - v7.examples.html_uri_app.app.renderLogs
+  - v7.examples.html_uri_app.app.runSelected
+  - v7.examples.html_uri_app.app.selected
+  - v7.examples.html_uri_app.app.target
+  - v7.examples.html_uri_app.app.text
+  - v7.examples.html_uri_app.app.updatePreview
+  v7.examples.html_uri_app.uri-runtime-v7:
+  - v7.examples.html_uri_app.uri-runtime-v7.activePolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.adapter
+  - v7.examples.html_uri_app.uri-runtime-v7.allowed
+  - v7.examples.html_uri_app.uri-runtime-v7.compileBindings
+  - v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+  - v7.examples.html_uri_app.uri-runtime-v7.defaultPolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.dispatch
+  - v7.examples.html_uri_app.uri-runtime-v7.entries
+  - v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.expandBinding
+  - v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.globToRegExp
+  - v7.examples.html_uri_app.uri-runtime-v7.hasPlaceholders
+  - v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+  - v7.examples.html_uri_app.uri-runtime-v7.looksDestructive
+  - v7.examples.html_uri_app.uri-runtime-v7.match
+  - v7.examples.html_uri_app.uri-runtime-v7.matchesAny
+  - v7.examples.html_uri_app.uri-runtime-v7.mergePolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.parseUri
+  - v7.examples.html_uri_app.uri-runtime-v7.preview
+  - v7.examples.html_uri_app.uri-runtime-v7.reason
+  - v7.examples.html_uri_app.uri-runtime-v7.renderCommand
+  - v7.examples.html_uri_app.uri-runtime-v7.renderValue
+  - v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+  - v7.examples.html_uri_app.uri-runtime-v7.routeKey
+  - v7.examples.html_uri_app.uri-runtime-v7.routes
+  - v7.examples.html_uri_app.uri-runtime-v7.setPolicy
+  - v7.examples.html_uri_app.uri-runtime-v7.tokenize
+  - v7.examples.html_uri_app.uri-runtime-v7.translate
+  v7.examples.js.urihandler-v7:
+  - v7.examples.js.urihandler-v7.DEFAULT_TIMEOUT
+  - v7.examples.js.urihandler-v7.OUTPUT_LIMIT
+  - v7.examples.js.urihandler-v7.allow
+  - v7.examples.js.urihandler-v7.check
+  - v7.examples.js.urihandler-v7.compileRegistry
+  - v7.examples.js.urihandler-v7.compileRegistryDocument
+  - v7.examples.js.urihandler-v7.defaultAdapter
+  - v7.examples.js.urihandler-v7.deny
+  - v7.examples.js.urihandler-v7.envFlags
+  - v7.examples.js.urihandler-v7.evaluatePolicy
+  - v7.examples.js.urihandler-v7.executor
+  - v7.examples.js.urihandler-v7.expandBinding
+  - v7.examples.js.urihandler-v7.expandBindings
+  - v7.examples.js.urihandler-v7.globMatch
+  - v7.examples.js.urihandler-v7.inferKind
+  - v7.examples.js.urihandler-v7.inner
+  - v7.examples.js.urihandler-v7.listRoutes
+  - v7.examples.js.urihandler-v7.match
+  - v7.examples.js.urihandler-v7.mergePolicy
+  - v7.examples.js.urihandler-v7.merged
+  - v7.examples.js.urihandler-v7.parseUri
+  - v7.examples.js.urihandler-v7.registryTree
+  - v7.examples.js.urihandler-v7.renderCommand
+  - v7.examples.js.urihandler-v7.renderValue
+  - v7.examples.js.urihandler-v7.renderedEnv
+  - v7.examples.js.urihandler-v7.resolveParams
+  - v7.examples.js.urihandler-v7.response
+  - v7.examples.js.urihandler-v7.routeRows
+  - v7.examples.js.urihandler-v7.run
+  - v7.examples.js.urihandler-v7.runProcess
+  - v7.examples.js.urihandler-v7.setRoute
+  - v7.examples.js.urihandler-v7.tokenize
+  - v7.examples.js.urihandler-v7.tokens
+  - v7.examples.js.urihandler-v7.translate
+  - v7.examples.js.urihandler-v7.truncate
+  v8.examples.decorators.example:
+  - v8.examples.decorators.example.echo_message
+  - v8.examples.decorators.example.shell_echo
+  - v8.examples.decorators.example.transcode
+  v8.examples.docker_uri_flow.node-worker.server:
+  - v8.examples.docker_uri_flow.node-worker.server.body
+  - v8.examples.docker_uri_flow.node-worker.server.readBody
+  - v8.examples.docker_uri_flow.node-worker.server.send
+  - v8.examples.docker_uri_flow.node-worker.server.server
+  - v8.examples.docker_uri_flow.node-worker.server.slug
+  - v8.examples.docker_uri_flow.node-worker.server.slugify
+  v8.examples.docker_uri_flow.orchestrator.flow_runner:
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.get_path
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.json_get
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.json_post
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.load_registry
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.main
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.normalize_uri
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_scalar
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_has_uri
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.registry_route_count
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.resolve_payload
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.route_key
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.run_flow
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.service_url
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.validate_flow_registry
+  - v8.examples.docker_uri_flow.orchestrator.flow_runner.wait_for_services
+  v8.examples.docker_uri_flow.python-worker.server:
+  - v8.examples.docker_uri_flow.python-worker.server.Handler.do_GET
+  - v8.examples.docker_uri_flow.python-worker.server.Handler.do_POST
+  - v8.examples.docker_uri_flow.python-worker.server.dispatch
+  - v8.examples.docker_uri_flow.python-worker.server.normalize
+  - v8.examples.docker_uri_flow.python-worker.server.summary
+  v8.examples.docker_uri_flow.shell-worker.server:
+  - v8.examples.docker_uri_flow.shell-worker.server.Handler.do_GET
+  - v8.examples.docker_uri_flow.shell-worker.server.Handler.do_POST
+  v8.examples.generators.php.example:
+  - v8.examples.generators.php.example.UriCommand.bindingFromFunction
+  - v8.examples.generators.php.example.UriCommand.schemaType
+  v8.examples.html_uri_app.app:
+  - v8.examples.html_uri_app.app.card
+  - v8.examples.html_uri_app.app.classFor
+  - v8.examples.html_uri_app.app.data
+  - v8.examples.html_uri_app.app.defaults
+  - v8.examples.html_uri_app.app.escapeHtml
+  - v8.examples.html_uri_app.app.iconFor
+  - v8.examples.html_uri_app.app.inputType
+  - v8.examples.html_uri_app.app.payloadDefaults
+  - v8.examples.html_uri_app.app.refreshLogs
+  - v8.examples.html_uri_app.app.renderActions
+  - v8.examples.html_uri_app.app.renderForm
+  - v8.examples.html_uri_app.app.renderToolList
+  - v8.examples.html_uri_app.app.required
+  - v8.examples.html_uri_app.app.routeResponse
+  - v8.examples.html_uri_app.app.schemaFor
+  v8.examples.html_uri_app.backend:
+  - v8.examples.html_uri_app.backend.Handler.do_GET
+  - v8.examples.html_uri_app.backend.Handler.do_POST
+  - v8.examples.html_uri_app.backend.Handler.log_message
+  - v8.examples.html_uri_app.backend.add_log
+  - v8.examples.html_uri_app.backend.binding_document
+  - v8.examples.html_uri_app.backend.dispatch
+  - v8.examples.html_uri_app.backend.dispatch_tool
+  - v8.examples.html_uri_app.backend.env_bool
+  - v8.examples.html_uri_app.backend.json_response
+  - v8.examples.html_uri_app.backend.load_env
+  - v8.examples.html_uri_app.backend.main
+  - v8.examples.html_uri_app.backend.read_json
+  - v8.examples.html_uri_app.backend.registry
+  - v8.examples.html_uri_app.backend.routes
+  v8.examples.transports.transport_lib:
+  - v8.examples.transports.transport_lib.available_transports
+  - v8.examples.transports.transport_lib.grpc_available
+  - v8.examples.transports.transport_lib.run_inprocess
+  - v8.examples.transports.transport_lib.run_queue
+  - v8.examples.transports.transport_lib.run_via
+  - v8.examples.transports.transport_lib.serverless_handler
+  - v8.examples.transports.transport_lib.start_http_worker
+entry_points:
+- adapters.c.urihandler.urihandler_parse
+- adapters.c.urihandler_test.main
+- adapters.js.descriptor
+- adapters.js.dispatch
+- adapters.js.functionName
+- adapters.js.index.test.result
+- adapters.js.invocation
+- adapters.js.mod
+- adapters.js.path
+- adapters.js.segments
+- adapters.python.urihandler._registry.discover_entry_points
+- adapters.python.urihandler._registry.exec_fetch
+- adapters.python.urihandler._registry.exec_local_function
+- adapters.python.urihandler._registry.exec_mqtt_publish
+- adapters.python.urihandler._registry.exec_shell_template
+- adapters.python.urihandler._registry.exec_spawn
+- adapters.python.urihandler._registry.hydrate_registry
+- adapters.python.urihandler._registry.main
+- adapters.python.urihandler._registry.uri_handler
+- adapters.python.urihandler._runtime.main
+- adapters.python.urihandler._runtime.run_fetch
+- adapters.python.urihandler._runtime.run_local_function
+- adapters.python.urihandler._runtime.run_mqtt_publish
+- adapters.python.urihandler._runtime.run_shell_template
+- adapters.python.urihandler._runtime.run_spawn
+- adapters.python.urihandler._scan.main
+- adapters.python.urihandler.dispatch
+- adapters.python.urihandler.v7.main
+- adapters.python.urihandler.v7.run_docker_exec
+- adapters.python.urihandler.v7.run_docker_run
+- adapters.python.urihandler.v7.run_fetch
+- adapters.python.urihandler.v7.run_local_function
+- adapters.python.urihandler.v7.run_mqtt_publish
+- adapters.python.urihandler.v7.run_shell_template
+- adapters.python.urihandler.v7.run_spawn
+- adapters.python.urihandler.v8.check
+- adapters.python.urihandler.v8.decorated_bindings
+- adapters.python.urihandler.v8.main
+- adapters.python.urihandler.v8.render_sequence
+- adapters.python.urihandler.v8.run_argv_template
+- adapters.python.urihandler.v8.run_shell_template
+- adapters.python.urihandler.v8_adopt.main
+- adapters.python.urihandler.v8_grpc._dumps
+- adapters.python.urihandler.v8_grpc._loads
+- adapters.python.urihandler.v8_grpc.list_routes
+- adapters.python.urihandler.v8_grpc.main
+- adapters.python.urihandler.v8_grpc.stream
+- adapters.python.urihandler.v8_mcp.main
+- adapters.python.urihandler.v8_service.call
+- examples.reference_adapters.firmware-pseudo.handle_uri
+- examples.reference_adapters.node-server.body
+- examples.reference_adapters.node-server.raw
+- examples.reference_adapters.node-server.server
+- examples.reference_adapters.python-server.DeviceModule.led_set
+- examples.reference_adapters.python-server.Handler.do_POST
+- examples.reference_adapters.python-server.Handler.log_message
+- examples.reference_adapters.python-server.Handler.write_json
+- v7.examples.extend.lib.disk_free
+- v7.examples.extend.lib.greet
+- v7.examples.html_uri_app.app.active
+- v7.examples.html_uri_app.app.badge
+- v7.examples.html_uri_app.app.base
+- v7.examples.html_uri_app.app.basePolicy
+- v7.examples.html_uri_app.app.bindingDocument
+- v7.examples.html_uri_app.app.command
+- v7.examples.html_uri_app.app.command2
+- v7.examples.html_uri_app.app.envelope
+- v7.examples.html_uri_app.app.glob
+- v7.examples.html_uri_app.app.inner
+- v7.examples.html_uri_app.app.inputs
+- v7.examples.html_uri_app.app.item
+- v7.examples.html_uri_app.app.items
+- v7.examples.html_uri_app.app.label
+- v7.examples.html_uri_app.app.method
+- v7.examples.html_uri_app.app.node
+- v7.examples.html_uri_app.app.p
+- v7.examples.html_uri_app.app.params
+- v7.examples.html_uri_app.app.ph
+- v7.examples.html_uri_app.app.renderDetail
+- v7.examples.html_uri_app.app.response
+- v7.examples.html_uri_app.app.runSelected
+- v7.examples.html_uri_app.app.runtime
+- v7.examples.html_uri_app.app.selected
+- v7.examples.html_uri_app.app.target
+- v7.examples.html_uri_app.app.text
+- v7.examples.html_uri_app.app.url
+- v7.examples.html_uri_app.test.backup
+- v7.examples.html_uri_app.test.bindings
+- v7.examples.html_uri_app.test.dry
+- v7.examples.html_uri_app.test.git
+- v7.examples.html_uri_app.test.missing
+- v7.examples.html_uri_app.test.policy
+- v7.examples.html_uri_app.test.render
+- v7.examples.html_uri_app.test.runtime
+- v7.examples.html_uri_app.test.shell
+- v7.examples.html_uri_app.uri-runtime-v7.activePolicy
+- v7.examples.html_uri_app.uri-runtime-v7.allowMatch
+- v7.examples.html_uri_app.uri-runtime-v7.allowed
+- v7.examples.html_uri_app.uri-runtime-v7.args
+- v7.examples.html_uri_app.uri-runtime-v7.command
+- v7.examples.html_uri_app.uri-runtime-v7.config
+- v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+- v7.examples.html_uri_app.uri-runtime-v7.current
+- v7.examples.html_uri_app.uri-runtime-v7.decision
+- v7.examples.html_uri_app.uri-runtime-v7.denyMatch
+- v7.examples.html_uri_app.uri-runtime-v7.descriptor
+- v7.examples.html_uri_app.uri-runtime-v7.entry
+- v7.examples.html_uri_app.uri-runtime-v7.escaped
+- v7.examples.html_uri_app.uri-runtime-v7.execute
+- v7.examples.html_uri_app.uri-runtime-v7.getPolicy
+- v7.examples.html_uri_app.uri-runtime-v7.key
+- v7.examples.html_uri_app.uri-runtime-v7.listRoutes
+- v7.examples.html_uri_app.uri-runtime-v7.merged
+- v7.examples.html_uri_app.uri-runtime-v7.params
+- v7.examples.html_uri_app.uri-runtime-v7.preview
+- v7.examples.html_uri_app.uri-runtime-v7.reason
+- v7.examples.html_uri_app.uri-runtime-v7.routePolicy
+- v7.examples.html_uri_app.uri-runtime-v7.segments
+- v7.examples.html_uri_app.uri-runtime-v7.setPolicy
+- v7.examples.html_uri_app.uri-runtime-v7.spec
+- v7.examples.html_uri_app.uri-runtime-v7.translation
+- v7.examples.js.example.preview
+- v7.examples.js.example.registry
+- v7.examples.js.example.result
+- v7.examples.js.urihandler-v7.DEFAULT_TIMEOUT
+- v7.examples.js.urihandler-v7.OUTPUT_LIMIT
+- v7.examples.js.urihandler-v7.allow
+- v7.examples.js.urihandler-v7.allowed
+- v7.examples.js.urihandler-v7.base
+- v7.examples.js.urihandler-v7.bucket
+- v7.examples.js.urihandler-v7.check
+- v7.examples.js.urihandler-v7.command
+- v7.examples.js.urihandler-v7.compileRegistry
+- v7.examples.js.urihandler-v7.config
+- v7.examples.js.urihandler-v7.current
+- v7.examples.js.urihandler-v7.decision
+- v7.examples.js.urihandler-v7.deny
+- v7.examples.js.urihandler-v7.descriptor
+- v7.examples.js.urihandler-v7.envFlags
+- v7.examples.js.urihandler-v7.hasPlaceholders
+- v7.examples.js.urihandler-v7.inner
+- v7.examples.js.urihandler-v7.listRoutes
+- v7.examples.js.urihandler-v7.merged
+- v7.examples.js.urihandler-v7.method
+- v7.examples.js.urihandler-v7.parts
+- v7.examples.js.urihandler-v7.query
+- v7.examples.js.urihandler-v7.renderCommand
+- v7.examples.js.urihandler-v7.rendered
+- v7.examples.js.urihandler-v7.result
+- v7.examples.js.urihandler-v7.routeEntry
+- v7.examples.js.urihandler-v7.segments
+- v7.examples.js.urihandler-v7.spec
+- v7.examples.js.urihandler-v7.test.result
+- v7.examples.js.urihandler-v7.tokens
+- v7.examples.js.urihandler-v7.translation
+- v7.examples.js.urihandler-v7.tree
+- v8.examples.decorators.example.echo_message
+- v8.examples.decorators.example.shell_echo
+- v8.examples.decorators.example.transcode
+- v8.examples.docker_uri_flow.node-worker.server.bindings
+- v8.examples.docker_uri_flow.node-worker.server.body
+- v8.examples.docker_uri_flow.node-worker.server.data
+- v8.examples.docker_uri_flow.node-worker.server.fs
+- v8.examples.docker_uri_flow.node-worker.server.http
+- v8.examples.docker_uri_flow.node-worker.server.path
+- v8.examples.docker_uri_flow.node-worker.server.server
+- v8.examples.docker_uri_flow.node-worker.server.slug
+- v8.examples.docker_uri_flow.orchestrator.flow_runner.main
+- v8.examples.docker_uri_flow.python-worker.server.Handler.do_GET
+- v8.examples.docker_uri_flow.python-worker.server.Handler.do_POST
+- v8.examples.docker_uri_flow.python-worker.server.Handler.log_message
+- v8.examples.docker_uri_flow.python-worker.server.dispatch
+- v8.examples.docker_uri_flow.python-worker.server.response
+- v8.examples.docker_uri_flow.run.cleanup
+- v8.examples.docker_uri_flow.run_tests.cleanup
+- v8.examples.docker_uri_flow.shell-worker.server.Handler.do_GET
+- v8.examples.docker_uri_flow.shell-worker.server.Handler.do_POST
+- v8.examples.docker_uri_flow.shell-worker.server.Handler.log_message
+- v8.examples.docker_uri_flow.shell-worker.server.dispatch
+- v8.examples.docker_uri_flow.shell-worker.server.response
+- v8.examples.generators.js.example.document
+- v8.examples.generators.js.example.greet
+- v8.examples.generators.js.uri-command.bindingDocument
+- v8.examples.generators.js.uri-command.boolean
+- v8.examples.generators.js.uri-command.integer
+- v8.examples.generators.js.uri-command.placeholders
+- v8.examples.generators.js.uri-command.properties
+- v8.examples.generators.js.uri-command.required
+- v8.examples.generators.js.uri-command.string
+- v8.examples.generators.js.uri-command.uriCommand
+- v8.examples.generators.nodejs.generate-bindings.document
+- v8.examples.generators.nodejs.generate-bindings.out
+- v8.examples.generators.nodejs.generate-bindings.sha256
+- v8.examples.generators.php.example.UriCommand.__construct
+- v8.examples.generators.php.example.UriCommand.bindingFromFunction
+- v8.examples.generators.php.example.UriCommand.slug
+- v8.examples.generators.ts.decorators.MathCommands.add
+- v8.examples.generators.ts.decorators.method
+- v8.examples.generators.ts.decorators.placeholders
+- v8.examples.generators.ts.decorators.properties
+- v8.examples.generators.ts.decorators.uriCommand
+- v8.examples.html_uri_app.app.button
+- v8.examples.html_uri_app.app.card
+- v8.examples.html_uri_app.app.data
+- v8.examples.html_uri_app.app.defaults
+- v8.examples.html_uri_app.app.inputType
+- v8.examples.html_uri_app.app.key
+- v8.examples.html_uri_app.app.manifest
+- v8.examples.html_uri_app.app.payloadFromForm
+- v8.examples.html_uri_app.app.properties
+- v8.examples.html_uri_app.app.refreshLogs
+- v8.examples.html_uri_app.app.required
+- v8.examples.html_uri_app.app.result
+- v8.examples.html_uri_app.app.route
+- v8.examples.html_uri_app.app.routeResponse
+- v8.examples.html_uri_app.app.schema
+- v8.examples.html_uri_app.app.value
+- v8.examples.html_uri_app.backend.Handler.do_GET
+- v8.examples.html_uri_app.backend.Handler.do_POST
+- v8.examples.html_uri_app.backend.Handler.log_message
+- v8.examples.html_uri_app.backend.Handler.read_body
+- v8.examples.html_uri_app.backend.Handler.serve_static
+- v8.examples.html_uri_app.backend.dispatch
+- v8.examples.html_uri_app.backend.main
+- v8.examples.html_uri_app.backend.routes
+- v8.examples.html_uri_app.test.bindings
+- v8.examples.html_uri_app.test.routes
+- v8.examples.multi_transport.run_tests.cleanup
+- v8.examples.multi_transport.worker.serve_grpc
+- v8.examples.multi_transport.worker.serve_http
+- v8.examples.transports.scan_and_run.main
+- v8.examples.transports.transport_lib.available_transports
+- v8.examples.transports.transport_lib.build_registry
+- v8.examples.transports.transport_lib.run_via

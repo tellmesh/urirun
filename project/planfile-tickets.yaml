@@ -1,0 +1,2866 @@
+source: code2llm
+# generated in 0.09s
+schema: code2llm.planfile_tickets.v1
+project_root: /home/tom/github/tellmesh/urihandler
+tickets:
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+    (CC=32)'
+  description: 'code2llm reports `v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7`
+    at `v7/examples/html_uri_app/uri-runtime-v7.js:163` with cyclomatic complexity
+    32 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/html_uri_app/uri-runtime-v7.js
+  dedupe_key: code2llm:cc:v7/examples/html_uri_app/uri-runtime-v7.js:v7.examples.html_uri_app.uri-runtime-v7.createUriRuntimeV7
+- signal: code2llm_dup
+  title: Consolidate duplicate class Handler
+  description: 'code2llm found similar `Handler` classes in `v8/examples/html_uri_app/backend.py`
+    and `v8/examples/docker_uri_flow/shell-worker/server.py` with 3 overlapping methods.
+
+
+    Extract a shared base/helper or merge the duplicated behavior, then re-run code2llm
+    to confirm the duplicate signal is gone.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - duplication
+  - refactor
+  files:
+  - v8/examples/html_uri_app/backend.py
+  - v8/examples/docker_uri_flow/shell-worker/server.py
+  dedupe_key: code2llm:dup:Handler:v8/examples/html_uri_app/backend.py:v8/examples/docker_uri_flow/shell-worker/server.py
+- signal: code2llm_dup
+  title: Consolidate duplicate class Handler
+  description: 'code2llm found similar `Handler` classes in `v8/examples/html_uri_app/backend.py`
+    and `v8/examples/docker_uri_flow/python-worker/server.py` with 3 overlapping methods.
+
+
+    Extract a shared base/helper or merge the duplicated behavior, then re-run code2llm
+    to confirm the duplicate signal is gone.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - duplication
+  - refactor
+  files:
+  - v8/examples/html_uri_app/backend.py
+  - v8/examples/docker_uri_flow/python-worker/server.py
+  dedupe_key: code2llm:dup:Handler:v8/examples/html_uri_app/backend.py:v8/examples/docker_uri_flow/python-worker/server.py
+- signal: code2llm_dup
+  title: Consolidate duplicate class Handler
+  description: 'code2llm found similar `Handler` classes in `v8/examples/docker_uri_flow/shell-worker/server.py`
+    and `v8/examples/docker_uri_flow/python-worker/server.py` with 3 overlapping methods.
+
+
+    Extract a shared base/helper or merge the duplicated behavior, then re-run code2llm
+    to confirm the duplicate signal is gone.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - duplication
+  - refactor
+  files:
+  - v8/examples/docker_uri_flow/shell-worker/server.py
+  - v8/examples/docker_uri_flow/python-worker/server.py
+  dedupe_key: code2llm:dup:Handler:v8/examples/docker_uri_flow/shell-worker/server.py:v8/examples/docker_uri_flow/python-worker/server.py
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: call'
+  description: 'code2llm reports `God Function: call` in `adapters/python/urihandler/v8_service.py:55`.
+
+
+    Function ''call'' is oversized: CC=9, fan-out=9, mutations=26.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_service.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_service.py:55:God
+    Function: call'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/v8_adopt.py:145`.
+
+
+    Function ''main'' is oversized: CC=7, fan-out=17, mutations=26.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_adopt.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_adopt.py:145:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/v7.py:349`.
+
+
+    Function ''main'' is oversized: CC=13, fan-out=26, mutations=30.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:349:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Function ''main'' is oversized: CC=10, fan-out=20, mutations=20.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_runtime.py:358:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/_scan.py:576`.
+
+
+    Function ''main'' is oversized: CC=10, fan-out=23, mutations=50.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:576:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/v8_grpc.py:160`.
+
+
+    Function ''main'' is oversized: CC=9, fan-out=16, mutations=25.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_grpc.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_grpc.py:160:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/_registry.py:600`.
+
+
+    Function ''main'' is oversized: CC=9, fan-out=25, mutations=55.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:600:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run'
+  description: 'code2llm reports `God Function: run` in `adapters/python/urihandler/v7.py:215`.
+
+
+    Function ''run'' is oversized: CC=14, fan-out=14, mutations=30.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:215:God
+    Function: run'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: args'
+  description: 'code2llm reports `Shotgun Surgery: args` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''args'' spans 14 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: args'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: argv'
+  description: 'code2llm reports `Shotgun Surgery: argv` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''argv'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: argv'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: binding'
+  description: 'code2llm reports `Shotgun Surgery: binding` in `adapters/python/urihandler/v8.py:835`.
+
+
+    Mutation of variable ''binding'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8.py:835:Shotgun
+    Surgery: binding'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: bindings'
+  description: 'code2llm reports `Shotgun Surgery: bindings` in `adapters/python/urihandler/v8.py:824`.
+
+
+    Mutation of variable ''bindings'' spans 33 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8.py:824:Shotgun
+    Surgery: bindings'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: body'
+  description: 'code2llm reports `Shotgun Surgery: body` in `adapters/python/urihandler/_runtime.py:167`.
+
+
+    Mutation of variable ''body'' spans 8 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:167:Shotgun
+    Surgery: body'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: command'
+  description: 'code2llm reports `Shotgun Surgery: command` in `adapters/python/urihandler/v8.py:655`.
+
+
+    Mutation of variable ''command'' spans 11 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8.py:655:Shotgun
+    Surgery: command'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: config'
+  description: 'code2llm reports `Shotgun Surgery: config` in `adapters/python/urihandler/_runtime.py:167`.
+
+
+    Mutation of variable ''config'' spans 19 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:167:Shotgun
+    Surgery: config'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: data'
+  description: 'code2llm reports `Shotgun Surgery: data` in `adapters/python/urihandler/v8.py:564`.
+
+
+    Mutation of variable ''data'' spans 23 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8.py:564:Shotgun
+    Surgery: data'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: descriptor'
+  description: 'code2llm reports `Shotgun Surgery: descriptor` in `adapters/python/urihandler/_registry.py:84`.
+
+
+    Mutation of variable ''descriptor'' spans 14 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:84:Shotgun
+    Surgery: descriptor'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: entries'
+  description: 'code2llm reports `Shotgun Surgery: entries` in `adapters/python/urihandler/_registry.py:154`.
+
+
+    Mutation of variable ''entries'' spans 10 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:154:Shotgun
+    Surgery: entries'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: entry'
+  description: 'code2llm reports `Shotgun Surgery: entry` in `adapters/python/urihandler/_registry.py:84`.
+
+
+    Mutation of variable ''entry'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:84:Shotgun
+    Surgery: entry'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: envelope'
+  description: 'code2llm reports `Shotgun Surgery: envelope` in `adapters/python/urihandler/v8_mcp.py:104`.
+
+
+    Mutation of variable ''envelope'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8_mcp.py:104:Shotgun
+    Surgery: envelope'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: execute'
+  description: 'code2llm reports `Shotgun Surgery: execute` in `v8/examples/html_uri_app/backend.py:95`.
+
+
+    Mutation of variable ''execute'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:v8/examples/html_uri_app/backend.py:95:Shotgun
+    Surgery: execute'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: index'
+  description: 'code2llm reports `Shotgun Surgery: index` in `adapters/python/urihandler/v8_mcp.py:104`.
+
+
+    Mutation of variable ''index'' spans 7 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8_mcp.py:104:Shotgun
+    Surgery: index'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: key'
+  description: 'code2llm reports `Shotgun Surgery: key` in `adapters/python/urihandler/_scan.py:251`.
+
+
+    Mutation of variable ''key'' spans 16 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:251:Shotgun
+    Surgery: key'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: line'
+  description: 'code2llm reports `Shotgun Surgery: line` in `adapters/python/urihandler/_scan.py:251`.
+
+
+    Mutation of variable ''line'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:251:Shotgun
+    Surgery: line'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: meta'
+  description: 'code2llm reports `Shotgun Surgery: meta` in `adapters/python/urihandler/_registry.py:445`.
+
+
+    Mutation of variable ''meta'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:445:Shotgun
+    Surgery: meta'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: name'
+  description: 'code2llm reports `Shotgun Surgery: name` in `adapters/python/urihandler/v8.py:793`.
+
+
+    Mutation of variable ''name'' spans 10 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8.py:793:Shotgun
+    Surgery: name'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: normalized'
+  description: 'code2llm reports `Shotgun Surgery: normalized` in `adapters/python/urihandler/_scan.py:106`.
+
+
+    Mutation of variable ''normalized'' spans 10 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:106:Shotgun
+    Surgery: normalized'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: operation'
+  description: 'code2llm reports `Shotgun Surgery: operation` in `adapters/python/urihandler/_registry.py:169`.
+
+
+    Mutation of variable ''operation'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:169:Shotgun
+    Surgery: operation'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: package'
+  description: 'code2llm reports `Shotgun Surgery: package` in `adapters/python/urihandler/_registry.py:169`.
+
+
+    Mutation of variable ''package'' spans 7 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:169:Shotgun
+    Surgery: package'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: params'
+  description: 'code2llm reports `Shotgun Surgery: params` in `adapters/python/urihandler/v8_mcp.py:104`.
+
+
+    Mutation of variable ''params'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8_mcp.py:104:Shotgun
+    Surgery: params'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: parser'
+  description: 'code2llm reports `Shotgun Surgery: parser` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''parser'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: parser'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: path'
+  description: 'code2llm reports `Shotgun Surgery: path` in `v8/examples/docker_uri_flow/python-worker/server.py:28`.
+
+
+    Mutation of variable ''path'' spans 14 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - v8/examples/docker_uri_flow/python-worker/server.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:v8/examples/docker_uri_flow/python-worker/server.py:28:Shotgun
+    Surgery: path'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: payload'
+  description: 'code2llm reports `Shotgun Surgery: payload` in `v8/examples/html_uri_app/backend.py:95`.
+
+
+    Mutation of variable ''payload'' spans 7 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:v8/examples/html_uri_app/backend.py:95:Shotgun
+    Surgery: payload'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: policy'
+  description: 'code2llm reports `Shotgun Surgery: policy` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''policy'' spans 11 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: policy'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: registry'
+  description: 'code2llm reports `Shotgun Surgery: registry` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''registry'' spans 11 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: registry'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: resource'
+  description: 'code2llm reports `Shotgun Surgery: resource` in `adapters/python/urihandler/_registry.py:169`.
+
+
+    Mutation of variable ''resource'' spans 7 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:169:Shotgun
+    Surgery: resource'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: result'
+  description: 'code2llm reports `Shotgun Surgery: result` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''result'' spans 17 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: result'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: route'
+  description: 'code2llm reports `Shotgun Surgery: route` in `adapters/python/urihandler/_registry.py:224`.
+
+
+    Mutation of variable ''route'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:224:Shotgun
+    Surgery: route'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: route_entry'
+  description: 'code2llm reports `Shotgun Surgery: route_entry` in `adapters/python/urihandler/_scan.py:106`.
+
+
+    Mutation of variable ''route_entry'' spans 17 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:106:Shotgun
+    Surgery: route_entry'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: schema'
+  description: 'code2llm reports `Shotgun Surgery: schema` in `adapters/python/urihandler/v8_mcp.py:39`.
+
+
+    Mutation of variable ''schema'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8_mcp.py:39:Shotgun
+    Surgery: schema'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: server'
+  description: 'code2llm reports `Shotgun Surgery: server` in `v8/examples/transports/transport_lib.py:73`.
+
+
+    Mutation of variable ''server'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - v8/examples/transports/transport_lib.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:v8/examples/transports/transport_lib.py:73:Shotgun
+    Surgery: server'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: source_file'
+  description: 'code2llm reports `Shotgun Surgery: source_file` in `adapters/python/urihandler/_scan.py:343`.
+
+
+    Mutation of variable ''source_file'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:343:Shotgun
+    Surgery: source_file'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: subparsers'
+  description: 'code2llm reports `Shotgun Surgery: subparsers` in `adapters/python/urihandler/_runtime.py:358`.
+
+
+    Mutation of variable ''subparsers'' spans 5 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_runtime.py:358:Shotgun
+    Surgery: subparsers'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: target'
+  description: 'code2llm reports `Shotgun Surgery: target` in `v8/examples/transports/transport_lib.py:111`.
+
+
+    Mutation of variable ''target'' spans 6 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - v8/examples/transports/transport_lib.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:v8/examples/transports/transport_lib.py:111:Shotgun
+    Surgery: target'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: translation'
+  description: 'code2llm reports `Shotgun Surgery: translation` in `adapters/python/urihandler/_registry.py:84`.
+
+
+    Mutation of variable ''translation'' spans 12 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_registry.py:84:Shotgun
+    Surgery: translation'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: uri'
+  description: 'code2llm reports `Shotgun Surgery: uri` in `adapters/python/urihandler/v8_mcp.py:104`.
+
+
+    Mutation of variable ''uri'' spans 9 functions. Changing this logic requires work
+    in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/v8_mcp.py:104:Shotgun
+    Surgery: uri'
+- signal: code2llm_smell_shotgun_surgery
+  title: 'Address code smell: Shotgun Surgery: value'
+  description: 'code2llm reports `Shotgun Surgery: value` in `adapters/python/urihandler/_scan.py:251`.
+
+
+    Mutation of variable ''value'' spans 9 functions. Changing this logic requires
+    work in many places.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: high
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - shotgun-surgery
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:shotgun_surgery:adapters/python/urihandler/_scan.py:251:Shotgun
+    Surgery: value'
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.c.urihandler.urihandler_parse (CC=20)'
+  description: 'code2llm reports `adapters.c.urihandler.urihandler_parse` at `adapters/c/urihandler.c:16`
+    with cyclomatic complexity 20 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/c/urihandler.c
+  dedupe_key: code2llm:cc:adapters/c/urihandler.c:adapters.c.urihandler.urihandler_parse
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler._runtime.evaluate_policy
+    (CC=16)'
+  description: 'code2llm reports `adapters.python.urihandler._runtime.evaluate_policy`
+    at `adapters/python/urihandler/_runtime.py:71` with cyclomatic complexity 16 (limit
+    15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/_runtime.py:adapters.python.urihandler._runtime.evaluate_policy
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler._scan.scan_path
+    (CC=15)'
+  description: 'code2llm reports `adapters.python.urihandler._scan.scan_path` at `adapters/python/urihandler/_scan.py:464`
+    with cyclomatic complexity 15 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/_scan.py:adapters.python.urihandler._scan.scan_path
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler.v8.expand_binding
+    (CC=16)'
+  description: 'code2llm reports `adapters.python.urihandler.v8.expand_binding` at
+    `adapters/python/urihandler/v8.py:371` with cyclomatic complexity 16 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/v8.py:adapters.python.urihandler.v8.expand_binding
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler.v8.main (CC=21)'
+  description: 'code2llm reports `adapters.python.urihandler.v8.main` at `adapters/python/urihandler/v8.py:835`
+    with cyclomatic complexity 21 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/v8.py:adapters.python.urihandler.v8.main
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler.v8.run (CC=15)'
+  description: 'code2llm reports `adapters.python.urihandler.v8.run` at `adapters/python/urihandler/v8.py:274`
+    with cyclomatic complexity 15 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/v8.py:adapters.python.urihandler.v8.run
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: adapters.python.urihandler.v8_mcp.serve_mcp
+    (CC=15)'
+  description: 'code2llm reports `adapters.python.urihandler.v8_mcp.serve_mcp` at
+    `adapters/python/urihandler/v8_mcp.py:104` with cyclomatic complexity 15 (limit
+    15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: code2llm:cc:adapters/python/urihandler/v8_mcp.py:adapters.python.urihandler.v8_mcp.serve_mcp
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.html_uri_app.uri-runtime-v7.dispatch
+    (CC=17)'
+  description: 'code2llm reports `v7.examples.html_uri_app.uri-runtime-v7.dispatch`
+    at `v7/examples/html_uri_app/uri-runtime-v7.js:202` with cyclomatic complexity
+    17 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/html_uri_app/uri-runtime-v7.js
+  dedupe_key: code2llm:cc:v7/examples/html_uri_app/uri-runtime-v7.js:v7.examples.html_uri_app.uri-runtime-v7.dispatch
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+    (CC=18)'
+  description: 'code2llm reports `v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy`
+    at `v7/examples/html_uri_app/uri-runtime-v7.js:138` with cyclomatic complexity
+    18 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/html_uri_app/uri-runtime-v7.js
+  dedupe_key: code2llm:cc:v7/examples/html_uri_app/uri-runtime-v7.js:v7.examples.html_uri_app.uri-runtime-v7.evaluatePolicy
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+    (CC=15)'
+  description: 'code2llm reports `v7.examples.html_uri_app.uri-runtime-v7.resolveParams`
+    at `v7/examples/html_uri_app/uri-runtime-v7.js:76` with cyclomatic complexity
+    15 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/html_uri_app/uri-runtime-v7.js
+  dedupe_key: code2llm:cc:v7/examples/html_uri_app/uri-runtime-v7.js:v7.examples.html_uri_app.uri-runtime-v7.resolveParams
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.js.urihandler-v7.resolveParams
+    (CC=15)'
+  description: 'code2llm reports `v7.examples.js.urihandler-v7.resolveParams` at `v7/examples/js/urihandler-v7.js:119`
+    with cyclomatic complexity 15 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: code2llm:cc:v7/examples/js/urihandler-v7.js:v7.examples.js.urihandler-v7.resolveParams
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v7.examples.js.urihandler-v7.run (CC=19)'
+  description: 'code2llm reports `v7.examples.js.urihandler-v7.run` at `v7/examples/js/urihandler-v7.js:239`
+    with cyclomatic complexity 19 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: code2llm:cc:v7/examples/js/urihandler-v7.js:v7.examples.js.urihandler-v7.run
+- signal: code2llm_cc
+  title: 'Reduce cyclomatic complexity: v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow
+    (CC=24)'
+  description: 'code2llm reports `v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow`
+    at `v8/examples/docker_uri_flow/orchestrator/flow_runner.py:19` with cyclomatic
+    complexity 24 (limit 15).
+
+
+    Extract smaller functions, flatten conditionals, or split strategy branches. Re-run
+    code2llm after the change and keep tests green.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - complexity
+  - refactor
+  files:
+  - v8/examples/docker_uri_flow/orchestrator/flow_runner.py
+  dedupe_key: code2llm:cc:v8/examples/docker_uri_flow/orchestrator/flow_runner.py:v8.examples.docker_uri_flow.orchestrator.flow_runner.parse_flow
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v8.py:246`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:246:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v8.py:257`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:257:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:121`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:121:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:134`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:134:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:144`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:144:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:160`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:160:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:180`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:180:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:191`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:191:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: ctx, policy, execute'
+  description: 'code2llm reports `Data Clump: ctx, policy, execute` in `adapters/python/urihandler/v7.py:197`.
+
+
+    Arguments (ctx, policy, execute) are used together in multiple functions: adapters.python.urihandler.v8.run_argv_template,
+    adapters.python.urihandler.v8.run_shell_template, adapters.python.urihandler.v7.run_spawn,
+    adapters.python.urihandler.v7.run_shell_template, adapters.python.urihandler.v7.run_docker_exec,
+    adapters.python.urihandler.v7.run_docker_run, adapters.python.urihandler.v7.run_fetch,
+    adapters.python.urihandler.v7.run_local_function, adapters.python.urihandler.v7.run_mqtt_publish.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:197:Data
+    Clump: ctx, policy, execute'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: generated_at, doc, on_conflict'
+  description: 'code2llm reports `Data Clump: generated_at, doc, on_conflict` in `adapters/python/urihandler/v8.py:424`.
+
+
+    Arguments (generated_at, doc, on_conflict) are used together in multiple functions:
+    adapters.python.urihandler.v8.compile_registry, adapters.python.urihandler.v7.compile_registry.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:424:Data
+    Clump: generated_at, doc, on_conflict'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: generated_at, doc, on_conflict'
+  description: 'code2llm reports `Data Clump: generated_at, doc, on_conflict` in `adapters/python/urihandler/v7.py:331`.
+
+
+    Arguments (generated_at, doc, on_conflict) are used together in multiple functions:
+    adapters.python.urihandler.v8.compile_registry, adapters.python.urihandler.v7.compile_registry.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:331:Data
+    Clump: generated_at, doc, on_conflict'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: openapi_base_url, include_shell, path'
+  description: 'code2llm reports `Data Clump: openapi_base_url, include_shell, path`
+    in `adapters/python/urihandler/_scan.py:464`.
+
+
+    Arguments (openapi_base_url, include_shell, path) are used together in multiple
+    functions: adapters.python.urihandler._scan.scan_path, adapters.python.urihandler._scan.load_binding_source.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_scan.py:464:Data
+    Clump: openapi_base_url, include_shell, path'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: openapi_base_url, include_shell, path'
+  description: 'code2llm reports `Data Clump: openapi_base_url, include_shell, path`
+    in `adapters/python/urihandler/_scan.py:507`.
+
+
+    Arguments (openapi_base_url, include_shell, path) are used together in multiple
+    functions: adapters.python.urihandler._scan.scan_path, adapters.python.urihandler._scan.load_binding_source.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_scan.py:507:Data
+    Clump: openapi_base_url, include_shell, path'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: openapi_base_url, include_shell, paths'
+  description: 'code2llm reports `Data Clump: openapi_base_url, include_shell, paths`
+    in `adapters/python/urihandler/_scan.py:519`.
+
+
+    Arguments (openapi_base_url, include_shell, paths) are used together in multiple
+    functions: adapters.python.urihandler._scan.load_binding_sources, adapters.python.urihandler._scan.list_bindings.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_scan.py:519:Data
+    Clump: openapi_base_url, include_shell, paths'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: openapi_base_url, include_shell, paths'
+  description: 'code2llm reports `Data Clump: openapi_base_url, include_shell, paths`
+    in `adapters/python/urihandler/_scan.py:547`.
+
+
+    Arguments (openapi_base_url, include_shell, paths) are used together in multiple
+    functions: adapters.python.urihandler._scan.load_binding_sources, adapters.python.urihandler._scan.list_bindings.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_scan.py:547:Data
+    Clump: openapi_base_url, include_shell, paths'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: policy, confirm, executors, uri, mode, registry,
+    payload'
+  description: 'code2llm reports `Data Clump: policy, confirm, executors, uri, mode,
+    registry, payload` in `adapters/python/urihandler/v8.py:274`.
+
+
+    Arguments (policy, confirm, executors, uri, mode, registry, payload) are used
+    together in multiple functions: adapters.python.urihandler.v8.run, adapters.python.urihandler.v7.run,
+    adapters.python.urihandler._runtime.run.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:274:Data
+    Clump: policy, confirm, executors, uri, mode, registry, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: policy, confirm, executors, uri, mode, registry,
+    payload'
+  description: 'code2llm reports `Data Clump: policy, confirm, executors, uri, mode,
+    registry, payload` in `adapters/python/urihandler/v7.py:215`.
+
+
+    Arguments (policy, confirm, executors, uri, mode, registry, payload) are used
+    together in multiple functions: adapters.python.urihandler.v8.run, adapters.python.urihandler.v7.run,
+    adapters.python.urihandler._runtime.run.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:215:Data
+    Clump: policy, confirm, executors, uri, mode, registry, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: policy, confirm, executors, uri, mode, registry,
+    payload'
+  description: 'code2llm reports `Data Clump: policy, confirm, executors, uri, mode,
+    registry, payload` in `adapters/python/urihandler/_runtime.py:215`.
+
+
+    Arguments (policy, confirm, executors, uri, mode, registry, payload) are used
+    together in multiple functions: adapters.python.urihandler.v8.run, adapters.python.urihandler.v7.run,
+    adapters.python.urihandler._runtime.run.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_runtime.py:215:Data
+    Clump: policy, confirm, executors, uri, mode, registry, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: status, handler, payload'
+  description: 'code2llm reports `Data Clump: status, handler, payload` in `v8/examples/html_uri_app/backend.py:78`.
+
+
+    Arguments (status, handler, payload) are used together in multiple functions:
+    v8.examples.html_uri_app.backend.json_response, v8.examples.docker_uri_flow.shell-worker.server.response,
+    v8.examples.docker_uri_flow.python-worker.server.response.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:data_clump:v8/examples/html_uri_app/backend.py:78:Data
+    Clump: status, handler, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: status, handler, payload'
+  description: 'code2llm reports `Data Clump: status, handler, payload` in `v8/examples/docker_uri_flow/shell-worker/server.py:13`.
+
+
+    Arguments (status, handler, payload) are used together in multiple functions:
+    v8.examples.html_uri_app.backend.json_response, v8.examples.docker_uri_flow.shell-worker.server.response,
+    v8.examples.docker_uri_flow.python-worker.server.response.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - v8/examples/docker_uri_flow/shell-worker/server.py
+  dedupe_key: 'code2llm:smell:data_clump:v8/examples/docker_uri_flow/shell-worker/server.py:13:Data
+    Clump: status, handler, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: status, handler, payload'
+  description: 'code2llm reports `Data Clump: status, handler, payload` in `v8/examples/docker_uri_flow/python-worker/server.py:13`.
+
+
+    Arguments (status, handler, payload) are used together in multiple functions:
+    v8.examples.html_uri_app.backend.json_response, v8.examples.docker_uri_flow.shell-worker.server.response,
+    v8.examples.docker_uri_flow.python-worker.server.response.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - v8/examples/docker_uri_flow/python-worker/server.py
+  dedupe_key: 'code2llm:smell:data_clump:v8/examples/docker_uri_flow/python-worker/server.py:13:Data
+    Clump: status, handler, payload'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: translation, route_entry, payload, descriptor'
+  description: 'code2llm reports `Data Clump: translation, route_entry, payload, descriptor`
+    in `adapters/python/urihandler/v8.py:187`.
+
+
+    Arguments (translation, route_entry, payload, descriptor) are used together in
+    multiple functions: adapters.python.urihandler.v8.validate_input, adapters.python.urihandler.v7.resolve_params.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:187:Data
+    Clump: translation, route_entry, payload, descriptor'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: translation, route_entry, payload, descriptor'
+  description: 'code2llm reports `Data Clump: translation, route_entry, payload, descriptor`
+    in `adapters/python/urihandler/v7.py:40`.
+
+
+    Arguments (translation, route_entry, payload, descriptor) are used together in
+    multiple functions: adapters.python.urihandler.v8.validate_input, adapters.python.urihandler.v7.resolve_params.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:40:Data
+    Clump: translation, route_entry, payload, descriptor'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: uri, payload, registry'
+  description: 'code2llm reports `Data Clump: uri, payload, registry` in `adapters/python/urihandler/__init__.py:29`.
+
+
+    Arguments (uri, payload, registry) are used together in multiple functions: adapters.python.urihandler.dispatch,
+    adapters.python.urihandler.v8_grpc._validate.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/__init__.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/__init__.py:29:Data
+    Clump: uri, payload, registry'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: uri, payload, registry'
+  description: 'code2llm reports `Data Clump: uri, payload, registry` in `adapters/python/urihandler/v8_grpc.py:108`.
+
+
+    Arguments (uri, payload, registry) are used together in multiple functions: adapters.python.urihandler.dispatch,
+    adapters.python.urihandler.v8_grpc._validate.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8_grpc.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8_grpc.py:108:Data
+    Clump: uri, payload, registry'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: uri, policy, registry'
+  description: 'code2llm reports `Data Clump: uri, policy, registry` in `adapters/python/urihandler/v8.py:356`.
+
+
+    Arguments (uri, policy, registry) are used together in multiple functions: adapters.python.urihandler.v8.check,
+    adapters.python.urihandler.v7.check, adapters.python.urihandler._runtime.check.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v8.py:356:Data
+    Clump: uri, policy, registry'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: uri, policy, registry'
+  description: 'code2llm reports `Data Clump: uri, policy, registry` in `adapters/python/urihandler/v7.py:286`.
+
+
+    Arguments (uri, policy, registry) are used together in multiple functions: adapters.python.urihandler.v8.check,
+    adapters.python.urihandler.v7.check, adapters.python.urihandler._runtime.check.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/v7.py:286:Data
+    Clump: uri, policy, registry'
+- signal: code2llm_smell_data_clump
+  title: 'Address code smell: Data Clump: uri, policy, registry'
+  description: 'code2llm reports `Data Clump: uri, policy, registry` in `adapters/python/urihandler/_runtime.py:275`.
+
+
+    Arguments (uri, policy, registry) are used together in multiple functions: adapters.python.urihandler.v8.check,
+    adapters.python.urihandler.v7.check, adapters.python.urihandler._runtime.check.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - data-clump
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:data_clump:adapters/python/urihandler/_runtime.py:275:Data
+    Clump: uri, policy, registry'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: DEFAULT_TIMEOUT'
+  description: 'code2llm reports `God Function: DEFAULT_TIMEOUT` in `v7/examples/js/urihandler-v7.js:7`.
+
+
+    Function ''DEFAULT_TIMEOUT'' is oversized: CC=5, fan-out=11, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/js/urihandler-v7.js:7:God Function:
+    DEFAULT_TIMEOUT'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: OUTPUT_LIMIT'
+  description: 'code2llm reports `God Function: OUTPUT_LIMIT` in `v7/examples/js/urihandler-v7.js:8`.
+
+
+    Function ''OUTPUT_LIMIT'' is oversized: CC=5, fan-out=11, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/js/urihandler-v7.js:8:God Function:
+    OUTPUT_LIMIT'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _apply_defaults'
+  description: 'code2llm reports `God Function: _apply_defaults` in `adapters/python/urihandler/v8.py:160`.
+
+
+    Function ''_apply_defaults'' is oversized: CC=14, fan-out=5, mutations=6.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:160:God
+    Function: _apply_defaults'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _read_toml'
+  description: 'code2llm reports `God Function: _read_toml` in `adapters/python/urihandler/_scan.py:251`.
+
+
+    Function ''_read_toml'' is oversized: CC=12, fan-out=15, mutations=15.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:251:God
+    Function: _read_toml'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _scan_dockerfile'
+  description: 'code2llm reports `God Function: _scan_dockerfile` in `adapters/python/urihandler/v8.py:756`.
+
+
+    Function ''_scan_dockerfile'' is oversized: CC=7, fan-out=12, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:756:God
+    Function: _scan_dockerfile'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: _scan_makefile'
+  description: 'code2llm reports `God Function: _scan_makefile` in `adapters/python/urihandler/v8.py:712`.
+
+
+    Function ''_scan_makefile'' is oversized: CC=5, fan-out=11, mutations=4.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:712:God
+    Function: _scan_makefile'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: add_route'
+  description: 'code2llm reports `God Function: add_route` in `adapters/python/urihandler/_registry.py:140`.
+
+
+    Function ''add_route'' is oversized: CC=5, fan-out=6, mutations=14.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:140:God
+    Function: add_route'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: build_registry_document'
+  description: 'code2llm reports `God Function: build_registry_document` in `adapters/python/urihandler/_registry.py:224`.
+
+
+    Function ''build_registry_document'' is oversized: CC=10, fan-out=15, mutations=9.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:224:God
+    Function: build_registry_document'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: coerce_route_source'
+  description: 'code2llm reports `God Function: coerce_route_source` in `adapters/python/urihandler/_registry.py:114`.
+
+
+    Function ''coerce_route_source'' is oversized: CC=11, fan-out=7, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:114:God
+    Function: coerce_route_source'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: discover_docker_labels'
+  description: 'code2llm reports `God Function: discover_docker_labels` in `adapters/python/urihandler/_registry.py:279`.
+
+
+    Function ''discover_docker_labels'' is oversized: CC=14, fan-out=11, mutations=14.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:279:God
+    Function: discover_docker_labels'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: discover_entry_points'
+  description: 'code2llm reports `God Function: discover_entry_points` in `adapters/python/urihandler/_registry.py:420`.
+
+
+    Function ''discover_entry_points'' is oversized: CC=6, fan-out=11, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:420:God
+    Function: discover_entry_points'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: discover_manifest'
+  description: 'code2llm reports `God Function: discover_manifest` in `adapters/python/urihandler/_registry.py:195`.
+
+
+    Function ''discover_manifest'' is oversized: CC=14, fan-out=8, mutations=4.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:195:God
+    Function: discover_manifest'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: discover_openapi'
+  description: 'code2llm reports `God Function: discover_openapi` in `adapters/python/urihandler/_registry.py:353`.
+
+
+    Function ''discover_openapi'' is oversized: CC=10, fan-out=11, mutations=4.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:353:God
+    Function: discover_openapi'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: dispatch_generated'
+  description: 'code2llm reports `God Function: dispatch_generated` in `adapters/python/urihandler/_registry.py:543`.
+
+
+    Function ''dispatch_generated'' is oversized: CC=7, fan-out=9, mutations=9.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:543:God
+    Function: dispatch_generated'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: dispatch_tool'
+  description: 'code2llm reports `God Function: dispatch_tool` in `v8/examples/html_uri_app/backend.py:119`.
+
+
+    Function ''dispatch_tool'' is oversized: CC=7, fan-out=8, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/html_uri_app/backend.py:119:God
+    Function: dispatch_tool'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: do_GET'
+  description: 'code2llm reports `God Function: do_GET` in `v8/examples/html_uri_app/backend.py:142`.
+
+
+    Function ''do_GET'' is oversized: CC=8, fan-out=14, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/html_uri_app/backend.py:142:God
+    Function: do_GET'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: expand_binding'
+  description: 'code2llm reports `God Function: expand_binding` in `adapters/python/urihandler/v7.py:297`.
+
+
+    Function ''expand_binding'' is oversized: CC=7, fan-out=5, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:297:God
+    Function: expand_binding'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: format_route_table'
+  description: 'code2llm reports `God Function: format_route_table` in `adapters/python/urihandler/_runtime.py:343`.
+
+
+    Function ''format_route_table'' is oversized: CC=13, fan-out=9, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_runtime.py:343:God
+    Function: format_route_table'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: input_schema_from_params'
+  description: 'code2llm reports `God Function: input_schema_from_params` in `adapters/python/urihandler/v8.py:510`.
+
+
+    Function ''input_schema_from_params'' is oversized: CC=4, fan-out=2, mutations=11.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:510:God
+    Function: input_schema_from_params'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: list_routes'
+  description: 'code2llm reports `God Function: list_routes` in `adapters/python/urihandler/_runtime.py:320`.
+
+
+    Function ''list_routes'' is oversized: CC=4, fan-out=9, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_runtime.py:320:God
+    Function: list_routes'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: load_bindings_from_manifest'
+  description: 'code2llm reports `God Function: load_bindings_from_manifest` in `adapters/python/urihandler/_scan.py:134`.
+
+
+    Function ''load_bindings_from_manifest'' is oversized: CC=14, fan-out=7, mutations=3.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:134:God
+    Function: load_bindings_from_manifest'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `adapters/python/urihandler/v8_mcp.py:145`.
+
+
+    Function ''main'' is oversized: CC=9, fan-out=11, mutations=13.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_mcp.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_mcp.py:145:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: main'
+  description: 'code2llm reports `God Function: main` in `v8/examples/transports/scan_and_run.py:20`.
+
+
+    Function ''main'' is oversized: CC=6, fan-out=11, mutations=15.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/transports/scan_and_run.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/transports/scan_and_run.py:20:God
+    Function: main'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: merge_into'
+  description: 'code2llm reports `God Function: merge_into` in `adapters/python/urihandler/v8_adopt.py:127`.
+
+
+    Function ''merge_into'' is oversized: CC=7, fan-out=10, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_adopt.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_adopt.py:127:God
+    Function: merge_into'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: normalize_binding'
+  description: 'code2llm reports `God Function: normalize_binding` in `adapters/python/urihandler/_scan.py:82`.
+
+
+    Function ''normalize_binding'' is oversized: CC=11, fan-out=7, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:82:God
+    Function: normalize_binding'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: npm_package_bindings'
+  description: 'code2llm reports `God Function: npm_package_bindings` in `adapters/python/urihandler/v8_adopt.py:88`.
+
+
+    Function ''npm_package_bindings'' is oversized: CC=4, fan-out=9, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_adopt.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_adopt.py:88:God
+    Function: npm_package_bindings'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: parseUri'
+  description: 'code2llm reports `God Function: parseUri` in `v7/examples/js/urihandler-v7.js:10`.
+
+
+    Function ''parseUri'' is oversized: CC=5, fan-out=11, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/js/urihandler-v7.js:10:God
+    Function: parseUri'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: parse_compose_label_line'
+  description: 'code2llm reports `God Function: parse_compose_label_line` in `adapters/python/urihandler/_scan.py:412`.
+
+
+    Function ''parse_compose_label_line'' is oversized: CC=4, fan-out=7, mutations=9.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:412:God
+    Function: parse_compose_label_line'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: parse_param_declaration'
+  description: 'code2llm reports `God Function: parse_param_declaration` in `adapters/python/urihandler/v8.py:470`.
+
+
+    Function ''parse_param_declaration'' is oversized: CC=8, fan-out=8, mutations=14.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:470:God
+    Function: parse_param_declaration'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: registry_has_uri'
+  description: 'code2llm reports `God Function: registry_has_uri` in `v8/examples/docker_uri_flow/orchestrator/flow_runner.py:119`.
+
+
+    Function ''registry_has_uri'' is oversized: CC=4, fan-out=7, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/docker_uri_flow/orchestrator/flow_runner.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/docker_uri_flow/orchestrator/flow_runner.py:119:God
+    Function: registry_has_uri'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: renderDetail'
+  description: 'code2llm reports `God Function: renderDetail` in `v7/examples/html_uri_app/app.js:110`.
+
+
+    Function ''renderDetail'' is oversized: CC=7, fan-out=12, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/html_uri_app/app.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/html_uri_app/app.js:110:God
+    Function: renderDetail'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: resolve_params'
+  description: 'code2llm reports `God Function: resolve_params` in `adapters/python/urihandler/v7.py:40`.
+
+
+    Function ''resolve_params'' is oversized: CC=11, fan-out=12, mutations=10.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:40:God
+    Function: resolve_params'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: resolve_route'
+  description: 'code2llm reports `God Function: resolve_route` in `adapters/python/urihandler/_registry.py:445`.
+
+
+    Function ''resolve_route'' is oversized: CC=8, fan-out=12, mutations=6.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:445:God
+    Function: resolve_route'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run'
+  description: 'code2llm reports `God Function: run` in `adapters/python/urihandler/_runtime.py:215`.
+
+
+    Function ''run'' is oversized: CC=10, fan-out=14, mutations=19.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_runtime.py:215:God
+    Function: run'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run_docker_exec'
+  description: 'code2llm reports `God Function: run_docker_exec` in `adapters/python/urihandler/v7.py:144`.
+
+
+    Function ''run_docker_exec'' is oversized: CC=4, fan-out=6, mutations=7.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:144:God
+    Function: run_docker_exec'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run_docker_run'
+  description: 'code2llm reports `God Function: run_docker_run` in `adapters/python/urihandler/v7.py:160`.
+
+
+    Function ''run_docker_run'' is oversized: CC=5, fan-out=10, mutations=10.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v7.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v7.py:160:God
+    Function: run_docker_run'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run_fetch'
+  description: 'code2llm reports `God Function: run_fetch` in `adapters/python/urihandler/_runtime.py:167`.
+
+
+    Function ''run_fetch'' is oversized: CC=7, fan-out=19, mutations=10.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_runtime.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_runtime.py:167:God
+    Function: run_fetch'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run_flow'
+  description: 'code2llm reports `God Function: run_flow` in `v8/examples/docker_uri_flow/orchestrator/flow_runner.py:188`.
+
+
+    Function ''run_flow'' is oversized: CC=8, fan-out=12, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/docker_uri_flow/orchestrator/flow_runner.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/docker_uri_flow/orchestrator/flow_runner.py:188:God
+    Function: run_flow'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: run_via'
+  description: 'code2llm reports `God Function: run_via` in `v8/examples/transports/transport_lib.py:111`.
+
+
+    Function ''run_via'' is oversized: CC=6, fan-out=14, mutations=13.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/transports/transport_lib.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/transports/transport_lib.py:111:God
+    Function: run_via'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: scan_artifacts'
+  description: 'code2llm reports `God Function: scan_artifacts` in `adapters/python/urihandler/v8.py:793`.
+
+
+    Function ''scan_artifacts'' is oversized: CC=11, fan-out=15, mutations=11.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:793:God
+    Function: scan_artifacts'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: scan_docker_compose'
+  description: 'code2llm reports `God Function: scan_docker_compose` in `adapters/python/urihandler/_scan.py:425`.
+
+
+    Function ''scan_docker_compose'' is oversized: CC=10, fan-out=12, mutations=15.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:425:God
+    Function: scan_docker_compose'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: scan_package_json'
+  description: 'code2llm reports `God Function: scan_package_json` in `adapters/python/urihandler/_scan.py:217`.
+
+
+    Function ''scan_package_json'' is oversized: CC=7, fan-out=11, mutations=5.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:217:God
+    Function: scan_package_json'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: scan_pyproject'
+  description: 'code2llm reports `God Function: scan_pyproject` in `adapters/python/urihandler/_scan.py:280`.
+
+
+    Function ''scan_pyproject'' is oversized: CC=9, fan-out=13, mutations=8.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_scan.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_scan.py:280:God
+    Function: scan_pyproject'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: serve'
+  description: 'code2llm reports `God Function: serve` in `adapters/python/urihandler/v8_grpc.py:63`.
+
+
+    Function ''serve'' is oversized: CC=2, fan-out=12, mutations=5.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8_grpc.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8_grpc.py:63:God
+    Function: serve'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: serve_http'
+  description: 'code2llm reports `God Function: serve_http` in `v8/examples/multi_transport/worker.py:36`.
+
+
+    Function ''serve_http'' is oversized: CC=1, fan-out=20, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/multi_transport/worker.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/multi_transport/worker.py:36:God
+    Function: serve_http'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: serve_static'
+  description: 'code2llm reports `God Function: serve_static` in `v8/examples/html_uri_app/backend.py:187`.
+
+
+    Function ''serve_static'' is oversized: CC=7, fan-out=13, mutations=0.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/html_uri_app/backend.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/html_uri_app/backend.py:187:God
+    Function: serve_static'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: start_http_worker'
+  description: 'code2llm reports `God Function: start_http_worker` in `v8/examples/transports/transport_lib.py:73`.
+
+
+    Function ''start_http_worker'' is oversized: CC=1, fan-out=20, mutations=1.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v8/examples/transports/transport_lib.py
+  dedupe_key: 'code2llm:smell:god_function:v8/examples/transports/transport_lib.py:73:God
+    Function: start_http_worker'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: validate_binding_document'
+  description: 'code2llm reports `God Function: validate_binding_document` in `adapters/python/urihandler/v8.py:593`.
+
+
+    Function ''validate_binding_document'' is oversized: CC=12, fan-out=17, mutations=13.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:593:God
+    Function: validate_binding_document'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Function: validate_input'
+  description: 'code2llm reports `God Function: validate_input` in `adapters/python/urihandler/v8.py:187`.
+
+
+    Function ''validate_input'' is oversized: CC=6, fan-out=13, mutations=10.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:187:God
+    Function: validate_input'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: adapters.python.urihandler._registry'
+  description: 'code2llm reports `God Module: adapters.python.urihandler._registry`
+    in `adapters/python/urihandler/_registry.py:1`.
+
+
+    Module ''adapters.python.urihandler._registry'' is too large (41 functions, 0
+    classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/_registry.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/_registry.py:1:God
+    Module: adapters.python.urihandler._registry'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: adapters.python.urihandler.v8'
+  description: 'code2llm reports `God Module: adapters.python.urihandler.v8` in `adapters/python/urihandler/v8.py:1`.
+
+
+    Module ''adapters.python.urihandler.v8'' is too large (49 functions, 0 classes).
+    Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - adapters/python/urihandler/v8.py
+  dedupe_key: 'code2llm:smell:god_function:adapters/python/urihandler/v8.py:1:God
+    Module: adapters.python.urihandler.v8'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: v7.examples.html_uri_app.uri-runtime-v7'
+  description: 'code2llm reports `God Module: v7.examples.html_uri_app.uri-runtime-v7`
+    in `v7/examples/html_uri_app/uri-runtime-v7.js:1`.
+
+
+    Module ''v7.examples.html_uri_app.uri-runtime-v7'' is too large (54 functions,
+    0 classes). Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/html_uri_app/uri-runtime-v7.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/html_uri_app/uri-runtime-v7.js:1:God
+    Module: v7.examples.html_uri_app.uri-runtime-v7'
+- signal: code2llm_smell_god_function
+  title: 'Address code smell: God Module: v7.examples.js.urihandler-v7'
+  description: 'code2llm reports `God Module: v7.examples.js.urihandler-v7` in `v7/examples/js/urihandler-v7.js:1`.
+
+
+    Module ''v7.examples.js.urihandler-v7'' is too large (65 functions, 0 classes).
+    Consider splitting into sub-modules.
+
+
+    Make the smallest refactor that removes the smell and run local tests.'
+  priority: normal
+  labels:
+  - llm-ready
+  - code2llm
+  - code-smell
+  - god-function
+  files:
+  - v7/examples/js/urihandler-v7.js
+  dedupe_key: 'code2llm:smell:god_function:v7/examples/js/urihandler-v7.js:1:God Module:
+    v7.examples.js.urihandler-v7'
+applied: []
+skipped: []

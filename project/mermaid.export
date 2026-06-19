@@ -1,0 +1,664 @@
+flowchart TD
+%% generated in 0.00s
+    subgraph adapters__c
+        adapters__c__urihandler__urihandler_parse{{urihandler_parse CC=20}}
+        adapters__c__urihandler__copy_token["copy_token"]
+        adapters__c__urihandler__memcpy["memcpy"]
+        adapters__c__urihandler__is_path_end["is_path_end"]
+        adapters__c__urihandler__memset["memset"]
+        adapters__c__urihandler_test__main["main"]
+        adapters__c__urihandler_test__assert["assert"]
+    end
+    subgraph adapters__js
+        adapters__js__index__test__result["result"]
+        adapters__js__parseUri("parseUri CC=8")
+        adapters__js__match["match"]
+        adapters__js__path["path"]
+        adapters__js__segments["segments"]
+        adapters__js__buildInvocation["buildInvocation"]
+        adapters__js__functionName["functionName"]
+        adapters__js__dispatch["dispatch"]
+        adapters__js__descriptor["descriptor"]
+        adapters__js__invocation["invocation"]
+        adapters__js__mod["mod"]
+        adapters__js__fn["fn"]
+    end
+    subgraph adapters__python
+        adapters__python__urihandler__v8_service__service_base["service_base"]
+        adapters__python__urihandler__v8_service___post["_post"]
+        adapters__python__urihandler__v8_service__call("call CC=9")
+        adapters__python__urihandler__v8__model_from_function["model_from_function"]
+        adapters__python__urihandler__v8___placeholder_kwargs["_placeholder_kwargs"]
+        adapters__python__urihandler__v8__uri_command["uri_command"]
+        adapters__python__urihandler__v8__uri_shell["uri_shell"]
+        adapters__python__urihandler__v8__decorated_bindings["decorated_bindings"]
+        adapters__python__urihandler__v8___schema_for["_schema_for"]
+        adapters__python__urihandler__v8___apply_defaults("_apply_defaults CC=14")
+        adapters__python__urihandler__v8___input_values["_input_values"]
+        adapters__python__urihandler__v8__validate_input["validate_input"]
+        adapters__python__urihandler__v8__render_value["render_value"]
+        adapters__python__urihandler__v8__render_sequence["render_sequence"]
+        adapters__python__urihandler__v8__render_argv["render_argv"]
+        adapters__python__urihandler__v8__run_argv_template["run_argv_template"]
+        adapters__python__urihandler__v8__run_shell_template["run_shell_template"]
+        adapters__python__urihandler__v8__run{{run CC=15}}
+        adapters__python__urihandler__v8__check["check"]
+        adapters__python__urihandler__v8__list_routes["list_routes"]
+        adapters__python__urihandler__v8___strip_runtime_only["_strip_runtime_only"]
+        adapters__python__urihandler__v8__expand_binding{{expand_binding CC=16}}
+        adapters__python__urihandler__v8___binding_pairs("_binding_pairs CC=8")
+        adapters__python__urihandler__v8__expand_bindings["expand_bindings"]
+        adapters__python__urihandler__v8__compile_registry["compile_registry"]
+        adapters__python__urihandler__v8__build_binding_document["build_binding_document"]
+        adapters__python__urihandler__v8___bindings_as_map["_bindings_as_map"]
+        adapters__python__urihandler__v8__merge_binding_document["merge_binding_document"]
+        adapters__python__urihandler__v8__write_or_emit_binding["write_or_emit_binding"]
+        adapters__python__urihandler__v8___coerce_default["_coerce_default"]
+        adapters__python__urihandler__v8__parse_param_declaration("parse_param_declaration CC=8")
+        adapters__python__urihandler__v8__input_schema_from_params["input_schema_from_params"]
+        adapters__python__urihandler__v8__command_binding_from_cli["command_binding_from_cli"]
+        adapters__python__urihandler__v8__pypi_binding["pypi_binding"]
+        adapters__python__urihandler__v8__load_registry_arg["load_registry_arg"]
+        adapters__python__urihandler__v8___placeholders_in["_placeholders_in"]
+        adapters__python__urihandler__v8__validate_binding_document("validate_binding_document CC=12")
+        adapters__python__urihandler__v8___iter_files["_iter_files"]
+        adapters__python__urihandler__v8___rel["_rel"]
+        adapters__python__urihandler__v8___empty_input_schema["_empty_input_schema"]
+        adapters__python__urihandler__v8___load_manifest["_load_manifest"]
+        adapters__python__urihandler__v8___scan_package_json["_scan_package_json"]
+        adapters__python__urihandler__v8___read_toml["_read_toml"]
+        adapters__python__urihandler__v8___scan_pyproject["_scan_pyproject"]
+        adapters__python__urihandler__v8___scan_shell_script["_scan_shell_script"]
+        adapters__python__urihandler__v8___scan_makefile["_scan_makefile"]
+        adapters__python__urihandler__v8___parse_dockerfile_labels["_parse_dockerfile_labels"]
+        adapters__python__urihandler__v8___manifest_candidates["_manifest_candidates"]
+        adapters__python__urihandler__v8___scan_dockerfile["_scan_dockerfile"]
+        adapters__python__urihandler__v8__scan_artifacts("scan_artifacts CC=11")
+        adapters__python__urihandler__v8___load_many["_load_many"]
+        adapters__python__urihandler__v8__main{{main CC=21}}
+        adapters__python__urihandler__v8_adopt__passthrough_schema["passthrough_schema"]
+        adapters__python__urihandler__v8_adopt___command_binding["_command_binding"]
+        adapters__python__urihandler__v8_adopt__python_package_bindings["python_package_bindings"]
+        adapters__python__urihandler__v8_adopt__installed_python_bindings["installed_python_bindings"]
+        adapters__python__urihandler__v8_adopt__npm_package_bindings["npm_package_bindings"]
+        adapters__python__urihandler__v8_adopt__init_project["init_project"]
+        adapters__python__urihandler__v8_adopt__merge_into["merge_into"]
+        adapters__python__urihandler__v8_adopt__main["main"]
+    end
+    subgraph examples__reference_adapters
+        examples__reference_adapters__node_server__readJson["readJson"]
+        examples__reference_adapters__node_server__writeJson["writeJson"]
+        examples__reference_adapters__node_server__raw["raw"]
+        examples__reference_adapters__node_server__server["server"]
+        examples__reference_adapters__node_server__body["body"]
+        examples__reference_adapters__python_server__DeviceModule__led_set["led_set"]
+        examples__reference_adapters__python_server__Handler__do_POST["do_POST"]
+        examples__reference_adapters__python_server__Handler__log_message["log_message"]
+        examples__reference_adapters__python_server__Handler__write_json["write_json"]
+        examples__reference_adapters__firmware_pseudo__led_set["led_set"]
+        examples__reference_adapters__firmware_pseudo__handle_uri["handle_uri"]
+    end
+    subgraph v7__examples
+        v7__examples__js__urihandler_v7__test__registry["registry"]
+        v7__examples__js__urihandler_v7__test__result["result"]
+        v7__examples__js__example__registry["registry"]
+        v7__examples__js__example__preview["preview"]
+        v7__examples__js__example__result["result"]
+        v7__examples__js__urihandler_v7__DEFAULT_TIMEOUT["DEFAULT_TIMEOUT"]
+        v7__examples__js__urihandler_v7__OUTPUT_LIMIT["OUTPUT_LIMIT"]
+        v7__examples__js__urihandler_v7__parseUri["parseUri"]
+        v7__examples__js__urihandler_v7__match["match"]
+        v7__examples__js__urihandler_v7__segments["segments"]
+        v7__examples__js__urihandler_v7__query["query"]
+        v7__examples__js__urihandler_v7__translate["translate"]
+        v7__examples__js__urihandler_v7__inferKind("inferKind CC=10")
+        v7__examples__js__urihandler_v7__defaultAdapter["defaultAdapter"]
+        v7__examples__js__urihandler_v7__registryTree["registryTree"]
+        v7__examples__js__urihandler_v7__setRoute["setRoute"]
+        v7__examples__js__urihandler_v7__translation["translation"]
+        v7__examples__js__urihandler_v7__bucket["bucket"]
+        v7__examples__js__urihandler_v7__compileRegistryDocument["compileRegistryDocument"]
+        v7__examples__js__urihandler_v7__routeRows("routeRows CC=10")
+        v7__examples__js__urihandler_v7__globMatch["globMatch"]
+        v7__examples__js__urihandler_v7__parts["parts"]
+        v7__examples__js__urihandler_v7__mergePolicy["mergePolicy"]
+        v7__examples__js__urihandler_v7__evaluatePolicy["evaluatePolicy"]
+        v7__examples__js__urihandler_v7__merged["merged"]
+        v7__examples__js__urihandler_v7__deny["deny"]
+        v7__examples__js__urihandler_v7__allow["allow"]
+        v7__examples__js__urihandler_v7__allowed["allowed"]
+        v7__examples__js__urihandler_v7__check["check"]
+        v7__examples__js__urihandler_v7__descriptor["descriptor"]
+        v7__examples__js__urihandler_v7__routeEntry["routeEntry"]
+        v7__examples__js__urihandler_v7__tokenize["tokenize"]
+        v7__examples__js__urihandler_v7__resolveParams{{resolveParams CC=15}}
+        v7__examples__js__urihandler_v7__spec["spec"]
+        v7__examples__js__urihandler_v7__current["current"]
+        v7__examples__js__urihandler_v7__renderValue["renderValue"]
+        v7__examples__js__urihandler_v7__renderCommand["renderCommand"]
+        v7__examples__js__urihandler_v7__hasPlaceholders["hasPlaceholders"]
+        v7__examples__js__urihandler_v7__truncate["truncate"]
+        v7__examples__js__urihandler_v7__renderedEnv["renderedEnv"]
+        v7__examples__js__urihandler_v7__runProcess["runProcess"]
+        v7__examples__js__urihandler_v7__result["result"]
+        v7__examples__js__urihandler_v7__envFlags["envFlags"]
+        v7__examples__js__urihandler_v7__config["config"]
+        v7__examples__js__urihandler_v7__base["base"]
+        v7__examples__js__urihandler_v7__command["command"]
+        v7__examples__js__urihandler_v7__rendered["rendered"]
+        v7__examples__js__urihandler_v7__tokens["tokens"]
+        v7__examples__js__urihandler_v7__inner["inner"]
+        v7__examples__js__urihandler_v7__method["method"]
+        v7__examples__js__urihandler_v7__response["response"]
+        v7__examples__js__urihandler_v7__run{{run CC=19}}
+        v7__examples__js__urihandler_v7__tree["tree"]
+        v7__examples__js__urihandler_v7__decision["decision"]
+        v7__examples__js__urihandler_v7__executor["executor"]
+        v7__examples__js__urihandler_v7__listRoutes["listRoutes"]
+        v7__examples__js__urihandler_v7__expandBinding("expandBinding CC=9")
+        v7__examples__js__urihandler_v7__expandBindings["expandBindings"]
+        v7__examples__js__urihandler_v7__compileRegistry["compileRegistry"]
+        v7__examples__html_uri_app__uri_runtime_v7__parseUri["parseUri"]
+    end
+    subgraph v8__examples
+        v8__examples__html_uri_app__test__bindings["bindings"]
+        v8__examples__html_uri_app__test__routes["routes"]
+        v8__examples__html_uri_app__backend__load_env["load_env"]
+        v8__examples__html_uri_app__backend__env_bool["env_bool"]
+        v8__examples__html_uri_app__backend__read_json["read_json"]
+        v8__examples__html_uri_app__backend__binding_document["binding_document"]
+        v8__examples__html_uri_app__backend__registry["registry"]
+        v8__examples__html_uri_app__backend__routes["routes"]
+        v8__examples__html_uri_app__backend__add_log["add_log"]
+        v8__examples__html_uri_app__backend__recent_logs["recent_logs"]
+        v8__examples__html_uri_app__backend__json_response["json_response"]
+        v8__examples__html_uri_app__backend__execute_policy["execute_policy"]
+        v8__examples__html_uri_app__backend__dispatch["dispatch"]
+        v8__examples__html_uri_app__backend__dispatch_tool["dispatch_tool"]
+        v8__examples__html_uri_app__backend__Handler__log_message["log_message"]
+        v8__examples__html_uri_app__backend__Handler__do_GET("do_GET CC=8")
+        v8__examples__html_uri_app__backend__Handler__do_POST["do_POST"]
+        v8__examples__html_uri_app__backend__Handler__read_body["read_body"]
+        v8__examples__html_uri_app__backend__Handler__serve_static["serve_static"]
+        v8__examples__html_uri_app__backend__main["main"]
+        v8__examples__html_uri_app__app__routeResponse["routeResponse"]
+        v8__examples__html_uri_app__app__button["button"]
+        v8__examples__html_uri_app__app__result["result"]
+        v8__examples__html_uri_app__app__schemaFor["schemaFor"]
+        v8__examples__html_uri_app__app__payloadDefaults["payloadDefaults"]
+        v8__examples__html_uri_app__app__renderActions["renderActions"]
+        v8__examples__html_uri_app__app__renderForm("renderForm CC=10")
+        v8__examples__html_uri_app__app__route["route"]
+        v8__examples__html_uri_app__app__schema["schema"]
+        v8__examples__html_uri_app__app__properties["properties"]
+        v8__examples__html_uri_app__app__required("required CC=8")
+        v8__examples__html_uri_app__app__defaults("defaults CC=8")
+        v8__examples__html_uri_app__app__value["value"]
+        v8__examples__html_uri_app__app__inputType["inputType"]
+        v8__examples__html_uri_app__app__payloadFromForm["payloadFromForm"]
+        v8__examples__html_uri_app__app__refreshLogs["refreshLogs"]
+        v8__examples__html_uri_app__app__data["data"]
+        v8__examples__html_uri_app__app__manifest["manifest"]
+        v8__examples__html_uri_app__app__card["card"]
+        v8__examples__html_uri_app__app__renderToolList["renderToolList"]
+        v8__examples__html_uri_app__app__classFor["classFor"]
+        v8__examples__html_uri_app__app__iconFor["iconFor"]
+        v8__examples__html_uri_app__app__key["key"]
+        v8__examples__html_uri_app__app__escapeHtml["escapeHtml"]
+        v8__examples__docker_uri_flow__run__cleanup["cleanup"]
+        v8__examples__docker_uri_flow__run_tests__cleanup["cleanup"]
+        v8__examples__docker_uri_flow__shell_worker__server__response["response"]
+        v8__examples__docker_uri_flow__shell_worker__server__dispatch["dispatch"]
+        v8__examples__docker_uri_flow__shell_worker__server__Handler__log_message["log_message"]
+        v8__examples__docker_uri_flow__shell_worker__server__Handler__do_GET["do_GET"]
+        v8__examples__docker_uri_flow__shell_worker__server__Handler__do_POST["do_POST"]
+        v8__examples__docker_uri_flow__node_worker__server__http["http"]
+        v8__examples__docker_uri_flow__node_worker__server__fs["fs"]
+        v8__examples__docker_uri_flow__node_worker__server__path["path"]
+        v8__examples__docker_uri_flow__node_worker__server__bindings["bindings"]
+        v8__examples__docker_uri_flow__node_worker__server__send["send"]
+        v8__examples__docker_uri_flow__node_worker__server__data["data"]
+        v8__examples__docker_uri_flow__node_worker__server__readBody["readBody"]
+        v8__examples__docker_uri_flow__node_worker__server__slugify["slugify"]
+        v8__examples__docker_uri_flow__node_worker__server__server("server CC=10")
+    end
+    v7__examples__js__urihandler_v7__DEFAULT_TIMEOUT --> v7__examples__js__urihandler_v7__match
+    v7__examples__js__urihandler_v7__OUTPUT_LIMIT --> v7__examples__js__urihandler_v7__match
+    v7__examples__js__urihandler_v7__parseUri --> v7__examples__js__urihandler_v7__match
+    v7__examples__js__urihandler_v7__setRoute --> v7__examples__js__urihandler_v7__translate
+    v7__examples__js__urihandler_v7__setRoute --> v7__examples__js__urihandler_v7__parseUri
+    v7__examples__js__urihandler_v7__compileRegistryDocument --> v7__examples__js__urihandler_v7__setRoute
+    v7__examples__js__urihandler_v7__routeRows --> v7__examples__js__urihandler_v7__registryTree
+    v7__examples__js__urihandler_v7__evaluatePolicy --> v7__examples__js__urihandler_v7__mergePolicy
+    v7__examples__js__urihandler_v7__evaluatePolicy --> v7__examples__js__urihandler_v7__globMatch
+    v7__examples__js__urihandler_v7__merged --> v7__examples__js__urihandler_v7__routeRows
+    v7__examples__js__urihandler_v7__merged --> v7__examples__js__urihandler_v7__evaluatePolicy
+    v7__examples__js__urihandler_v7__deny --> v7__examples__js__urihandler_v7__globMatch
+    v7__examples__js__urihandler_v7__allow --> v7__examples__js__urihandler_v7__globMatch
+    v7__examples__js__urihandler_v7__check --> v7__examples__js__urihandler_v7__parseUri
+    v7__examples__js__urihandler_v7__check --> v7__examples__js__urihandler_v7__translate
+    v7__examples__js__urihandler_v7__check --> v7__examples__js__urihandler_v7__registryTree
+    v7__examples__js__urihandler_v7__check --> v7__examples__js__urihandler_v7__evaluatePolicy
+    v7__examples__js__urihandler_v7__check --> v7__examples__js__urihandler_v7__mergePolicy
+    v7__examples__js__urihandler_v7__renderCommand --> v7__examples__js__urihandler_v7__renderValue
+    v7__examples__js__urihandler_v7__renderedEnv --> v7__examples__js__urihandler_v7__renderValue
+    v7__examples__js__urihandler_v7__runProcess --> v7__examples__js__urihandler_v7__renderedEnv
+    v7__examples__js__urihandler_v7__runProcess --> v7__examples__js__urihandler_v7__truncate
+    v7__examples__js__urihandler_v7__envFlags --> v7__examples__js__urihandler_v7__renderValue
+    v7__examples__js__urihandler_v7__tokens --> v7__examples__js__urihandler_v7__runProcess
+    v7__examples__js__urihandler_v7__inner --> v7__examples__js__urihandler_v7__renderValue
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__mergePolicy
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__parseUri
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__translate
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__registryTree
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__resolveParams
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__evaluatePolicy
+    v7__examples__js__urihandler_v7__run --> v7__examples__js__urihandler_v7__executor
+    v7__examples__js__urihandler_v7__listRoutes --> v7__examples__js__urihandler_v7__mergePolicy
+    v7__examples__js__urihandler_v7__listRoutes --> v7__examples__js__urihandler_v7__routeRows
+    v7__examples__js__urihandler_v7__listRoutes --> v7__examples__js__urihandler_v7__evaluatePolicy
+    v7__examples__js__urihandler_v7__expandBinding --> v7__examples__js__urihandler_v7__tokenize
+    v7__examples__js__urihandler_v7__expandBinding --> v7__examples__js__urihandler_v7__inferKind
+    v7__examples__js__urihandler_v7__expandBinding --> v7__examples__js__urihandler_v7__defaultAdapter
+    v7__examples__js__urihandler_v7__expandBindings --> v7__examples__js__urihandler_v7__expandBinding
+    v7__examples__js__urihandler_v7__compileRegistry --> v7__examples__js__urihandler_v7__compileRegistryDocument
+    v7__examples__js__urihandler_v7__compileRegistry --> v7__examples__js__urihandler_v7__expandBindings
+    v7__examples__html_uri_app__uri_runtime_v7__parseUri --> v7__examples__html_uri_app__uri_runtime_v7__match
+    v7__examples__html_uri_app__uri_runtime_v7__routeKey --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__routeKey --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__expandBinding --> v7__examples__html_uri_app__uri_runtime_v7__tokenize
+    v7__examples__html_uri_app__uri_runtime_v7__compileBindings --> v7__examples__html_uri_app__uri_runtime_v7__entries
+    v7__examples__html_uri_app__uri_runtime_v7__compileBindings --> v7__examples__html_uri_app__uri_runtime_v7__routeKey
+    v7__examples__html_uri_app__uri_runtime_v7__compileBindings --> v7__examples__html_uri_app__uri_runtime_v7__expandBinding
+    v7__examples__html_uri_app__uri_runtime_v7__resolveParams --> v7__examples__html_uri_app__uri_runtime_v7__entries
+    v7__examples__html_uri_app__uri_runtime_v7__renderCommand --> v7__examples__html_uri_app__uri_runtime_v7__renderValue
+    v7__examples__html_uri_app__uri_runtime_v7__mergePolicy --> v7__examples__html_uri_app__uri_runtime_v7__defaultPolicy
+    v7__examples__html_uri_app__uri_runtime_v7__mergePolicy --> v7__examples__html_uri_app__uri_runtime_v7__entries
+    v7__examples__html_uri_app__uri_runtime_v7__matchesAny --> v7__examples__html_uri_app__uri_runtime_v7__globToRegExp
+    v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy --> v7__examples__html_uri_app__uri_runtime_v7__matchesAny
+    v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy --> v7__examples__html_uri_app__uri_runtime_v7__looksDestructive
+    v7__examples__html_uri_app__uri_runtime_v7__allowed --> v7__examples__html_uri_app__uri_runtime_v7__matchesAny
+    v7__examples__html_uri_app__uri_runtime_v7__reason --> v7__examples__html_uri_app__uri_runtime_v7__matchesAny
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__compileBindings
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__resolveParams
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__renderValue
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__renderCommand
+    v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7 --> v7__examples__html_uri_app__uri_runtime_v7__hasPlaceholders
+    v7__examples__html_uri_app__uri_runtime_v7__routes --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__activePolicy --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__setPolicy --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__getPolicy --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__getPolicy --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__getPolicy --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__getPolicy --> v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__listRoutes --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__listRoutes --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__listRoutes --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__listRoutes --> v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__resolveParams
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__renderValue
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__renderCommand
+    v7__examples__html_uri_app__uri_runtime_v7__preview --> v7__examples__html_uri_app__uri_runtime_v7__hasPlaceholders
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__mergePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__parseUri
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__translate
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__resolveParams
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy
+    v7__examples__html_uri_app__uri_runtime_v7__dispatch --> v7__examples__html_uri_app__uri_runtime_v7__adapter
+    v7__examples__html_uri_app__app__text --> v7__examples__html_uri_app__app__appendLog
+    v7__examples__html_uri_app__app__selected --> v7__examples__html_uri_app__app__executeMode
+    v7__examples__html_uri_app__app__badgeFor --> v7__examples__html_uri_app__app__executeMode
+    v7__examples__html_uri_app__app__renderActions --> v7__examples__html_uri_app__app__executeMode
+    v7__examples__html_uri_app__app__renderActions --> v7__examples__html_uri_app__app__badgeFor
+    v7__examples__html_uri_app__app__renderActions --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__items --> v7__examples__html_uri_app__app__badgeFor
+    v7__examples__html_uri_app__app__items --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__badge --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__label --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__active --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__renderDetail --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__renderDetail --> v7__examples__html_uri_app__app__updatePreview
+    v7__examples__html_uri_app__app__params --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__inputs --> v7__examples__html_uri_app__app__escapeHtml
+    v7__examples__html_uri_app__app__updatePreview --> v7__examples__html_uri_app__app__currentPayload
+    v7__examples__html_uri_app__app__node --> v7__examples__html_uri_app__app__currentPayload
+    v7__examples__html_uri_app__app__runSelected --> v7__examples__html_uri_app__app__currentPayload
+    v7__examples__html_uri_app__app__runSelected --> v7__examples__html_uri_app__app__executeMode
+    v7__examples__html_uri_app__app__runSelected --> v7__examples__html_uri_app__app__renderLogs
+    v7__examples__html_uri_app__app__envelope --> v7__examples__html_uri_app__app__currentPayload
+    v7__examples__html_uri_app__app__envelope --> v7__examples__html_uri_app__app__executeMode
+    v7__examples__html_uri_app__app__target --> v7__examples__html_uri_app__app__renderActions
+    v7__examples__html_uri_app__app__renderLogs --> v7__examples__html_uri_app__app__escapeHtml
+    adapters__js__parseUri --> adapters__js__match
+    adapters__js__dispatch --> adapters__js__parseUri
+    adapters__js__dispatch --> adapters__js__buildInvocation
+    adapters__js__dispatch --> adapters__js__fn
+    adapters__c__urihandler__urihandler_parse --> adapters__c__urihandler__memset
+    adapters__c__urihandler__urihandler_parse --> adapters__c__urihandler__copy_token
+    adapters__c__urihandler__urihandler_parse --> adapters__c__urihandler__is_path_end
+    adapters__c__urihandler__copy_token --> adapters__c__urihandler__memcpy
+    adapters__c__urihandler__memcpy --> adapters__c__urihandler__is_path_end
+    adapters__c__urihandler_test__main --> adapters__c__urihandler_test__assert
+    adapters__python__urihandler__v8_service__call --> adapters__python__urihandler__v8_service___post
+    adapters__python__urihandler__v8_service__call --> adapters__python__urihandler__v8_service__service_base
+    adapters__python__urihandler__v8__uri_command --> adapters__python__urihandler__v8__model_from_function
+    adapters__python__urihandler__v8__uri_command --> adapters__js__fn
+    adapters__python__urihandler__v8__uri_command --> adapters__python__urihandler__v8___placeholder_kwargs
+    adapters__python__urihandler__v8__uri_shell --> adapters__python__urihandler__v8__uri_command
+    adapters__python__urihandler__v8__validate_input --> adapters__python__urihandler__v8___input_values
+    adapters__python__urihandler__v8__validate_input --> adapters__python__urihandler__v8___schema_for
+    adapters__python__urihandler__v8__validate_input --> adapters__python__urihandler__v8___apply_defaults
+    adapters__python__urihandler__v8__render_sequence --> adapters__python__urihandler__v8__render_value
+    adapters__python__urihandler__v8__render_argv --> adapters__python__urihandler__v8__render_value
+    adapters__python__urihandler__v8__run_argv_template --> adapters__python__urihandler__v8__render_argv
+    adapters__python__urihandler__v8__run_shell_template --> adapters__python__urihandler__v8__render_value
+    adapters__python__urihandler__v8__run --> adapters__python__urihandler__v8__validate_input
+    adapters__python__urihandler__v8__run --> v7__examples__js__urihandler_v7__executor
+    adapters__python__urihandler__v8__expand_binding --> adapters__python__urihandler__v8___strip_runtime_only
+    adapters__python__urihandler__v8__expand_bindings --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8__expand_bindings --> adapters__python__urihandler__v8___binding_pairs
+    adapters__python__urihandler__v8__compile_registry --> adapters__python__urihandler__v8__expand_bindings
+    adapters__python__urihandler__v8__build_binding_document --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___bindings_as_map --> adapters__python__urihandler__v8__expand_bindings
+    adapters__python__urihandler__v8___bindings_as_map --> adapters__python__urihandler__v8___strip_runtime_only
+    adapters__python__urihandler__v8__merge_binding_document --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8__merge_binding_document --> adapters__python__urihandler__v8___bindings_as_map
+    adapters__python__urihandler__v8__write_or_emit_binding --> adapters__python__urihandler__v8__merge_binding_document
+    adapters__python__urihandler__v8__write_or_emit_binding --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8__parse_param_declaration --> adapters__python__urihandler__v8___coerce_default
+    adapters__python__urihandler__v8__input_schema_from_params --> adapters__python__urihandler__v8__parse_param_declaration
+    adapters__python__urihandler__v8__command_binding_from_cli --> adapters__python__urihandler__v8__input_schema_from_params
+    adapters__python__urihandler__v8__load_registry_arg --> adapters__python__urihandler__v8__compile_registry
+    adapters__python__urihandler__v8__load_registry_arg --> adapters__python__urihandler__v8__build_binding_document
+    adapters__python__urihandler__v8__load_registry_arg --> adapters__python__urihandler__v8__scan_artifacts
+    adapters__python__urihandler__v8__validate_binding_document --> adapters__python__urihandler__v8__expand_bindings
+    adapters__python__urihandler__v8___load_manifest --> adapters__python__urihandler__v8__expand_bindings
+    adapters__python__urihandler__v8___scan_package_json --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___scan_package_json --> adapters__python__urihandler__v8___empty_input_schema
+    adapters__python__urihandler__v8___scan_package_json --> adapters__python__urihandler__v8___rel
+    adapters__python__urihandler__v8___scan_pyproject --> adapters__python__urihandler__v8___read_toml
+    adapters__python__urihandler__v8___scan_pyproject --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___scan_pyproject --> adapters__python__urihandler__v8___empty_input_schema
+    adapters__python__urihandler__v8___scan_pyproject --> adapters__python__urihandler__v8___rel
+    adapters__python__urihandler__v8___scan_shell_script --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___scan_shell_script --> adapters__python__urihandler__v8___empty_input_schema
+    adapters__python__urihandler__v8___scan_shell_script --> adapters__python__urihandler__v8___rel
+    adapters__python__urihandler__v8___scan_makefile --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___scan_makefile --> adapters__python__urihandler__v8___empty_input_schema
+    adapters__python__urihandler__v8___scan_makefile --> adapters__python__urihandler__v8___rel
+    adapters__python__urihandler__v8___scan_dockerfile --> adapters__python__urihandler__v8___rel
+    adapters__python__urihandler__v8___scan_dockerfile --> adapters__python__urihandler__v8___parse_dockerfile_labels
+    adapters__python__urihandler__v8___scan_dockerfile --> adapters__python__urihandler__v8___manifest_candidates
+    adapters__python__urihandler__v8___scan_dockerfile --> adapters__python__urihandler__v8__expand_binding
+    adapters__python__urihandler__v8___scan_dockerfile --> adapters__python__urihandler__v8___load_manifest
+    adapters__python__urihandler__v8__scan_artifacts --> adapters__python__urihandler__v8___iter_files
+    adapters__python__urihandler__v8__scan_artifacts --> adapters__python__urihandler__v8___load_manifest
+    adapters__python__urihandler__v8__scan_artifacts --> adapters__python__urihandler__v8___scan_package_json
+    adapters__python__urihandler__v8__scan_artifacts --> adapters__python__urihandler__v8___scan_pyproject
+    adapters__python__urihandler__v8__scan_artifacts --> adapters__python__urihandler__v8___scan_makefile
+    adapters__python__urihandler__v8___load_many --> adapters__python__urihandler__v8__scan_artifacts
+    adapters__python__urihandler__v8___load_many --> adapters__python__urihandler__v8__expand_bindings
+    adapters__python__urihandler__v8_adopt___command_binding --> adapters__python__urihandler__v8_adopt__passthrough_schema
+    adapters__python__urihandler__v8_adopt__python_package_bindings --> adapters__python__urihandler__v8_adopt___command_binding
+    adapters__python__urihandler__v8_adopt__installed_python_bindings --> adapters__python__urihandler__v8_adopt__python_package_bindings
+    adapters__python__urihandler__v8_adopt__npm_package_bindings --> adapters__python__urihandler__v8_adopt___command_binding
+    adapters__python__urihandler__v8_mcp__to_mcp_tools --> adapters__python__urihandler__v8_mcp__tool_name
+    adapters__python__urihandler__v8_mcp__to_mcp_tools --> adapters__python__urihandler__v8_mcp___input_schema
+    adapters__python__urihandler__v8_mcp__to_mcp_manifest --> adapters__python__urihandler__v8_mcp__to_mcp_tools
+    adapters__python__urihandler__v8_mcp__to_a2a_card --> adapters__python__urihandler__v8_mcp__tool_name
+    adapters__python__urihandler__v8_mcp__to_a2a_card --> adapters__python__urihandler__v8_mcp___input_schema
+    adapters__python__urihandler__v8_mcp__build_tool_index --> adapters__python__urihandler__v8_mcp__to_mcp_tools
+    adapters__python__urihandler__v8_mcp__call_tool --> adapters__python__urihandler__v8_mcp__build_tool_index
+    adapters__python__urihandler__v8_mcp__serve_mcp --> adapters__python__urihandler__v8_mcp__to_mcp_tools
+    adapters__python__urihandler__v8_mcp__main --> adapters__python__urihandler__v8_mcp__serve_mcp
+    adapters__python__urihandler__v8_mcp__main --> adapters__python__urihandler__v8_mcp__to_mcp_manifest
+    adapters__python__urihandler__v8_mcp__main --> adapters__python__urihandler__v8_mcp__to_a2a_card
+    adapters__python__urihandler__v7__resolve_params --> adapters__python__urihandler__v7___params_spec
+    adapters__python__urihandler__v7__render_command --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7___proc_env --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7___run_process --> adapters__python__urihandler__v7___proc_env
+    adapters__python__urihandler__v7___env_flags --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7__run_spawn --> adapters__python__urihandler__v7__render_command
+    adapters__python__urihandler__v7__run_spawn --> adapters__python__urihandler__v7___has_placeholders
+    adapters__python__urihandler__v7__run_spawn --> adapters__python__urihandler__v7___run_process
+    adapters__python__urihandler__v7__run_shell_template --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7__run_shell_template --> adapters__python__urihandler__v7___run_process
+    adapters__python__urihandler__v7__run_docker_exec --> adapters__python__urihandler__v7__render_command
+    adapters__python__urihandler__v7__run_docker_exec --> adapters__python__urihandler__v7___env_flags
+    adapters__python__urihandler__v7__run_docker_exec --> adapters__python__urihandler__v7___run_process
+    adapters__python__urihandler__v7__run_docker_run --> adapters__python__urihandler__v7__render_command
+    adapters__python__urihandler__v7__run_docker_run --> adapters__python__urihandler__v7___env_flags
+    adapters__python__urihandler__v7__run_docker_run --> adapters__python__urihandler__v7___run_process
+    adapters__python__urihandler__v7__run_docker_run --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7__run_fetch --> adapters__python__urihandler__v7__render_value
+    adapters__python__urihandler__v7__run --> adapters__python__urihandler__v7__resolve_params
+    adapters__python__urihandler__v7__run --> v7__examples__js__urihandler_v7__executor
+    adapters__python__urihandler__v7__expand_bindings --> adapters__python__urihandler__v7__expand_binding
+    adapters__python__urihandler__v7__expand_bindings --> adapters__python__urihandler__v7___binding_pairs
+    adapters__python__urihandler__v7__compile_registry --> adapters__python__urihandler__v7__expand_bindings
+    adapters__python__urihandler__v7__load_registry_arg --> adapters__python__urihandler__v7__compile_registry
+    adapters__python__urihandler__dispatch --> adapters__python__urihandler__parse_uri
+    adapters__python__urihandler__dispatch --> adapters__python__urihandler__build_invocation
+    adapters__python__urihandler__dispatch --> adapters__js__fn
+    adapters__python__urihandler___runtime__merge_policy --> adapters__python__urihandler___runtime__default_policy
+    adapters__python__urihandler___runtime__evaluate_policy --> adapters__python__urihandler___runtime___matches_any
+    adapters__python__urihandler___runtime__evaluate_policy --> adapters__python__urihandler___runtime___looks_destructive
+    adapters__python__urihandler___runtime__run_spawn --> adapters__python__urihandler___runtime___truncate
+    adapters__python__urihandler___runtime__run_shell_template --> adapters__python__urihandler___runtime___truncate
+    adapters__python__urihandler___runtime__run_local_function --> adapters__js__fn
+    adapters__python__urihandler___runtime__run --> adapters__python__urihandler___runtime__merge_policy
+    adapters__python__urihandler___runtime__run --> adapters__python__urihandler___runtime__evaluate_policy
+    adapters__python__urihandler___runtime__run --> v7__examples__js__urihandler_v7__executor
+    adapters__python__urihandler___runtime__check --> adapters__python__urihandler___runtime__merge_policy
+    adapters__python__urihandler___runtime__check --> adapters__python__urihandler___runtime__evaluate_policy
+    adapters__python__urihandler___runtime__list_routes --> adapters__python__urihandler___runtime__merge_policy
+    adapters__python__urihandler___runtime__list_routes --> adapters__python__urihandler___runtime__evaluate_policy
+    adapters__python__urihandler___runtime__main --> adapters__python__urihandler___runtime__load_registry_arg
+    adapters__python__urihandler___scan__emit_json --> adapters__python__urihandler___scan__write_json
+    adapters__python__urihandler___scan__normalize_binding --> adapters__python__urihandler___scan__infer_kind
+    adapters__python__urihandler___scan__binding_to_route_source --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__route_source_to_binding --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__load_bindings_from_manifest --> adapters__python__urihandler___scan__route_source_to_binding
+    adapters__python__urihandler___scan__load_bindings_from_manifest --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__build_binding_document --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__build_binding_document --> adapters__python__urihandler___scan__now_iso
+    adapters__python__urihandler___scan__compile_registry_document --> adapters__python__urihandler___scan__load_bindings_from_manifest
+    adapters__python__urihandler___scan__compile_registry_document --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__compile_registry_document --> adapters__python__urihandler___scan__binding_to_route_source
+    adapters__python__urihandler___scan__scan_manifest_files --> adapters__python__urihandler___scan__load_bindings_from_manifest
+    adapters__python__urihandler___scan__scan_manifest_files --> adapters__python__urihandler___scan__load_json
+    adapters__python__urihandler___scan__scan_manifest_files --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__github_dependency_binding --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__github_dependency_binding --> adapters__python__urihandler___scan__slugify
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__load_json
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__github_dependency_binding
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__npm_command_for_script
+    adapters__python__urihandler___scan__scan_package_json --> adapters__python__urihandler___scan__slugify
+    adapters__python__urihandler___scan__scan_pyproject --> adapters__python__urihandler___scan___read_toml
+    adapters__python__urihandler___scan__scan_pyproject --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_pyproject --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_pyproject --> adapters__python__urihandler___scan__github_dependency_binding
+    adapters__python__urihandler___scan__scan_pyproject --> adapters__python__urihandler___scan__slugify
+    adapters__python__urihandler___scan__scan_makefile --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_makefile --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_makefile --> adapters__python__urihandler___scan__slugify
+    adapters__python__urihandler___scan__scan_shell_script --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_shell_script --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_shell_script --> adapters__python__urihandler___scan__slugify
+    adapters__python__urihandler___scan__scan_python_code --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_python_code --> adapters__python__urihandler___scan__module_ref_for_python
+    adapters__python__urihandler___scan__scan_python_code --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_js_code --> adapters__python__urihandler___scan__normalize_binding
+    adapters__python__urihandler___scan__scan_js_code --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_docker_compose --> adapters__python__urihandler___scan__parse_compose_label_line
+    adapters__python__urihandler___scan__scan_docker_compose --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_docker_compose --> adapters__python__urihandler___scan__route_source_to_binding
+    adapters__python__urihandler___scan__scan_openapi --> adapters__python__urihandler___scan__load_json
+    adapters__python__urihandler___scan__scan_openapi --> adapters__python__urihandler___scan__route_source_to_binding
+    adapters__python__urihandler___scan__scan_openapi --> adapters__python__urihandler___scan__relpath
+    adapters__python__urihandler___scan__scan_path --> adapters__python__urihandler___scan__iter_project_files
+    adapters__python__urihandler___scan__scan_path --> adapters__python__urihandler___scan__scan_manifest_files
+    adapters__python__urihandler___scan__scan_path --> adapters__python__urihandler___scan__scan_package_json
+    adapters__python__urihandler___scan__scan_path --> adapters__python__urihandler___scan__scan_pyproject
+    adapters__python__urihandler___scan__scan_path --> adapters__python__urihandler___scan__scan_makefile
+    adapters__python__urihandler___scan__scan_github --> adapters__python__urihandler___scan__scan_path
+    adapters__python__urihandler___scan__load_binding_source --> adapters__python__urihandler___scan__load_json
+    adapters__python__urihandler___scan__load_binding_source --> adapters__python__urihandler___scan__load_bindings_from_manifest
+    adapters__python__urihandler___scan__load_binding_source --> adapters__python__urihandler___scan__scan_path
+    adapters__python__urihandler___scan__load_binding_source --> adapters__python__urihandler___scan__route_source_to_binding
+    adapters__python__urihandler___scan__load_binding_sources --> adapters__python__urihandler___scan__load_binding_source
+    adapters__python__urihandler___scan__load_registry_arg --> adapters__python__urihandler___scan__load_json
+    adapters__python__urihandler___scan__load_registry_arg --> adapters__python__urihandler___scan__compile_registry_document
+    adapters__python__urihandler___scan__load_registry_arg --> adapters__python__urihandler___scan__build_binding_document
+    adapters__python__urihandler___scan__load_registry_arg --> adapters__python__urihandler___scan__scan_path
+    adapters__python__urihandler___scan__list_bindings --> adapters__python__urihandler___scan__load_binding_sources
+    adapters__python__urihandler___scan__list_bindings --> adapters__python__urihandler___scan__normalize_binding
+    v8__examples__html_uri_app__backend__binding_document --> v8__examples__html_uri_app__backend__read_json
+    v8__examples__html_uri_app__backend__registry --> adapters__python__urihandler__v8__compile_registry
+    v8__examples__html_uri_app__backend__registry --> v8__examples__html_uri_app__backend__binding_document
+    v8__examples__html_uri_app__backend__routes --> adapters__python__urihandler__v8__expand_bindings
+    v8__examples__html_uri_app__backend__routes --> v8__examples__html_uri_app__backend__binding_document
+    v8__examples__html_uri_app__backend__dispatch --> v8__examples__html_uri_app__backend__add_log
+    v8__examples__html_uri_app__backend__dispatch --> v8__examples__html_uri_app__backend__env_bool
+    v8__examples__html_uri_app__backend__dispatch --> v8__examples__html_uri_app__backend__registry
+    v8__examples__html_uri_app__backend__dispatch --> v8__examples__html_uri_app__backend__execute_policy
+    v8__examples__html_uri_app__backend__dispatch_tool --> v8__examples__html_uri_app__backend__registry
+    v8__examples__html_uri_app__backend__dispatch_tool --> v8__examples__html_uri_app__backend__add_log
+    v8__examples__html_uri_app__backend__dispatch_tool --> v8__examples__html_uri_app__backend__env_bool
+    v8__examples__html_uri_app__backend__dispatch_tool --> adapters__python__urihandler__v8_mcp__call_tool
+    v8__examples__html_uri_app__backend__Handler__log_message --> v8__examples__html_uri_app__backend__add_log
+    v8__examples__html_uri_app__backend__Handler__do_GET --> v8__examples__html_uri_app__backend__json_response
+    v8__examples__html_uri_app__backend__Handler__do_GET --> adapters__python__urihandler__v8__validate_binding_document
+    v8__examples__html_uri_app__backend__Handler__do_GET --> adapters__python__urihandler__v8_mcp__to_mcp_manifest
+    v8__examples__html_uri_app__backend__Handler__do_GET --> adapters__python__urihandler__v8_mcp__to_a2a_card
+    v8__examples__html_uri_app__backend__Handler__do_GET --> v7__examples__html_uri_app__uri_runtime_v7__routes
+    v8__examples__html_uri_app__backend__Handler__do_POST --> v8__examples__html_uri_app__backend__json_response
+    v8__examples__html_uri_app__backend__Handler__do_POST --> v8__examples__html_uri_app__backend__add_log
+    v8__examples__html_uri_app__backend__Handler__do_POST --> v7__examples__html_uri_app__uri_runtime_v7__dispatch
+    v8__examples__html_uri_app__backend__Handler__do_POST --> v8__examples__html_uri_app__backend__dispatch_tool
+    v8__examples__html_uri_app__backend__main --> v8__examples__html_uri_app__backend__load_env
+    v8__examples__html_uri_app__backend__main --> v8__examples__html_uri_app__backend__add_log
+    v8__examples__html_uri_app__app__routeResponse --> v8__examples__html_uri_app__app__renderActions
+    v8__examples__html_uri_app__app__routeResponse --> v8__examples__html_uri_app__app__renderForm
+    v8__examples__html_uri_app__app__renderActions --> v8__examples__html_uri_app__app__classFor
+    v8__examples__html_uri_app__app__renderActions --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__renderActions --> v8__examples__html_uri_app__app__iconFor
+    v8__examples__html_uri_app__app__renderForm --> v8__examples__html_uri_app__app__schemaFor
+    v8__examples__html_uri_app__app__renderForm --> v8__examples__html_uri_app__app__payloadDefaults
+    v8__examples__html_uri_app__app__renderForm --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__required --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__defaults --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__inputType --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__refreshLogs --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__data --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__card --> v8__examples__html_uri_app__app__renderToolList
+    v8__examples__html_uri_app__app__renderToolList --> v8__examples__html_uri_app__app__escapeHtml
+    v8__examples__html_uri_app__app__iconFor --> v8__examples__html_uri_app__app__classFor
+    v8__examples__docker_uri_flow__shell_worker__server__Handler__do_GET --> v7__examples__js__urihandler_v7__response
+    v8__examples__docker_uri_flow__shell_worker__server__Handler__do_POST --> v7__examples__html_uri_app__uri_runtime_v7__dispatch
+    v8__examples__docker_uri_flow__shell_worker__server__Handler__do_POST --> v7__examples__js__urihandler_v7__response
+    v8__examples__docker_uri_flow__node_worker__server__server --> v8__examples__docker_uri_flow__node_worker__server__send
+    v8__examples__docker_uri_flow__node_worker__server__server --> v8__examples__docker_uri_flow__node_worker__server__readBody
+    v8__examples__docker_uri_flow__node_worker__server__server --> v8__examples__docker_uri_flow__node_worker__server__slugify
+    v8__examples__docker_uri_flow__node_worker__server__body --> v8__examples__docker_uri_flow__node_worker__server__send
+    v8__examples__docker_uri_flow__node_worker__server__slug --> v8__examples__docker_uri_flow__node_worker__server__send
+    v8__examples__docker_uri_flow__python_worker__server__dispatch --> v8__examples__docker_uri_flow__python_worker__server__normalize
+    v8__examples__docker_uri_flow__python_worker__server__dispatch --> v8__examples__docker_uri_flow__python_worker__server__summary
+    v8__examples__docker_uri_flow__python_worker__server__Handler__do_GET --> v7__examples__js__urihandler_v7__response
+    v8__examples__docker_uri_flow__python_worker__server__Handler__do_POST --> v7__examples__html_uri_app__uri_runtime_v7__dispatch
+    v8__examples__docker_uri_flow__python_worker__server__Handler__do_POST --> v7__examples__js__urihandler_v7__response
+    v8__examples__generators__php__example__UriCommand__bindingFromFunction --> v8__examples__generators__php__example__UriCommand__schemaType
+    v8__examples__decorators__example__echo_message --> adapters__python__urihandler__v8__uri_command
+    v8__examples__decorators__example__transcode --> adapters__python__urihandler__v8__uri_command
+    v8__examples__decorators__example__shell_echo --> adapters__python__urihandler__v8__uri_shell
+    examples__reference_adapters__node_server__server --> examples__reference_adapters__node_server__writeJson
+    examples__reference_adapters__node_server__server --> examples__reference_adapters__node_server__readJson
+    examples__reference_adapters__python_server__Handler__do_POST --> v7__examples__html_uri_app__uri_runtime_v7__dispatch
+    examples__reference_adapters__firmware_pseudo__handle_uri --> examples__reference_adapters__firmware_pseudo__led_set
+    adapters__python__urihandler__v8_grpc__serve --> adapters__python__urihandler__v8_grpc___route_list
+    adapters__python__urihandler__v8_grpc__call --> adapters__python__urihandler__v8_grpc__channel_target
+    adapters__python__urihandler__v8_grpc__call --> adapters__python__urihandler__v8_grpc___validate
+    adapters__python__urihandler__v8_grpc__call --> adapters__python__urihandler__v8_grpc___method
+    adapters__python__urihandler__v8_grpc__call --> v7__examples__js__urihandler_v7__run
+    adapters__python__urihandler__v8_grpc__stream --> adapters__python__urihandler__v8_grpc__channel_target
+    adapters__python__urihandler__v8_grpc__stream --> adapters__python__urihandler__v8_grpc___method
+    adapters__python__urihandler__v8_grpc__list_routes --> adapters__python__urihandler__v8_grpc__channel_target
+    adapters__python__urihandler__v8_grpc__list_routes --> adapters__python__urihandler__v8_grpc___method
+    adapters__python__urihandler___registry__normalize_route_entry --> adapters__python__urihandler___registry__default_adapter
+    adapters__python__urihandler___registry__route_from_uri --> adapters__python__urihandler___registry__parse_uri
+    adapters__python__urihandler___registry__route_from_uri --> adapters__python__urihandler___registry__translate
+    adapters__python__urihandler___registry__route_from_uri --> adapters__python__urihandler___registry__normalize_route_entry
+    adapters__python__urihandler___registry__route_from_parts --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__coerce_route_source --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__coerce_route_source --> adapters__python__urihandler___registry__route_from_parts
+    adapters__python__urihandler___registry__add_route --> adapters__python__urihandler___registry___route_entry_equal
+    adapters__python__urihandler___registry__flatten_registry_tree --> adapters__python__urihandler___registry__route_from_parts
+    adapters__python__urihandler___registry__flatten_registry_document --> adapters__python__urihandler___registry__flatten_registry_tree
+    adapters__python__urihandler___registry__flatten_registry_document --> adapters__python__urihandler___registry___get_route_entry
+    adapters__python__urihandler___registry__flatten_registry_document --> adapters__python__urihandler___registry__route_from_parts
+    adapters__python__urihandler___registry__discover_manifest --> adapters__python__urihandler___registry__flatten_registry_tree
+    adapters__python__urihandler___registry__discover_manifest --> adapters__python__urihandler___registry__flatten_registry_document
+    adapters__python__urihandler___registry__discover_manifest --> adapters__python__urihandler___registry__coerce_route_source
+    adapters__python__urihandler___registry__build_registry_document --> adapters__python__urihandler___registry__coerce_route_source
+    adapters__python__urihandler___registry__build_registry_document --> adapters__python__urihandler___registry__add_route
+    adapters__python__urihandler___registry__build_registry_document --> adapters__python__urihandler___registry__hash_uri
+    adapters__python__urihandler___registry__build_registry_document --> adapters__python__urihandler___registry___route_entry_equal
+    adapters__python__urihandler___registry__discover_docker_labels --> adapters__python__urihandler___registry__default_adapter
+    adapters__python__urihandler___registry__discover_docker_labels --> adapters__python__urihandler___registry___parse_command
+    adapters__python__urihandler___registry__discover_docker_labels --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__discover_docker_labels --> adapters__python__urihandler___registry__route_from_parts
+    adapters__python__urihandler___registry__discover_docker_inspect --> adapters__python__urihandler___registry__discover_docker_labels
+    adapters__python__urihandler___registry___default_openapi_route --> adapters__python__urihandler___registry___operation_from_method
+    adapters__python__urihandler___registry__discover_openapi --> adapters__python__urihandler___registry___default_openapi_route
+    adapters__python__urihandler___registry__discover_openapi --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__uri_handler --> adapters__python__urihandler___registry__normalize_route_entry
+    adapters__python__urihandler___registry__discover_python_modules --> adapters__python__urihandler___registry___iter_module_exports
+    adapters__python__urihandler___registry__discover_python_modules --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__discover_entry_points --> adapters__python__urihandler___registry__route_from_uri
+    adapters__python__urihandler___registry__resolve_route --> adapters__python__urihandler___registry__registry_tree
+    adapters__python__urihandler___registry__resolve_route --> adapters__python__urihandler___registry__hash_uri
+    adapters__python__urihandler___registry__hydrate_registry --> adapters__python__urihandler___registry___walk_route_entries
+    adapters__python__urihandler___registry__hydrate_registry --> adapters__python__urihandler___registry__registry_tree
+    adapters__python__urihandler___registry__exec_local_function --> adapters__js__fn
+    adapters__python__urihandler___registry__dispatch_generated --> adapters__python__urihandler___registry__parse_uri
+    adapters__python__urihandler___registry__dispatch_generated --> adapters__python__urihandler___registry__translate
+    adapters__python__urihandler___registry__dispatch_generated --> adapters__python__urihandler___registry__hash_uri
+    adapters__python__urihandler___registry__dispatch_generated --> v7__examples__js__urihandler_v7__executor
+    adapters__python__urihandler___registry__dispatch_generated --> adapters__python__urihandler___registry__resolve_route
+    adapters__python__urihandler___registry___emit_json --> adapters__python__urihandler___registry__write_json
+    adapters__python__urihandler___registry___load_sources --> adapters__python__urihandler___registry__load_json
+    adapters__python__urihandler___registry___load_sources --> adapters__python__urihandler___registry__discover_manifest
+    adapters__python__urihandler___registry___discover_python_module --> adapters__python__urihandler___registry__discover_python_modules
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__parse_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__parse_scalar
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__resolve_payload --> v8__examples__docker_uri_flow__orchestrator__flow_runner__get_path
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__registry_has_uri --> v8__examples__docker_uri_flow__orchestrator__flow_runner__route_key
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__registry_has_uri --> v8__examples__docker_uri_flow__orchestrator__flow_runner__normalize_uri
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__validate_flow_registry --> v8__examples__docker_uri_flow__orchestrator__flow_runner__registry_route_count
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__validate_flow_registry --> v8__examples__docker_uri_flow__orchestrator__flow_runner__registry_has_uri
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__wait_for_services --> v8__examples__docker_uri_flow__orchestrator__flow_runner__service_url
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__wait_for_services --> v8__examples__docker_uri_flow__orchestrator__flow_runner__json_get
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__validate_flow_registry
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__wait_for_services
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__load_registry
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__resolve_payload
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow --> v8__examples__docker_uri_flow__orchestrator__flow_runner__json_post
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__main --> v8__examples__docker_uri_flow__orchestrator__flow_runner__parse_flow
+    v8__examples__docker_uri_flow__orchestrator__flow_runner__main --> v8__examples__docker_uri_flow__orchestrator__flow_runner__run_flow
+    v8__examples__transports__transport_lib__run_via --> v8__examples__transports__transport_lib__run_inprocess
+    v8__examples__transports__transport_lib__run_via --> v8__examples__transports__transport_lib__run_queue
+    v8__examples__transports__transport_lib__run_via --> v8__examples__transports__transport_lib__serverless_handler
+    v8__examples__transports__transport_lib__run_via --> v8__examples__transports__transport_lib__start_http_worker
+    v8__examples__transports__transport_lib__available_transports --> v8__examples__transports__transport_lib__grpc_available
+
+    classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
+    class v7__examples__js__urihandler_v7__resolveParams,v7__examples__js__urihandler_v7__run,v7__examples__html_uri_app__uri_runtime_v7__resolveParams,v7__examples__html_uri_app__uri_runtime_v7__evaluatePolicy,v7__examples__html_uri_app__uri_runtime_v7__createUriRuntimeV7,v7__examples__html_uri_app__uri_runtime_v7__dispatch,adapters__c__urihandler__urihandler_parse,adapters__python__urihandler__v8__run,adapters__python__urihandler__v8__expand_binding,adapters__python__urihandler__v8__main,adapters__python__urihandler__v8_mcp__serve_mcp,adapters__python__urihandler___runtime__evaluate_policy,adapters__python__urihandler___scan__scan_path,v8__examples__docker_uri_flow__orchestrator__flow_runner__parse_flow highCC
+    class v7__examples__js__urihandler_v7__inferKind,v7__examples__js__urihandler_v7__routeRows,v7__examples__js__urihandler_v7__expandBinding,v7__examples__html_uri_app__uri_runtime_v7__expandBinding,v7__examples__html_uri_app__uri_runtime_v7__preview,adapters__js__parseUri,adapters__python__urihandler__v8_service__call,adapters__python__urihandler__v8___apply_defaults,adapters__python__urihandler__v8___binding_pairs,adapters__python__urihandler__v8__parse_param_declaration,adapters__python__urihandler__v8__validate_binding_document,adapters__python__urihandler__v8__scan_artifacts,adapters__python__urihandler__v8_mcp__main,adapters__python__urihandler__v7__resolve_params,adapters__python__urihandler__v7__run,adapters__python__urihandler__v7___binding_pairs,adapters__python__urihandler__v7__main,adapters__python__urihandler___runtime__run,adapters__python__urihandler___runtime__build_policy,adapters__python__urihandler___runtime__format_route_table,adapters__python__urihandler___runtime__main,adapters__python__urihandler___scan__infer_kind,adapters__python__urihandler___scan__normalize_binding,adapters__python__urihandler___scan__load_bindings_from_manifest,adapters__python__urihandler___scan___read_toml,adapters__python__urihandler___scan__scan_pyproject,adapters__python__urihandler___scan__scan_docker_compose,adapters__python__urihandler___scan__format_binding_table,adapters__python__urihandler___scan__main,v8__examples__html_uri_app__backend__Handler__do_GET medCC

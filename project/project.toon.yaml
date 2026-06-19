@@ -1,0 +1,52 @@
+# urihandler | 507 func | 43f | 10314L | json | 2026-06-19
+# generated in 0.00s
+
+HEALTH:
+  CC̄=3.7  critical=44 (limit:10)  dup=1  cycles=0
+
+ALERTS[20]:
+  !!! high_fan_out     main = 39 (limit:10)
+  !!! cc_exceeded      createUriRuntimeV7 = 32 (limit:15)
+  !!! high_fan_out     main = 26 (limit:10)
+  !!! high_fan_out     main = 25 (limit:10)
+  !!! high_fan_out     main = 23 (limit:10)
+  !!! high_fan_out     main = 20 (limit:10)
+  !!! high_fan_out     serve_http = 20 (limit:10)
+  !!! high_fan_out     start_http_worker = 20 (limit:10)
+  !!  cc_exceeded      parse_flow = 24 (limit:15)
+  !!  cc_exceeded      main = 21 (limit:15)
+
+MODULES[98] (top by size):
+  M[v8/examples/docker_uri_flow/generated/registry.json] 1069L C:0 F:0 CC↑0 D:0 (json)
+  M[adapters/python/urihandler/v8.py] 955L C:0 F:49 CC↑21 D:2 (python)
+  M[adapters/python/urihandler/_registry.py] 679L C:0 F:41 CC↑14 D:0 (python)
+  M[adapters/python/urihandler/_scan.py] 667L C:0 F:36 CC↑15 D:0 (python)
+  M[goal.yaml] 523L C:0 F:0 CC↑0 D:0 (yaml)
+  M[v8/examples/docker_uri_flow/generated/bindings.v8.json] 521L C:0 F:0 CC↑0 D:0 (json)
+  M[planfile.yaml] 487L C:0 F:0 CC↑0 D:0 (yaml)
+  M[adapters/python/urihandler/v7.py] 420L C:0 F:24 CC↑14 D:0 (python)
+  M[adapters/python/urihandler/_runtime.py] 418L C:1 F:18 CC↑16 D:0 (python)
+  M[v7/examples/js/urihandler-v7.js] 331L C:0 F:54 CC↑19 D:7 (javascript)
+  M[v7/examples/html_uri_app/uri-runtime-v7.js] 238L C:0 F:47 CC↑32 D:4 (javascript)
+  M[v8/examples/html_uri_app/backend.py] 227L C:1 F:18 CC↑8 D:0 (python)
+  M[v8/examples/docker_uri_flow/orchestrator/flow_runner.py] 218L C:0 F:16 CC↑24 D:0 (python)
+  M[adapters/python/urihandler/v8_grpc.py] 202L C:0 F:11 CC↑9 D:0 (python)
+  M[adapters/python/urihandler/v8_adopt.py] 192L C:0 F:8 CC↑7 D:0 (python)
+  LANGS: json:22/python:21/javascript:15/other:12/shell:12/yaml:5/c:3/yml:3/toml:2/php:1/typescript:1/txt:1
+
+HOTSPOTS[10]:
+  ★ main fan=39  // Orchestrates 39 calls
+  ★ main fan=26  // Orchestrates 26 calls
+  ★ main fan=25  // Orchestrates 25 calls
+  ★ main fan=23  // Orchestrates 23 calls
+  ★ main fan=20  // Orchestrates 20 calls
+
+REFACTOR[15]:
+  [1] H/L Split createUriRuntimeV7 (CC=32)
+  [2] H/H Split god module adapters/python/urihandler/v8.py (955L, 0 classes)
+  [3] H/H Split god module adapters/python/urihandler/_scan.py (667L, 0 classes)
+  [4] H/H Split god module adapters/python/urihandler/_registry.py (679L, 0 classes)
+  [5] H/H Split god module goal.yaml (523L, 0 classes)
+
+EVOLUTION:
+  2026-06-19 CC̄=3.7 crit=44 10314L // Automated analysis

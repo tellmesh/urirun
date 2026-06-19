@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { dispatch } from '../adapters/js/index.js';
+import { dispatch } from '../../adapters/js/index.js';
 
 const registry = {
   device: {

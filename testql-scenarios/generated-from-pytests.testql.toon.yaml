@@ -1,0 +1,14 @@
+# SCENARIO: Auto-generated from Python Tests
+# TYPE: integration
+# GENERATED: true
+
+CONFIG[2]{key, value}:
+  base_url, ${api_url:-http://localhost:8101}
+  timeout_ms, 10000
+
+# Converted 4 assertions from pytest
+ASSERT[4]{field, operator, expected}:
+  env.request.uri, ==, "python://python-worker/text/normalize"
+  normalized.result.normalized, ==, "supplier report"
+  slug.result.slug, ==, "supplier-report-june-2026"
+  env.error.type, ==, "schema"
