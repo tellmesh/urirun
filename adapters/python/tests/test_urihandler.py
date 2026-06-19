@@ -1,6 +1,6 @@
 import unittest
 
-from urirun import build_invocation, dispatch, parse_uri
+from urirun import build_invocation, dispatch, parse_uri, v2
 
 
 class UriHandlerTests(unittest.TestCase):
@@ -50,6 +50,34 @@ class UriHandlerTests(unittest.TestCase):
             dispatch("device://device-01/led/set/on", {}, {})
         with self.assertRaises(KeyError):
             dispatch("device://device-01/led/set/on", {"device": {}}, {})
+
+    def test_v2_connector_bindings_from_decorators(self):
+        previous = dict(v2.DECORATED_BINDINGS)
+        v2.DECORATED_BINDINGS.clear()
+        try:
+            @v2.uri_command("demo://host/http/query/status", meta={"connector": "demo"})
+            def demo_status(url: str, expectStatus: int = 200):
+                return ["demo-http-check", "{url}", "{expectStatus}"]
+
+            @v2.uri_command("other://host/example/command/run", meta={"connector": "other"})
+            def other_command(name: str):
+                return ["echo", "{name}"]
+
+            document = v2.connector_bindings(connector="demo")
+            self.assertEqual(document["version"], "urirun.bindings.v2")
+            self.assertEqual(list(document["bindings"]), ["demo://host/http/query/status"])
+
+            route = document["bindings"]["demo://host/http/query/status"]
+            self.assertEqual(route["argv"], ["demo-http-check", "{url}", "{expectStatus}"])
+            self.assertEqual(route["inputSchema"]["required"], ["url"])
+            self.assertFalse(route["inputSchema"]["additionalProperties"])
+
+            registry = v2.compile_registry(document)
+            routes = v2.list_routes(registry)
+            self.assertEqual([route["uri"] for route in routes], ["demo://host/http/query/status"])
+        finally:
+            v2.DECORATED_BINDINGS.clear()
+            v2.DECORATED_BINDINGS.update(previous)
 
 
 if __name__ == "__main__":

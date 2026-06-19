@@ -48,6 +48,20 @@ urirun validate generated/bindings.v2.json
 urirun list generated/registry.json
 ```
 
+Connector packages can also generate bindings directly from decorated Python
+functions:
+
+```python
+from urirun import v2
+
+@v2.uri_command("httpcheck://host/http/query/status", meta={"connector": "http-check"})
+def status_command(url: str, expectStatus: int = 200, timeout: float = 10.0):
+    return ["urirun-http-check", "status", "{url}", "--expect-status", "{expectStatus}"]
+
+def urirun_bindings():
+    return v2.connector_bindings(connector="http-check")
+```
+
 
 ## License
 

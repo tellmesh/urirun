@@ -19,7 +19,7 @@ import re
 import shlex
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
@@ -147,6 +147,43 @@ def uri_shell(uri: str, **options):
 
 def decorated_bindings() -> dict:
     return {"version": VERSION, "bindings": {uri: binding for uri, binding in DECORATED_BINDINGS.items()}}
+
+
+def _document_binding_from_expanded(entry: dict) -> dict:
+    binding = {key: value for key, value in entry.items() if key != "config"}
+    binding.update(entry.get("config") or {})
+    return json.loads(json.dumps(binding))
+
+
+def connector_bindings(
+    routes: Iterable[str] | None = None,
+    *,
+    connector: str | None = None,
+    additional_properties: bool | None = False,
+) -> dict:
+    """Return serializable bindings generated from decorated connector commands.
+
+    ``decorated_bindings()`` intentionally keeps runtime-only objects such as the
+    Pydantic input model. Connector packages usually need a JSON document they
+    can expose through ``urirun_bindings()``. This helper filters the global
+    decorator registry to one connector and returns a v2 bindings document.
+    """
+    route_filter = set(routes or [])
+    bindings: dict[str, dict] = {}
+    expanded = expand_bindings(decorated_bindings())["bindings"]
+    for entry in sorted(expanded, key=lambda item: item["uri"]):
+        uri = entry["uri"]
+        if route_filter and uri not in route_filter:
+            continue
+        binding = _document_binding_from_expanded(entry)
+        meta = binding.get("meta") or {}
+        if connector and meta.get("connector") != connector:
+            continue
+        schema = binding.get("inputSchema")
+        if additional_properties is not None and isinstance(schema, dict) and schema.get("type") == "object":
+            schema.setdefault("additionalProperties", additional_properties)
+        bindings[uri] = binding
+    return {"version": VERSION, "bindings": bindings}
 
 
 # --------------------------------------------------------------------------- #
