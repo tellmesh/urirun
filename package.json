@@ -1,6 +1,6 @@
 {
   "name": "urihandler",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Language-agnostic URI to handler adapter",
   "type": "module",
   "main": "./adapters/js/index.js",
@@ -28,5 +28,9 @@
   "scripts": {
     "test": "node --test adapters/js/*.test.js"
   },
-  "license": "MIT"
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Tom Sapletta",
+    "email": "tom@sapletta.com"
+  }
 }

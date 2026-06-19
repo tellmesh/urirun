@@ -106,4 +106,4 @@ v5 scans existing project artifacts into flat URI bindings first, then compiles 
 
 ## License
 
-MIT
+Licensed under Apache-2.0.

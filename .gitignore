@@ -1,3 +1,4 @@
+.env.example
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -10,3 +11,6 @@ build/
 *.out
 **/.urihandler/*.json
 !.urihandler/registry.merged.json
+
+# Environment variables
+.env
