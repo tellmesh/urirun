@@ -102,6 +102,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix stale references to a non-existing `tellmesh/urirun` GitHub repository in
   examples.
 
+## [0.3.8] - 2026-06-20
+
+### Test
+- Update test/urirun.test.js
+- Update testql-scenarios/generated-from-pytests.testql.toon.yaml
+
 ## [0.3.7] - 2026-06-19
 
 ### Docs
