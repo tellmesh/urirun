@@ -4,11 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urihandler"
-version = "0.1.0"
+version = "0.2.0"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
+
+[project.scripts]
+urihandler = "urihandler.v4:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

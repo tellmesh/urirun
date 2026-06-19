@@ -9,3 +9,4 @@ build/
 *.o
 *.out
 **/.urihandler/*.json
+!.urihandler/registry.merged.json

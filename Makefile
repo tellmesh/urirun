@@ -9,7 +9,7 @@ help: ## Show available commands.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "%-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: test
-test: test-js test-python test-c test-examples test-v2 test-v3 ## Run all checks.
+test: test-js test-python test-c test-examples test-v2 test-v3 test-v4 ## Run all checks.
 
 .PHONY: test-js
 test-js: ## Run JavaScript adapter tests.
@@ -49,6 +49,21 @@ test-v3: ## Run urihandler v3 checks.
 	PYTHONPATH=v3/examples/python $(PYTHON) v3/examples/python/example.py
 	$(PYTHON) -m json.tool v3/examples/json/registry.example.json >/tmp/urihandler-v3-registry.json
 
+.PHONY: test-v4
+test-v4: ## Run urihandler v4 discovery and registry checks.
+	$(NODE) --test v4/examples/js/*.test.js
+	PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s v4/examples/python -p 'test_*.py'
+	$(NODE) v4/examples/js/example.js
+	PYTHONPATH=adapters/python $(PYTHON) v4/examples/python/example.py
+	$(PYTHON) -m json.tool v4/examples/json/manifest.routes.json >/tmp/urihandler-v4-manifest.json
+	$(PYTHON) -m json.tool v4/examples/json/docker-inspect.example.json >/tmp/urihandler-v4-docker.json
+	$(PYTHON) -m json.tool v4/examples/json/openapi.example.json >/tmp/urihandler-v4-openapi.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v4 discover manifest v4/examples/json/manifest.routes.json --out /tmp/urihandler-v4-manifest.registry.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v4 discover docker-inspect v4/examples/json/docker-inspect.example.json --out /tmp/urihandler-v4-docker.registry.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v4 discover openapi v4/examples/json/openapi.example.json --base-url http://backend:8080 --out /tmp/urihandler-v4-openapi.registry.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v4 build-registry /tmp/urihandler-v4-manifest.registry.json /tmp/urihandler-v4-docker.registry.json /tmp/urihandler-v4-openapi.registry.json --out /tmp/urihandler-v4-registry.merged.json --on-conflict keep
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v4 call 'cli://local/git/status' --registry /tmp/urihandler-v4-registry.merged.json >/tmp/urihandler-v4-call.json
+
 .PHONY: clean
 clean: ## Remove local generated cache files.
-	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ v2/examples/python/__pycache__ v3/examples/python/__pycache__ __pycache__
+	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ v2/examples/python/__pycache__ v3/examples/python/__pycache__ v4/examples/python/__pycache__ __pycache__

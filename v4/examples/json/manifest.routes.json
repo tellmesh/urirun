@@ -1,0 +1,35 @@
+{
+  "routes": [
+    {
+      "package": "cli",
+      "resource": "git",
+      "operation": "status",
+      "routeEntry": {
+        "kind": "cli",
+        "adapter": "spawn",
+        "config": {
+          "command": ["git", "status"]
+        }
+      }
+    },
+    {
+      "uri": "shell://local/system/restart/nginx",
+      "routeEntry": {
+        "kind": "shell",
+        "adapter": "shell-template",
+        "config": {
+          "template": "systemctl restart {0}"
+        }
+      }
+    },
+    {
+      "uri": "device://device-01/led/set/on",
+      "routeEntry": {
+        "kind": "function",
+        "adapter": "local-function",
+        "ref": "devices.led_set",
+        "config": {}
+      }
+    }
+  ]
+}
