@@ -72,6 +72,7 @@ test-v5: ## Run urihandler v5 binding scanner checks.
 	PYTHONPATH=adapters/python $(PYTHON) v5/examples/python/example.py
 	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v5 scan v5/examples/project --out /tmp/urihandler-v5.bindings.json --registry-out /tmp/urihandler-v5.registry.json --generated-at 2026-06-19T00:00:00.000Z
 	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v5 compile /tmp/urihandler-v5.bindings.json --out /tmp/urihandler-v5.registry.compiled.json --generated-at 2026-06-19T00:00:00.000Z
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v5 compile v5/examples/json/simple-bindings.example.json --out /tmp/urihandler-v5-simple.registry.json --generated-at 2026-06-19T00:00:00.000Z
 	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v5 call 'cli://local/npm/test' --registry /tmp/urihandler-v5.registry.compiled.json >/tmp/urihandler-v5-call.json
 	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v5 discover manifest v4/examples/json/manifest.routes.json --out /tmp/urihandler-v5-v4-compat.registry.json
 

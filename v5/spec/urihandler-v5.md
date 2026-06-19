@@ -10,6 +10,29 @@ existing project -> scan -> bindings.v5.json -> registry.merged.json -> dispatch
 
 ## Binding document
 
+Recommended manual format:
+
+```json
+{
+  "bindings": {
+    "shell://local/system/restart/nginx": {
+      "kind": "shell",
+      "adapter": "shell-template",
+      "template": "systemctl restart {0}"
+    },
+    "mqtt://broker/publish/home": {
+      "kind": "mqtt",
+      "adapter": "mqtt-publish",
+      "topicPrefix": "home"
+    }
+  }
+}
+```
+
+This is the simplest source-of-truth format: the URI is the key, and the value says what runtime adapter should do with it.
+
+Generated scanner output uses the equivalent list form:
+
 ```json
 {
   "version": "urihandler.bindings.v5",

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from urihandler.v5 import build_binding_document, compile_registry_document, scan_path
+from urihandler.v5 import build_binding_document, compile_registry_document, load_bindings_from_manifest, scan_path
 
 
 PROJECT = Path(__file__).resolve().parents[1] / "project"
@@ -36,6 +36,28 @@ class UriHandlerV5Tests(unittest.TestCase):
         self.assertEqual(registry["routes"]["cli"]["npm"]["test"]["config"]["command"], ["npm", "test"])
         self.assertEqual(registry["routes"]["service"]["user"]["create"]["config"]["url"], "http://user-service:8080/api/users")
         self.assertEqual(registry["routes"]["device"]["led"]["set"]["ref"], "devices.led_set")
+
+    def test_compiles_simple_uri_to_binding_map(self):
+        bindings = load_bindings_from_manifest(
+            {
+                "bindings": {
+                    "shell://local/system/restart/nginx": {
+                        "kind": "shell",
+                        "adapter": "shell-template",
+                        "template": "systemctl restart {0}",
+                    },
+                    "mqtt://broker/publish/home": {
+                        "kind": "mqtt",
+                        "adapter": "mqtt-publish",
+                        "topicPrefix": "home",
+                    },
+                }
+            }
+        )
+        registry = compile_registry_document(bindings, generated_at="2026-06-19T00:00:00.000Z")
+
+        self.assertEqual(registry["routes"]["shell"]["system"]["restart"]["config"]["template"], "systemctl restart {0}")
+        self.assertEqual(registry["routes"]["mqtt"]["publish"]["home"]["config"]["topicPrefix"], "home")
 
     def test_cli_scan_compile_and_call(self):
         with tempfile.TemporaryDirectory() as tmp:

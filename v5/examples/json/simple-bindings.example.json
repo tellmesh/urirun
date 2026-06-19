@@ -1,0 +1,25 @@
+{
+  "bindings": {
+    "shell://local/system/restart/nginx": {
+      "kind": "shell",
+      "adapter": "shell-template",
+      "template": "systemctl restart {0}"
+    },
+    "mqtt://broker/publish/home": {
+      "kind": "mqtt",
+      "adapter": "mqtt-publish",
+      "topicPrefix": "home"
+    },
+    "service://api/user/create/basic": {
+      "kind": "http",
+      "adapter": "fetch",
+      "method": "POST",
+      "url": "http://user-service:8080/api/users"
+    },
+    "cli://local/git/status": {
+      "kind": "cli",
+      "adapter": "spawn",
+      "command": ["git", "status"]
+    }
+  }
+}

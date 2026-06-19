@@ -4,6 +4,34 @@ v5 is the simple scanner layer for existing projects.
 
 It scans project artifacts into a flat binding document, then compiles those bindings to the existing v4 registry format.
 
+## Define addresses directly
+
+The simplest v5 file is a URI-to-binding map:
+
+```json
+{
+  "bindings": {
+    "shell://local/system/restart/nginx": {
+      "kind": "shell",
+      "adapter": "shell-template",
+      "template": "systemctl restart {0}"
+    },
+    "mqtt://broker/publish/home": {
+      "kind": "mqtt",
+      "adapter": "mqtt-publish",
+      "topicPrefix": "home"
+    }
+  }
+}
+```
+
+Compile it directly:
+
+```bash
+PYTHONPATH=adapters/python python -m urihandler.v5 compile v5/examples/json/simple-bindings.example.json \
+  --out /tmp/urihandler-simple.registry.json
+```
+
 ## Scan a project
 
 ```bash
