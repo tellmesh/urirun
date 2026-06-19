@@ -1,8 +1,9 @@
-import { createUriRuntime } from './uri-runtime.js';
+import { createUriRuntime, parseUri, translate } from './uri-runtime.js';
 
 const state = {
   led: 'off',
   logs: [],
+  backendLogs: [],
   portalText: '',
 };
 
@@ -10,6 +11,7 @@ function appendLog(event, detail = {}) {
   state.logs.unshift({
     at: new Date().toLocaleTimeString(),
     event,
+    source: 'frontend',
     detail,
   });
   state.logs = state.logs.slice(0, 12);
@@ -41,10 +43,6 @@ const refs = {
       rssi: -48,
     },
   }),
-  'logs.write': ({ payload }) => {
-    appendLog(payload.event || 'frontend.event', payload.detail || {});
-    return { ok: true, written: true };
-  },
   'assertions.contains': ({ payload }) => {
     const actual = String(payload.actual || '');
     const expected = String(payload.expected || '');
@@ -64,7 +62,7 @@ const adapters = {
   },
   fetch: async ({ entry, translation, payload, descriptor }) => {
     const method = entry.config.method || 'POST';
-    appendLog('http.fetch', { method: entry.config.method, url: entry.config.url, payload });
+    appendLog('http.fetch', { method, url: entry.config.url, payload });
     const response = await fetch(entry.config.url, {
       method,
       headers: method === 'GET' ? undefined : { 'Content-Type': 'application/json' },
@@ -120,16 +118,21 @@ const adapters = {
   },
 };
 
-const outputEl = document.querySelector('#output');
-const logEl = document.querySelector('#logs');
-const stateEl = document.querySelector('#state');
-const routeCountEl = document.querySelector('#route-count');
+const els = {
+  actions: document.querySelector('#actions'),
+  output: document.querySelector('#output'),
+  logs: document.querySelector('#logs'),
+  state: document.querySelector('#state'),
+  routeCount: document.querySelector('#route-count'),
+};
 
 const bindingDocument = await fetch('./bindings.json').then((response) => response.json());
 const runtime = createUriRuntime({ bindings: bindingDocument, adapters, refs, state });
 window.uriApp = runtime;
 
-routeCountEl.textContent = Object.keys(runtime.routes).length;
+els.routeCount.textContent = Object.keys(runtime.routes).length;
+renderActions();
+await refreshBackendLogs();
 render();
 
 document.addEventListener('click', async (event) => {
@@ -144,30 +147,78 @@ document.addEventListener('click', async (event) => {
 });
 
 async function run(uri, payload) {
-  try {
-    const result = await runtime.dispatch(uri, payload);
-    if (!uri.startsWith('log://')) {
-      await runtime.dispatch('log://frontend/session/write/event', {
-        event: 'frontend.dispatch',
-        detail: { uri, ok: result.ok !== false },
-      });
-    }
-    outputEl.textContent = JSON.stringify({ uri, result }, null, 2);
-  } catch (error) {
-    outputEl.textContent = JSON.stringify({ uri, error: error.message }, null, 2);
+  const envelope = await runtime.dispatchEnvelope(uri, payload);
+  if (envelope.ok && envelope.result?.logs) state.backendLogs = envelope.result.logs;
+  if (envelope.ok && !uri.startsWith('log://')) {
+    await runtime.dispatchEnvelope('log://frontend/session/write/event', {
+      event: 'frontend.dispatch',
+      detail: { uri, ok: envelope.ok },
+    });
   }
+  await refreshBackendLogs();
+  els.output.textContent = JSON.stringify(envelope, null, 2);
   render();
 }
 
+async function refreshBackendLogs() {
+  try {
+    const result = await runtime.dispatch('log://backend/logs/query/recent');
+    state.backendLogs = result.logs || [];
+  } catch (error) {
+    appendLog('backend.logs.unavailable', { error: error.message });
+  }
+}
+
+function renderActions() {
+  els.actions.innerHTML = runtime.listRoutes()
+    .map((item) => {
+      const uri = item.meta?.uri || item.uri;
+      const payload = item.meta?.payload ? JSON.stringify(item.meta.payload) : '';
+      return `
+        <button class="action ${escapeHtml(classFor(item))}" data-uri="${escapeHtml(uri)}" data-payload='${escapeHtml(payload)}'>
+          <span>${escapeHtml(iconFor(item))}</span>
+          <strong>${escapeHtml(labelFor(item))}</strong>
+          <code>${escapeHtml(uri)}</code>
+        </button>`;
+    })
+    .join('');
+}
+
+function labelFor(item) {
+  if (item.meta?.label) return item.meta.label;
+  const translation = translate(parseUri(item.uri));
+  return `${translation.resource} ${translation.operation}`;
+}
+
+function classFor(item) {
+  return parseUri(item.uri).package;
+}
+
+function iconFor(item) {
+  const key = classFor(item);
+  return {
+    assertion: 'A',
+    browser: 'B',
+    device: 'D',
+    log: 'L',
+    mqtt: 'M',
+    service: 'S',
+    shell: 'H',
+    workflow: 'W',
+  }[key] || key.slice(0, 1).toUpperCase();
+}
+
 function render() {
-  stateEl.textContent = JSON.stringify({ led: state.led, portalText: state.portalText }, null, 2);
-  logEl.innerHTML = state.logs
-    .map((item) => `<li><strong>${item.at}</strong><span>${item.event}</span><code>${escapeHtml(JSON.stringify(item.detail))}</code></li>`)
+  state.logs = state.logs.slice(0, 12);
+  state.backendLogs = state.backendLogs.slice(0, 20);
+  els.state.textContent = JSON.stringify({ led: state.led, portalText: state.portalText }, null, 2);
+  els.logs.innerHTML = [...state.logs, ...state.backendLogs]
+    .map((item) => `<li><strong>${escapeHtml(item.at || '')}</strong><span>${escapeHtml(item.source || 'frontend')}: ${escapeHtml(item.event || '')}</span><code>${escapeHtml(JSON.stringify(item.detail || {}))}</code></li>`)
     .join('');
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (char) => ({
+  return String(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',

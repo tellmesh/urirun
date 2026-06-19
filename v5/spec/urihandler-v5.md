@@ -98,6 +98,11 @@ urihandler scan ./project \
 urihandler compile .urihandler/bindings.v5.json \
   --out .urihandler/registry.merged.json
 
+urihandler compile ./project \
+  --out .urihandler/registry.merged.json
+
+urihandler list ./project
+
 urihandler call 'cli://local/npm/test' \
   --registry .urihandler/registry.merged.json
 ```

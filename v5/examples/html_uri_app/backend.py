@@ -71,6 +71,7 @@ def normalize_binding(uri: str, binding: dict) -> dict:
         "adapter": binding.get("adapter") or binding.get("kind") or "local-function",
         "config": config,
         "ref": binding.get("ref"),
+        "meta": binding.get("meta") or {},
     }
 
 
@@ -81,6 +82,18 @@ def load_routes() -> dict:
         descriptor = parse_uri(uri)
         routes[descriptor["route"]] = normalize_binding(uri, binding)
     return routes
+
+
+def list_routes() -> list[dict]:
+    return [
+        {
+            "uri": entry["uri"],
+            "kind": entry["kind"],
+            "adapter": entry["adapter"],
+            "meta": entry.get("meta") or {},
+        }
+        for entry in sorted(load_routes().values(), key=lambda item: item["uri"])
+    ]
 
 
 def add_log(event: str, detail: dict | None = None, source: str = "backend") -> dict:
@@ -120,12 +133,15 @@ def dispatch_backend(uri: str, payload: dict | None = None) -> dict:
     adapter = entry["adapter"]
     config = entry["config"]
 
-    if descriptor["package"] == "log" and descriptor["resource"] in {"session", "logs"}:
-        if descriptor["operation"] in {"write", "query"}:
+    if descriptor["package"] == "log":
+        if descriptor["resource"] in {"session", "logs"} and descriptor["operation"] == "write":
             event = payload.get("event") or "frontend.event"
             detail = payload.get("detail") or {"payload": payload}
             add_log(event, detail, source=descriptor["target"])
             return {"ok": True, "written": True, "logs": recent_logs()}
+        if descriptor["resource"] == "logs" and descriptor["operation"] == "query":
+            limit = int(payload.get("limit") or (descriptor["args"][0] if descriptor["args"] else 20))
+            return {"ok": True, "logs": recent_logs(limit)}
 
     if kind == "shell" or "template" in config:
         command = shell_command(config.get("template", ""), descriptor["args"])
@@ -191,6 +207,9 @@ class Handler(BaseHTTPRequestHandler):
             params = parse_qs(parsed.query)
             limit = int((params.get("limit") or ["20"])[0])
             json_response(self, 200, {"ok": True, "logs": recent_logs(limit)})
+            return
+        if parsed.path == "/api/routes":
+            json_response(self, 200, {"ok": True, "routes": list_routes()})
             return
         self.serve_static(parsed.path)
 

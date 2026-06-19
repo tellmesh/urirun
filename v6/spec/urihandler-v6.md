@@ -76,22 +76,46 @@ own policy:
 
 ## CLI
 
+v6 is built to need as few declarations as possible. Every command takes a
+**single source** that can be a project directory, a prebuilt registry, or a
+bindings file — directories are scanned and compiled in memory, so no
+intermediate files are required. Allow rules can be passed inline with
+`--allow` instead of authoring a policy file.
+
 ```bash
-# resolve + show the decision only
-urihandler check 'cli://local/npm/test' --registry .urihandler/registry.merged.json --policy policy.json
+# discover what is available (table; add --json for machines)
+urihandler list ./project
+urihandler list ./project --allow 'cli://local/npm/*'   # adds an EXECUTE column
 
-# dry-run (default, identical to v5 call output under result)
-urihandler run 'cli://local/npm/test' --registry .urihandler/registry.merged.json
+# the one-liner: point at a folder, allow inline, execute. No files in between.
+urihandler run 'cli://local/npm/test' ./project --execute --allow 'cli://local/npm/*'
 
-# actually execute, gated by policy
-urihandler run 'cli://local/npm/test' --registry .urihandler/registry.merged.json --policy policy.json --execute
+# decision only, no run
+urihandler check 'cli://local/npm/test' ./project --allow 'cli://local/npm/*'
+
+# dry-run (default): result mirrors the v5 simulated output
+urihandler run 'cli://local/npm/test' ./project
+
+# a saved registry + policy file still work exactly the same
+urihandler run 'cli://local/npm/test' --registry r.json --policy policy.json --execute
 
 # destructive routes need --confirm
-urihandler run 'cli://local/make/deploy' --registry r.json --policy p.json --execute --confirm
+urihandler run 'cli://local/make/deploy' ./project --execute --allow 'cli://local/make/*' --confirm
 ```
 
 `scan`, `compile`, `discover`, `build-registry` and `call` are delegated to the
 v5/v4 CLI, so v6 is a drop-in superset.
+
+### Commands
+
+| command | purpose |
+|---------|---------|
+| `list <source>`   | list available URIs (kind, adapter, and EXECUTE decision with a policy) |
+| `check <uri> <source>` | show the policy decision for one URI without running it |
+| `run <uri> <source>`   | dry-run (default) or `--execute` through the policy gate |
+
+`<source>` is optional and defaults to `.urihandler/registry.merged.json`.
+`--allow`/`--deny` (repeatable globs) merge with any `--policy` file.
 
 ## Adapters
 

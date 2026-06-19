@@ -1,0 +1,44 @@
+{
+  "bindings": {
+    "cli://local/git/status": "git status",
+
+    "media://local/video/transcode": {
+      "kind": "cli",
+      "adapter": "spawn",
+      "command": ["ffmpeg", "-i", "{input}", "-vf", "scale={width}:{height}", "{output}"],
+      "params": {
+        "input": { "required": true },
+        "output": { "required": true },
+        "width": { "default": 1280 },
+        "height": { "default": 720 }
+      }
+    },
+
+    "media://local/audio/extract": "ffmpeg -i {input} -vn -acodec copy {output}",
+
+    "container://api/db/backup": {
+      "kind": "docker",
+      "adapter": "docker-exec",
+      "command": ["pg_dump", "-U", "{user}", "{database}"],
+      "params": { "user": { "default": "postgres" }, "database": { "required": true } }
+    },
+
+    "img://ffmpeg/video/thumbnail": {
+      "kind": "docker",
+      "adapter": "docker-run",
+      "image": "jrottenberg/ffmpeg",
+      "mount": ".",
+      "command": ["-i", "{input}", "-ss", "{at}", "-vframes", "1", "{output}"],
+      "params": { "input": { "required": true }, "output": { "required": true }, "at": { "default": "00:00:01" } }
+    },
+
+    "script://local/deploy/run": {
+      "kind": "cli",
+      "adapter": "spawn",
+      "command": ["sh", "deploy.sh"],
+      "env": { "RELEASE": "{release}", "TARGET": "{target}" },
+      "cwd": ".",
+      "params": { "release": { "required": true } }
+    }
+  }
+}

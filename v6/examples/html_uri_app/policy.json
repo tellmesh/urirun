@@ -1,0 +1,21 @@
+{
+  "version": "urihandler.policy.v6",
+  "defaultMode": "dry-run",
+  "execute": {
+    "allow": [
+      "device://**",
+      "log://**",
+      "service://api/user/**",
+      "browser://**",
+      "dom://**",
+      "assertion://**",
+      "mqtt://**",
+      "workflow://**"
+    ],
+    "deny": [
+      "shell://**"
+    ]
+  },
+  "allowShellTemplates": false,
+  "maxArgs": 16
+}

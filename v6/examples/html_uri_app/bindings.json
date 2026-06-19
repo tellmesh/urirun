@@ -1,0 +1,92 @@
+{
+  "bindings": {
+    "device://device-01/led/set/on": {
+      "kind": "function",
+      "adapter": "local-function",
+      "ref": "devices.ledSet",
+      "meta": { "label": "LED on" }
+    },
+    "device://device-01/telemetry/query/latest": {
+      "kind": "function",
+      "adapter": "local-function",
+      "ref": "devices.telemetryLatest",
+      "meta": { "label": "Telemetry" }
+    },
+    "log://frontend/session/write/event": {
+      "kind": "function",
+      "adapter": "local-function",
+      "ref": "logs.write",
+      "meta": { "label": "Write log", "payload": { "event": "frontend.click" } }
+    },
+    "log://backend/logs/query/recent": {
+      "kind": "http",
+      "adapter": "fetch",
+      "method": "GET",
+      "url": "/api/logs/recent",
+      "meta": { "label": "Recent logs" }
+    },
+    "service://api/user/create/basic": {
+      "kind": "http",
+      "adapter": "fetch",
+      "method": "POST",
+      "url": "/api/users",
+      "meta": { "label": "Create user", "payload": { "name": "Ada" } }
+    },
+    "service://api/user/delete/basic": {
+      "kind": "http",
+      "adapter": "fetch",
+      "method": "DELETE",
+      "url": "/api/users/ada",
+      "policy": { "requireConfirm": true },
+      "meta": { "label": "Delete user", "payload": { "name": "Ada" } }
+    },
+    "mqtt://broker/publish/home": {
+      "kind": "mqtt",
+      "adapter": "mqtt-publish",
+      "topicPrefix": "home",
+      "meta": { "label": "MQTT publish", "uri": "mqtt://broker/publish/home/kitchen/light/on" }
+    },
+    "shell://local/system/restart/nginx": {
+      "kind": "shell",
+      "adapter": "shell-template",
+      "template": "systemctl restart {0}",
+      "meta": { "label": "Shell restart" }
+    },
+    "browser://chrome/page/open": {
+      "kind": "browser",
+      "adapter": "browser-open",
+      "meta": { "label": "Open page", "payload": { "url": "https://supplier-portal.example.local/reports/monthly" } }
+    },
+    "dom://chrome/active/body": {
+      "kind": "browser",
+      "adapter": "dom-read",
+      "meta": { "label": "Read DOM" }
+    },
+    "assertion://local/contains/check": {
+      "kind": "assertion",
+      "adapter": "local-function",
+      "ref": "assertions.contains",
+      "meta": { "label": "Assert contains", "payload": { "actual": "csv export ready", "expected": "csv" } }
+    },
+    "workflow://office/supplier-report/monthly": {
+      "kind": "workflow",
+      "adapter": "uri-flow",
+      "meta": { "label": "Supplier report" },
+      "steps": [
+        { "id": "open_portal", "uri": "browser://chrome/page/open", "payload": { "url": "https://supplier-portal.example.local/reports/monthly" } },
+        { "id": "read_page", "uri": "dom://chrome/active/body" },
+        { "id": "verify_csv", "uri": "assertion://local/contains/check", "payload": { "actual_from": "read_page.text", "expected": "csv" } }
+      ]
+    },
+    "workflow://bank/batch-transfer/dry-run": {
+      "kind": "workflow",
+      "adapter": "uri-flow",
+      "meta": { "label": "Bank batch" },
+      "steps": [
+        { "id": "open_bank", "uri": "browser://chrome/page/open", "payload": { "url": "https://bank.example.local/transfer/batch" } },
+        { "id": "read_batch", "uri": "dom://chrome/active/body" },
+        { "id": "stop_before_2fa", "uri": "assertion://local/contains/check", "payload": { "actual_from": "read_batch.text", "expected": "ok" } }
+      ]
+    }
+  }
+}

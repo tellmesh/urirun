@@ -17,6 +17,8 @@ runtime.dispatch(uri, payload)
 
 The runtime resolves the URI through `bindings.json`, picks the adapter and executes a local demo adapter.
 
+The visible action list is generated from `runtime.listRoutes()`. To add another UI action, add a binding and optional `meta.label`, `meta.payload`, or `meta.uri` in `bindings.json`; no extra HTML button is needed.
+
 The Python backend serves the static files and handles backend-addressed URI calls:
 
 - `POST /api/dispatch` - execute a URI from the frontend
@@ -57,6 +59,6 @@ node v5/examples/html_uri_app/test.mjs
 ## Files
 
 - `bindings.json` - URI to adapter map
-- `uri-runtime.js` - small browser-safe dispatcher
-- `app.js` - demo adapters and UI wiring
-- `index.html` - URI-driven controls
+- `uri-runtime.js` - small browser-safe dispatcher with `listRoutes()` and `dispatchEnvelope()`
+- `app.js` - demo adapters, generated UI wiring, and backend log refresh
+- `index.html` - static shell with an empty action list generated from bindings

@@ -293,6 +293,76 @@ def check(uri: str, registry: dict, policy: dict | None = None) -> dict:
     }
 
 
+def load_registry_arg(arg: str, openapi_base_url: str = "") -> dict:
+    """Resolve ``arg`` into a registry, whatever form the human gave it.
+
+    Accepts a project directory (scanned + compiled in memory), a prebuilt
+    ``urihandler.registry.v4`` document, a ``urihandler.bindings.v5`` document,
+    or any v4 manifest. This removes the scan -> compile -> registry ceremony:
+    a single path is enough.
+    """
+    path = Path(arg)
+    if path.is_dir():
+        bindings = v5.scan_path(path, openapi_base_url=openapi_base_url)
+        return v5.compile_registry_document(v5.build_binding_document(bindings))
+    data = v4.load_json(path)
+    if isinstance(data, dict) and data.get("version") == v4.REGISTRY_VERSION:
+        return data
+    return v5.compile_registry_document(data)
+
+
+def build_policy(policy_file: str | None, allow: list[str] | None = None, deny: list[str] | None = None) -> dict | None:
+    """Combine an optional policy file with inline --allow / --deny globs."""
+    raw = v4.load_json(policy_file) if policy_file else {}
+    if not (allow or deny) and not policy_file:
+        return None
+    execute = dict(raw.get("execute") or {})
+    merged = dict(raw)
+    merged["execute"] = {
+        "allow": list(execute.get("allow") or []) + list(allow or []),
+        "deny": list(execute.get("deny") or []) + list(deny or []),
+    }
+    return merged
+
+
+def list_routes(registry: dict, policy: dict | None = None) -> list[dict]:
+    """Flatten a registry into a human-scannable list of available URIs."""
+    resolved_policy = merge_policy(policy) if policy is not None else None
+    items: list[dict] = []
+    for route in v4.flatten_registry_document(registry):
+        route_entry = route["routeEntry"]
+        item = {
+            "uri": route["uri"],
+            "kind": route_entry.get("kind"),
+            "adapter": route_entry.get("adapter"),
+            "source": route.get("source", {}),
+        }
+        if resolved_policy is not None:
+            descriptor = v4.parse_uri(route["uri"])
+            translation = v4.translate(descriptor)
+            item["decision"] = evaluate_policy(
+                descriptor["normalized"], route_entry, {"args": translation["args"]}, resolved_policy
+            )
+        items.append(item)
+    items.sort(key=lambda i: i["uri"])
+    return items
+
+
+def format_route_table(items: list[dict], show_decision: bool = False) -> str:
+    if not items:
+        return "(no routes)"
+    rows = [{"uri": i["uri"], "kind": i.get("kind") or "", "adapter": i.get("adapter") or "",
+             "run": ("allow" if i.get("decision", {}).get("allowed") else "deny") if show_decision else ""}
+            for i in items]
+    headers = {"uri": "URI", "kind": "KIND", "adapter": "ADAPTER", "run": "EXECUTE"}
+    columns = ["uri", "kind", "adapter"] + (["run"] if show_decision else [])
+    widths = {c: max(len(headers[c]), *(len(r[c]) for r in rows)) for c in columns}
+    line = lambda r: "  ".join(r[c].ljust(widths[c]) for c in columns).rstrip()
+    out = [line(headers), line({c: "-" * widths[c] for c in columns})]
+    out.extend(line(r) for r in rows)
+    return "\n".join(out)
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     # Reuse the full v5/v4 CLI (scan, compile, discover, build-registry, call).
@@ -302,22 +372,31 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="urihandler")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    def add_source(p, with_uri=True):
+        if with_uri:
+            p.add_argument("uri")
+        p.add_argument("source", nargs="?", help="project directory, registry, or bindings file")
+        p.add_argument("--registry", default=".urihandler/registry.merged.json")
+        p.add_argument("--policy")
+        p.add_argument("--allow", action="append", default=[], metavar="GLOB", help="allow URIs matching glob (repeatable)")
+        p.add_argument("--deny", action="append", default=[], metavar="GLOB", help="deny URIs matching glob (repeatable)")
+
     run_parser = subparsers.add_parser("run", help="Resolve and run a URI through the policy gate")
-    run_parser.add_argument("uri")
-    run_parser.add_argument("--registry", default=".urihandler/registry.merged.json")
-    run_parser.add_argument("--policy")
+    add_source(run_parser)
     run_parser.add_argument("--payload", default="null")
     run_parser.add_argument("--execute", action="store_true", help="Actually run (default is dry-run)")
     run_parser.add_argument("--confirm", action="store_true", help="Approve routes that require confirmation")
 
     check_parser = subparsers.add_parser("check", help="Show the policy decision for a URI without running it")
-    check_parser.add_argument("uri")
-    check_parser.add_argument("--registry", default=".urihandler/registry.merged.json")
-    check_parser.add_argument("--policy")
+    add_source(check_parser)
+
+    list_parser = subparsers.add_parser("list", help="List the URIs available in a project or registry")
+    add_source(list_parser, with_uri=False)
+    list_parser.add_argument("--json", action="store_true", help="Emit JSON instead of a table")
 
     args = parser.parse_args(argv)
-    registry = v4.load_json(args.registry)
-    policy = v4.load_json(args.policy) if getattr(args, "policy", None) else None
+    registry = load_registry_arg(args.source or args.registry)
+    policy = build_policy(getattr(args, "policy", None), args.allow, args.deny)
 
     if args.command == "run":
         result = run(
@@ -335,6 +414,14 @@ def main(argv: list[str] | None = None) -> int:
         result = check(args.uri, registry, policy)
         v4._emit_json(result, "-")
         return 0 if result["decision"]["allowed"] else 1
+
+    if args.command == "list":
+        items = list_routes(registry, policy)
+        if args.json:
+            v4._emit_json(items, "-")
+        else:
+            print(format_route_table(items, show_decision=policy is not None))
+        return 0
 
     return 1
 

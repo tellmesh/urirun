@@ -504,11 +504,73 @@ def scan_github(repo: str, include_shell: bool = True, openapi_base_url: str = "
         return bindings
 
 
-def load_binding_sources(paths: list[str]) -> list[dict]:
+def load_binding_source(path: str | Path, include_shell: bool = True, openapi_base_url: str = "") -> list[dict]:
+    source_path = Path(path)
+    if source_path.is_dir():
+        return scan_path(source_path, include_shell=include_shell, openapi_base_url=openapi_base_url)
+
+    data = load_json(source_path)
+    if isinstance(data, dict) and data.get("version") == v4.REGISTRY_VERSION:
+        return [route_source_to_binding(route) for route in v4.flatten_registry_document(data, {"file": str(source_path)})]
+
+    return load_bindings_from_manifest(data, {"file": str(source_path)})
+
+
+def load_binding_sources(paths: list[str], include_shell: bool = True, openapi_base_url: str = "") -> list[dict]:
     bindings: list[dict] = []
     for path in paths:
-        bindings.extend(load_bindings_from_manifest(load_json(path), {"file": path}))
+        bindings.extend(load_binding_source(path, include_shell=include_shell, openapi_base_url=openapi_base_url))
     return bindings
+
+
+def load_registry_arg(
+    arg: str | Path,
+    include_shell: bool = True,
+    openapi_base_url: str = "",
+    generated_at: str | None = None,
+    on_conflict: str = "keep",
+) -> dict:
+    path = Path(arg)
+    if path.is_dir():
+        doc = build_binding_document(
+            scan_path(path, include_shell=include_shell, openapi_base_url=openapi_base_url),
+            generated_at=generated_at,
+        )
+        return compile_registry_document(doc, generated_at=generated_at, on_conflict=on_conflict)
+
+    data = load_json(path)
+    if isinstance(data, dict) and data.get("version") == v4.REGISTRY_VERSION:
+        return data
+    return compile_registry_document(data, generated_at=generated_at, on_conflict=on_conflict)
+
+
+def list_bindings(paths: list[str], include_shell: bool = True, openapi_base_url: str = "") -> list[dict]:
+    bindings = load_binding_sources(paths, include_shell=include_shell, openapi_base_url=openapi_base_url)
+    return sorted((normalize_binding(binding) for binding in bindings), key=lambda item: item["uri"])
+
+
+def format_binding_table(bindings: list[dict]) -> str:
+    if not bindings:
+        return "(no bindings)"
+    rows = [
+        {
+            "uri": item["uri"],
+            "kind": item.get("kind") or "",
+            "adapter": item.get("adapter") or "",
+            "source": item.get("source", {}).get("type") or item.get("source", {}).get("file") or "",
+        }
+        for item in bindings
+    ]
+    headers = {"uri": "URI", "kind": "KIND", "adapter": "ADAPTER", "source": "SOURCE"}
+    columns = ["uri", "kind", "adapter", "source"]
+    widths = {column: max(len(headers[column]), *(len(row[column]) for row in rows)) for column in columns}
+
+    def line(row: dict) -> str:
+        return "  ".join(row[column].ljust(widths[column]) for column in columns).rstrip()
+
+    output = [line(headers), line({column: "-" * widths[column] for column in columns})]
+    output.extend(line(row) for row in rows)
+    return "\n".join(output)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -535,16 +597,26 @@ def main(argv: list[str] | None = None) -> int:
     scan_github_parser.add_argument("--openapi-base-url", default="")
     scan_github_parser.add_argument("--include-shell", action=argparse.BooleanOptionalAction, default=True)
 
-    compile_parser = subparsers.add_parser("compile", help="Compile v5 bindings to a v4/v3 registry document")
+    compile_parser = subparsers.add_parser("compile", help="Compile v5 bindings, registries, or project directories")
     compile_parser.add_argument("sources", nargs="+")
     compile_parser.add_argument("--out", default=".urihandler/registry.merged.json")
     compile_parser.add_argument("--on-conflict", choices=["error", "keep", "replace"], default="keep")
     compile_parser.add_argument("--generated-at")
+    compile_parser.add_argument("--openapi-base-url", default="")
+    compile_parser.add_argument("--include-shell", action=argparse.BooleanOptionalAction, default=True)
+
+    list_parser = subparsers.add_parser("list", help="List URI bindings from files or a project directory")
+    list_parser.add_argument("sources", nargs="+")
+    list_parser.add_argument("--json", action="store_true", help="Emit JSON instead of a table")
+    list_parser.add_argument("--openapi-base-url", default="")
+    list_parser.add_argument("--include-shell", action=argparse.BooleanOptionalAction, default=True)
 
     call = subparsers.add_parser("call", help="Dispatch one URI through a generated registry")
     call.add_argument("uri")
-    call.add_argument("--registry", default=".urihandler/registry.merged.json")
+    call.add_argument("--registry", default=".urihandler/registry.merged.json", help="registry, bindings file, or project directory")
     call.add_argument("--payload", default="null")
+    call.add_argument("--openapi-base-url", default="")
+    call.add_argument("--include-shell", action=argparse.BooleanOptionalAction, default=True)
 
     args = parser.parse_args(argv)
 
@@ -565,13 +637,30 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "compile":
-        doc = build_binding_document(load_binding_sources(args.sources), generated_at=args.generated_at)
+        doc = build_binding_document(
+            load_binding_sources(args.sources, include_shell=args.include_shell, openapi_base_url=args.openapi_base_url),
+            generated_at=args.generated_at,
+        )
         emit_json(compile_registry_document(doc, generated_at=args.generated_at, on_conflict=args.on_conflict), args.out)
+        return 0
+
+    if args.command == "list":
+        bindings = list_bindings(args.sources, include_shell=args.include_shell, openapi_base_url=args.openapi_base_url)
+        if args.json:
+            emit_json(build_binding_document(bindings), "-")
+        else:
+            print(format_binding_table(bindings))
         return 0
 
     if args.command == "call":
         payload = json.loads(args.payload)
-        emit_json(v4.dispatch_generated(args.uri, load_json(args.registry), payload), "-")
+        registry = load_registry_arg(
+            args.registry,
+            include_shell=args.include_shell,
+            openapi_base_url=args.openapi_base_url,
+            on_conflict="keep",
+        )
+        emit_json(v4.dispatch_generated(args.uri, registry, payload), "-")
         return 0
 
     return 1

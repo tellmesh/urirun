@@ -3,57 +3,108 @@
     "device://device-01/led/set/on": {
       "kind": "function",
       "adapter": "local-function",
-      "ref": "devices.ledSet"
+      "ref": "devices.ledSet",
+      "meta": {
+        "label": "LED on"
+      }
     },
     "device://device-01/telemetry/query/latest": {
       "kind": "function",
       "adapter": "local-function",
-      "ref": "devices.telemetryLatest"
+      "ref": "devices.telemetryLatest",
+      "meta": {
+        "label": "Telemetry"
+      }
     },
     "log://frontend/session/write/event": {
       "kind": "http",
       "adapter": "backend-dispatch",
-      "url": "/api/dispatch"
+      "url": "/api/dispatch",
+      "meta": {
+        "label": "Write backend log",
+        "payload": {
+          "event": "frontend.manual-log",
+          "detail": {
+            "from": "bindings-meta"
+          }
+        }
+      }
     },
     "log://backend/logs/query/recent": {
       "kind": "http",
       "adapter": "fetch",
       "method": "GET",
-      "url": "/api/logs/recent"
+      "url": "/api/logs/recent",
+      "meta": {
+        "label": "Read backend logs"
+      }
     },
     "mqtt://broker/publish/home": {
       "kind": "mqtt",
       "adapter": "mqtt-publish",
-      "topicPrefix": "home"
+      "topicPrefix": "home",
+      "meta": {
+        "label": "MQTT publish",
+        "uri": "mqtt://broker/publish/home/kitchen/light/on"
+      }
     },
     "shell://local/system/restart/nginx": {
       "kind": "shell",
       "adapter": "backend-dispatch",
       "url": "/api/dispatch",
-      "template": "systemctl restart {0}"
+      "template": "systemctl restart {0}",
+      "meta": {
+        "label": "Shell template"
+      }
     },
     "service://api/user/create/basic": {
       "kind": "http",
       "adapter": "fetch",
       "method": "POST",
-      "url": "/api/users"
+      "url": "/api/users",
+      "meta": {
+        "label": "Create user",
+        "payload": {
+          "name": "Ada",
+          "source": "bindings-meta"
+        }
+      }
     },
     "browser://chrome/page/open": {
       "kind": "browser",
-      "adapter": "browser-open"
+      "adapter": "browser-open",
+      "meta": {
+        "label": "Open portal",
+        "payload": {
+          "url": "https://supplier-portal.example.local/reports/monthly"
+        }
+      }
     },
     "dom://chrome/active/body": {
       "kind": "browser",
-      "adapter": "dom-read"
+      "adapter": "dom-read",
+      "meta": {
+        "label": "Read DOM"
+      }
     },
     "assertion://local/contains/check": {
       "kind": "assertion",
       "adapter": "local-function",
-      "ref": "assertions.contains"
+      "ref": "assertions.contains",
+      "meta": {
+        "label": "Assert contains",
+        "payload": {
+          "actual": "csv export ready",
+          "expected": "csv"
+        }
+      }
     },
     "workflow://office/supplier-report/monthly": {
       "kind": "workflow",
       "adapter": "uri-flow",
+      "meta": {
+        "label": "Supplier report"
+      },
       "steps": [
         {
           "id": "open_portal",
@@ -79,6 +130,9 @@
     "workflow://portal/zus-form/dry-run": {
       "kind": "workflow",
       "adapter": "uri-flow",
+      "meta": {
+        "label": "ZUS form"
+      },
       "steps": [
         {
           "id": "open_portal",
@@ -104,6 +158,9 @@
     "workflow://bank/batch-transfer/dry-run": {
       "kind": "workflow",
       "adapter": "uri-flow",
+      "meta": {
+        "label": "Bank batch"
+      },
       "steps": [
         {
           "id": "open_bank",

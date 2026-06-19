@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { check, run } from './urihandler-v6.js';
+import { check, listRoutes, run } from './urihandler-v6.js';
 
 const ECHO_REGISTRY = {
   version: 'urihandler.registry.v4',
@@ -46,6 +46,18 @@ test('deny glob overrides allow', () => {
     execute: { allow: ['cli://**'], deny: ['cli://local/script/*'] },
   });
   assert.equal(decision.decision.allowed, false);
+});
+
+test('listRoutes returns sorted uris with policy decisions', () => {
+  // A real registry carries an index that preserves full URIs (incl. target).
+  const indexed = {
+    ...NPM_REGISTRY,
+    index: { a: { uri: 'cli://local/npm/test', route: ['cli', 'npm', 'test'], source: {} } },
+  };
+  const items = listRoutes(indexed, { execute: { allow: ['cli://local/npm/*'] } });
+  assert.equal(items[0].uri, 'cli://local/npm/test');
+  assert.equal(items[0].kind, 'cli');
+  assert.equal(items[0].decision.allowed, true);
 });
 
 test('destructive routes require confirmation', async () => {

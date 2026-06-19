@@ -32,6 +32,12 @@ PYTHONPATH=adapters/python python -m urihandler.v5 compile v5/examples/json/simp
   --out /tmp/urihandler-simple.registry.json
 ```
 
+You can also inspect the URI catalog without compiling it:
+
+```bash
+PYTHONPATH=adapters/python python -m urihandler.v5 list v5/examples/json/simple-bindings.example.json
+```
+
 ## Scan a project
 
 ```bash
@@ -48,6 +54,16 @@ PYTHONPATH=adapters/python python -m urihandler.v5 compile /tmp/urihandler-v5.bi
 
 PYTHONPATH=adapters/python python -m urihandler.v5 call 'cli://local/npm/test' \
   --registry /tmp/urihandler-v5.registry.json
+```
+
+`compile` and `call --registry` now accept a project directory too:
+
+```bash
+PYTHONPATH=adapters/python python -m urihandler.v5 compile v5/examples/project \
+  --out /tmp/urihandler-v5.registry.json
+
+PYTHONPATH=adapters/python python -m urihandler.v5 call 'cli://local/npm/test' \
+  --registry v5/examples/project
 ```
 
 ## Scan a GitHub repo

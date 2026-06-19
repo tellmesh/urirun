@@ -38,6 +38,7 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `v4/` - auto-discovery, generated registry documents, and CLI `discover/build-registry/call`
 - `v5/` - simple bindings-first scanner for existing projects, services, CLI, shell, code, and GitHub repos
 - `v6/` - execution and policy runtime: real `run`/`check` with a default-deny, default-dry-run safety gate
+- `v7/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `examples/` - end-to-end examples
 - `github/` - GitHub integration notes
 
@@ -55,6 +56,7 @@ import { dispatch } from "urihandler/v3/js";
 import { buildRegistryDocument } from "urihandler/v4/js";
 import { buildBindingDocument } from "urihandler/v5/js";
 import { run, check } from "urihandler/v6/js";
+import { compileRegistry, run as runV7 } from "urihandler/v7/js";
 ```
 
 or vendor the adapter folder directly into your repo.
@@ -112,16 +114,24 @@ Through v5 every executor only *simulated* the call and the spec's safety rules
 were never enforced. v6 adds a real runtime over the same registry, gated by a
 policy and defaulting to `dry-run` so nothing runs by accident.
 
+It is also built to need **as few declarations as possible**. Every command
+accepts a single source — a project directory, a registry, or a bindings file —
+and scans/compiles directories in memory, so there are no intermediate files.
+Allow rules can be passed inline with `--allow` instead of authoring a policy.
+
 ```bash
-# show the policy decision without running anything
-PYTHONPATH=adapters/python python -m urihandler.v6 check 'cli://local/npm/test' \
-  --registry /tmp/urihandler-v5.registry.json --policy v6/examples/json/policy.example.json
+# discover what URIs a project exposes (no scan/compile step needed)
+PYTHONPATH=adapters/python python -m urihandler.v6 list v5/examples/project
+PYTHONPATH=adapters/python python -m urihandler.v6 list v5/examples/project --allow 'cli://local/npm/*'
+
+# the one-liner: point at the folder, allow inline, execute. Nothing in between.
+PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' v5/examples/project \
+  --execute --allow 'cli://local/npm/*'
 
 # dry-run (default): result mirrors the v5 simulated output
-PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' \
-  --registry /tmp/urihandler-v5.registry.json
+PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' v5/examples/project
 
-# actually execute, only if the policy allows it (default deny otherwise)
+# a saved registry + policy file still work the same way
 PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' \
   --registry /tmp/urihandler-v5.registry.json --policy v6/examples/json/policy.example.json --execute
 ```
@@ -130,6 +140,38 @@ Key guarantees: default-deny in execute mode, argv arrays instead of shell
 strings (no injection), opt-in shell templates, and `--confirm` required for
 destructive commands. v6 also delegates `scan`/`compile`/`discover`/
 `build-registry`/`call` to the v5/v4 CLI, so it is a drop-in superset.
+
+## v7 parameter binding, Docker, and shell
+
+v6 could only feed CLI/shell adapters *positional* args from URI segments. v7
+adds named **parameter binding** so real tools (ffmpeg, kubectl, docker) are
+easy to drive, plus a string shorthand, Docker adapters, and `env`/`stdin`/
+`cwd`/`timeout`. Same registry, same policy gate.
+
+```bash
+# string shorthand + named params; dry-run prints the exact command first
+PYTHONPATH=adapters/python python -m urihandler.v7 compile v7/examples/json/bindings.v7.example.json \
+  --out /tmp/registry.json
+PYTHONPATH=adapters/python python -m urihandler.v7 run 'media://local/video/transcode' /tmp/registry.json \
+  --payload '{"input":"a.mp4","output":"b.mp4"}'
+# -> result.command: ["ffmpeg","-i","a.mp4","-vf","scale=1280:720","b.mp4"]
+
+# Docker as an execution surface (target = container; or one-shot from an image)
+PYTHONPATH=adapters/python python -m urihandler.v7 run 'container://api/db/backup' /tmp/registry.json \
+  --payload '{"database":"app"}'
+# -> docker exec api pg_dump -U postgres app
+```
+
+A binding can be as small as a string, with `{name}` placeholders bound from the
+payload, the URI query (`?input=a.mp4`), positional segments (`{0}`), and the
+target (`{target}`):
+
+```json
+{ "bindings": {
+  "cli://local/git/status": "git status",
+  "media://local/video/transcode": "ffmpeg -i {input} -vf scale={width}:{height} {output}"
+}}
+```
 
 ## License
 

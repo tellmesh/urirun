@@ -68,6 +68,13 @@ const adapters = {
 const runtime = createUriRuntime({ bindings, adapters, refs, state });
 
 assert.equal(Object.keys(runtime.routes).length, 13);
+const routeItems = runtime.listRoutes();
+assert.equal(routeItems.length, 13);
+assert.equal(routeItems.find((item) => item.uri === 'mqtt://broker/publish/home').meta.uri, 'mqtt://broker/publish/home/kitchen/light/on');
+const envelope = await runtime.dispatchEnvelope('device://device-01/led/set/on');
+assert.equal(envelope.ok, true);
+assert.equal(envelope.kind, 'function');
+assert.equal(envelope.result.state, 'on');
 assert.deepEqual(await runtime.dispatch('device://device-01/led/set/off'), { ok: true, state: 'off' });
 assert.deepEqual((await runtime.dispatch('device://device-01/telemetry/query/latest')).telemetry, { led: 'off' });
 assert.equal((await runtime.dispatch('mqtt://broker/publish/home/kitchen/light/on')).topic, 'home/broker/kitchen/light/on');

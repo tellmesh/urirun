@@ -6,7 +6,13 @@ import unittest
 from pathlib import Path
 
 from urihandler.v5 import build_binding_document, compile_registry_document, scan_path
-from urihandler.v6 import check, run
+from urihandler.v6 import (
+    build_policy,
+    check,
+    list_routes,
+    load_registry_arg,
+    run,
+)
 
 PROJECT = Path(__file__).resolve().parents[3] / "v5" / "examples" / "project"
 
@@ -105,6 +111,45 @@ class UriHandlerV6ExecutionTests(unittest.TestCase):
         self.assertEqual(result["error"]["type"], "PolicyError")
 
 
+class UriHandlerV6ErgonomicsTests(unittest.TestCase):
+    def test_load_registry_arg_accepts_a_project_directory(self):
+        registry = load_registry_arg(str(PROJECT))
+        self.assertEqual(registry["version"], "urihandler.registry.v4")
+        self.assertIn("test", registry["routes"]["cli"]["npm"])
+
+    def test_load_registry_arg_accepts_a_prebuilt_registry(self):
+        registry = build_registry()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "registry.json"
+            path.write_text(json.dumps(registry), encoding="utf-8")
+            self.assertEqual(load_registry_arg(str(path)), registry)
+
+    def test_list_routes_returns_sorted_uris_with_decision(self):
+        registry = build_registry()
+        items = list_routes(registry, build_policy(None, ["cli://local/npm/*"], []))
+        uris = [i["uri"] for i in items]
+        self.assertEqual(uris, sorted(uris))
+        decisions = {i["uri"]: i["decision"]["allowed"] for i in items}
+        self.assertTrue(decisions["cli://local/npm/test"])
+        self.assertFalse(decisions["cli://local/script/deploy"])
+
+    def test_build_policy_merges_file_and_inline_globs(self):
+        policy = build_policy(None, ["a://*"], ["b://*"])
+        self.assertEqual(policy["execute"]["allow"], ["a://*"])
+        self.assertEqual(policy["execute"]["deny"], ["b://*"])
+        self.assertIsNone(build_policy(None, [], []))
+
+    def test_directory_plus_inline_allow_runs_without_intermediate_files(self):
+        result = run(
+            "cli://local/npm/test",
+            load_registry_arg(str(PROJECT)),
+            mode="dry-run",
+            policy=build_policy(None, ["cli://local/npm/*"], []),
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["command"], ["npm", "test"])
+
+
 class UriHandlerV6CliTests(unittest.TestCase):
     def test_cli_run_and_check(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -126,6 +171,21 @@ class UriHandlerV6CliTests(unittest.TestCase):
                 capture_output=True, text=True,
             )
             self.assertFalse(json.loads(check_result.stdout)["decision"]["allowed"])
+
+    def test_cli_list_directly_on_a_directory(self):
+        listing = subprocess.run(
+            [sys.executable, "-m", "urihandler.v6", "list", str(PROJECT), "--json"],
+            check=True, capture_output=True, text=True,
+        )
+        uris = {item["uri"] for item in json.loads(listing.stdout)}
+        self.assertIn("cli://local/npm/test", uris)
+
+        table = subprocess.run(
+            [sys.executable, "-m", "urihandler.v6", "list", str(PROJECT), "--allow", "cli://local/npm/*"],
+            check=True, capture_output=True, text=True,
+        )
+        self.assertIn("EXECUTE", table.stdout)
+        self.assertIn("allow", table.stdout)
 
     def test_cli_delegates_scan_to_v5(self):
         with tempfile.TemporaryDirectory() as tmp:

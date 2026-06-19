@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import {
   dispatchGenerated,
+  flattenRegistryDocument,
   registryTree,
 } from '../../../v4/examples/js/urihandler-v4.js';
 import { parseUri, translate } from '../../../v3/examples/js/urihandler-v3.js';
@@ -188,6 +189,26 @@ export async function run(uri, registry, payload = null, { mode = 'dry-run', pol
     envelope.error = { type: err.name || 'Error', message: err.message };
   }
   return envelope;
+}
+
+export function listRoutes(registry, policy) {
+  const merged = policy === undefined ? undefined : mergePolicy(policy);
+  return flattenRegistryDocument(registry)
+    .map((route) => {
+      const item = {
+        uri: route.uri,
+        kind: route.routeEntry.kind,
+        adapter: route.routeEntry.adapter,
+        source: route.source || {},
+      };
+      if (merged) {
+        const descriptor = parseUri(route.uri);
+        const translation = translate(descriptor);
+        item.decision = evaluatePolicy(descriptor.normalized, route.routeEntry, { args: translation.args }, merged);
+      }
+      return item;
+    })
+    .sort((a, b) => a.uri.localeCompare(b.uri));
 }
 
 export function check(uri, registry, policy) {

@@ -10,7 +10,8 @@
     "./v3/js": "./v3/examples/js/urihandler-v3.js",
     "./v4/js": "./v4/examples/js/urihandler-v4.js",
     "./v5/js": "./v5/examples/js/urihandler-v5.js",
-    "./v6/js": "./v6/examples/js/urihandler-v6.js"
+    "./v6/js": "./v6/examples/js/urihandler-v6.js",
+    "./v7/js": "./v7/examples/js/urihandler-v7.js"
   },
   "files": [
     "adapters/js/index.js",
@@ -19,12 +20,14 @@
     "v4/examples/js/urihandler-v4.js",
     "v5/examples/js/urihandler-v5.js",
     "v6/examples/js/urihandler-v6.js",
+    "v7/examples/js/urihandler-v7.js",
     "spec/urihandler-spec.md",
     "v2/spec/urihandler-v2.md",
     "v3/spec/urihandler-v3.md",
     "v4/spec/urihandler-v4.md",
     "v5/spec/urihandler-v5.md",
     "v6/spec/urihandler-v6.md",
+    "v7/spec/urihandler-v7.md",
     "README.md",
     "LICENSE"
   ],

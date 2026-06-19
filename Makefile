@@ -9,7 +9,7 @@ help: ## Show available commands.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "%-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: test
-test: test-js test-python test-c test-examples test-v2 test-v3 test-v4 test-v5 test-v6 ## Run all checks.
+test: test-js test-python test-c test-examples test-v2 test-v3 test-v4 test-v5 test-v6 test-v7 ## Run all checks.
 
 .PHONY: test-js
 test-js: ## Run JavaScript adapter tests.
@@ -83,10 +83,22 @@ test-v6: ## Run urihandler v6 execution and policy checks.
 	$(NODE) v6/examples/js/example.js
 	PYTHONPATH=adapters/python $(PYTHON) v6/examples/python/example.py
 	$(PYTHON) -m json.tool v6/examples/json/policy.example.json >/tmp/urihandler-v6-policy.json
-	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 scan v5/examples/project --out /tmp/urihandler-v6.bindings.json --registry-out /tmp/urihandler-v6.registry.json --generated-at 2026-06-19T00:00:00.000Z
-	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 check 'cli://local/npm/test' --registry /tmp/urihandler-v6.registry.json --policy v6/examples/json/policy.example.json >/tmp/urihandler-v6-check.json
-	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 run 'cli://local/npm/test' --registry /tmp/urihandler-v6.registry.json >/tmp/urihandler-v6-dryrun.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 list v5/examples/project --allow 'cli://local/npm/*'
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 check 'cli://local/npm/test' v5/examples/project --allow 'cli://local/npm/*' >/tmp/urihandler-v6-check.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v6 run 'cli://local/npm/test' v5/examples/project >/tmp/urihandler-v6-dryrun.json
+	$(NODE) v6/examples/html_uri_app/test.mjs
+
+.PHONY: test-v7
+test-v7: ## Run urihandler v7 parameter-binding, docker, and shell checks.
+	$(NODE) --test v7/examples/js/*.test.js
+	PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s v7/examples/python -p 'test_*.py'
+	$(NODE) v7/examples/js/example.js
+	PYTHONPATH=adapters/python $(PYTHON) v7/examples/python/example.py
+	$(PYTHON) -m json.tool v7/examples/json/bindings.v7.example.json >/tmp/urihandler-v7-bindings.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v7 compile v7/examples/json/bindings.v7.example.json --out /tmp/urihandler-v7.registry.json --generated-at 2026-06-19T00:00:00.000Z
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v7 run 'media://local/video/transcode' --registry /tmp/urihandler-v7.registry.json --payload '{"input":"a.mp4","output":"b.mp4"}' >/tmp/urihandler-v7-ffmpeg.json
+	PYTHONPATH=adapters/python $(PYTHON) -m urihandler.v7 list /tmp/urihandler-v7.registry.json --allow 'media://**'
 
 .PHONY: clean
 clean: ## Remove local generated cache files.
-	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ v2/examples/python/__pycache__ v3/examples/python/__pycache__ v4/examples/python/__pycache__ v5/examples/python/__pycache__ v6/examples/python/__pycache__ __pycache__
+	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urihandler/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ v2/examples/python/__pycache__ v3/examples/python/__pycache__ v4/examples/python/__pycache__ v5/examples/python/__pycache__ v6/examples/python/__pycache__ v7/examples/python/__pycache__ __pycache__
