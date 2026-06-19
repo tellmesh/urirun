@@ -1,6 +1,12 @@
 .PHONY: registry runtime-config up flow down logs test clean
 
 PYTHON ?= python3
+ROOT_ENV := ../../../.env
+
+ifneq (,$(wildcard $(ROOT_ENV)))
+include $(ROOT_ENV)
+export
+endif
 
 ifneq (,$(wildcard .env))
 include .env
@@ -45,7 +51,7 @@ flow: registry
 	docker compose --profile flow run --rm orchestrator
 
 logs:
-	docker compose logs -f pc1 pc2 pc3 pc4 orchestrator
+	docker compose logs -f pc1 pc2 pc3 pc4 dashboard orchestrator
 
 down:
 	docker compose down -v --remove-orphans

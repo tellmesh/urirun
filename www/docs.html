@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs</title>
+  <meta name="description" content="urirun documentation: getting started, naming, commands, registry, transports, and roadmap.">
+  <link rel="icon" href="assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="urirun home"><img src="assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a href="#index"><span>Docs index</span></a>
+      <a href="#getting-started"><span>Getting started</span></a>
+      <a href="#naming"><span>Naming</span></a>
+      <a href="#commands"><span>Commands</span></a>
+      <a href="#registry-and-bindings"><span>Registry</span></a>
+      <a href="#transports"><span>Transports</span></a>
+      <a href="#logo"><span>Logo</span></a>
+      <a href="#roadmap"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<section id="index">
+<h2>urirun docs</h2>
+<p><code>urirun</code> is the user-facing CLI for URI-addressed command packages. A project can declare a URI once and call it from a shell, backend, frontend, service flow, or agent tool projection.</p>
+<h3>Start here</h3>
+<ul>
+<li><a href="#getting-started">Getting started</a> - install from GitHub, scan artifacts, compile a registry, and run a URI.</li>
+<li><a href="#naming">Naming</a> - what uses <code>urirun</code> and why the GitHub repo URL still contains <code>urihandler</code>.</li>
+<li><a href="#commands">Commands</a> - CLI commands and versioned entry points.</li>
+<li><a href="#registry-and-bindings">Registry and bindings</a> - how bindings become a dispatchable registry.</li>
+<li><a href="#transports">Transports</a> - local functions, shell, Docker, HTTP, gRPC, browser, MCP, and A2A.</li>
+<li><a href="#logo">Logo</a> - generated SVG logo assets and usage notes.</li>
+<li><a href="#roadmap">Roadmap</a> - practical TODO list for making the tool easier.</li>
+</ul>
+<h3>Current recommendation</h3>
+<p>Use v8 for new projects:</p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+urirun scan ./project --out generated/bindings.v8.json --registry-out generated/registry.json
+urirun list generated/registry.json
+</code></pre>
+<p>Keep v7 only for older examples that depend on the first parameter-binding contract.</p>
+</section>
+<section id="getting-started">
+<h2>Getting started</h2>
+<p>Install directly from GitHub:</p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+</code></pre>
+<p>The installed CLI and Python import namespace are both <code>urirun</code>.</p>
+<h3>Generate a registry</h3>
+<p>Scan a project and compile a runtime registry in one command:</p>
+<pre><code>urirun scan ./project \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json
+</code></pre>
+<p>The scanner can read explicit binding files, Dockerfile labels, package scripts, Python entry points, Makefile targets, and shell scripts.</p>
+<h3>Inspect routes</h3>
+<pre><code>urirun validate generated/bindings.v8.json
+urirun list generated/registry.json
+</code></pre>
+<h3>Run a URI</h3>
+<p>Dry-run is the default for command-like routes:</p>
+<pre><code>urirun run &#039;cli://local/git/status&#039; --registry generated/registry.json
+</code></pre>
+<p>For real execution, use a policy file and the <code>--execute</code> flag:</p>
+<pre><code>urirun run &#039;cli://local/git/status&#039; \
+  --registry generated/registry.json \
+  --policy policy.json \
+  --allow &#039;cli://local/**&#039; \
+  --execute
+</code></pre>
+<p>Keep shell templates behind an explicit policy with <code>allowShellTemplates: true</code>.</p>
+</section>
+<section id="naming">
+<h2>Naming</h2>
+<p>The public runtime name is <code>urirun</code>. The GitHub repository URL is still <code>tellmesh/urihandler</code>.</p>
+<h3>Use `urirun` for runtime surfaces</h3>
+<p>Use <code>urirun</code> for:</p>
+<ul>
+<li>Python distribution name</li>
+<li>Python import namespace</li>
+<li>JS package name and imports</li>
+<li>primary CLI command</li>
+<li>versioned CLI commands</li>
+<li>JSON document versions</li>
+<li>Docker/OCI labels</li>
+<li>C firmware adapter files</li>
+<li>documentation title</li>
+<li>logo and website branding</li>
+</ul>
+<p>Recommended commands:</p>
+<pre><code>urirun --help
+urirun scan ./project
+urirun validate generated/bindings.v8.json
+urirun list generated/registry.json
+urirun run &#039;tool://local/report/render&#039; --registry generated/registry.json
+</code></pre>
+<p>Version-specific CLIs are also available:</p>
+<pre><code>urirun-v7 --help
+urirun-v8 --help
+</code></pre>
+<p>Examples:</p>
+<pre><code>from urirun import v8
+from urirun.v8 import uri_command
+</code></pre>
+<pre><code>import { parseUri } from &quot;urirun&quot;;
+</code></pre>
+<pre><code>{ &quot;version&quot;: &quot;urirun.bindings.v8&quot; }
+</code></pre>
+<pre><code>LABEL io.tellmesh.urirun.manifest=&quot;/app/bindings.json&quot;
+</code></pre>
+<h3>Keep `urihandler` only for the repository URL</h3>
+<p>The current remote is:</p>
+<pre><code>git@github.com:tellmesh/urihandler.git
+</code></pre>
+<p>That is why install commands still use:</p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+npm install github:tellmesh/urihandler
+</code></pre>
+<p>Historical changelog entries can also mention <code>urihandler</code>.</p>
+</section>
+<section id="commands">
+<h2>Commands</h2>
+<h3>v8 CLI</h3>
+<p><code>urirun</code> defaults to the v8 schema-first runtime.</p>
+<pre><code>urirun scan PATH --out generated/bindings.v8.json --registry-out generated/registry.json
+urirun validate generated/bindings.v8.json
+urirun compile generated/bindings.v8.json --out generated/registry.json
+urirun list generated/registry.json
+urirun run URI --registry generated/registry.json --payload &#039;{&quot;name&quot;:&quot;Ada&quot;}&#039;
+</code></pre>
+<h3>Generate bindings in one line</h3>
+<p>Expose a package command:</p>
+<pre><code>urirun add-pypi sampleproject --out urirun.bindings.v8.json
+</code></pre>
+<p>Expose a command template:</p>
+<pre><code>urirun add-command &#039;util://local/echo/message&#039; \
+  --argv &#039;python3 -c &quot;import sys; print(sys.argv[1])&quot; {text}&#039; \
+  --param text:string:required \
+  --out urirun.bindings.v8.json
+</code></pre>
+<h3>Versioned commands</h3>
+<pre><code>urirun-v7 compile v7/examples/json/bindings.v7.example.json --out /tmp/registry.json
+urirun-v7 run &#039;media://local/video/transcode&#039; /tmp/registry.json --payload &#039;{&quot;input&quot;:&quot;a.mp4&quot;,&quot;output&quot;:&quot;b.mp4&quot;}&#039;
+urirun-v8 --help
+</code></pre>
+<p>Use these versioned commands when a script must stay pinned to a major registry contract.</p>
+<h3>Module commands</h3>
+<p>The module namespace is <code>urirun</code>, so these are also valid:</p>
+<pre><code>python -m urirun.v8 --help
+python -m urirun.v8_mcp tools generated/registry.json
+python -m urirun.v8_mcp card generated/registry.json
+</code></pre>
+</section>
+<section id="registry-and-bindings">
+<h2>Registry and bindings</h2>
+<p><code>urirun</code> separates the package contract from the runtime lookup tree.</p>
+<h3>Binding document</h3>
+<p>A binding document is portable JSON. It describes URI routes, input schemas, and adapter configuration.</p>
+<pre><code>{
+  &quot;version&quot;: &quot;urirun.bindings.v8&quot;,
+  &quot;bindings&quot;: {
+    &quot;report://local/render/pdf&quot;: {
+      &quot;kind&quot;: &quot;command&quot;,
+      &quot;adapter&quot;: &quot;argv-template&quot;,
+      &quot;inputSchema&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [&quot;input&quot;, &quot;output&quot;],
+        &quot;properties&quot;: {
+          &quot;input&quot;: { &quot;type&quot;: &quot;string&quot; },
+          &quot;output&quot;: { &quot;type&quot;: &quot;string&quot; }
+        },
+        &quot;additionalProperties&quot;: false
+      },
+      &quot;argv&quot;: [&quot;python3&quot;, &quot;render.py&quot;, &quot;{input}&quot;, &quot;{output}&quot;]
+    }
+  }
+}
+</code></pre>
+<h3>Registry</h3>
+<p>The registry is compiled from one or more binding documents:</p>
+<pre><code>urirun compile bindings.v8.json --out registry.json
+</code></pre>
+<p>The runtime dispatches from the registry only. This makes a generated registry reviewable, reproducible, and safe to pass between shell clients, HTTP services, browser consoles, Docker orchestrators, and agent projections.</p>
+<h3>Route identity</h3>
+<p>The full URI matters. A route such as:</p>
+<pre><code>device://device-01/led/command/set
+</code></pre>
+<p>can coexist with:</p>
+<pre><code>device://device-02/led/command/set
+</code></pre>
+<p>because the target is part of the route identity. This avoids conflicts when multiple services expose the same operation shape for different targets.</p>
+<h3>Conflict policy</h3>
+<p>Generated bindings should be deterministic:</p>
+<ul>
+<li>explicit binding files win over inferred script/package routes</li>
+<li>duplicate full URIs should fail validation unless the scanner marks them as the same source</li>
+<li>generated files should be written to <code>generated/</code> or <code>.urirun/</code>, not edited as primary source</li>
+<li>source artifacts remain the source of truth when using scanner adoption</li>
+</ul>
+</section>
+<section id="transports">
+<h2>Transports</h2>
+<p><code>urirun</code> keeps the URI contract separate from the transport. The same URI can be called locally, through a service endpoint, or by a flow orchestrator. The registry, JSON Schema and policy gate are the contract; a transport only moves <code>{uri, payload}</code> to where <code>v8.run</code> executes it.</p>
+<p><code>v8/examples/transports</code> drives one registry over five transports (in-process, queue, serverless, HTTP, gRPC) and ships a one-command <code>scan_and_run.py</code>.</p>
+<h3>Local and shell</h3>
+<ul>
+<li><code>local-function</code> calls an in-process function registered by code.</li>
+<li><code>argv-template</code> renders an argv list and executes it without a shell.</li>
+<li><code>shell-template</code> renders a shell string and requires explicit policy approval.</li>
+</ul>
+<h3>Queue and serverless</h3>
+<ul>
+<li>A queue/event consumer maps a topic message to <code>v8.run</code> (the MQTT/NATS/Kafka shape) and publishes a reply.</li>
+<li>A serverless function is a pure <code>handler(event)</code> that calls <code>v8.run</code> per request, with the registry compiled in memory.</li>
+</ul>
+<h3>Docker</h3>
+<p>Docker examples use URI targets as service names:</p>
+<pre><code>python://python-worker/text/normalize
+node://node-worker/text/slugify
+shell://shell-worker/report/write
+</code></pre>
+<p>See <code>v8/examples/docker_uri_flow</code> for a Compose flow where services publish bindings and an orchestrator runs a multi-step URI flow.</p>
+<h3>HTTP and browser</h3>
+<p>The HTML example in <code>v8/examples/html_uri_app</code> loads a binding document, renders URI forms, and calls a Python backend through <code>POST /api/run</code>.</p>
+<p>The backend can expose logs, recent calls, MCP tools, and A2A cards from the same registry, so frontend actions use the same URI names as backend actions.</p>
+<h3>gRPC</h3>
+<p><code>urirun.v8_grpc</code> provides a small RPC surface for route listing, unary calls, and stream-style calls. Install the optional dependency set when using it:</p>
+<pre><code>pip install &quot;urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+</code></pre>
+<p><code>v8/examples/multi_transport</code> is a Docker stack that mixes HTTP and gRPC workers, auto-generates one registry from their <code>/routes</code> and <code>ListRoutes</code>, detects route conflicts, and runs a cross-environment flow whose steps land on both transports.</p>
+<h3>MCP and A2A</h3>
+<p>Because v8 bindings include JSON Schema, the registry can be projected into:</p>
+<ul>
+<li>MCP <code>tools/list</code></li>
+<li>MCP <code>tools/call</code></li>
+<li>A2A agent card skills</li>
+</ul>
+<p>Execution still goes through the same <code>urirun</code> policy gate.</p>
+</section>
+<section id="logo">
+<h2>Logo</h2>
+<p>The generated logo family lives in <code>logo/</code>:</p>
+<ul>
+<li><code>urirun-icon.svg</code></li>
+<li><code>urirun-icon-mono.svg</code></li>
+<li><code>urirun-wordmark.svg</code></li>
+<li><code>urirun-horizontal.svg</code></li>
+<li><code>urirun-stacked.svg</code></li>
+<li><code>urirun-favicon.svg</code></li>
+<li><code>urirun-logo-sheet.svg</code></li>
+</ul>
+<p>The mark combines a URI colon and double slash with a compact motion shape for the &quot;run&quot; part of the name.</p>
+<p>The PHP site in <code>www/</code> uses copied assets under <code>www/assets/</code> so it can be served directly from the <code>www</code> document root.</p>
+</section>
+<section id="roadmap">
+<h2>Roadmap</h2>
+<p>The most useful next work for making <code>urirun</code> easier:</p>
+<ul>
+<li>Add <code>urirun init</code> as a guided command that writes <code>.urirun/</code> defaults, sample policy, and an example binding.</li>
+<li>Add <code>urirun doctor</code> to check Python version, optional dependencies, Docker, PHP, Node, generated registry freshness, and duplicate route conflicts.</li>
+<li>Add <code>urirun serve</code> as a single HTTP console command for logs, route listing, dry-runs, and real execution behind policy.</li>
+<li>Add a canonical <code>.env</code> loader shared by examples so ports and registry paths have one source of truth.</li>
+<li>Add first-class <code>log://</code> routes for frontend, backend, shell, firmware, and Docker services.</li>
+<li>Add a registry diff command: <code>urirun diff old-registry.json new-registry.json</code>.</li>
+<li>Add scanner explanations: every generated binding should include source file, source standard, and reason.</li>
+<li>Add installer smoke tests for GitHub installs and GitHub Release wheels.</li>
+<li>Keep public docs focused on v7 and v8; older experiment folders should remain removed or archived outside the main project.</li>
+</ul>
+</section>
+    </article>
+  </main>
+</body>
+</html>

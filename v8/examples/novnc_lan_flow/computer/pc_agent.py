@@ -14,8 +14,40 @@ PC_NAME = os.getenv("PC_NAME", "pc")
 PC_ROLE = os.getenv("PC_ROLE", "node")
 API_PORT = int(os.getenv("API_PORT", "9000"))
 LOG_FILE = Path("/workspace/logs/events.log")
+APP_DIR = Path("/workspace/apps")
 SERVICES: dict[int, ThreadingHTTPServer] = {}
 LOCK = threading.Lock()
+
+APP_SPECS = {
+    "pc1": {
+        "name": "notes",
+        "routes": [
+            {"uri": "app://pc1/notes/command/add", "kind": "app", "adapter": "notes-jsonl"},
+            {"uri": "app://pc1/notes/query/list", "kind": "app", "adapter": "notes-jsonl"},
+        ],
+    },
+    "pc2": {
+        "name": "orders",
+        "routes": [
+            {"uri": "app://pc2/orders/command/create", "kind": "app", "adapter": "orders-jsonl"},
+            {"uri": "app://pc2/orders/query/list", "kind": "app", "adapter": "orders-jsonl"},
+        ],
+    },
+    "pc3": {
+        "name": "reports",
+        "routes": [
+            {"uri": "app://pc3/reports/command/render", "kind": "app", "adapter": "reports-jsonl"},
+            {"uri": "app://pc3/reports/query/latest", "kind": "app", "adapter": "reports-jsonl"},
+        ],
+    },
+    "pc4": {
+        "name": "monitor",
+        "routes": [
+            {"uri": "app://pc4/monitor/command/check", "kind": "app", "adapter": "monitor-jsonl"},
+            {"uri": "app://pc4/monitor/query/status", "kind": "app", "adapter": "monitor-jsonl"},
+        ],
+    },
+}
 
 
 def write_log(event: str, detail=None) -> dict:
@@ -48,7 +80,7 @@ def recent_logs(limit: int = 20) -> list[dict]:
 
 
 def routes_for(pc_name: str = PC_NAME) -> list[dict]:
-    return [
+    routes = [
         {"uri": f"pc://{pc_name}/terminal/command/run", "kind": "terminal", "adapter": "shell"},
         {"uri": f"pc://{pc_name}/service/command/start", "kind": "service", "adapter": "python-http"},
         {"uri": f"pc://{pc_name}/network/command/ping", "kind": "network", "adapter": "ping"},
@@ -56,6 +88,8 @@ def routes_for(pc_name: str = PC_NAME) -> list[dict]:
         {"uri": f"log://{pc_name}/session/command/write", "kind": "log", "adapter": "jsonl"},
         {"uri": f"log://{pc_name}/session/query/recent", "kind": "log", "adapter": "jsonl"},
     ]
+    routes.extend(APP_SPECS.get(pc_name, {}).get("routes", []))
+    return routes
 
 
 def parsed_uri(uri: str):
@@ -133,6 +167,88 @@ def http_get(url: str) -> dict:
     return result
 
 
+def app_file(app: str) -> Path:
+    return APP_DIR / f"{app}.jsonl"
+
+
+def append_app_record(app: str, event: str, payload: dict) -> dict:
+    APP_DIR.mkdir(parents=True, exist_ok=True)
+    record = {
+        "at": time.strftime("%H:%M:%S"),
+        "pc": PC_NAME,
+        "app": app,
+        "event": event,
+        **payload,
+    }
+    with LOCK:
+        with app_file(app).open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    write_log(f"app.{app}.{event}", record)
+    return record
+
+
+def read_app_records(app: str, limit: int = 20) -> list[dict]:
+    path = app_file(app)
+    if not path.exists():
+        return []
+    rows = []
+    for line in path.read_text(encoding="utf-8").splitlines()[-limit:]:
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError:
+            rows.append({"raw": line})
+    return rows
+
+
+def dispatch_app(segments: list[str], payload: dict) -> dict:
+    if PC_NAME == "pc1" and segments == ["notes", "command", "add"]:
+        text = str(payload.get("text", "note from URI flow"))
+        return {"ok": True, "result": append_app_record("notes", "note.added", {"text": text})}
+    if PC_NAME == "pc1" and segments == ["notes", "query", "list"]:
+        return {"ok": True, "result": {"notes": read_app_records("notes", int(payload.get("limit", 20)))}}
+
+    if PC_NAME == "pc2" and segments == ["orders", "command", "create"]:
+        item = str(payload.get("item", "demo-item"))
+        quantity = int(payload.get("quantity", 1))
+        order_id = f"ord-{int(time.time())}"
+        return {"ok": True, "result": append_app_record("orders", "order.created", {
+            "orderId": order_id,
+            "item": item,
+            "quantity": quantity,
+        })}
+    if PC_NAME == "pc2" and segments == ["orders", "query", "list"]:
+        return {"ok": True, "result": {"orders": read_app_records("orders", int(payload.get("limit", 20)))}}
+
+    if PC_NAME == "pc3" and segments == ["reports", "command", "render"]:
+        title = str(payload.get("title", "URI report"))
+        source = str(payload.get("source", "orders"))
+        summary = f"Report '{title}' rendered from {source} on {PC_NAME}"
+        return {"ok": True, "result": append_app_record("reports", "report.rendered", {
+            "title": title,
+            "source": source,
+            "summary": summary,
+        })}
+    if PC_NAME == "pc3" and segments == ["reports", "query", "latest"]:
+        reports = read_app_records("reports", int(payload.get("limit", 1)))
+        return {"ok": True, "result": {"latest": reports[-1] if reports else None, "reports": reports}}
+
+    if PC_NAME == "pc4" and segments == ["monitor", "command", "check"]:
+        target = str(payload.get("target", "pc2"))
+        level = str(payload.get("level", "normal"))
+        ping = ping_target(target)
+        status = "up" if ping.get("returncode") == 0 else "down"
+        return {"ok": True, "result": append_app_record("monitor", "monitor.checked", {
+            "target": target,
+            "level": level,
+            "status": status,
+        })}
+    if PC_NAME == "pc4" and segments == ["monitor", "query", "status"]:
+        checks = read_app_records("monitor", int(payload.get("limit", 5)))
+        return {"ok": True, "result": {"status": checks[-1] if checks else None, "checks": checks}}
+
+    return {"ok": False, "error": {"type": "app-route", "message": f"unknown app route on {PC_NAME}: {segments}"}}
+
+
 def dispatch(uri: str, payload: dict | None = None) -> dict:
     payload = payload or {}
     scheme, target, segments = parsed_uri(uri)
@@ -143,6 +259,8 @@ def dispatch(uri: str, payload: dict | None = None) -> dict:
         return {"ok": True, "result": write_log(payload.get("event", "log.write"), payload.get("detail", ""))}
     if scheme == "log" and segments == ["session", "query", "recent"]:
         return {"ok": True, "result": {"logs": recent_logs(int(payload.get("limit", 20)))}}
+    if scheme == "app":
+        return dispatch_app(segments, payload)
     if scheme == "pc" and segments == ["terminal", "command", "run"]:
         return {"ok": True, "result": run_shell(str(payload["command"]))}
     if scheme == "pc" and segments == ["service", "command", "start"]:

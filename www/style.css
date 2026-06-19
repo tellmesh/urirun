@@ -388,6 +388,157 @@ pre code,
   font-size: 14px;
 }
 
+.contract-section h2 {
+  max-width: 18ch;
+}
+
+.contract-intro {
+  align-items: start;
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+}
+
+.schema-steps {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.schema-step {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 7px;
+  min-height: 154px;
+  padding: 16px;
+}
+
+.schema-step span {
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.schema-step strong {
+  line-height: 1.2;
+}
+
+.schema-step small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.tech-tabs {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 26px;
+  overflow: hidden;
+}
+
+.tab-list {
+  background: #fbfcfe;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 8px;
+}
+
+.tab-button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  font: 800 13px/1 var(--sans);
+  min-height: 36px;
+  padding: 10px 12px;
+}
+
+.tab-button:hover,
+.tab-button:focus-visible {
+  border-color: var(--line);
+  color: var(--ink);
+  outline: none;
+}
+
+.tab-button.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.tech-panel {
+  display: none;
+  gap: 24px;
+  grid-template-columns: minmax(220px, 0.44fr) minmax(0, 1fr);
+  padding: 22px;
+}
+
+.tech-panel.active {
+  display: grid;
+}
+
+.tech-copy {
+  min-width: 0;
+}
+
+.tech-copy span {
+  color: var(--green);
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 900;
+  margin-bottom: 12px;
+}
+
+.tech-copy h3 {
+  font-size: 24px;
+  line-height: 1.13;
+}
+
+.tech-copy p {
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+
+.tech-code-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  min-width: 0;
+}
+
+.code-block {
+  background: var(--code);
+  border: 1px solid #263449;
+  border-radius: 8px;
+  color: #e8eef8;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.code-block span {
+  border-bottom: 1px solid #263449;
+  color: #9ca3af;
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 10px 14px;
+}
+
+.code-block pre {
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-x: auto;
+  padding: 16px;
+}
+
 .roadmap ol {
   counter-reset: roadmap;
   display: grid;
@@ -520,6 +671,8 @@ aside small {
   .hero,
   .split,
   .runtime-map,
+  .contract-intro,
+  .tech-panel,
   .docs-layout {
     grid-template-columns: 1fr;
   }
@@ -527,8 +680,13 @@ aside small {
   .feature-grid,
   .facts,
   .grid,
+  .schema-steps,
   .transport-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tech-code-grid {
+    grid-template-columns: 1fr;
   }
 
   aside {
@@ -568,8 +726,14 @@ aside small {
   .feature-grid,
   .facts,
   .grid,
+  .schema-steps,
   .transport-grid {
     grid-template-columns: 1fr;
+  }
+
+  .tab-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .doc-body {

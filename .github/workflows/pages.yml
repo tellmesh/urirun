@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p _site
           cp -R www/assets _site/assets
-          cp www/.nojekyll www/index.html www/index.en.html www/language.js www/style.css _site/
+          cp www/.nojekyll www/index.html www/index.en.html www/docs.html www/language.js www/style.css _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

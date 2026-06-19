@@ -22,7 +22,7 @@
       <img src="assets/urirun-horizontal.svg" alt="urirun">
     </a>
     <nav aria-label="Main navigation">
-      <a href="https://github.com/tellmesh/urihandler/tree/main/docs">Docs</a>
+      <a href="docs.html">Docs</a>
       <a href="#workflow">Workflow</a>
       <a href="#examples">Examples</a>
       <a href="https://github.com/tellmesh/urihandler">GitHub</a>
@@ -41,8 +41,8 @@
         <h1>One URI registry for commands across code, shell, containers, and services.</h1>
         <p class="lede">Declare a route once, compile it into a registry, and call the same URI in-process or over HTTP, gRPC, a queue, serverless, Docker, MCP, or an A2A agent card.</p>
         <div class="actions">
-          <a class="button primary" href="https://github.com/tellmesh/urihandler/blob/main/docs/getting-started.md">Start with v8</a>
-          <a class="button" href="https://github.com/tellmesh/urihandler/blob/main/docs/commands.md">CLI commands</a>
+          <a class="button primary" href="docs.html#getting-started">Start with v8</a>
+          <a class="button" href="docs.html#commands">CLI commands</a>
         </div>
       </div>
 
@@ -65,6 +65,217 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
       <div><span>Repository</span><strong>tellmesh/urihandler</strong></div>
       <div><span>Default contract</span><strong>v8 JSON Schema</strong></div>
       <div><span>Execution</span><strong>dry-run first</strong></div>
+    </section>
+
+    <section class="section contract-section" id="contract">
+      <div class="contract-intro">
+        <div>
+          <p class="kicker">urirun://schema</p>
+          <h2>One contract, many runtimes.</h2>
+          <p class="section-copy">Packaging commands starts with a schema. A decorator, helper, or artifact scan generates a binding, then urirun compiles it into a registry and runs the same URI everywhere.</p>
+        </div>
+        <div class="schema-steps" aria-label="URI command creation process">
+          <div class="schema-step">
+            <span>fn</span>
+            <strong>Write a function</strong>
+            <small>Types and defaults are the source of truth.</small>
+          </div>
+          <div class="schema-step">
+            <span>{ }</span>
+            <strong>Generate a binding</strong>
+            <small>inputSchema plus argv or shell template is emitted.</small>
+          </div>
+          <div class="schema-step">
+            <span>✓</span>
+            <strong>Compile registry</strong>
+            <small>Routes are validated and discoverable.</small>
+          </div>
+          <div class="schema-step">
+            <span>▶</span>
+            <strong>Run the URI</strong>
+            <small>Dry-run first; execute only after policy allows it.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-tabs" data-tech-tabs>
+        <div class="tab-list" role="tablist" aria-label="Technologies that generate URI bindings">
+          <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="panel-python" id="tab-python" data-tech-tab="python">Python</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-javascript" id="tab-javascript" data-tech-tab="javascript">JavaScript</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-c" id="tab-c" data-tech-tab="c">C</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-shell" id="tab-shell" data-tech-tab="shell">Shell</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-docker" id="tab-docker" data-tech-tab="docker">Docker</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-typescript" id="tab-typescript" data-tech-tab="typescript">TypeScript</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-php" id="tab-php" data-tech-tab="php">PHP</button>
+        </div>
+        <article class="tech-panel active" id="panel-python" role="tabpanel" aria-labelledby="tab-python">
+          <div class="tech-copy">
+            <span>decorator + Pydantic</span>
+            <h3>The decorator turns a function signature into a binding.</h3>
+            <p>Types and defaults become JSON Schema, while the returned argv list becomes a deterministic command template.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>from urirun.v8 import decorated_bindings, uri_command
+
+@uri_command(&quot;media://local/video/transcode&quot;)
+def transcode(input: str, output: str, width: int = 1280, height: int = 720):
+    return [&quot;ffmpeg&quot;, &quot;-i&quot;, &quot;{input}&quot;, &quot;-vf&quot;, &quot;scale={width}:{height}&quot;, &quot;{output}&quot;]</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>from urirun.v8 import compile_registry, decorated_bindings
+
+bindings = decorated_bindings()
+registry = compile_registry(bindings)</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-javascript" role="tabpanel" aria-labelledby="tab-javascript" hidden>
+          <div class="tech-copy">
+            <span>plain JS helper</span>
+            <h3>A small JS helper emits bindings without a transpiler.</h3>
+            <p>Field declarations produce inputSchema, and the command factory returns argv placeholders.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>import { bindingDocument, string, uriCommand } from &quot;./uri-command.mjs&quot;;
+
+const greet = uriCommand(
+  &quot;js://local/greet/message&quot;,
+  { name: string({ required: true }) },
+  ({ name }) =&gt; [&quot;node&quot;, &quot;-e&quot;, &quot;console.log(process.argv[1])&quot;, name],
+);</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>node generate-bindings.mjs &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-c" role="tabpanel" aria-labelledby="tab-c" hidden>
+          <div class="tech-copy">
+            <span>firmware route table</span>
+            <h3>Firmware can expose a small URI route table.</h3>
+            <p>C handles local dispatch, while a generated registry gives the rest of the system the same contract.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>static const UriRoute routes[] = {
+  {&quot;firmware://device-01/led/command/set&quot;, led_set},
+  {&quot;firmware://device-01/telemetry/query/latest&quot;, telemetry_latest},
+};</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 add-command &quot;firmware://device-01/led/command/set&quot; \
+  --argv &quot;./firmware-cli led set {state}&quot; \
+  --param state:boolean:required \
+  --out generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-shell" role="tabpanel" aria-labelledby="tab-shell" hidden>
+          <div class="tech-copy">
+            <span>scan scripts</span>
+            <h3>A shell script becomes a URI by scanning the project.</h3>
+            <p>Existing scripts stay in place. urirun scans them and creates bindings for controlled execution.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>#!/usr/bin/env bash
+# scripts/render-report.sh
+set -euo pipefail
+echo &quot;report for ${1:-today}&quot;</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 scan ./scripts \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+          <div class="tech-copy">
+            <span>image label + manifest</span>
+            <h3>A Docker image points to its URI manifest.</h3>
+            <p>The container carries bindings.json, and Dockerfile scanning collects manifests into the shared registry.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>FROM python:3.12-slim
+LABEL io.tellmesh.urirun.manifest=&quot;/app/bindings.json&quot;
+COPY bindings.json /app/bindings.json
+COPY worker.py /app/worker.py</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 scan ./docker-stack \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-typescript" role="tabpanel" aria-labelledby="tab-typescript" hidden>
+          <div class="tech-copy">
+            <span>decorator-style declaration</span>
+            <h3>A TS decorator gives a typed command declaration.</h3>
+            <p>The method returns argv, while decorator fields become the runtime input schema.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>class MathCommands {
+  @uriCommand(&quot;ts://local/math/add&quot;, {
+    a: { type: &quot;integer&quot;, required: true },
+    b: { type: &quot;integer&quot;, default: 0 },
+  })
+  add({ a, b }) {
+    return [&quot;node&quot;, &quot;-e&quot;, &quot;console.log(Number(process.argv[1]) + Number(process.argv[2]))&quot;, a, b];
+  }
+}</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>npx tsx decorators.ts &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-php" role="tabpanel" aria-labelledby="tab-php" hidden>
+          <div class="tech-copy">
+            <span>PHP 8 attribute + reflection</span>
+            <h3>A PHP attribute generates a binding through reflection.</h3>
+            <p>Function parameters become inputSchema, and the attribute carries URI plus argv.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>declaration</span>
+              <pre><code>#[UriCommand(
+  uri: &quot;php://local/slug/create&quot;,
+  argv: [&quot;php&quot;, &quot;-r&quot;, &quot;echo strtolower($argv[1]);&quot;, &quot;{text}&quot;],
+)]
+function slug(string $text, int $limit = 64): void {}</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>php examples/php/generate-bindings.php &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
 
     <section class="section split" id="workflow">
@@ -96,32 +307,6 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
           </article>
       </div>
     </section>
-
-    <section class="section">
-      <div class="section-head">
-        <p class="kicker">registry://local/value/query</p>
-        <h2>What gets simpler.</h2>
-      </div>
-      <div class="feature-grid">
-          <article class="feature">
-            <h3>Artifact-first adoption</h3>
-            <p>Existing Dockerfiles, pyproject scripts, package.json scripts, shell files, and Makefile targets become routes without hand-writing every endpoint.</p>
-          </article>
-          <article class="feature">
-            <h3>Schema-first calls</h3>
-            <p>v8 bindings use JSON Schema. Python decorators can generate schemas from function signatures through Pydantic.</p>
-          </article>
-          <article class="feature">
-            <h3>One address across layers</h3>
-            <p>Frontend buttons, backend handlers, shell clients, firmware tables, and service flows can share the same URI naming standard.</p>
-          </article>
-          <article class="feature">
-            <h3>Policy before execution</h3>
-            <p>Command routes dry-run by default. Real execution is explicit and can be limited by URI allow and deny rules.</p>
-          </article>
-      </div>
-    </section>
-
     <section class="section runtime-map">
       <div>
         <p class="kicker">transport://any/adapter/query</p>
@@ -174,31 +359,31 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
         <h2 id="doc-list">Documentation.</h2>
       </div>
       <div class="grid">
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/getting-started.md">
+          <a class="doc-card" href="docs.html#getting-started">
             <span>Getting started</span>
             <small>Install from GitHub, scan artifacts, validate, and run the first URI.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/naming.md">
+          <a class="doc-card" href="docs.html#naming">
             <span>Naming</span>
             <small>Where to use urirun and why the repository URL still contains urihandler.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/commands.md">
+          <a class="doc-card" href="docs.html#commands">
             <span>Commands</span>
             <small>CLI commands, versioned entry points, and one-line binding generation.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/registry-and-bindings.md">
+          <a class="doc-card" href="docs.html#registry-and-bindings">
             <span>Registry</span>
             <small>How portable binding documents become dispatchable runtime routes.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/transports.md">
+          <a class="doc-card" href="docs.html#transports">
             <span>Transports</span>
             <small>Local functions, shell, Docker, HTTP, gRPC, browser, MCP, and A2A.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/logo.md">
+          <a class="doc-card" href="docs.html#logo">
             <span>Logo</span>
             <small>Generated SVG assets for icon, wordmark, favicon, and lockups.</small>
           </a>
-          <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/roadmap.md">
+          <a class="doc-card" href="docs.html#roadmap">
             <span>Roadmap</span>
             <small>Practical next work for making urirun easier to use.</small>
           </a>
@@ -261,7 +446,7 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
   <footer>
     <span>Runtime: urirun</span>
     <span>Repo: tellmesh/urihandler</span>
-    <span><a href="https://github.com/tellmesh/urihandler/blob/main/docs/naming.md">Naming rules</a></span>
+    <span><a href="docs.html#naming">Naming rules</a></span>
   </footer>
   <script src="language.js" defer></script>
 </body>

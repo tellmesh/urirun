@@ -64,13 +64,26 @@ services:
       - pc4-data:/workspace
 
   dashboard:
-    image: python:3.12-alpine
+    build:
+      context: ./dashboard
+    image: urirun-novnc-dashboard:local
     working_dir: /site
-    command: ["python", "-m", "http.server", "8080"]
+    command: ["python", "server.py"]
+    depends_on:
+      - pc1
+      - pc2
+      - pc3
+      - pc4
+    environment:
+      DASHBOARD_INTERNAL_PORT: "8080"
+      URI_REGISTRY: /registry/registry.json
+      LLM_MODEL: ${LLM_MODEL:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     ports:
       - "${DASHBOARD_PORT:-8192}:8080"
     volumes:
       - ./dashboard:/site:ro
+      - ./generated:/registry:ro
     networks: [uri-lan]
 
   orchestrator:

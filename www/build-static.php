@@ -13,8 +13,139 @@ function h(string $value): string
 
 function doc_url(string $slug): string
 {
-    global $repoUrl;
-    return $repoUrl . '/blob/main/docs/' . rawurlencode($slug) . '.md';
+    return 'docs.html#' . rawurlencode($slug);
+}
+
+function inline_md(string $text): string
+{
+    $text = htmlspecialchars($text, ENT_QUOTES);
+    $text = preg_replace_callback('/\[([^\]]+)\]\(([a-z0-9-]+)\.md\)/i', static function (array $m): string {
+        return '<a href="#' . rawurlencode($m[2]) . '">' . $m[1] . '</a>';
+    }, $text);
+    $text = preg_replace('/`([^`]+)`/', '<code>$1</code>', $text);
+    $text = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $text);
+    return $text;
+}
+
+function render_md(string $markdown): string
+{
+    $html = '';
+    $inCode = false;
+    $paragraph = [];
+    $inList = false;
+    $listItem = null;
+    $flushParagraph = static function () use (&$html, &$paragraph): void {
+        if ($paragraph !== []) {
+            $html .= '<p>' . inline_md(implode(' ', $paragraph)) . "</p>\n";
+            $paragraph = [];
+        }
+    };
+    $flushListItem = static function () use (&$html, &$listItem): void {
+        if ($listItem !== null) {
+            $html .= '<li>' . inline_md($listItem) . "</li>\n";
+            $listItem = null;
+        }
+    };
+    $closeList = static function () use (&$html, &$inList, $flushListItem): void {
+        if ($inList) {
+            $flushListItem();
+            $html .= "</ul>\n";
+            $inList = false;
+        }
+    };
+    foreach (preg_split('/\R/', $markdown) as $line) {
+        if (str_starts_with($line, '```')) {
+            $flushParagraph();
+            $closeList();
+            $html .= $inCode ? "</code></pre>\n" : '<pre><code>';
+            $inCode = !$inCode;
+            continue;
+        }
+        if ($inCode) {
+            $html .= htmlspecialchars($line, ENT_QUOTES) . "\n";
+            continue;
+        }
+        if ($line === '') {
+            $flushParagraph();
+            $closeList();
+            continue;
+        }
+        if (preg_match('/^(#{1,3})\s+(.*)$/', $line, $m)) {
+            $flushParagraph();
+            $closeList();
+            $level = strlen($m[1]) + 1; // shift h1->h2 under the page title
+            $html .= "<h{$level}>" . htmlspecialchars($m[2], ENT_QUOTES) . "</h{$level}>\n";
+            continue;
+        }
+        if (preg_match('/^-\s+(.*)$/', $line, $m)) {
+            $flushParagraph();
+            if (!$inList) {
+                $html .= "<ul>\n";
+                $inList = true;
+            }
+            $flushListItem();
+            $listItem = $m[1];
+            continue;
+        }
+        if ($inList && preg_match('/^\s{2,}(.+)$/', $line, $m)) {
+            $listItem = trim(($listItem ?? '') . ' ' . trim($m[1]));
+            continue;
+        }
+        $closeList();
+        $paragraph[] = trim($line);
+    }
+    if ($inCode) {
+        $html .= "</code></pre>\n";
+    }
+    $flushParagraph();
+    $closeList();
+    return $html;
+}
+
+function build_docs_page(array $site, string $repoUrl): string
+{
+    $docFiles = [
+        'index' => 'index.md',
+        'getting-started' => 'getting-started.md',
+        'naming' => 'naming.md',
+        'commands' => 'commands.md',
+        'registry-and-bindings' => 'registry-and-bindings.md',
+        'transports' => 'transports.md',
+        'logo' => 'logo.md',
+        'roadmap' => 'roadmap.md',
+    ];
+    $titles = ['index' => 'Docs index'];
+    foreach ($site['docs'] as $slug => $doc) {
+        $titles[$slug] = $doc['title'];
+    }
+
+    $html = "<!doctype html>\n<html lang=\"en\">\n<head>\n";
+    $html .= "  <meta charset=\"utf-8\">\n";
+    $html .= "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n";
+    $html .= "  <title>urirun docs</title>\n";
+    $html .= "  <meta name=\"description\" content=\"urirun documentation: getting started, naming, commands, registry, transports, and roadmap.\">\n";
+    $html .= "  <link rel=\"icon\" href=\"assets/urirun-favicon.svg\" type=\"image/svg+xml\">\n";
+    $html .= "  <link rel=\"stylesheet\" href=\"style.css\">\n";
+    $html .= "</head>\n<body>\n";
+    $html .= "  <header class=\"topbar\">\n";
+    $html .= "    <a class=\"brand\" href=\"index.html\" aria-label=\"urirun home\"><img src=\"assets/urirun-horizontal.svg\" alt=\"urirun\"></a>\n";
+    $html .= "    <nav>\n";
+    $html .= "      <a href=\"index.html\">Home</a>\n";
+    $html .= "      <a href=\"" . h($repoUrl) . "\">GitHub</a>\n";
+    $html .= "    </nav>\n";
+    $html .= "  </header>\n";
+    $html .= "  <main class=\"docs-layout\">\n    <aside>\n";
+    foreach ($docFiles as $slug => $file) {
+        $html .= '      <a href="#' . h($slug) . '"><span>' . h($titles[$slug] ?? $slug) . "</span></a>\n";
+    }
+    $html .= "    </aside>\n    <article class=\"doc-body\">\n";
+    foreach ($docFiles as $slug => $file) {
+        $path = __DIR__ . '/../docs/' . $file;
+        $markdown = is_file($path) ? file_get_contents($path) : '# Missing document';
+        $html .= '<section id="' . h($slug) . "\">\n" . render_md($markdown) . "</section>\n";
+    }
+    $html .= "    </article>\n  </main>\n</body>\n</html>\n";
+    return $html;
 }
 
 function render_doc_cards(array $docs): string
@@ -153,10 +284,10 @@ function render_page(array $page, array $site, string $baseUrl, string $repoUrl)
     $canonical = $baseUrl . ($isPl ? '' : 'index.en.html');
     $plUrl = $baseUrl;
     $enUrl = $baseUrl . 'index.en.html';
-    $docsUrl = $repoUrl . '/tree/main/docs';
-    $quickstartUrl = $repoUrl . '/blob/main/docs/getting-started.md';
-    $commandsUrl = $repoUrl . '/blob/main/docs/commands.md';
-    $namingUrl = $repoUrl . '/blob/main/docs/naming.md';
+    $docsUrl = 'docs.html';
+    $quickstartUrl = 'docs.html#getting-started';
+    $commandsUrl = 'docs.html#commands';
+    $namingUrl = 'docs.html#naming';
 
     $nav = $page['nav'];
     $html = '<!doctype html>' . "\n";
@@ -325,6 +456,214 @@ $plDocs = [
     ],
 ];
 
+$techTabsPl = [
+    [
+        'id' => 'python',
+        'label' => 'Python',
+        'eyebrow' => 'decorator + Pydantic',
+        'title' => 'Dekorator robi binding z sygnatury funkcji.',
+        'text' => 'Typy i wartości domyślne trafiają do JSON Schema, a lista argv zostaje deterministycznym szablonem komendy.',
+        'declare' => <<<'CODE'
+from urirun.v8 import decorated_bindings, uri_command
+
+@uri_command("media://local/video/transcode")
+def transcode(input: str, output: str, width: int = 1280, height: int = 720):
+    return ["ffmpeg", "-i", "{input}", "-vf", "scale={width}:{height}", "{output}"]
+CODE,
+        'registry' => <<<'CODE'
+from urirun.v8 import compile_registry, decorated_bindings
+
+bindings = decorated_bindings()
+registry = compile_registry(bindings)
+CODE,
+    ],
+    [
+        'id' => 'javascript',
+        'label' => 'JavaScript',
+        'eyebrow' => 'plain JS helper',
+        'title' => 'Helper JS składa binding bez transpilerów.',
+        'text' => 'Deklaracja pól tworzy inputSchema, a factory komendy zwraca argv z placeholderami.',
+        'declare' => <<<'CODE'
+import { bindingDocument, string, uriCommand } from "./uri-command.mjs";
+
+const greet = uriCommand(
+  "js://local/greet/message",
+  { name: string({ required: true }) },
+  ({ name }) => ["node", "-e", "console.log(process.argv[1])", name],
+);
+CODE,
+        'registry' => <<<'CODE'
+node generate-bindings.mjs > generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json
+CODE,
+    ],
+    [
+        'id' => 'c',
+        'label' => 'C',
+        'eyebrow' => 'firmware route table',
+        'title' => 'Firmware może mieć prostą tabelę tras URI.',
+        'text' => 'Kod C obsługuje lokalny dispatch, a registry dla reszty systemu można wygenerować jako kontrakt obok firmware.',
+        'declare' => <<<'CODE'
+static const UriRoute routes[] = {
+  {"firmware://device-01/led/command/set", led_set},
+  {"firmware://device-01/telemetry/query/latest", telemetry_latest},
+};
+CODE,
+        'registry' => <<<'CODE'
+python -m urirun.v8 add-command "firmware://device-01/led/command/set" \
+  --argv "./firmware-cli led set {state}" \
+  --param state:boolean:required \
+  --out generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json --out generated/registry.json
+CODE,
+    ],
+    [
+        'id' => 'shell',
+        'label' => 'Shell',
+        'eyebrow' => 'scan scripts',
+        'title' => 'Skrypt shell staje się URI przez skan projektu.',
+        'text' => 'Nie trzeba przepisywać istniejących skryptów. urirun skanuje pliki i tworzy bindingi do kontrolowanego wykonania.',
+        'declare' => <<<'CODE'
+#!/usr/bin/env bash
+# scripts/render-report.sh
+set -euo pipefail
+echo "report for ${1:-today}"
+CODE,
+        'registry' => <<<'CODE'
+python -m urirun.v8 scan ./scripts \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json
+CODE,
+    ],
+    [
+        'id' => 'docker',
+        'label' => 'Docker',
+        'eyebrow' => 'image label + manifest',
+        'title' => 'Obraz Dockera wskazuje manifest URI.',
+        'text' => 'Kontener niesie własne bindings.json, a skan Dockerfile zbiera manifesty do wspólnego registry.',
+        'declare' => <<<'CODE'
+FROM python:3.12-slim
+LABEL io.tellmesh.urirun.manifest="/app/bindings.json"
+COPY bindings.json /app/bindings.json
+COPY worker.py /app/worker.py
+CODE,
+        'registry' => <<<'CODE'
+python -m urirun.v8 scan ./docker-stack \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json
+CODE,
+    ],
+    [
+        'id' => 'typescript',
+        'label' => 'TypeScript',
+        'eyebrow' => 'decorator-style declaration',
+        'title' => 'Dekorator TS daje typowaną deklarację komendy.',
+        'text' => 'Metoda zwraca argv, a pola dekoratora są schematem wejścia dla runtime.',
+        'declare' => <<<'CODE'
+class MathCommands {
+  @uriCommand("ts://local/math/add", {
+    a: { type: "integer", required: true },
+    b: { type: "integer", default: 0 },
+  })
+  add({ a, b }) {
+    return ["node", "-e", "console.log(Number(process.argv[1]) + Number(process.argv[2]))", a, b];
+  }
+}
+CODE,
+        'registry' => <<<'CODE'
+npx tsx decorators.ts > generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json
+CODE,
+    ],
+    [
+        'id' => 'php',
+        'label' => 'PHP',
+        'eyebrow' => 'PHP 8 attribute + reflection',
+        'title' => 'Atrybut PHP generuje binding przez reflection.',
+        'text' => 'Parametry funkcji stają się inputSchema, a atrybut trzyma URI i argv.',
+        'declare' => <<<'CODE'
+#[UriCommand(
+  uri: "php://local/slug/create",
+  argv: ["php", "-r", "echo strtolower($argv[1]);", "{text}"],
+)]
+function slug(string $text, int $limit = 64): void {}
+CODE,
+        'registry' => <<<'CODE'
+php examples/php/generate-bindings.php > generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json
+CODE,
+    ],
+];
+
+$techTabsEn = [
+    [
+        'id' => 'python',
+        'label' => 'Python',
+        'eyebrow' => 'decorator + Pydantic',
+        'title' => 'The decorator turns a function signature into a binding.',
+        'text' => 'Types and defaults become JSON Schema, while the returned argv list becomes a deterministic command template.',
+        'declare' => $techTabsPl[0]['declare'],
+        'registry' => $techTabsPl[0]['registry'],
+    ],
+    [
+        'id' => 'javascript',
+        'label' => 'JavaScript',
+        'eyebrow' => 'plain JS helper',
+        'title' => 'A small JS helper emits bindings without a transpiler.',
+        'text' => 'Field declarations produce inputSchema, and the command factory returns argv placeholders.',
+        'declare' => $techTabsPl[1]['declare'],
+        'registry' => $techTabsPl[1]['registry'],
+    ],
+    [
+        'id' => 'c',
+        'label' => 'C',
+        'eyebrow' => 'firmware route table',
+        'title' => 'Firmware can expose a small URI route table.',
+        'text' => 'C handles local dispatch, while a generated registry gives the rest of the system the same contract.',
+        'declare' => $techTabsPl[2]['declare'],
+        'registry' => $techTabsPl[2]['registry'],
+    ],
+    [
+        'id' => 'shell',
+        'label' => 'Shell',
+        'eyebrow' => 'scan scripts',
+        'title' => 'A shell script becomes a URI by scanning the project.',
+        'text' => 'Existing scripts stay in place. urirun scans them and creates bindings for controlled execution.',
+        'declare' => $techTabsPl[3]['declare'],
+        'registry' => $techTabsPl[3]['registry'],
+    ],
+    [
+        'id' => 'docker',
+        'label' => 'Docker',
+        'eyebrow' => 'image label + manifest',
+        'title' => 'A Docker image points to its URI manifest.',
+        'text' => 'The container carries bindings.json, and Dockerfile scanning collects manifests into the shared registry.',
+        'declare' => $techTabsPl[4]['declare'],
+        'registry' => $techTabsPl[4]['registry'],
+    ],
+    [
+        'id' => 'typescript',
+        'label' => 'TypeScript',
+        'eyebrow' => 'decorator-style declaration',
+        'title' => 'A TS decorator gives a typed command declaration.',
+        'text' => 'The method returns argv, while decorator fields become the runtime input schema.',
+        'declare' => $techTabsPl[5]['declare'],
+        'registry' => $techTabsPl[5]['registry'],
+    ],
+    [
+        'id' => 'php',
+        'label' => 'PHP',
+        'eyebrow' => 'PHP 8 attribute + reflection',
+        'title' => 'A PHP attribute generates a binding through reflection.',
+        'text' => 'Function parameters become inputSchema, and the attribute carries URI plus argv.',
+        'declare' => $techTabsPl[6]['declare'],
+        'registry' => $techTabsPl[6]['registry'],
+    ],
+];
+
 $pages = [
     [
         'lang' => 'pl',
@@ -370,6 +709,20 @@ $pages = [
             ['title' => 'Jeden adres w wielu warstwach', 'text' => 'Frontend, backend, shell, firmware i flow usług mogą dzielić ten sam standard nazewnictwa URI.'],
             ['title' => 'Policy przed wykonaniem', 'text' => 'Komendy są domyślnie dry-run. Realne wykonanie wymaga jawnych reguł allow i deny.'],
         ],
+        'contract_kicker' => 'urirun://schema',
+        'contract_title' => 'Jeden kontrakt, wiele runtime’ów.',
+        'contract_text' => 'Pakowanie komend zaczyna się od schematu. Dekorator, helper albo skan artefaktu generuje binding, potem urirun kompiluje go do registry i uruchamia po tym samym adresie URI.',
+        'schema_steps_label' => 'Proces tworzenia komendy URI',
+        'schema_steps' => [
+            ['mark' => 'fn', 'title' => 'Napisz funkcję', 'text' => 'Typy i wartości domyślne są źródłem prawdy.'],
+            ['mark' => '{ }', 'title' => 'Wygeneruj binding', 'text' => 'Powstaje inputSchema i szablon argv lub shell.'],
+            ['mark' => '✓', 'title' => 'Skompiluj registry', 'text' => 'Trasy są walidowane i gotowe do odkrywania.'],
+            ['mark' => '▶', 'title' => 'Uruchom URI', 'text' => 'Dry-run najpierw, execute dopiero z polityką.'],
+        ],
+        'tech_tabs_label' => 'Technologie generujące bindingi URI',
+        'declare_label' => 'deklaracja',
+        'registry_label' => 'binding + registry',
+        'tech_tabs' => $techTabsPl,
         'runtime_kicker' => 'transport://any/adapter/query',
         'runtime_title' => 'Ten sam URI, inny runtime.',
         'runtime_text' => 'URI nazywa to, co ma się wykonać. Transport decyduje jak: in-process, argv, shell, Docker, HTTP, gRPC, kolejka, serverless, MCP lub A2A. Kontrakt i bramka policy zostają w jednym miejscu.',
@@ -426,6 +779,20 @@ $pages = [
         'features_kicker' => 'registry://local/value/query',
         'features_title' => 'What gets simpler.',
         'features' => $site['features'],
+        'contract_kicker' => 'urirun://schema',
+        'contract_title' => 'One contract, many runtimes.',
+        'contract_text' => 'Packaging commands starts with a schema. A decorator, helper, or artifact scan generates a binding, then urirun compiles it into a registry and runs the same URI everywhere.',
+        'schema_steps_label' => 'URI command creation process',
+        'schema_steps' => [
+            ['mark' => 'fn', 'title' => 'Write a function', 'text' => 'Types and defaults are the source of truth.'],
+            ['mark' => '{ }', 'title' => 'Generate a binding', 'text' => 'inputSchema plus argv or shell template is emitted.'],
+            ['mark' => '✓', 'title' => 'Compile registry', 'text' => 'Routes are validated and discoverable.'],
+            ['mark' => '▶', 'title' => 'Run the URI', 'text' => 'Dry-run first; execute only after policy allows it.'],
+        ],
+        'tech_tabs_label' => 'Technologies that generate URI bindings',
+        'declare_label' => 'declaration',
+        'registry_label' => 'binding + registry',
+        'tech_tabs' => $techTabsEn,
         'runtime_kicker' => 'transport://any/adapter/query',
         'runtime_title' => 'Same URI, different runtime.',
         'runtime_text' => 'A URI names what should run. The transport decides how it runs: in-process, argv, shell, Docker, HTTP, gRPC, a message queue, serverless, MCP, or A2A. The contract and the policy gate stay in one place.',
@@ -448,3 +815,6 @@ foreach ($pages as $page) {
     file_put_contents($page['file'], render_page($page, $site, $baseUrl, $repoUrl));
     echo 'Wrote ' . basename($page['file']) . PHP_EOL;
 }
+
+file_put_contents(__DIR__ . '/docs.html', build_docs_page($site, $repoUrl));
+echo 'Wrote docs.html' . PHP_EOL;

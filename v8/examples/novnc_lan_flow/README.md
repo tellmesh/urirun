@@ -21,6 +21,17 @@ Each computer runs:
 The dashboard displays all four noVNC desktops at once in iframes and can call
 the URI agents from the browser.
 
+## Screenshot
+
+![Four noVNC desktops (pc1 controller, pc2 service-node, pc3 client-node, pc4 monitor-node) in one dashboard, each terminal streaming URI-flow JSON events](../../../www/assets/pc4.png)
+
+The dashboard shows the four virtual computers in a 2x2 grid. Each desktop has a
+terminal tailing its agent log: `pc1` (controller) announces the flow and reads
+back the session log, `pc2` (service-node) starts the `orders` service and runs a
+shell that lists the LAN hosts, `pc3` (client-node) starts `reports` and reads
+`pc2` over HTTP, and `pc4` (monitor-node) reads `pc3`. Every line is a URI call -
+the same `pc://...` / `log://...` resources the flow uses.
+
 ## Ports
 
 | Computer | noVNC | URI API |
@@ -89,6 +100,26 @@ steps:
 The implementation behind the URI can be a terminal command, Python service,
 Docker container, firmware handler, or remote HTTP adapter. The flow does not
 change as long as the URI contract stays the same.
+
+## Verified run
+
+`make flow` runs `flows/lan_demo.yaml` against the four live containers. A
+successful run reports `ok: true`, `routeCount: 8`, and every step green:
+
+| step | URI | what happens |
+|------|-----|--------------|
+| announce_start | `log://pc1/session/command/write` | pc1 records `flow.started` |
+| start_pc2_service | `pc://pc2/service/command/start` | pc2 serves `orders` on `:9102` |
+| start_pc3_service | `pc://pc3/service/command/start` | pc3 serves `reports` on `:9103` |
+| pc1_checks_pc2 | `pc://pc1/network/command/ping` | pc1 pings pc2 (0% loss) |
+| pc3_reads_pc2 | `pc://pc3/http/command/get` | pc3 GETs `http://pc2:9102/` -> 200 |
+| pc4_reads_pc3 | `pc://pc4/http/command/get` | pc4 GETs `http://pc3:9103/` -> 200 |
+| pc2_shell_observes_lan | `pc://pc2/terminal/command/run` | pc2 shell lists pc1..pc4 LAN hosts |
+| read_pc1_logs | `log://pc1/session/query/recent` | pc1 returns the recorded log trail |
+
+The orchestrator only ever sends `{uri, payload}`; each container resolves the
+URI to its own native action (HTTP service, ping, curl, shell, log store), which
+is exactly the cross-environment behaviour the screenshot shows.
 
 ## Why noVNC
 

@@ -1,39 +1,35 @@
 # urirun website
 
-The `www/` directory contains the static GitHub Pages site and the local PHP
-documentation renderer.
+Static, GitHub-Pages-friendly site generated from a single content source. There
+is **one homepage** and **no PHP at serve time** - PHP only runs at build time to
+generate the static files.
 
-Static Pages entry points:
+## Files
 
-- `/index.html` - Polish page with SEO `hreflang` links.
-- `/index.en.html` - English page with SEO `hreflang` links.
-- `/language.js` - remembers the last language selected without replacing the
-  static page content.
+- `index.html` / `index.en.html` - generated landing pages (PL / EN).
+- `docs.html` - generated single-page docs, rendered from `../docs/*.md`.
+- `style.css`, `language.js`, `assets/` - styles, language switch, logo + images.
+- `site-data.php` - the single content source.
+- `build-static.php` - generator: reads `site-data.php` + `../docs/*.md` and
+  writes `index.html`, `index.en.html`, and `docs.html`.
 
-Regenerate the static pages after editing copy or `site-data.php`:
-
-```bash
-php www/build-static.php
-```
-
-Serve the local PHP documentation site from the repository root:
+## Build
 
 ```bash
-php -S 127.0.0.1:8098 -t www
+php www/build-static.php   # regenerates index.html, index.en.html, docs.html
 ```
 
-The site reads Markdown documents from `../docs/` and uses copied SVG logo
-assets from `www/assets/`.
+The committed `*.html` files are the build output.
 
-Routes:
+## Preview locally
 
-- `/index.php` - project overview, quickstart, workflow, examples, and roadmap.
-- `/docs.php?doc=getting-started` - Markdown docs rendered from `../docs/`.
-- `/index.html` and `/index.en.html` - static pages for GitHub Pages.
+```bash
+python3 -m http.server 8099 -d www   # http://127.0.0.1:8099/
+```
 
-Deployment:
+## Deploy
 
-- `.github/workflows/pages.yml` builds a static `_site` artifact from `www/`
-  and uploads it to GitHub Pages.
-- Enable GitHub Pages with source set to GitHub Actions in the repository
-  settings.
+`.github/workflows/pages.yml` copies the static files (`index.html`,
+`index.en.html`, `docs.html`, `language.js`, `style.css`, `assets/`, `.nojekyll`)
+into `_site` and publishes them to GitHub Pages. Enable Pages with the source set
+to GitHub Actions.

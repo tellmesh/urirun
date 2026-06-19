@@ -38,6 +38,27 @@
       </article>
     </section>
 
+    <section class="nl-panel panel" aria-label="Natural language URI flow">
+      <div class="nl-head">
+        <div>
+          <p class="kicker">llm://dashboard/flow/command/generate</p>
+          <h2>Natural language to URI flow</h2>
+        </div>
+        <button id="run-nl-flow" type="button">Generate and run</button>
+      </div>
+      <textarea id="nl-prompt" rows="4"></textarea>
+      <div class="flow-preview">
+        <div>
+          <h2>Generated workflow</h2>
+          <pre id="generated-flow">{}</pre>
+        </div>
+        <div>
+          <h2>Generator</h2>
+          <pre id="generator-status">{}</pre>
+        </div>
+      </div>
+    </section>
+
     <section class="bottom">
       <article class="panel">
         <h2>URI process flow</h2>

@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `www/` PHP documentation site wired to the generated SVG logo assets.
 - Add static `www/index.html` and `www/index.en.html` pages with SEO
   `hreflang`, language memory, and a GitHub Pages deployment workflow.
+- Add technology tabs to the static `www` landing page showing how Python,
+  JavaScript, C, Shell, Docker, TypeScript, and PHP generate bindings and
+  compile registries.
 - Add generated `logo/` SVG assets for icon, wordmark, favicon, horizontal,
   stacked, and logo sheet variants.
 - Add a curated `TODO.md` focused on urirun usability work.
