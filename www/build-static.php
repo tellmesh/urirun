@@ -396,6 +396,10 @@ function render_page(array $page, array $site, string $baseUrl, string $repoUrl)
     $html .= '        <p class="kicker">' . h($page['examples_kicker']) . "</p>\n";
     $html .= '        <h2>' . h($page['examples_title']) . "</h2>\n";
     $html .= '        <p class="section-copy">' . h($page['examples_text']) . "</p>\n";
+    $html .= "        <figure class=\"showcase\">\n";
+    $html .= '          <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/novnc_lan_flow"><img src="assets/pc4.png" alt="' . h($page['showcase_alt']) . '" loading="lazy" width="1200" height="740"></a>' . "\n";
+    $html .= '          <figcaption>' . h($page['showcase_caption']) . "</figcaption>\n";
+    $html .= "        </figure>\n";
     $html .= "      </div>\n";
     $html .= "      <div class=\"example-list\">\n";
     $html .= render_examples($page['examples']);
@@ -733,6 +737,8 @@ $pages = [
         'examples_kicker' => 'examples://repo/current/query',
         'examples_title' => 'Przykłady pokazujące współpracę warstw.',
         'examples_text' => 'Przykłady są małe celowo: pokazują, jak jedno registry obsługuje UI w przeglądarce, backend, usługi Docker, generatory i adaptery firmware.',
+        'showcase_alt' => 'Cztery pulpity noVNC (pc1 controller, pc2 service-node, pc3 client-node, pc4 monitor-node) w jednym dashboardzie, każdy terminal pokazuje zdarzenia JSON z przepływu URI',
+        'showcase_caption' => 'novnc_lan_flow: cztery komputery Docker komunikują się przez ten sam kontrakt URI (pc://…, log://…), pokazane razem w dashboardzie.',
         'examples' => $site['examples'],
         'roadmap_kicker' => 'todo://urirun/usability/query',
         'roadmap_title' => 'Następne prace nad użytecznością.',
@@ -803,6 +809,8 @@ $pages = [
         'examples_kicker' => 'examples://repo/current/query',
         'examples_title' => 'Examples that show the layers working together.',
         'examples_text' => 'The examples are intentionally small: they show how one registry can be used by browser UI, backend services, Docker workers, generators, and firmware-style adapters.',
+        'showcase_alt' => 'Four noVNC desktops (pc1 controller, pc2 service-node, pc3 client-node, pc4 monitor-node) in one dashboard, each terminal streaming URI-flow JSON events',
+        'showcase_caption' => 'novnc_lan_flow: four Docker computers communicating over one URI contract (pc://…, log://…), shown together in a dashboard.',
         'examples' => $site['examples'],
         'roadmap_kicker' => 'todo://urirun/usability/query',
         'roadmap_title' => 'Next usability work.',

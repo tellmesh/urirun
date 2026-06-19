@@ -44,6 +44,13 @@ def registry_has_uri(registry: dict, uri: str) -> bool:
     return any(meta.get("uri") == uri for meta in (registry.get("index") or {}).values())
 
 
+def registry_uris(registry: dict | None = None) -> set[str]:
+    registry = registry if registry is not None else load_registry()
+    if not registry:
+        return set()
+    return {meta.get("uri") for meta in (registry.get("index") or {}).values() if meta.get("uri")}
+
+
 def registry_routes() -> list[dict]:
     registry = load_registry()
     if not registry:
@@ -80,6 +87,14 @@ def discover_routes() -> list[dict]:
     return routes
 
 
+def registry_backed_routes(routes: list[dict]) -> list[dict]:
+    registry = load_registry()
+    if not registry:
+        return routes
+    allowed = registry_uris(registry)
+    return [route for route in routes if route.get("uri") in allowed]
+
+
 def wait_for_targets(uris: list[str]) -> None:
     for base in sorted({service_base(uri) for uri in uris}):
         last_error = None
@@ -97,12 +112,13 @@ def wait_for_targets(uris: list[str]) -> None:
 def validate_flow(flow: dict, routes: list[dict]) -> dict:
     allowed = {route["uri"] for route in safe_routes(routes)}
     registry = load_registry()
+    registered = registry_uris(registry)
     missing = []
     for step in flow["steps"]:
         uri = step["uri"]
         if uri not in allowed:
             missing.append(uri)
-        if registry and not registry_has_uri(registry, uri):
+        if registry and uri not in registered:
             missing.append(uri)
     if missing:
         raise RuntimeError(f"Generated flow references unavailable URI: {sorted(set(missing))}")
@@ -142,8 +158,9 @@ def execute_flow(flow: dict) -> dict:
 
 def nl_flow(prompt: str, execute: bool = True) -> dict:
     routes = discover_routes()
-    flow, generator = generate_flow(prompt, routes, use_llm=os.getenv("URIRUN_LLM_DISABLE") != "1")
-    registry = validate_flow(flow, routes)
+    generation_routes = registry_backed_routes(routes)
+    flow, generator = generate_flow(prompt, generation_routes, use_llm=os.getenv("URIRUN_LLM_DISABLE") != "1")
+    registry = validate_flow(flow, generation_routes)
     execution = execute_flow(flow) if execute else {"ok": True, "timeline": [], "results": {}}
     return {
         "ok": execution.get("ok", False),

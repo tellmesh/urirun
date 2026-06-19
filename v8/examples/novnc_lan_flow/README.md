@@ -5,21 +5,23 @@ environment and across a local Docker network.
 
 It starts four virtual computers:
 
-- `pc1` - controller and observer
-- `pc2` - service node
-- `pc3` - client node
-- `pc4` - monitor node
+- `pc1` - controller and notes app
+- `pc2` - service node and orders app
+- `pc3` - client node and reports app
+- `pc4` - monitor node and health-check app
 
 Each computer runs:
 
 - a lightweight X11 desktop visible through noVNC,
 - terminal windows inside that desktop,
 - an HTTP URI agent on port `9000`,
-- dynamic URI routes such as `pc://pc2/service/command/start` and
-  `log://pc1/session/command/write`.
+- dynamic URI routes such as `pc://pc2/service/command/start`,
+  `app://pc3/reports/command/render`, and `log://pc1/session/command/write`.
 
 The dashboard displays all four noVNC desktops at once in iframes and can call
-the URI agents from the browser.
+the URI agents from the browser. It also has a natural-language input that
+turns a user request into a URI workflow and runs that workflow through the same
+HTTP URI agents.
 
 ## Screenshot
 
@@ -48,10 +50,23 @@ Open:
 http://127.0.0.1:8192/
 ```
 
-Ports are defined in `.env`. If any port is already busy on your machine, edit
-that file and run `make up` again. `make up` also writes
+Ports are defined in the example `.env`. If any port is already busy on your
+machine, edit that file and run `make up` again. `make up` also writes
 `dashboard/runtime-config.js`, so the browser uses the same port values as
 Docker Compose.
+
+LLM settings are read from the project root `.env`:
+
+```env
+LLM_MODEL=openrouter/...
+OPENROUTER_API_KEY=...
+```
+
+The browser never receives these secrets. The dashboard container reads them,
+calls LiteLLM server-side, validates the generated URI flow against the registry,
+and only then executes it. If LiteLLM is not configured or the provider returns
+an error, the dashboard uses a deterministic fallback flow so the example still
+works offline.
 
 ## Run
 
@@ -61,7 +76,16 @@ make registry
 make up
 ```
 
-Then open the dashboard and press `Run browser demo`.
+Then open the dashboard and press `Generate and run`. The textarea starts with
+an example prompt:
+
+```txt
+Uruchom zadanie na czterech komputerach: dodaj notatkę na pc1, utwórz zamówienie na pc2, wygeneruj raport na pc3, sprawdź pc2 z monitora na pc4 i pokaż ostatnie logi.
+```
+
+The generated workflow is shown before the execution output, so you can inspect
+which URI commands were chosen. You can also press `Run browser demo` to execute
+a fixed URI sequence directly from JavaScript.
 
 To run the declarative flow from Docker:
 
@@ -72,6 +96,14 @@ make flow
 The flow in `flows/lan_demo.yaml` starts services on different computers, checks
 network reachability, calls services across the Docker LAN, and writes logs that
 are visible in the noVNC terminal windows.
+
+To call the natural-language endpoint from shell:
+
+```bash
+curl -s http://127.0.0.1:8192/api/nl-flow \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Dodaj notatkę, utwórz zamówienie, wygeneruj raport i sprawdź pc2","execute":true}'
+```
 
 Stop everything:
 
@@ -101,10 +133,35 @@ The implementation behind the URI can be a terminal command, Python service,
 Docker container, firmware handler, or remote HTTP adapter. The flow does not
 change as long as the URI contract stays the same.
 
+The natural-language generator uses the same rule: it may choose only routes
+that exist in the registry and are marked safe for the browser/LLM demo. Shell
+routes such as `pc://pc2/terminal/command/run` stay available in the registry,
+but the generator filters them out.
+
+## Application routes
+
+Each computer exposes one simple application:
+
+```txt
+app://pc1/notes/command/add
+app://pc1/notes/query/list
+app://pc2/orders/command/create
+app://pc2/orders/query/list
+app://pc3/reports/command/render
+app://pc3/reports/query/latest
+app://pc4/monitor/command/check
+app://pc4/monitor/query/status
+```
+
+These routes show the intended model: the flow does not import SDKs or call
+language-specific functions directly. It addresses capabilities by URI, and the
+local agent on each computer maps that URI to Python code, a shell command, a
+container, or another adapter.
+
 ## Verified run
 
 `make flow` runs `flows/lan_demo.yaml` against the four live containers. A
-successful run reports `ok: true`, `routeCount: 8`, and every step green:
+successful run reports `ok: true`, `routeCount: 16`, and every step green:
 
 | step | URI | what happens |
 |------|-----|--------------|
