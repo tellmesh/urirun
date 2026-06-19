@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <body>
+    <button id="on" data-uri="device://device-01/led/set/on">LED on</button>
+    <script type="module">
+      import { dispatch } from "../adapters/js/index.js";
+      const registry = {
+        device: {
+          led_set(target, state, payload, invocation) {
+            console.log('frontend dispatch', { target, state, payload, invocation });
+          }
+        }
+      };
+      document.getElementById('on').addEventListener('click', () => {
+        dispatch('device://device-01/led/set/on', registry, { source: 'frontend' });
+      });
+    </script>
+  </body>
+</html>
