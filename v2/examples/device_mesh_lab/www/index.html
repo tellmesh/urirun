@@ -48,42 +48,6 @@
     </section>
 
     <section class="demo-layout">
-      <div class="control-column">
-        <section id="flow-panel" class="nl-panel panel" aria-label="Natural language orchestration">
-          <div>
-            <p class="kicker">llm://controller/flow/command/generate</p>
-            <h2>Natural language to URI flow across devices</h2>
-          </div>
-          <textarea id="nl-prompt" rows="4"></textarea>
-          <button id="run-nl-flow-inline" type="button">Generate and run URI flow</button>
-        </section>
-
-        <section id="command-workbench" class="panel command-workbench" aria-label="URI command workbench">
-          <div class="panel-head">
-            <h2>URI command workbench</h2>
-            <input id="route-filter" type="search" placeholder="filter URI">
-          </div>
-          <div class="command-grid">
-            <div>
-              <h3>Available URI commands</h3>
-              <div id="routes" class="route-list"></div>
-            </div>
-            <div>
-              <div class="panel-head compact">
-                <h3>Payload</h3>
-                <button id="run-selected-uri" type="button" disabled>RUN</button>
-              </div>
-              <div id="selected-command" class="selected-command empty-state">
-                Select a URI command to build its payload.
-              </div>
-              <form id="payload-form" class="payload-form"></form>
-            </div>
-          </div>
-        </section>
-
-        <section class="device-grid" id="devices" aria-label="Devices"></section>
-      </div>
-
       <aside id="presentation-panel" class="observe-column panel" aria-label="Presentation view">
         <div class="panel-head">
           <div>
@@ -126,6 +90,42 @@
           </div>
         </section>
       </aside>
+
+      <div class="control-column">
+        <section id="flow-panel" class="nl-panel panel" aria-label="Natural language orchestration">
+          <div>
+            <p class="kicker">llm://controller/flow/command/generate</p>
+            <h2>Natural language to URI flow across devices</h2>
+          </div>
+          <textarea id="nl-prompt" rows="4"></textarea>
+          <button id="run-nl-flow-inline" type="button">Generate and run URI flow</button>
+        </section>
+
+        <section id="command-workbench" class="panel command-workbench" aria-label="URI command workbench">
+          <div class="panel-head">
+            <h2>URI command workbench</h2>
+            <input id="route-filter" type="search" placeholder="filter URI">
+          </div>
+          <div class="command-grid">
+            <div>
+              <h3>Available URI commands</h3>
+              <div id="routes" class="route-list"></div>
+            </div>
+            <div>
+              <div class="panel-head compact">
+                <h3>Payload</h3>
+                <button id="run-selected-uri" type="button" disabled>RUN</button>
+              </div>
+              <div id="selected-command" class="selected-command empty-state">
+                Select a URI command to build its payload.
+              </div>
+              <form id="payload-form" class="payload-form"></form>
+            </div>
+          </div>
+        </section>
+
+        <section class="device-grid" id="devices" aria-label="Devices"></section>
+      </div>
     </section>
   </main>
 

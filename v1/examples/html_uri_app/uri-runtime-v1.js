@@ -160,7 +160,7 @@ export function evaluatePolicy(uri, entry, ctx, policy) {
 }
 
 // --- runtime ----------------------------------------------------------------
-export function createUriRuntimeV7({ bindings, adapters, refs = {}, state = {}, policy = {} }) {
+export function createUriRuntimeV1({ bindings, adapters, refs = {}, state = {}, policy = {} }) {
   const routes = compileBindings(bindings);
   let activePolicy = mergePolicy(policy);
 

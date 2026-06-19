@@ -184,6 +184,7 @@ function renderDevices(mesh) {
           <div><dt>Host</dt><dd>${escapeHtml(device.hostname || "-")}</dd></div>
           <div><dt>Platform</dt><dd>${escapeHtml(device.platform || item.error || "-")}</dd></div>
           <div><dt>Routes</dt><dd>${device.routeCount || 0}</dd></div>
+          <div><dt>Browser</dt><dd>${device.allowBrowser ? "<span class=\"badge safe\">enabled</span>" : "<span class=\"badge locked\">blocked</span>"}</dd></div>
         </dl>
         <h3>Processes</h3>
         <table>

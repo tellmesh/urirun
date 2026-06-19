@@ -1,4 +1,4 @@
-import { createUriRuntimeV7 } from './uri-runtime-v1.js';
+import { createUriRuntimeV1 } from './uri-runtime-v1.js';
 
 const state = { runs: 0, logs: [] };
 
@@ -69,7 +69,7 @@ const els = {
 
 const bindingDocument = await fetch('./bindings.json').then((r) => r.json());
 const basePolicy = await fetch('./policy.json').then((r) => r.json());
-const runtime = createUriRuntimeV7({ bindings: bindingDocument, adapters, state, policy: basePolicy });
+const runtime = createUriRuntimeV1({ bindings: bindingDocument, adapters, state, policy: basePolicy });
 window.uriApp = runtime;
 
 els.routeCount.textContent = Object.keys(runtime.routes).length;

@@ -134,7 +134,7 @@ def dispatch_tool(body: dict) -> dict:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "UriHandlerV8HtmlApp/0.1"
+    server_version = "UriRunV2HtmlApp/0.1"
 
     def log_message(self, fmt: str, *args) -> None:
         add_log("http.request", {"message": fmt % args})

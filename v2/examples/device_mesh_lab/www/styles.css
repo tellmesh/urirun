@@ -197,7 +197,7 @@ input:focus {
   display: grid;
   align-items: start;
   gap: 16px;
-  grid-template-columns: minmax(500px, 0.95fr) minmax(620px, 1.05fr);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .control-column,
@@ -207,12 +207,27 @@ input:focus {
 
 .control-column {
   display: grid;
+  grid-template-areas:
+    "flow command"
+    "devices command";
+  grid-template-columns: minmax(320px, 0.8fr) minmax(520px, 1.2fr);
   gap: 14px;
 }
 
 .observe-column {
-  position: sticky;
-  top: 96px;
+  position: static;
+}
+
+#flow-panel {
+  grid-area: flow;
+}
+
+#command-workbench {
+  grid-area: command;
+}
+
+#devices {
+  grid-area: devices;
 }
 
 .summary-grid {
@@ -628,12 +643,16 @@ li + li {
 }
 
 @media (max-width: 1180px) {
+  .control-column,
   .demo-layout {
     grid-template-columns: 1fr;
   }
 
-  .observe-column {
-    position: static;
+  .control-column {
+    grid-template-areas:
+      "flow"
+      "command"
+      "devices";
   }
 }
 

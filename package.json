@@ -1,6 +1,6 @@
 {
   "name": "urirun",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Language-agnostic URI to handler adapter",
   "type": "module",
   "main": "./adapters/js/index.js",

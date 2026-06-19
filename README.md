@@ -69,7 +69,7 @@ npm install github:tellmesh/urirun
 
 ```js
 import { parseUri } from "urirun";
-import { compileRegistry, run as runV7 } from "urirun/v1/js";
+import { compileRegistry, run as runV1 } from "urirun/v1/js";
 ```
 
 or vendor the adapter folder directly into your repo.

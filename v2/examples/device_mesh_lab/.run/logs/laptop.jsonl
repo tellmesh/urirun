@@ -151,3 +151,7 @@
 {"at": "2026-06-19T17:12:19+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /processes HTTP/1.1\" 200 -"}}
 {"at": "2026-06-19T17:12:19+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /processes HTTP/1.1\" 200 -"}}
 {"at": "2026-06-19T17:12:19+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"POST /run HTTP/1.1\" 200 -"}}
+{"at": "2026-06-19T17:40:33+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /device HTTP/1.1\" 200 -"}}
+{"at": "2026-06-19T17:40:33+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /routes HTTP/1.1\" 200 -"}}
+{"at": "2026-06-19T17:40:33+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /processes HTTP/1.1\" 200 -"}}
+{"at": "2026-06-19T17:40:33+0200", "device": "laptop", "role": "remote-laptop", "event": "http.request", "detail": {"message": "\"GET /health HTTP/1.1\" 200 -"}}

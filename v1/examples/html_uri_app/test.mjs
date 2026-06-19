@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createUriRuntimeV7 } from './uri-runtime-v1.js';
+import { createUriRuntimeV1 } from './uri-runtime-v1.js';
 
 const bindings = JSON.parse(await readFile(new URL('./bindings.json', import.meta.url), 'utf8'));
 const policy = JSON.parse(await readFile(new URL('./policy.json', import.meta.url), 'utf8'));
@@ -15,7 +15,7 @@ const adapters = {
   fetch: async ({ entry, params }) => ({ ok: true, simulated: true, type: 'http', url: String(entry.config.url).replace(/\{([a-zA-Z0-9_.]+)\}/g, (_, k) => String(params[k])) }),
 };
 
-const runtime = createUriRuntimeV7({ bindings, adapters, policy });
+const runtime = createUriRuntimeV1({ bindings, adapters, policy });
 
 assert.equal(Object.keys(runtime.routes).length, 7);
 

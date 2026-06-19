@@ -70,6 +70,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix stale references to a non-existing `tellmesh/urirun` GitHub repository in
   examples.
 
+## [0.3.7] - 2026-06-19
+
+### Docs
+- Update README.md
+
+### Other
+- Update v1/examples/html_uri_app/app.js
+- Update v1/examples/html_uri_app/test.mjs
+- Update v1/examples/html_uri_app/uri-runtime-v1.js
+- Update v2/examples/device_mesh_lab/.run/logs/desktop.jsonl
+- Update v2/examples/device_mesh_lab/.run/logs/laptop.jsonl
+- Update v2/examples/device_mesh_lab/controller.py
+- Update v2/examples/device_mesh_lab/device_agent.py
+- Update v2/examples/device_mesh_lab/mesh_env.py
+- Update v2/examples/device_mesh_lab/tests/gui_smoke.py
+- Update v2/examples/device_mesh_lab/www/app.js
+- ... and 4 more files
+
 ## [0.3.6] - 2026-06-19
 
 ### Docs

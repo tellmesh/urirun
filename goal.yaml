@@ -272,6 +272,8 @@ hooks:
   post_push: ''
 advanced:
   auto_update_config: true
+  # Opt out of automatic fixing/applying during `goal -a` (respected by goal >= 2.1.255)
+  auto_apply: false
   performance:
     max_files: 50
     timeout_test: 300
