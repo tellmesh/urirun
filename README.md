@@ -34,6 +34,7 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `path segments` -> operation chain
 - `payload` -> optional data
 
+
 ## Naming
 
 - `urirun` is the runtime name used by the CLI, Python import namespace, JS
