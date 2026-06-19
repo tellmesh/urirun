@@ -14,6 +14,9 @@ dependencies = [
   "pydantic>=2",
 ]
 
+[project.optional-dependencies]
+grpc = ["grpcio>=1.60"]
+
 [project.scripts]
 urirun = "urihandler.v8:main"
 urirun-v7 = "urihandler.v7:main"

@@ -226,18 +226,18 @@ publishing:
   fallback:
     github_release:
       enabled: true
-      owner: ''
-      repo: ''
+      owner: tellmesh
+      repo: urihandler
       repo_map: {}
       token_env: GITHUB_TOKEN
       skip_pypi_retries_on_block: true
-      asset_glob: dist/*
+      asset_glob: adapters/python/dist/*
 strategies:
   python:
     test: pytest tests/ -v
-    build: python -m build
-    publish: twine upload dist/urirun-{version}*
-    publish_enabled: true
+    build: cd adapters/python && python -m build
+    publish: gh release upload v{version} adapters/python/dist/urirun-{version}* --clobber
+    publish_enabled: false
     dependencies:
       file: requirements.txt
       lock: pip freeze > requirements.txt

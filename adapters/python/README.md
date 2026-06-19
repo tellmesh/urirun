@@ -32,6 +32,12 @@ urirun run 'cli://local/git/status' .urihandler/registry.merged.json
 points. Compatibility aliases `urihandler-v7` and `urihandler-v8` are kept for
 existing v7/v8 scripts.
 
+The optional v8 gRPC transport can be installed with:
+
+```bash
+pip install "urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
+```
+
 v8 can generate schema-first bindings and a compiled registry from existing
 artifacts:
 

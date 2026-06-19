@@ -3,7 +3,7 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![Package](https://img.shields.io/badge/package-GitHub-blue) ![Version](https://img.shields.io/badge/version-0.3.4-blue) ![Python](https://img.shields.io/badge/python-3.10+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$0.73-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-3.5h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
 - 🤖 **LLM usage:** $0.7255 (10 commits)
@@ -91,6 +91,12 @@ urirun list .urihandler/registry.merged.json
 urirun run 'cli://local/git/status' .urihandler/registry.merged.json
 urirun-v7 --help
 urirun-v8 --help
+```
+
+Optional transports stay optional. For the v8 gRPC transport install:
+
+```bash
+pip install "urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
 ```
 
 ### C / firmware
