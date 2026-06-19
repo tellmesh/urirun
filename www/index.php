@@ -35,7 +35,7 @@ function h(string $value): string
       <div class="hero-copy">
         <p class="kicker">urirun://project/home</p>
         <h1>One URI registry for commands across code, shell, containers, and services.</h1>
-        <p class="lede">Declare a route once, compile it into a registry, and call the same URI from a frontend button, backend handler, shell client, Docker flow, or agent tool.</p>
+        <p class="lede">Declare a route once, compile it into a registry, and call the same URI in-process or over HTTP, gRPC, a queue, serverless, Docker, MCP, or an A2A agent card.</p>
         <div class="actions">
           <a class="button primary" href="docs.php?doc=getting-started">Start with v8</a>
           <a class="button" href="docs.php?doc=commands">CLI commands</a>
@@ -99,7 +99,7 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
       <div>
         <p class="kicker">transport://any/adapter/query</p>
         <h2>Same URI, different runtime.</h2>
-        <p class="section-copy">A URI names what should run. The adapter decides how it runs: local function, argv template, shell, Docker, HTTP, gRPC, MCP, or A2A.</p>
+        <p class="section-copy">A URI names what should run. The transport decides how it runs: in-process, argv, shell, Docker, HTTP, gRPC, a message queue, serverless, MCP, or A2A. The contract and the policy gate stay in one place.</p>
       </div>
       <div class="transport-grid">
         <?php foreach ($site['transports'] as $transport): ?>

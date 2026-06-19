@@ -59,7 +59,8 @@ test-v8: ## Run urirun v8 schema/decorator, artifact, and MCP/A2A checks.
 	$(PYTHON) v8/examples/docker_uri_flow/test_flow_e2e.py
 	PYTHONPATH=adapters/python $(PYTHON) v8/examples/docker_uri_flow/test_service_adapter.py
 	PYTHONPATH=adapters/python $(PYTHON) v8/examples/transports/test_transports.py
+	PYTHONPATH=adapters/python $(PYTHON) v8/examples/novnc_lan_flow/test_flow.py
 
 .PHONY: clean
 clean: ## Remove local generated cache files.
-	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ examples/reference_adapters/__pycache__ v7/examples/python/__pycache__ v8/examples/python/__pycache__ v8/examples/docker_uri_flow/__pycache__ v8/examples/transports/__pycache__ __pycache__
+	rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build examples/__pycache__ examples/reference_adapters/__pycache__ v7/examples/python/__pycache__ v8/examples/python/__pycache__ v8/examples/docker_uri_flow/__pycache__ v8/examples/transports/__pycache__ v8/examples/novnc_lan_flow/__pycache__ v8/examples/novnc_lan_flow/computer/__pycache__ v8/examples/novnc_lan_flow/orchestrator/__pycache__ __pycache__

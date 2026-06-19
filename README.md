@@ -211,6 +211,36 @@ This keeps the URI registry reproducible: a service can ship a Dockerfile label
 such as `io.tellmesh.urirun.manifest=/app/bindings.json`, and the scanner
 will connect the image artifact to the service's URI contract.
 
+For a visual LAN demo, `v8/examples/novnc_lan_flow` starts four Docker
+"computers" with noVNC desktops. A dashboard shows all four desktops at once in
+iframes while URI flow commands start services and call them across the Docker
+network:
+
+```bash
+cd v8/examples/novnc_lan_flow
+make up     # dashboard: http://127.0.0.1:8092/
+make flow   # run flows/lan_demo.yaml across pc1..pc4
+```
+
+## Transports
+
+The URI + registry + JSON Schema + policy gate are the contract; a transport
+only moves `{uri, payload}` to where the runtime executes it. The same registry
+runs over:
+
+- **in-process** - `urirun.v8.run`
+- **CLI / shell** - `argv-template`, `shell-template`
+- **HTTP** - `urirun.v8_service` (`POST /run`, `GET /routes`)
+- **gRPC** - `urirun.v8_grpc` (`Run`, `RunStream`, `ListRoutes`)
+- **queue / serverless** - a consumer or `handler(event)` that calls `v8.run`
+- **Docker** - `docker-run` / `docker-exec`
+- **MCP / A2A** - `urirun.v8_mcp` (`tools/list`, `tools/call`, agent card)
+
+`v8/examples/transports` drives one registry over five transports and ships a
+one-command `scan_and_run.py`. `v8/examples/multi_transport` is a Docker stack
+mixing HTTP and gRPC workers with an auto-generated registry, conflict
+detection, and a cross-environment flow. See [docs/transports.md](docs/transports.md).
+
 ## License
 
 Licensed under Apache-2.0.

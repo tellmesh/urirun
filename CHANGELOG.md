@@ -8,14 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add a gRPC transport (`urirun.v8_grpc`): a generic `Run` / `RunStream` /
+  `ListRoutes` service over JSON-over-gRPC, with a client `call()` that mirrors
+  the HTTP service path (schema-validated, target via `URI_GRPC_MAP`).
+- Add `urirun.v8_service` for library-native, adapter-agnostic HTTP dispatch
+  (validate against the registry schema, then `POST /run`).
+- Add `urirun.v8_mcp` (MCP tools manifest, A2A agent card, stdio MCP server) and
+  `urirun.v8_adopt` (adopt PyPI `console_scripts` and npm `bin` as URI commands).
+- Add `v8/examples/transports` (one registry over in-process, queue, serverless,
+  HTTP and gRPC, plus a one-command `scan_and_run.py`).
+- Add `v8/examples/multi_transport` (Docker stack mixing HTTP and gRPC workers,
+  auto-generated registry, route-conflict detection, cross-environment flow).
+- Add docker-free and Docker integration tests for the example flows.
 - Add `docs/` with current urirun quick start, naming, commands, registry,
   transports, logo notes, and roadmap.
 - Add `www/` PHP documentation site wired to the generated SVG logo assets.
+- Add static `www/index.html` and `www/index.en.html` pages with SEO
+  `hreflang`, language memory, and a GitHub Pages deployment workflow.
 - Add generated `logo/` SVG assets for icon, wordmark, favicon, horizontal,
   stacked, and logo sheet variants.
 - Add a curated `TODO.md` focused on urirun usability work.
+- Add a noVNC LAN flow example with four Docker "computers", a four-iframe
+  dashboard, URI agents, and a cross-computer flow.
 
 ### Changed
+- Disable `[tool.pfix] auto_apply` so configuration and documentation changes
+  are explicit rather than auto-applied.
+- Standardize the website and docs on the full transport set (in-process, CLI/
+  shell, HTTP, gRPC, queue, serverless, Docker, MCP/A2A) and the current example
+  list; make `www/index.html` consistent with the canonical site.
 - Update README for the current `urirun` runtime name while keeping the GitHub
   repository URL as `tellmesh/urihandler`.
 - Refresh the PHP project site with current positioning, workflow, transport,

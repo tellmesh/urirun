@@ -1,55 +1,55 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>urirun - runtime komend adresowanych URI</title>
-  <meta name="description" content="urirun zmienia funkcje, skrypty, kontenery i usługi w reużywalne trasy URI kompilowane do jednego registry.">
+  <title>urirun - URI-addressed command runtime</title>
+  <meta name="description" content="urirun turns functions, scripts, containers, and services into reusable URI routes compiled into one registry.">
   <link rel="icon" href="assets/urirun-favicon.svg" type="image/svg+xml">
-  <link rel="canonical" href="https://tellmesh.github.io/urihandler/">
+  <link rel="canonical" href="https://tellmesh.github.io/urihandler/index.en.html">
   <link rel="alternate" hreflang="pl" href="https://tellmesh.github.io/urihandler/">
   <link rel="alternate" hreflang="en" href="https://tellmesh.github.io/urihandler/index.en.html">
   <link rel="alternate" hreflang="x-default" href="https://tellmesh.github.io/urihandler/">
-  <meta property="og:title" content="urirun - runtime komend adresowanych URI">
-  <meta property="og:description" content="urirun zmienia funkcje, skrypty, kontenery i usługi w reużywalne trasy URI kompilowane do jednego registry.">
+  <meta property="og:title" content="urirun - URI-addressed command runtime">
+  <meta property="og:description" content="urirun turns functions, scripts, containers, and services into reusable URI routes compiled into one registry.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://tellmesh.github.io/urihandler/">
+  <meta property="og:url" content="https://tellmesh.github.io/urihandler/index.en.html">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="index.html" aria-label="urirun home">
+    <a class="brand" href="index.en.html" aria-label="urirun home">
       <img src="assets/urirun-horizontal.svg" alt="urirun">
     </a>
-    <nav aria-label="Nawigacja główna">
-      <a href="https://github.com/tellmesh/urihandler/tree/main/docs">Dokumentacja</a>
+    <nav aria-label="Main navigation">
+      <a href="https://github.com/tellmesh/urihandler/tree/main/docs">Docs</a>
       <a href="#workflow">Workflow</a>
-      <a href="#examples">Przykłady</a>
+      <a href="#examples">Examples</a>
       <a href="https://github.com/tellmesh/urihandler">GitHub</a>
-      <span class="language-switch" aria-label="Wersje językowe">
-        <a class="active" href="index.html" hreflang="pl" lang="pl" data-lang-choice="pl">PL</a>
-        <a class="" href="index.en.html" hreflang="en" lang="en" data-lang-choice="en">EN</a>
+      <span class="language-switch" aria-label="Language versions">
+        <a class="" href="index.html" hreflang="pl" lang="pl" data-lang-choice="pl">PL</a>
+        <a class="active" href="index.en.html" hreflang="en" lang="en" data-lang-choice="en">EN</a>
       </span>
     </nav>
   </header>
 
   <main>
-    <p class="language-memory" data-language-memory hidden><a href="index.en.html"></a></p>
+    <p class="language-memory" data-language-memory hidden><a href="index.html"></a></p>
     <section class="hero">
       <div class="hero-copy">
         <p class="kicker">urirun://project/home</p>
-        <h1>Jedno registry URI dla komend w kodzie, shellu, kontenerach i usługach.</h1>
-        <p class="lede">Deklarujesz trasę raz, kompilujesz ją do registry i wywołujesz ten sam URI lokalnie albo przez HTTP, gRPC, kolejkę, serverless, Docker, MCP lub kartę agenta A2A.</p>
+        <h1>One URI registry for commands across code, shell, containers, and services.</h1>
+        <p class="lede">Declare a route once, compile it into a registry, and call the same URI in-process or over HTTP, gRPC, a queue, serverless, Docker, MCP, or an A2A agent card.</p>
         <div class="actions">
-          <a class="button primary" href="https://github.com/tellmesh/urihandler/blob/main/docs/getting-started.md">Zacznij od v8</a>
-          <a class="button" href="https://github.com/tellmesh/urihandler/blob/main/docs/commands.md">Komendy CLI</a>
+          <a class="button primary" href="https://github.com/tellmesh/urihandler/blob/main/docs/getting-started.md">Start with v8</a>
+          <a class="button" href="https://github.com/tellmesh/urihandler/blob/main/docs/commands.md">CLI commands</a>
         </div>
       </div>
 
-      <section class="command-panel" aria-label="Sekwencja szybkiego startu">
+      <section class="command-panel" aria-label="Quick command sequence">
         <div class="panel-head">
           <span>quickstart</span>
-          <strong>Instalacja z GitHuba</strong>
+          <strong>GitHub install</strong>
         </div>
         <pre><code>pip install "git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
 urirun scan ./project \
@@ -60,39 +60,39 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
       </section>
     </section>
 
-    <section class="facts" aria-label="Fakty o projekcie">
+    <section class="facts" aria-label="Project facts">
       <div><span>Runtime</span><strong>urirun</strong></div>
-      <div><span>Repozytorium</span><strong>tellmesh/urihandler</strong></div>
-      <div><span>Domyślny kontrakt</span><strong>v8 JSON Schema</strong></div>
-      <div><span>Wykonanie</span><strong>dry-run first</strong></div>
+      <div><span>Repository</span><strong>tellmesh/urihandler</strong></div>
+      <div><span>Default contract</span><strong>v8 JSON Schema</strong></div>
+      <div><span>Execution</span><strong>dry-run first</strong></div>
     </section>
 
     <section class="section split" id="workflow">
       <div>
         <p class="kicker">flow://registry/build</p>
-        <h2>Używaj istniejących artefaktów jako paczek URI.</h2>
-        <p class="section-copy">Najprostsza droga to nie nowe SDK. Wskazujesz urirun to, co projekt już ma, generujesz bindingi, walidujesz registry i uruchamiasz po URI.</p>
+        <h2>Use existing artifacts as URI packages.</h2>
+        <p class="section-copy">The useful path is not writing a new SDK. Point urirun at what your project already ships, generate bindings, validate the registry, and run by URI.</p>
       </div>
       <div class="flow-list">
           <article class="flow-item">
             <code>repo://project/artifacts/query/scan</code>
-            <h3>Skanuj artefakty</h3>
-            <p>Czytaj etykiety Dockerfile, metadane paczek, targety Make, skrypty shell i jawne bindingi.</p>
+            <h3>Scan artifacts</h3>
+            <p>Read Dockerfile labels, package metadata, Make targets, shell scripts, and explicit bindings.</p>
           </article>
           <article class="flow-item">
             <code>registry://local/routes/command/compile</code>
-            <h3>Kompiluj registry</h3>
-            <p>Zamień przenośne pliki bindingów w jedno drzewo lookup dla każdego runtime.</p>
+            <h3>Compile a registry</h3>
+            <p>Turn portable binding files into one lookup tree for every runtime.</p>
           </article>
           <article class="flow-item">
             <code>policy://local/execution/query/check</code>
-            <h3>Kontroluj wykonanie</h3>
-            <p>Najpierw dry-run, potem jawne allow rules dla argv, shell, Docker lub wywołań sieciowych.</p>
+            <h3>Gate execution</h3>
+            <p>Dry-run first, then require allow rules for real argv, shell, Docker, or network calls.</p>
           </article>
           <article class="flow-item">
             <code>flow://local/task/command/run</code>
-            <h3>Uruchamiaj ten sam URI</h3>
-            <p>Wołaj go z shella, backendu, przeglądarki, usługi Docker, narzędzia MCP albo karty A2A.</p>
+            <h3>Run the same URI</h3>
+            <p>Call it from shell, backend, browser, Docker service, MCP tool, or A2A agent card.</p>
           </article>
       </div>
     </section>
@@ -100,24 +100,24 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
     <section class="section">
       <div class="section-head">
         <p class="kicker">registry://local/value/query</p>
-        <h2>Co robi się prostsze.</h2>
+        <h2>What gets simpler.</h2>
       </div>
       <div class="feature-grid">
           <article class="feature">
-            <h3>Adopcja artifact-first</h3>
-            <p>Dockerfile, pyproject, package.json, shell, Makefile i jawne bindingi stają się trasami bez ręcznego pisania każdego endpointa.</p>
+            <h3>Artifact-first adoption</h3>
+            <p>Existing Dockerfiles, pyproject scripts, package.json scripts, shell files, and Makefile targets become routes without hand-writing every endpoint.</p>
           </article>
           <article class="feature">
-            <h3>Wywołania schema-first</h3>
-            <p>Bindingi v8 używają JSON Schema. Dekoratory Pythona mogą generować schema z sygnatur funkcji przez Pydantic.</p>
+            <h3>Schema-first calls</h3>
+            <p>v8 bindings use JSON Schema. Python decorators can generate schemas from function signatures through Pydantic.</p>
           </article>
           <article class="feature">
-            <h3>Jeden adres w wielu warstwach</h3>
-            <p>Frontend, backend, shell, firmware i flow usług mogą dzielić ten sam standard nazewnictwa URI.</p>
+            <h3>One address across layers</h3>
+            <p>Frontend buttons, backend handlers, shell clients, firmware tables, and service flows can share the same URI naming standard.</p>
           </article>
           <article class="feature">
-            <h3>Policy przed wykonaniem</h3>
-            <p>Komendy są domyślnie dry-run. Realne wykonanie wymaga jawnych reguł allow i deny.</p>
+            <h3>Policy before execution</h3>
+            <p>Command routes dry-run by default. Real execution is explicit and can be limited by URI allow and deny rules.</p>
           </article>
       </div>
     </section>
@@ -125,8 +125,8 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
     <section class="section runtime-map">
       <div>
         <p class="kicker">transport://any/adapter/query</p>
-        <h2>Ten sam URI, inny runtime.</h2>
-        <p class="section-copy">URI nazywa to, co ma się wykonać. Transport decyduje jak: in-process, argv, shell, Docker, HTTP, gRPC, kolejka, serverless, MCP lub A2A. Kontrakt i bramka policy zostają w jednym miejscu.</p>
+        <h2>Same URI, different runtime.</h2>
+        <p class="section-copy">A URI names what should run. The transport decides how it runs: in-process, argv, shell, Docker, HTTP, gRPC, a message queue, serverless, MCP, or A2A. The contract and the policy gate stay in one place.</p>
       </div>
       <div class="transport-grid">
           <div class="transport">
@@ -171,36 +171,36 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
     <section class="section docs-grid" aria-labelledby="doc-list">
       <div class="section-head">
         <p class="kicker">docs://local/index/query</p>
-        <h2 id="doc-list">Dokumentacja.</h2>
+        <h2 id="doc-list">Documentation.</h2>
       </div>
       <div class="grid">
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/getting-started.md">
-            <span>Start</span>
-            <small>Instalacja z GitHuba, skanowanie artefaktów, walidacja i pierwsze uruchomienie URI.</small>
+            <span>Getting started</span>
+            <small>Install from GitHub, scan artifacts, validate, and run the first URI.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/naming.md">
-            <span>Nazewnictwo</span>
-            <small>Gdzie używać nazwy urirun i czemu URL repozytorium nadal zawiera urihandler.</small>
+            <span>Naming</span>
+            <small>Where to use urirun and why the repository URL still contains urihandler.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/commands.md">
-            <span>Komendy</span>
-            <small>CLI, wersjonowane entry pointy i generowanie bindingów w jednej linii.</small>
+            <span>Commands</span>
+            <small>CLI commands, versioned entry points, and one-line binding generation.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/registry-and-bindings.md">
             <span>Registry</span>
-            <small>Jak przenośne bindingi stają się trasami runtime do wykonania.</small>
+            <small>How portable binding documents become dispatchable runtime routes.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/transports.md">
-            <span>Transporty</span>
-            <small>Funkcje lokalne, shell, Docker, HTTP, gRPC, przeglądarka, MCP i A2A.</small>
+            <span>Transports</span>
+            <small>Local functions, shell, Docker, HTTP, gRPC, browser, MCP, and A2A.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/logo.md">
             <span>Logo</span>
-            <small>Wektory SVG dla ikony, wordmarka, favicony i lockupów.</small>
+            <small>Generated SVG assets for icon, wordmark, favicon, and lockups.</small>
           </a>
           <a class="doc-card" href="https://github.com/tellmesh/urihandler/blob/main/docs/roadmap.md">
             <span>Roadmap</span>
-            <small>Praktyczne kroki, które uproszczą użycie urirun.</small>
+            <small>Practical next work for making urirun easier to use.</small>
           </a>
       </div>
     </section>
@@ -208,8 +208,8 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
     <section class="section split" id="examples">
       <div>
         <p class="kicker">examples://repo/current/query</p>
-        <h2>Przykłady pokazujące współpracę warstw.</h2>
-        <p class="section-copy">Przykłady są małe celowo: pokazują, jak jedno registry obsługuje UI w przeglądarce, backend, usługi Docker, generatory i adaptery firmware.</p>
+        <h2>Examples that show the layers working together.</h2>
+        <p class="section-copy">The examples are intentionally small: they show how one registry can be used by browser UI, backend services, Docker workers, generators, and firmware-style adapters.</p>
       </div>
       <div class="example-list">
           <article class="example">
@@ -246,14 +246,14 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
     <section class="section roadmap" id="roadmap">
       <div class="section-head">
         <p class="kicker">todo://urirun/usability/query</p>
-        <h2>Następne prace nad użytecznością.</h2>
+        <h2>Next usability work.</h2>
       </div>
       <ol>
-        <li>urirun init dla startowego registry, policy i przykładowej trasy</li>
-        <li>urirun doctor dla środowiska, zależności, portów i konfliktów tras</li>
-        <li>urirun serve dla lokalnej przeglądarki tras, logów, dry-run console i policy-gated execution</li>
-        <li>standardowe log:// w frontendzie, backendzie, shellu, firmware i przykładach Docker</li>
-        <li>urirun diff do porównywania registry przed wdrożeniem</li>
+        <li>urirun init for a starter registry, policy, and example route</li>
+        <li>urirun doctor for environment, dependency, port, and route conflict checks</li>
+        <li>urirun serve for a local route browser, log viewer, dry-run console, and policy-gated execution</li>
+        <li>standard log:// routes across frontend, backend, shell, firmware, and Docker examples</li>
+        <li>urirun diff for comparing registries before deployment</li>
       </ol>
     </section>
   </main>
@@ -261,7 +261,7 @@ urirun run 'tool://local/report/render' --registry generated/registry.json</code
   <footer>
     <span>Runtime: urirun</span>
     <span>Repo: tellmesh/urihandler</span>
-    <span><a href="https://github.com/tellmesh/urihandler/blob/main/docs/naming.md">Zasady nazewnictwa</a></span>
+    <span><a href="https://github.com/tellmesh/urihandler/blob/main/docs/naming.md">Naming rules</a></span>
   </footer>
   <script src="language.js" defer></script>
 </body>

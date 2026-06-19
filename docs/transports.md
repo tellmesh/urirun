@@ -1,13 +1,25 @@
 # Transports
 
 `urirun` keeps the URI contract separate from the transport. The same URI can be
-called locally, through a service endpoint, or by a flow orchestrator.
+called locally, through a service endpoint, or by a flow orchestrator. The
+registry, JSON Schema and policy gate are the contract; a transport only moves
+`{uri, payload}` to where `v8.run` executes it.
+
+`v8/examples/transports` drives one registry over five transports (in-process,
+queue, serverless, HTTP, gRPC) and ships a one-command `scan_and_run.py`.
 
 ## Local and shell
 
 - `local-function` calls an in-process function registered by code.
 - `argv-template` renders an argv list and executes it without a shell.
 - `shell-template` renders a shell string and requires explicit policy approval.
+
+## Queue and serverless
+
+- A queue/event consumer maps a topic message to `v8.run` (the MQTT/NATS/Kafka
+  shape) and publishes a reply.
+- A serverless function is a pure `handler(event)` that calls `v8.run` per
+  request, with the registry compiled in memory.
 
 ## Docker
 
@@ -38,6 +50,10 @@ and stream-style calls. Install the optional dependency set when using it:
 ```bash
 pip install "urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
 ```
+
+`v8/examples/multi_transport` is a Docker stack that mixes HTTP and gRPC workers,
+auto-generates one registry from their `/routes` and `ListRoutes`, detects route
+conflicts, and runs a cross-environment flow whose steps land on both transports.
 
 ## MCP and A2A
 

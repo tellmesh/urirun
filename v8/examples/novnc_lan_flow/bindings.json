@@ -1,0 +1,105 @@
+{
+  "version": "urirun.bindings.v8",
+  "bindings": {
+    "log://pc1/session/command/write": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["event"],
+        "properties": {
+          "event": { "type": "string" },
+          "detail": { "type": "string", "default": "" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "log://pc1/session/query/recent": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "default": 20 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc1/network/command/ping": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["target"],
+        "properties": {
+          "target": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc2/service/command/start": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["port"],
+        "properties": {
+          "name": { "type": "string", "default": "demo" },
+          "port": { "type": "integer" },
+          "message": { "type": "string", "default": "hello from service" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc2/terminal/command/run": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["command"],
+        "properties": {
+          "command": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc3/service/command/start": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["port"],
+        "properties": {
+          "name": { "type": "string", "default": "demo" },
+          "port": { "type": "integer" },
+          "message": { "type": "string", "default": "hello from service" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc3/http/command/get": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pc://pc4/http/command/get": {
+      "kind": "service",
+      "adapter": "http-service",
+      "inputSchema": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

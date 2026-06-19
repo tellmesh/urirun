@@ -68,6 +68,43 @@ aside a.active {
   color: var(--accent);
 }
 
+.language-switch {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+}
+
+.language-switch a {
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+}
+
+.language-switch a.active {
+  background: var(--ink);
+  color: #fff;
+}
+
+.language-memory {
+  background: var(--accent-soft);
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+}
+
+.language-memory[hidden] {
+  display: none;
+}
+
 main {
   margin: 0 auto;
   max-width: 1180px;
@@ -332,6 +369,10 @@ pre code,
 .feature:hover,
 .example:hover,
 .transport:hover {
+  border-color: var(--accent);
+}
+
+.example a:hover code {
   border-color: var(--accent);
 }
 

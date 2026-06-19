@@ -1,0 +1,58 @@
+task:
+  id: novnc-lan-uri-flow
+  title: "Four noVNC computers communicating through URI flow"
+
+steps:
+  - id: announce_start
+    uri: log://pc1/session/command/write
+    payload:
+      event: "flow.started"
+      detail: "starting LAN demo from orchestrator"
+
+  - id: start_pc2_service
+    uri: pc://pc2/service/command/start
+    payload:
+      name: "orders"
+      port: 9102
+      message: "orders service from pc2"
+
+  - id: start_pc3_service
+    uri: pc://pc3/service/command/start
+    payload:
+      name: "reports"
+      port: 9103
+      message: "reports service from pc3"
+
+  - id: pc1_checks_pc2
+    uri: pc://pc1/network/command/ping
+    depends_on:
+      - start_pc2_service
+    payload:
+      target: "pc2"
+
+  - id: pc3_reads_pc2
+    uri: pc://pc3/http/command/get
+    depends_on:
+      - start_pc2_service
+    payload:
+      url: "http://pc2:9102/"
+
+  - id: pc4_reads_pc3
+    uri: pc://pc4/http/command/get
+    depends_on:
+      - start_pc3_service
+    payload:
+      url: "http://pc3:9103/"
+
+  - id: pc2_shell_observes_lan
+    uri: pc://pc2/terminal/command/run
+    payload:
+      command: "hostname; getent hosts pc1 pc2 pc3 pc4"
+
+  - id: read_pc1_logs
+    uri: log://pc1/session/query/recent
+    depends_on:
+      - announce_start
+      - pc1_checks_pc2
+    payload:
+      limit: 12
