@@ -5,7 +5,7 @@ v8 keeps the v7 execution model, but makes command declarations portable:
 - public input contracts are JSON Schema Draft 2020-12,
 - Python authors can generate that schema from Pydantic/decorated functions,
 - commands are represented as safe argv templates by default,
-- shell templates exist, but are gated by the v6 policy layer,
+- shell templates exist, but are gated by the policy layer,
 - common artifacts can be adopted into URI bindings without writing every
   endpoint by hand.
 """
@@ -24,7 +24,7 @@ from typing import Any, Callable
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
 
-from urihandler import v4, v5, v6, v7
+from urihandler import _registry as reglib, _scan as scan, _runtime as runtime, v7
 
 VERSION = "urihandler.bindings.v8"
 OCI_MANIFEST_LABEL = "io.tellmesh.urihandler.manifest"
@@ -280,11 +280,11 @@ def run(
     confirm: bool = False,
     executors: dict | None = None,
 ) -> dict:
-    policy = v6.merge_policy(policy)
+    policy = runtime.merge_policy(policy)
     executor_registry = EXECUTORS if executors is None else executors
-    descriptor = v4.parse_uri(uri)
-    translation = v4.translate(descriptor)
-    route_entry = v4.resolve_route(translation, registry)
+    descriptor = reglib.parse_uri(uri)
+    translation = reglib.translate(descriptor)
+    route_entry = reglib.resolve_route(translation, registry)
     envelope = {
         "uri": descriptor["normalized"],
         "mode": mode,
@@ -312,7 +312,7 @@ def run(
         "payload": payload,
         "params": params,
     }
-    decision = v6.evaluate_policy(descriptor["normalized"], route_entry, ctx, policy)
+    decision = runtime.evaluate_policy(descriptor["normalized"], route_entry, ctx, policy)
     envelope["decision"] = decision
 
     executor = executor_registry.get(route_entry.get("adapter")) or executor_registry.get(route_entry.get("kind"))
@@ -347,18 +347,18 @@ def run(
     except KeyError as err:
         envelope["ok"] = False
         envelope["error"] = {"type": "schema", "message": f"unresolved placeholder: {err.args[0]}"}
-    except (v6.PolicyError, OSError, ValueError) as err:
+    except (runtime.PolicyError, OSError, ValueError) as err:
         envelope["ok"] = False
         envelope["error"] = {"type": type(err).__name__, "message": str(err)}
     return envelope
 
 
 def check(uri: str, registry: dict, policy: dict | None = None) -> dict:
-    return v6.check(uri, registry, policy)
+    return runtime.check(uri, registry, policy)
 
 
 def list_routes(registry: dict, policy: dict | None = None) -> list[dict]:
-    return v6.list_routes(registry, policy)
+    return runtime.list_routes(registry, policy)
 
 
 # --------------------------------------------------------------------------- #
@@ -422,7 +422,7 @@ def expand_bindings(doc) -> dict:
 
 
 def compile_registry(doc, generated_at: str | None = None, on_conflict: str = "keep") -> dict:
-    return v5.compile_registry_document(expand_bindings(doc), generated_at=generated_at, on_conflict=on_conflict)
+    return scan.compile_registry_document(expand_bindings(doc), generated_at=generated_at, on_conflict=on_conflict)
 
 
 def build_binding_document(bindings: list[dict], generated_at: str | None = None) -> dict:
@@ -430,7 +430,7 @@ def build_binding_document(bindings: list[dict], generated_at: str | None = None
     normalized.sort(key=lambda item: item["uri"])
     return {
         "version": VERSION,
-        "generatedAt": generated_at or v5.now_iso(),
+        "generatedAt": generated_at or scan.now_iso(),
         "bindingCount": len(normalized),
         "bindings": normalized,
     }
@@ -450,11 +450,11 @@ def merge_binding_document(existing, binding: dict) -> dict:
 
 def write_or_emit_binding(path: str, binding: dict) -> None:
     if path == "-":
-        v4._emit_json({"version": VERSION, "bindings": {binding["uri"]: expand_binding(binding["uri"], binding)}}, "-")
+        reglib._emit_json({"version": VERSION, "bindings": {binding["uri"]: expand_binding(binding["uri"], binding)}}, "-")
         return
     output = Path(path)
-    existing = v4.load_json(output) if output.exists() else None
-    v4.write_json(output, merge_binding_document(existing, binding))
+    existing = reglib.load_json(output) if output.exists() else None
+    reglib.write_json(output, merge_binding_document(existing, binding))
 
 
 def _coerce_default(value: str, schema_type: str):
@@ -546,7 +546,7 @@ def command_binding_from_cli(
 def pypi_binding(name: str, version: str | None = None, uri: str | None = None) -> dict:
     requirement = f"{name}=={version}" if version else name
     return {
-        "uri": uri or f"package://pypi/{v5.slugify(name)}/install",
+        "uri": uri or f"package://pypi/{scan.slugify(name)}/install",
         "kind": "command",
         "adapter": "argv-template",
         "inputSchema": {
@@ -565,8 +565,8 @@ def load_registry_arg(arg: str, openapi_base_url: str = "") -> dict:
     path = Path(arg)
     if path.is_dir():
         return compile_registry(build_binding_document(scan_artifacts(path)))
-    data = v4.load_json(path)
-    if isinstance(data, dict) and data.get("version") == v4.REGISTRY_VERSION:
+    data = reglib.load_json(path)
+    if isinstance(data, dict) and data.get("version") == reglib.REGISTRY_VERSION:
         return data
     return compile_registry(data)
 
@@ -596,7 +596,7 @@ def validate_binding_document(doc) -> dict:
     for binding in expanded["bindings"]:
         uri = binding.get("uri")
         try:
-            v4.translate(v4.parse_uri(uri))
+            reglib.translate(reglib.parse_uri(uri))
         except Exception as exc:  # noqa: BLE001 - validation should collect all errors.
             errors.append({"uri": uri, "error": f"invalid uri: {exc}"})
             continue
@@ -648,18 +648,18 @@ def _empty_input_schema() -> dict:
 
 
 def _load_manifest(path: Path) -> list[dict]:
-    data = v4.load_json(path)
+    data = reglib.load_json(path)
     return expand_bindings(data)["bindings"]
 
 
 def _scan_package_json(path: Path, root: Path) -> list[dict]:
-    data = v4.load_json(path)
+    data = reglib.load_json(path)
     bindings: list[dict] = []
     for script in sorted((data.get("scripts") or {}).keys()):
         command = ["npm", script] if script in {"start", "stop", "restart", "test"} else ["npm", "run", script]
         bindings.append(
             expand_binding(
-                f"npm://local/script/{v5.slugify(script)}",
+                f"npm://local/script/{scan.slugify(script)}",
                 {
                     "argv": command,
                     "inputSchema": _empty_input_schema(),
@@ -677,7 +677,7 @@ def _read_toml(path: Path) -> dict:
 
         with path.open("rb") as f:
             return tomllib.load(f)
-    return v5._read_toml(path)
+    return scan._read_toml(path)
 
 
 def _scan_pyproject(path: Path, root: Path) -> list[dict]:
@@ -686,7 +686,7 @@ def _scan_pyproject(path: Path, root: Path) -> list[dict]:
     for script in sorted(((data.get("project") or {}).get("scripts") or {}).keys()):
         bindings.append(
             expand_binding(
-                f"python://local/script/{v5.slugify(script)}",
+                f"python://local/script/{scan.slugify(script)}",
                 {
                     "argv": [script],
                     "inputSchema": _empty_input_schema(),
@@ -700,7 +700,7 @@ def _scan_pyproject(path: Path, root: Path) -> list[dict]:
 
 def _scan_shell_script(path: Path, root: Path) -> dict:
     return expand_binding(
-        f"script://local/{v5.slugify(path.stem)}/run",
+        f"script://local/{scan.slugify(path.stem)}/run",
         {
             "argv": ["sh", _rel(path, root)],
             "inputSchema": _empty_input_schema(),
@@ -721,7 +721,7 @@ def _scan_makefile(path: Path, root: Path) -> list[dict]:
             continue
         bindings.append(
             expand_binding(
-                f"make://local/target/{v5.slugify(target)}",
+                f"make://local/target/{scan.slugify(target)}",
                 {
                     "argv": ["make", target],
                     "inputSchema": _empty_input_schema(),
@@ -756,7 +756,7 @@ def _manifest_candidates(dockerfile: Path, manifest_ref: str) -> list[Path]:
 def _scan_dockerfile(path: Path, root: Path) -> list[dict]:
     bindings: list[dict] = []
     source_file = _rel(path, root)
-    target = v5.slugify(path.stem if path.stem != "Dockerfile" else path.parent.name or "image")
+    target = scan.slugify(path.stem if path.stem != "Dockerfile" else path.parent.name or "image")
     labels = _parse_dockerfile_labels(path)
     manifest_ref = labels.get(OCI_MANIFEST_LABEL)
     if manifest_ref:
@@ -828,15 +828,12 @@ def _load_many(sources: list[str]) -> list[dict]:
         if path.is_dir():
             bindings.extend(scan_artifacts(path))
         else:
-            bindings.extend(expand_bindings(v4.load_json(path))["bindings"])
+            bindings.extend(expand_bindings(reglib.load_json(path))["bindings"])
     return bindings
 
 
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
-    if argv and argv[0] in {"discover", "build-registry", "call"}:
-        return v5.main(argv)
-
     executable = Path(sys.argv[0]).name
     prog = executable if executable in {"urirun", "urirun-v8", "urihandler-v8"} else "urirun"
     parser = argparse.ArgumentParser(prog=prog)
@@ -849,7 +846,7 @@ def main(argv: list[str] | None = None) -> int:
 
     compile_parser = subparsers.add_parser("compile", help="Compile v8 bindings or adopted artifact dirs")
     compile_parser.add_argument("sources", nargs="+")
-    compile_parser.add_argument("--out", default=".urihandler/registry.merged.json")
+    compile_parser.add_argument("--out", default=".urihandler/reglib.merged.json")
     compile_parser.add_argument("--generated-at")
     compile_parser.add_argument("--on-conflict", choices=["error", "keep", "replace"], default="keep")
 
@@ -875,7 +872,7 @@ def main(argv: list[str] | None = None) -> int:
         if with_uri:
             p.add_argument("uri")
         p.add_argument("source", nargs="?", help="project directory, registry, or bindings file")
-        p.add_argument("--registry", default=".urihandler/registry.merged.json")
+        p.add_argument("--registry", default=".urihandler/reglib.merged.json")
         p.add_argument("--policy")
         p.add_argument("--allow", action="append", default=[], metavar="GLOB")
         p.add_argument("--deny", action="append", default=[], metavar="GLOB")
@@ -894,22 +891,22 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "scan":
         doc = build_binding_document(scan_artifacts(args.path))
-        v4._emit_json(doc, args.out)
+        reglib._emit_json(doc, args.out)
         if args.registry_out:
-            v4.write_json(args.registry_out, compile_registry(doc))
+            reglib.write_json(args.registry_out, compile_registry(doc))
         return 0
 
     if args.command == "compile":
         doc = build_binding_document(_load_many(args.sources), generated_at=args.generated_at)
-        v4._emit_json(compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict), args.out)
+        reglib._emit_json(compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict), args.out)
         return 0
 
     if args.command == "validate":
         path = Path(args.source)
-        doc = build_binding_document(scan_artifacts(path)) if path.is_dir() else v4.load_json(path)
+        doc = build_binding_document(scan_artifacts(path)) if path.is_dir() else reglib.load_json(path)
         result = validate_binding_document(doc)
         if args.json:
-            v4._emit_json(result, "-")
+            reglib._emit_json(result, "-")
         else:
             print("OK" if result["ok"] else "FAILED")
             for error in result["errors"]:
@@ -929,7 +926,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     registry = load_registry_arg(args.source or args.registry)
-    policy = v6.build_policy(getattr(args, "policy", None), args.allow, args.deny)
+    policy = runtime.build_policy(getattr(args, "policy", None), args.allow, args.deny)
 
     if args.command == "run":
         result = run(
@@ -940,15 +937,15 @@ def main(argv: list[str] | None = None) -> int:
             policy=policy,
             confirm=args.confirm,
         )
-        v4._emit_json(result, "-")
+        reglib._emit_json(result, "-")
         return 0 if result.get("ok") else 1
 
     if args.command == "list":
         items = list_routes(registry, policy)
         if args.json:
-            v4._emit_json(items, "-")
+            reglib._emit_json(items, "-")
         else:
-            print(v6.format_route_table(items, show_decision=policy is not None))
+            print(runtime.format_route_table(items, show_decision=policy is not None))
         return 0
 
     return 1

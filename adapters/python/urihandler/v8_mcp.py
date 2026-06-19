@@ -5,14 +5,14 @@ what the Model Context Protocol wants for a tool, and what an Agent-to-Agent
 (A2A) agent card wants for a skill. So one registry projects cleanly to both:
 
 ```txt
-urihandler.registry.v4  ->  MCP tools/list   (LLM tool calling)
-                        ->  A2A agent card    (agent discovery)
-                        ->  tools/call        ->  v8 policy gate -> run
+urirun registry  ->  MCP tools/list   (LLM tool calling)
+                 ->  A2A agent card    (agent discovery)
+                 ->  tools/call        ->  policy gate -> run
 ```
 
 An LLM or another agent can therefore *discover* the endpoints (tools/list or
-the agent card) and *call* them (tools/call), with the v6/v7/v8 policy gate
-deciding what is allowed to actually execute.
+the agent card) and *call* them (tools/call), with the same policy gate deciding
+what is allowed to actually execute.
 """
 
 from __future__ import annotations
@@ -23,15 +23,15 @@ import re
 import sys
 from pathlib import Path
 
-from urihandler import v4, v6, v8
+from urihandler import _registry as reglib, _runtime as runtime, v8
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "urihandler", "version": "0.8.0"}
 
 
 def tool_name(uri: str) -> str:
-    descriptor = v4.parse_uri(uri)
-    translation = v4.translate(descriptor)
+    descriptor = reglib.parse_uri(uri)
+    translation = reglib.translate(descriptor)
     parts = [translation["package"], translation["target"], translation["resource"], translation["operation"]]
     return re.sub(r"[^a-zA-Z0-9_-]", "_", "_".join(parts))[:64]
 
@@ -44,7 +44,7 @@ def _input_schema(entry: dict) -> dict:
 
 def to_mcp_tools(registry: dict) -> list[dict]:
     tools: list[dict] = []
-    for route in v4.flatten_registry_document(registry):
+    for route in reglib.flatten_registry_document(registry):
         entry = route["routeEntry"]
         uri = route["uri"]
         meta = entry.get("meta") or {}
@@ -65,7 +65,7 @@ def to_mcp_manifest(registry: dict) -> dict:
 def to_a2a_card(registry: dict, name: str = "urihandler-agent", url: str = "http://localhost:8080",
                 version: str = "0.8.0") -> dict:
     skills = []
-    for route in v4.flatten_registry_document(registry):
+    for route in reglib.flatten_registry_document(registry):
         entry = route["routeEntry"]
         uri = route["uri"]
         meta = entry.get("meta") or {}
@@ -73,7 +73,7 @@ def to_a2a_card(registry: dict, name: str = "urihandler-agent", url: str = "http
             "id": tool_name(uri),
             "name": meta.get("label") or uri,
             "description": f"{entry.get('kind')} route exposed as a URI",
-            "tags": [entry.get("kind"), v4.parse_uri(uri)["package"]],
+            "tags": [entry.get("kind"), reglib.parse_uri(uri)["package"]],
             "examples": [uri],
             "inputSchema": _input_schema(entry),
         })
@@ -160,13 +160,13 @@ def main(argv: list[str] | None = None) -> int:
     registry = v8.load_registry_arg(args.source)
 
     if args.command == "tools":
-        v4._emit_json(to_mcp_manifest(registry), "-")
+        reglib._emit_json(to_mcp_manifest(registry), "-")
         return 0
     if args.command == "card":
-        v4._emit_json(to_a2a_card(registry, name=args.name, url=args.url), "-")
+        reglib._emit_json(to_a2a_card(registry, name=args.name, url=args.url), "-")
         return 0
     if args.command == "serve":
-        policy = v4.load_json(args.policy) if args.policy else None
+        policy = reglib.load_json(args.policy) if args.policy else None
         serve_mcp(registry, policy=policy, mode="execute" if args.execute else "dry-run")
         return 0
     return 1

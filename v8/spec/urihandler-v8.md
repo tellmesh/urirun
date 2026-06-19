@@ -113,12 +113,12 @@ binding file is kept so the registry remains reproducible.
 v8 can append bindings without hand-editing JSON:
 
 ```bash
-urirun add-pypi urihandler --out urihandler.bindings.v8.json
+urirun add-pypi sampleproject --out urirun.bindings.v8.json
 
 urirun add-command 'util://local/echo/message' \
   --argv 'python3 -c "import sys; print(sys.argv[1])" {text}' \
   --param text:string:required \
-  --out urihandler.bindings.v8.json
+  --out urirun.bindings.v8.json
 ```
 
 `--param` accepts compact field declarations:
@@ -181,7 +181,7 @@ Because a v8 binding already carries a JSON Schema (`inputSchema`), the registry
 projects cleanly to the two formats agents use to discover and call tools:
 
 ```txt
-urihandler.registry.v4 ->  MCP tools/list   (LLM tool calling)
+urirun registry        ->  MCP tools/list   (LLM tool calling)
                        ->  A2A agent card    (agent-to-agent discovery)
                        ->  tools/call        ->  v8 policy gate -> run
 ```
@@ -197,7 +197,7 @@ python -m urihandler.v8_mcp serve registry.json --execute --policy policy.json
 
 An LLM (via MCP) or another agent (via the A2A card) **discovers** the endpoints
 and **calls** them by tool name; every `tools/call` goes through the same
-v6/v7/v8 policy gate, so discovery never implies permission to execute. The
+same policy gate, so discovery never implies permission to execute. The
 `html_uri_app` backend exposes the same over HTTP: `GET /api/mcp/tools`,
 `GET /api/a2a/card`, `POST /api/mcp/call`.
 

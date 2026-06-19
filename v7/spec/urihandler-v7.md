@@ -2,12 +2,9 @@
 
 `urihandler v7` makes real tools easy to drive: ffmpeg, kubectl, git, docker.
 
-v6 made routes executable behind a policy gate, but `spawn`/`shell-template`
-could only receive **positional** arguments taken from URI path segments —
-payload and query were dropped. Real command-line tools need *named* flags and
-values, so v7 adds parameter binding, a string shorthand, Docker adapters, and
-uniform process options. It runs on the same `urihandler.registry.v4` document
-and the same v6 policy gate.
+Real command-line tools need *named* flags and values, so v7 provides parameter
+binding, a string shorthand, Docker adapters, uniform process options, dry-run
+by default, and a default-deny policy gate for execute mode.
 
 ## Parameter binding
 
@@ -38,8 +35,8 @@ Each command element is rendered separately, so values keep the argv structure
 missing required param or an unresolved `{placeholder}` is a `params` error — and
 because dry-run renders the same way, you catch it **before** executing.
 
-Backward compatible: a command with no `{...}` keeps v6 behaviour and appends the
-trailing URI segments as positional args.
+A command with no `{...}` placeholders appends trailing URI segments as
+positional args.
 
 ## String shorthand
 
@@ -92,12 +89,11 @@ For `docker-exec`/`docker-run`, `env` is passed as `-e KEY=VALUE`.
 ## CLI
 
 ```bash
-urihandler compile bindings.v7.json --out .urihandler/registry.merged.json
-urihandler list ./project --allow 'media://**'
-urihandler run media://local/video/transcode bindings.v7.json --payload '{"input":"a.mp4","output":"b.mp4"}'
-urihandler run media://local/video/transcode bindings.v7.json --payload '{"input":"a.mp4","output":"b.mp4"}' --allow 'media://**' --execute
+urirun-v7 compile bindings.v7.json --out .urihandler/registry.merged.json
+urirun-v7 list .urihandler/registry.merged.json --allow 'media://**'
+urirun-v7 run media://local/video/transcode bindings.v7.json --payload '{"input":"a.mp4","output":"b.mp4"}'
+urirun-v7 run media://local/video/transcode bindings.v7.json --payload '{"input":"a.mp4","output":"b.mp4"}' --allow 'media://**' --execute
 ```
 
 `compile` understands the string shorthand and the top-level process keys;
-`scan`, `discover`, `build-registry` and `call` are delegated to v5/v4. Like v6,
 the policy gate is default-deny in execute mode and dry-run is the default.

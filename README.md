@@ -46,11 +46,6 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `adapters/js/` - JavaScript reference adapter
 - `adapters/python/` - Python reference adapter
 - `adapters/c/` - C firmware-style reference adapter
-- `v2/` - route descriptor model with registry tree lookup
-- `v3/` - route entry model with executor adapters for function/http/cli/shell/mqtt/artifact
-- `v4/` - auto-discovery, generated registry documents, and CLI `discover/build-registry/call`
-- `v5/` - simple bindings-first scanner for existing projects, services, CLI, shell, code, and GitHub repos
-- `v6/` - execution and policy runtime: real `run`/`check` with a default-deny, default-dry-run safety gate
 - `v7/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v8/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
 - `examples/` - end-to-end examples
@@ -66,10 +61,6 @@ npm install github:tellmesh/urihandler
 
 ```js
 import { parseUri } from "urihandler";
-import { dispatch } from "urihandler/v3/js";
-import { buildRegistryDocument } from "urihandler/v4/js";
-import { buildBindingDocument } from "urihandler/v5/js";
-import { run, check } from "urihandler/v6/js";
 import { compileRegistry, run as runV7 } from "urihandler/v7/js";
 ```
 
@@ -77,27 +68,29 @@ or vendor the adapter folder directly into your repo.
 
 ### Python
 
-```bash
-pip install urirun
-```
-
-The PyPI distribution is named `urirun` because `urihandler` is already used by
-another project on PyPI. The Python import package remains `urihandler`.
-
-Install directly from GitHub:
+PyPI publishing is intentionally not required. Install directly from GitHub:
 
 ```bash
 pip install "git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
 ```
 
-The Python package installs the v8-first `urirun` CLI. It also keeps versioned
-compatibility commands such as `urihandler-v4` through `urihandler-v8`:
+Or install a GitHub Release wheel:
+
+```bash
+pip install "https://github.com/tellmesh/urihandler/releases/download/v0.3.4/urirun-0.3.4-py3-none-any.whl"
+```
+
+The distribution is named `urirun`; the import package remains `urihandler`.
+The Python package installs the v8-first `urirun` CLI and versioned v7/v8
+entrypoints:
 
 ```bash
 urirun scan ./project --out .urihandler/bindings.v8.json --registry-out .urihandler/registry.merged.json
 urirun validate .urihandler/bindings.v8.json
 urirun list .urihandler/registry.merged.json
 urirun run 'cli://local/git/status' .urihandler/registry.merged.json
+urirun-v7 --help
+urirun-v8 --help
 ```
 
 ### C / firmware
@@ -110,65 +103,11 @@ Copy `adapters/c/urihandler.c` and `adapters/c/urihandler.h` into your firmware 
 make test
 ```
 
-## v4 discovery workflow
-
-```bash
-PYTHONPATH=adapters/python python -m urihandler.v4 discover manifest v4/examples/json/manifest.routes.json --out /tmp/manifest.registry.json
-PYTHONPATH=adapters/python python -m urihandler.v4 discover docker-inspect v4/examples/json/docker-inspect.example.json --out /tmp/docker.registry.json
-PYTHONPATH=adapters/python python -m urihandler.v4 discover openapi v4/examples/json/openapi.example.json --base-url http://backend:8080 --out /tmp/openapi.registry.json
-PYTHONPATH=adapters/python python -m urihandler.v4 build-registry /tmp/manifest.registry.json /tmp/docker.registry.json /tmp/openapi.registry.json --out .urihandler/registry.merged.json --on-conflict keep --generated-at 2026-06-19T00:00:00.000Z
-```
-
-The generated `.urihandler/registry.merged.json` has a v3-compatible `routes` tree plus URI hash index and source metadata.
-
-## v5 bindings workflow
-
-```bash
-PYTHONPATH=adapters/python python -m urihandler.v5 scan v5/examples/project --out /tmp/urihandler-v5.bindings.json --registry-out /tmp/urihandler-v5.registry.json
-PYTHONPATH=adapters/python python -m urihandler.v5 call 'cli://local/npm/test' --registry /tmp/urihandler-v5.registry.json
-```
-
-v5 scans existing project artifacts into flat URI bindings first, then compiles those bindings to the same v4 registry runtime.
-
-## v6 execution and policy workflow
-
-Through v5 every executor only *simulated* the call and the spec's safety rules
-were never enforced. v6 adds a real runtime over the same registry, gated by a
-policy and defaulting to `dry-run` so nothing runs by accident.
-
-It is also built to need **as few declarations as possible**. Every command
-accepts a single source — a project directory, a registry, or a bindings file —
-and scans/compiles directories in memory, so there are no intermediate files.
-Allow rules can be passed inline with `--allow` instead of authoring a policy.
-
-```bash
-# discover what URIs a project exposes (no scan/compile step needed)
-PYTHONPATH=adapters/python python -m urihandler.v6 list v5/examples/project
-PYTHONPATH=adapters/python python -m urihandler.v6 list v5/examples/project --allow 'cli://local/npm/*'
-
-# the one-liner: point at the folder, allow inline, execute. Nothing in between.
-PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' v5/examples/project \
-  --execute --allow 'cli://local/npm/*'
-
-# dry-run (default): result mirrors the v5 simulated output
-PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' v5/examples/project
-
-# a saved registry + policy file still work the same way
-PYTHONPATH=adapters/python python -m urihandler.v6 run 'cli://local/npm/test' \
-  --registry /tmp/urihandler-v5.registry.json --policy v6/examples/json/policy.example.json --execute
-```
-
-Key guarantees: default-deny in execute mode, argv arrays instead of shell
-strings (no injection), opt-in shell templates, and `--confirm` required for
-destructive commands. v6 also delegates `scan`/`compile`/`discover`/
-`build-registry`/`call` to the v5/v4 CLI, so it is a drop-in superset.
-
 ## v7 parameter binding, Docker, and shell
 
-v6 could only feed CLI/shell adapters *positional* args from URI segments. v7
-adds named **parameter binding** so real tools (ffmpeg, kubectl, docker) are
+v7 adds named **parameter binding** so real tools (ffmpeg, kubectl, docker) are
 easy to drive, plus a string shorthand, Docker adapters, and `env`/`stdin`/
-`cwd`/`timeout`. Same registry, same policy gate.
+`cwd`/`timeout`.
 
 ```bash
 # string shorthand + named params; dry-run prints the exact command first

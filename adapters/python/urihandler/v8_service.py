@@ -1,20 +1,22 @@
-"""urihandler v8 service adapter - dispatch a URI to a remote worker over HTTP.
+"""urihandler v8 service dispatch - call a URI implemented by a remote worker.
 
 In a polyglot deployment each worker implements its own URI resources natively
-(Python, Node.js, shell, ...). From a coordinator's point of view those URIs are
-*services*: it validates the input against the registry and POSTs to the worker.
+(Python, Node.js, shell, ...) and exposes `POST /run`. From a coordinator's point
+of view those URIs are *services*: it looks the URI up in the registry, validates
+the payload against that route's JSON Schema, then POSTs to the worker.
 
-This adapter makes that the library's job instead of bespoke orchestrator code:
+This makes that the library's job rather than bespoke orchestrator code, and it is
+deliberately **adapter-agnostic**: it does not matter how the worker labels the
+route (`local-service`, `command`, ...) - to the coordinator every worker URI is
+reached over HTTP.
 
 ```python
 from urihandler import v8_service
-env = v8_service.call("python://python-worker/text/normalize",
-                      {"text": "Hello"}, registry)   # validates + POSTs /run
+env = v8_service.call("python://python-worker/text/normalize", {"text": "Hi"}, registry)
 ```
 
-The target host resolves to ``http://<target>:8080`` by default, overridable
-with ``URI_SERVICE_MAP`` (the same env the docker_uri_flow orchestrator uses), so
-the same registry drives Docker DNS, localhost ports, or any topology.
+The target host resolves to ``http://<target>:8080`` by default, overridable with
+``URI_SERVICE_MAP`` (the same env the docker_uri_flow orchestrator uses).
 """
 
 from __future__ import annotations
@@ -24,7 +26,9 @@ import os
 import urllib.error
 import urllib.request
 
-from urihandler import v8
+from jsonschema import exceptions as jsonschema_exceptions
+
+from urihandler import _registry as reglib, v8
 
 DEFAULT_PORT = 8080
 
@@ -38,42 +42,59 @@ def service_base(target: str) -> str:
     return f"http://{target}:{DEFAULT_PORT}"
 
 
-def run_service(ctx: dict, policy: dict, execute: bool) -> dict:
-    descriptor = ctx["descriptor"]
-    uri = descriptor["normalized"]
-    payload = ctx.get("payload") or {}
-    url = f"{service_base(descriptor['target'])}/run"
-    if not execute:
-        return {"simulated": True, "type": "service", "url": url, "request": {"uri": uri, "payload": payload}}
-
-    body = json.dumps({"uri": uri, "payload": payload}).encode("utf-8")
-    request = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
+def _post(url: str, body: dict, timeout: float):
+    data = json.dumps(body).encode("utf-8")
+    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
     try:
-        with urllib.request.urlopen(request, timeout=policy.get("timeout", 30)) as response:
-            data = json.loads(response.read().decode("utf-8"))
-            status = response.status
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read().decode("utf-8")), response.status
     except urllib.error.HTTPError as err:
-        data = json.loads(err.read().decode("utf-8") or "{}")
-        status = err.code
-    ok = bool(data.get("ok", status < 400))
-    return {"type": "service", "url": url, "status": status, "response": data,
-            "result": data.get("result"), "exitCode": 0 if ok else 1}
+        return json.loads(err.read().decode("utf-8") or "{}"), err.code
 
 
-EXECUTORS = {**v8.EXECUTORS, "service": run_service}
+def call(uri: str, payload: dict | None = None, registry: dict | None = None, mode: str = "execute",
+         timeout: float = 30.0, validate: bool = True) -> dict:
+    descriptor = reglib.parse_uri(uri)
+    translation = reglib.translate(descriptor)
+    payload = payload or {}
+    envelope = {"uri": descriptor["normalized"], "mode": mode, "target": translation["target"]}
 
+    route_entry = None
+    if registry is not None:
+        try:
+            route_entry = reglib.resolve_route(translation, registry)
+        except KeyError:
+            envelope["ok"] = False
+            envelope["error"] = {"type": "registry", "message": f"route not found: {descriptor['normalized']}"}
+            return envelope
 
-def run(uri: str, registry: dict, payload=None, mode: str = "dry-run", policy: dict | None = None,
-        confirm: bool = False) -> dict:
-    """Like ``v8.run`` but with the ``service`` adapter available.
+    if validate and route_entry is not None:
+        try:
+            v8.validate_input(route_entry, descriptor, translation, payload)
+        except (jsonschema_exceptions.ValidationError, jsonschema_exceptions.SchemaError) as err:
+            envelope["ok"] = False
+            envelope["error"] = {"type": "schema", "message": err.message}
+            return envelope
 
-    Schema validation still happens in ``v8.run`` before the call, so a bad
-    payload is rejected at the coordinator, not the worker.
-    """
-    return v8.run(uri, registry, payload=payload, mode=mode, policy=policy, confirm=confirm, executors=EXECUTORS)
+    url = f"{service_base(translation['target'])}/run"
+    envelope["url"] = url
+    body = {"uri": descriptor["normalized"], "payload": payload}
 
+    if mode != "execute":
+        envelope["ok"] = True
+        envelope["simulated"] = True
+        envelope["request"] = body
+        return envelope
 
-def call(uri: str, payload: dict, registry: dict, mode: str = "execute", policy: dict | None = None) -> dict:
-    if policy is None and mode == "execute":
-        policy = {"execute": {"allow": [uri]}}
-    return run(uri, registry, payload=payload, mode=mode, policy=policy)
+    try:
+        data, status = _post(url, body, timeout)
+    except OSError as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "transport", "message": str(err)}
+        return envelope
+
+    envelope["status"] = status
+    envelope["response"] = data
+    envelope["result"] = data.get("result")
+    envelope["ok"] = bool(data.get("ok", status < 400))
+    return envelope

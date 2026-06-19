@@ -25,7 +25,7 @@ template as a normal v8 binding. The runtime validates payload/query values
 against that schema, applies defaults, renders placeholders, and then runs the
 command.
 
-Shell routes are real shell execution, but they stay behind the v6 policy gate:
+Shell routes are real shell execution, but they stay behind the policy gate:
 execution needs both an allow rule and `allowShellTemplates: true`.
 
 ## JSON binding
@@ -152,26 +152,25 @@ not the source language.
 Append a PyPI install binding to a v8 binding document:
 
 ```bash
-PYTHONPATH=adapters/python python -m urihandler.v8 add-pypi urihandler \
-  --out urihandler.bindings.v8.json
+urirun add-pypi sampleproject --out urirun.bindings.v8.json
 ```
 
 Append a generic command binding:
 
 ```bash
-PYTHONPATH=adapters/python python -m urihandler.v8 add-command 'util://local/echo/message' \
+urirun add-command 'util://local/echo/message' \
   --argv 'python3 -c "import sys; print(sys.argv[1])" {text}' \
   --param text:string:required \
-  --out urihandler.bindings.v8.json
+  --out urirun.bindings.v8.json
 ```
 
 ## CLI
 
 ```bash
-PYTHONPATH=adapters/python python -m urihandler.v8 scan v8/examples/artifacts --out /tmp/v8.bindings.json
-PYTHONPATH=adapters/python python -m urihandler.v8 validate /tmp/v8.bindings.json
-PYTHONPATH=adapters/python python -m urihandler.v8 compile /tmp/v8.bindings.json --out /tmp/v8.registry.json
-PYTHONPATH=adapters/python python -m urihandler.v8 run tool://local/report/render --registry /tmp/v8.registry.json --payload '{"name":"Ada"}'
+urirun scan v8/examples/artifacts --out /tmp/v8.bindings.json
+urirun validate /tmp/v8.bindings.json
+urirun compile /tmp/v8.bindings.json --out /tmp/v8.registry.json
+urirun run tool://local/report/render --registry /tmp/v8.registry.json --payload '{"name":"Ada"}'
 ```
 
 ## Standards used

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-06-19
+
+### Changed
+- Keep the Python distribution GitHub-installable as `urirun`.
+- Remove public console entry points for versions below v7.
+- Keep only `urirun`, `urirun-v7`, `urirun-v8`, `urihandler-v7`, and
+  `urihandler-v8` as installed scripts.
+- Move legacy registry/scanner/policy helpers behind private module names used
+  internally by v7/v8.
+
 ## [0.3.3] - 2026-06-19
 
 ### Docs
@@ -26,14 +36,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update adapters/python/uv.lock
 - Update v8/examples/docker_uri_flow/shell-worker/bindings.json
 - Update v8/examples/docker_uri_flow/test_service_adapter.py
-
-## [0.3.2] - 2026-06-19
-
-### Changed
-- Rename the Python distribution to `urirun` because `urihandler` is already
-  used on PyPI.
-- Add `urirun` and `urirun-v4` through `urirun-v8` console scripts while keeping
-  `urihandler-v4` through `urihandler-v8` compatibility aliases.
 
 ## [0.3.1] - 2026-06-19
 

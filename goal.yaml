@@ -21,8 +21,7 @@ versioning:
   strategy: semver
   files:
   - VERSION
-  - pyproject.toml:version
-  - .venv/lib/python3.13/site-packages/attrs/__init__.py:__version__
+  - adapters/python/pyproject.toml:version
   bump_rules:
     patch: 10
     minor: 50
@@ -221,10 +220,9 @@ git:
     prefix: v
     format: '{prefix}{version}'
 publishing:
-  enabled: true
-  registries:
-  - pypi
-  dry_run: false
+  enabled: false
+  registries: []
+  dry_run: true
   fallback:
     github_release:
       enabled: true

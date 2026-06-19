@@ -1,14 +1,5 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { parseUri, translate } from '../../../v3/examples/js/urihandler-v3.js';
-import { defaultAdapter, registryTree } from '../../../v4/examples/js/urihandler-v4.js';
-import { compileRegistryDocument, inferKind } from '../../../v5/examples/js/urihandler-v5.js';
-import {
-  check as v6check,
-  evaluatePolicy,
-  listRoutes as v6list,
-  mergePolicy,
-} from '../../../v6/examples/js/urihandler-v6.js';
 
 const PLACEHOLDER_RE = /\{([a-zA-Z0-9_.]+)\}/g;
 const PROCESS_CONFIG_KEYS = ['image', 'mount', 'env', 'stdin', 'timeout', 'cwd', 'params'];
@@ -16,7 +7,104 @@ const COMMAND_KEYS = ['command', 'template', 'method', 'url', 'topicPrefix'];
 const DEFAULT_TIMEOUT = 30000;
 const OUTPUT_LIMIT = 4000;
 
-export { check } from '../../../v6/examples/js/urihandler-v6.js';
+export function parseUri(uri) {
+  const match = String(uri).match(/^([a-z][a-z0-9+.-]*):\/\/([^/?#]+)(\/[^?#]*)?(?:\?([^#]*))?(?:#(.*))?$/i);
+  if (!match) throw new Error(`Invalid URI: ${uri}`);
+  const [, scheme, target, rawPath = '/', rawQuery = '', fragment = null] = match;
+  const segments = rawPath.split('/').filter(Boolean).map(decodeURIComponent);
+  const query = Object.fromEntries(new URLSearchParams(rawQuery));
+  const normalized = `${scheme.toLowerCase()}://${decodeURIComponent(target)}${segments.length ? `/${segments.join('/')}` : ''}`;
+  return { package: scheme.toLowerCase(), target: decodeURIComponent(target), segments, query, fragment, raw: uri, normalized };
+}
+
+export function translate(descriptor) {
+  const [resource = '', operation = '', ...args] = descriptor.segments;
+  return { package: descriptor.package, target: descriptor.target, resource, operation, args,
+    route: [descriptor.package, resource, operation] };
+}
+
+export function inferKind(binding) {
+  if (binding.kind) return binding.kind;
+  if (binding.image || binding.adapter?.startsWith('docker-')) return 'docker';
+  if (binding.url || binding.method) return 'http';
+  if (binding.template || binding.shell) return 'shell';
+  if (binding.topicPrefix) return 'mqtt';
+  return 'cli';
+}
+
+export function defaultAdapter(kind) {
+  return {
+    cli: 'spawn',
+    command: 'spawn',
+    shell: 'shell-template',
+    http: 'fetch',
+    docker: 'docker-run',
+    mqtt: 'mqtt-publish',
+  }[kind] || kind;
+}
+
+export function registryTree(registry) {
+  return registry.routes || registry;
+}
+
+function setRoute(tree, uri, entry, onConflict = 'keep') {
+  const translation = translate(parseUri(uri));
+  tree[translation.package] ||= {};
+  tree[translation.package][translation.resource] ||= {};
+  const bucket = tree[translation.package][translation.resource];
+  if (bucket[translation.operation] && onConflict === 'error') throw new Error(`Route conflict: ${uri}`);
+  if (!bucket[translation.operation] || onConflict === 'replace') bucket[translation.operation] = entry;
+}
+
+export function compileRegistryDocument(doc, options = {}) {
+  const tree = {};
+  for (const binding of doc.bindings || []) {
+    setRoute(tree, binding.uri, binding, options.onConflict || 'keep');
+  }
+  return { version: 'urihandler.registry.v7', generatedAt: options.generatedAt || new Date().toISOString(), routes: tree };
+}
+
+function routeRows(registry) {
+  const rows = [];
+  for (const [scheme, resources] of Object.entries(registryTree(registry) || {})) {
+    for (const [resource, operations] of Object.entries(resources || {})) {
+      for (const [operation, entry] of Object.entries(operations || {})) {
+        rows.push({ uri: entry.uri || `${scheme}://*/${resource}/${operation}`, kind: entry.kind || '', adapter: entry.adapter || '' });
+      }
+    }
+  }
+  return rows.sort((a, b) => a.uri.localeCompare(b.uri));
+}
+
+function globMatch(pattern, value) {
+  if (pattern === '*') return true;
+  const parts = String(pattern).split('**').map((part) => part
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*/g, '[^/]*'));
+  return new RegExp(`^${parts.join('.*')}$`).test(value);
+}
+
+export function mergePolicy(policy = {}) {
+  return { timeout: DEFAULT_TIMEOUT, execute: { allow: [], deny: [], ...(policy.execute || {}) }, ...policy };
+}
+
+export function evaluatePolicy(uri, routeEntry, ctx, policy = {}) {
+  const merged = mergePolicy(policy);
+  const deny = merged.execute.deny || [];
+  const allow = merged.execute.allow || [];
+  if (deny.some((pattern) => globMatch(pattern, uri))) return { allowed: false, reason: 'denied by policy' };
+  const allowed = allow.some((pattern) => globMatch(pattern, uri));
+  return { allowed, reason: allowed ? 'allowed by policy' : 'execute denied by default',
+    requireConfirm: Boolean(routeEntry.confirm || routeEntry.destructive) };
+}
+
+export function check(uri, registry, policy) {
+  const descriptor = parseUri(uri);
+  const translation = translate(descriptor);
+  const routeEntry = registryTree(registry)?.[translation.package]?.[translation.resource]?.[translation.operation];
+  if (!routeEntry) throw new Error(`Route not found: ${translation.route.join('.')}`);
+  return { uri: descriptor.normalized, decision: evaluatePolicy(descriptor.normalized, routeEntry, {}, mergePolicy(policy)) };
+}
 
 export function tokenize(value) {
   const tokens = [];
@@ -206,7 +294,11 @@ export async function run(uri, registry, payload = null, { mode = 'dry-run', pol
 }
 
 export function listRoutes(registry, policy) {
-  return v6list(registry, policy);
+  const merged = policy ? mergePolicy(policy) : null;
+  return routeRows(registry).map((row) => {
+    if (!merged) return row;
+    return { ...row, decision: evaluatePolicy(row.uri, row, {}, merged) };
+  });
 }
 
 export function expandBinding(uri, binding) {
@@ -231,7 +323,7 @@ export function expandBindings(doc) {
   else if (doc && doc.bindings) {
     pairs = Array.isArray(doc.bindings) ? doc.bindings.map((item) => [item.uri, item]) : Object.entries(doc.bindings);
   } else pairs = Object.entries(doc);
-  return { version: 'urihandler.bindings.v5', bindings: pairs.map(([uri, binding]) => expandBinding(uri, binding)) };
+  return { version: 'urihandler.bindings.v7', bindings: pairs.map(([uri, binding]) => expandBinding(uri, binding)) };
 }
 
 export function compileRegistry(doc, options = {}) {

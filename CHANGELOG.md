@@ -10,9 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Docs
 - Document v8 generated registry workflow for Docker URI flows.
 - Document Python package installation as `urirun`.
+- Document GitHub-only Python installation.
 
 ### Changed
-- Rename the Python distribution from `urihandler` to `urirun` for PyPI.
+- Rename the Python distribution from `urihandler` to `urirun`.
+- Remove public project versions below v7.
+- Keep GitHub Release / Git install as the supported Python package channel.
 
 ## [0.3.2] - 2026-06-19
 

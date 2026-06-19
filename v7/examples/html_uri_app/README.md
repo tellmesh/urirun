@@ -1,9 +1,9 @@
 # HTML URI app (v7)
 
-The same console as `v6/examples/html_uri_app`, upgraded to the v7 runtime. The
-new idea is **named parameter binding**: a URI is no longer a fixed action, it is
-a small template. So the UI gives every endpoint a **form** and shows the exact
-command it will run — live, as you type — before anything executes.
+This console demonstrates the v7 runtime. The key idea is **named parameter
+binding**: a URI is a small template. The UI gives every endpoint a **form** and
+shows the exact command it will run — live, as you type — before anything
+executes.
 
 ## What v7 adds to the console
 
@@ -14,18 +14,8 @@ command it will run — live, as you type — before anything executes.
 - **Real tools as templates**: `ffmpeg` (spawn), `docker run` / `docker exec`
   (Docker adapters), a GitHub **HTTP GET** that actually fetches, and a string
   shorthand binding (`"cli://local/git/status": "git status"`).
-- The v6 safety layer is unchanged: dry-run by default, default-deny in execute,
+- The safety layer is dry-run by default, default-deny in execute,
   `shell://` denied, `--allow` editable live, destructive confirm.
-
-## v6 vs v7, in practice
-
-| | v6 console | v7 console |
-|---|-----------|-----------|
-| A URI is | a fixed action (button) | a template with named params (a form) |
-| Passing values | hard-coded `data-payload` | typed into per-param inputs |
-| Before running | nothing | exact rendered command, live |
-| Real tools (ffmpeg/docker) | not expressible | first-class via params + Docker adapters |
-| Authoring a route | full `{kind,adapter,config}` | a one-line string when there are no params |
 
 Open the app, pick **Transcode video (ffmpeg)**, type `input` and `output`, and
 watch the preview become `ffmpeg -i a.mp4 -vf scale=1280:720 b.mp4`. Toggle

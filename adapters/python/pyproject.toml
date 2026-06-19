@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urirun"
-version = "0.3.3"
+version = "0.3.4"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,19 +16,14 @@ dependencies = [
 
 [project.scripts]
 urirun = "urihandler.v8:main"
-urirun-v4 = "urihandler.v4:main"
-urirun-v5 = "urihandler.v5:main"
-urirun-v6 = "urihandler.v6:main"
 urirun-v7 = "urihandler.v7:main"
 urirun-v8 = "urihandler.v8:main"
-urihandler-v4 = "urihandler.v4:main"
-urihandler-v5 = "urihandler.v5:main"
-urihandler-v6 = "urihandler.v6:main"
 urihandler-v7 = "urihandler.v7:main"
 urihandler-v8 = "urihandler.v8:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["urihandler*"]
 
 [tool.pfix]
 # Self-healing Python configuration

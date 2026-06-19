@@ -23,7 +23,7 @@ import sys
 from importlib import metadata
 from pathlib import Path
 
-from urihandler import v4, v5, v8
+from urihandler import _registry as reglib, _scan as scan, v8
 
 
 def passthrough_schema(extra: dict | None = None) -> dict:
@@ -51,12 +51,12 @@ def _command_binding(uri: str, argv: list[str], label: str, source: dict, schema
 def python_package_bindings(name: str) -> list[dict]:
     dist = metadata.distribution(name)
     scripts = [ep for ep in dist.entry_points if ep.group in {"console_scripts", "gui_scripts"}]
-    package = v5.slugify(name)
+    package = scan.slugify(name)
     bindings: list[dict] = []
     for ep in sorted(scripts, key=lambda e: e.name):
         bindings.append(
             _command_binding(
-                f"cli://{package}/{v5.slugify(ep.name)}/run",
+                f"cli://{package}/{scan.slugify(ep.name)}/run",
                 [ep.name, "{...args}"],
                 f"{ep.name} ({name})",
                 {
@@ -87,7 +87,7 @@ def installed_python_bindings() -> list[dict]:
 # --------------------------------------------------------------------------- #
 def npm_package_bindings(name: str, project_dir: str | Path = ".") -> list[dict]:
     package_json = Path(project_dir) / "node_modules" / name / "package.json"
-    data = v4.load_json(package_json)
+    data = reglib.load_json(package_json)
     raw_bin = data.get("bin")
     if isinstance(raw_bin, str):
         bins = {data.get("name", name).split("/")[-1]: raw_bin}
@@ -95,12 +95,12 @@ def npm_package_bindings(name: str, project_dir: str | Path = ".") -> list[dict]
         bins = raw_bin
     else:
         bins = {}
-    package = v5.slugify(name)
+    package = scan.slugify(name)
     bindings: list[dict] = []
     for bin_name in sorted(bins):
         bindings.append(
             _command_binding(
-                f"cli://{package}/{v5.slugify(bin_name)}/run",
+                f"cli://{package}/{scan.slugify(bin_name)}/run",
                 ["npx", "--no-install", bin_name, "{...args}"],
                 f"{bin_name} ({name})",
                 {
@@ -128,17 +128,17 @@ def merge_into(out: str, bindings: list[dict]) -> dict:
     expanded = {binding["uri"]: v8.expand_binding(binding.get("uri"), binding) for binding in bindings}
     if out == "-":
         document = {"version": v8.VERSION, "bindings": expanded}
-        v4._emit_json(document, "-")
+        reglib._emit_json(document, "-")
         return document
 
     path = Path(out)
-    existing = v4.load_json(path) if path.exists() else {"version": v8.VERSION, "bindings": {}}
+    existing = reglib.load_json(path) if path.exists() else {"version": v8.VERSION, "bindings": {}}
     current = existing.get("bindings") or {}
     if isinstance(current, list):
         current = {item["uri"]: item for item in current}
     current.update(expanded)
     document = {"version": v8.VERSION, "bindings": current}
-    v4.write_json(path, document)
+    reglib.write_json(path, document)
     return document
 
 
@@ -163,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     init = sub.add_parser("init", help="Scan a project and write a starter bindings + registry")
     init.add_argument("path", nargs="?", default=".")
     init.add_argument("--out", default="urihandler.bindings.v8.json")
-    init.add_argument("--registry-out", default=".urihandler/registry.merged.json")
+    init.add_argument("--registry-out", default=".urihandler/reglib.merged.json")
 
     args = parser.parse_args(argv)
 
@@ -181,9 +181,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "init":
         document = init_project(args.path)
-        v4.write_json(args.out, document)
-        v4.write_json(args.registry_out, v8.compile_registry(document))
-        v4._emit_json({"bindings": args.out, "registry": args.registry_out, "bindingCount": document["bindingCount"]}, "-")
+        reglib.write_json(args.out, document)
+        reglib.write_json(args.registry_out, v8.compile_registry(document))
+        reglib._emit_json({"bindings": args.out, "registry": args.registry_out, "bindingCount": document["bindingCount"]}, "-")
         return 0
     return 1
 

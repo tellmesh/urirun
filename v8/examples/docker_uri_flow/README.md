@@ -272,3 +272,49 @@ the Docker path is unchanged):
 ```bash
 URI_SERVICE_MAP='{"python-worker":"http://127.0.0.1:9001","node-worker":"http://127.0.0.1:9002","shell-worker":"http://127.0.0.1:9003"}'
 ```
+
+## Library-native dispatch (`urihandler.v8_service`)
+
+Workers implement their URI resources natively, so their images stay
+dependency-free; the registry is the shared contract. A coordinator therefore
+needs no bespoke HTTP code - `urihandler.v8_service` turns "call this URI on its
+worker" into one library call that **validates the payload against the registry's
+JSON Schema first**, then POSTs to the worker (resolving the host via the same
+`URI_SERVICE_MAP`). It is adapter-agnostic - it works whatever the worker labels
+the route.
+
+```python
+from urihandler import v8, v8_service
+
+registry = v8.compile_registry(merged_worker_bindings)
+env = v8_service.call("python://python-worker/text/normalize", {"text": "Hi"}, registry)
+#   env["ok"] / env["result"]["normalized"]   (schema-checked, then dispatched)
+```
+
+See `test_service_adapter.py` for dry-run, schema-rejection, unknown-URI, and
+live-call coverage.
+
+## Docker test environment
+
+`docker-compose.test.yml` builds the three workers plus a **library-based
+tester** container (`tester/`) that has `urihandler` installed. On the Compose
+network the tester:
+
+1. **discovers** routes by calling each worker's `GET /routes`,
+2. **validates** a bad payload and an unknown URI against the registry schema,
+3. **dispatches** the whole flow with `urihandler.v8_service` over Docker DNS
+   (`URI_SERVICE_MAP` unset -> `http://<service>:8080`).
+
+Its exit code drives the run, so this is a self-contained integration test of the
+library against real, networked, polyglot services:
+
+```bash
+cd v8/examples/docker_uri_flow
+make test-docker          # or: bash run_tests.sh
+```
+
+```txt
+tester-1  | discovered 4 routes from 3 services
+tester-1  | flow: supplier report june 2026 -> supplier-report-june-2026 -> /tmp/supplier-report-june-2026.txt
+tester-1  | PASS docker_uri_flow library dispatch (in-container)
+```

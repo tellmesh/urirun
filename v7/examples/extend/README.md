@@ -114,7 +114,7 @@ urihandler run 'ops://local/notify/send' /tmp/extend.registry.json \
 ```
 
 The shell-template route `ops://local/notify/restart` stays denied unless you
-opt in with `allowShellTemplates` — the safety gate from v6 still applies.
+opt in with `allowShellTemplates`.
 
 ## Test
 

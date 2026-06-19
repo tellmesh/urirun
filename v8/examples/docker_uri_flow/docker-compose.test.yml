@@ -1,0 +1,34 @@
+services:
+  python-worker:
+    build:
+      context: ./python-worker
+    image: urihandler-v8-python-worker:local
+    networks: [uri-flow]
+
+  node-worker:
+    build:
+      context: ./node-worker
+    image: urihandler-v8-node-worker:local
+    networks: [uri-flow]
+
+  shell-worker:
+    build:
+      context: ./shell-worker
+    image: urihandler-v8-shell-worker:local
+    environment:
+      REPORT_DIR: /tmp
+    networks: [uri-flow]
+
+  tester:
+    build:
+      context: ../../..
+      dockerfile: v8/examples/docker_uri_flow/tester/Dockerfile
+    image: urihandler-v8-flow-tester:local
+    depends_on:
+      - python-worker
+      - node-worker
+      - shell-worker
+    networks: [uri-flow]
+
+networks:
+  uri-flow:

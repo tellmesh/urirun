@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 sys.path.insert(0, str(REPO / "adapters" / "python"))
 
-from urihandler import v4  # noqa: E402
+from urihandler import _registry as reglib  # noqa: E402
 from urihandler.v8 import compile_registry, expand_bindings, run as run_uri, validate_binding_document  # noqa: E402
 from urihandler.v8_mcp import call_tool, to_a2a_card, to_mcp_manifest  # noqa: E402
 

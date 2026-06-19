@@ -1,4 +1,4 @@
-// Browser-safe urihandler v7 runtime: the v6 policy gate + dry-run/execute, plus
+// Browser-safe urihandler v7 runtime: policy gate + dry-run/execute, plus
 // named parameter binding ({name} from query/payload/positional/target),
 // string shorthand bindings, and Docker adapters. Mirrors urihandler/v7.py.
 
@@ -107,7 +107,7 @@ function hasPlaceholders(parts) {
   return parts.some((part) => /\{[a-zA-Z0-9_.]+\}/.test(String(part)));
 }
 
-// --- policy (ported from v6) ------------------------------------------------
+// --- policy ---------------------------------------------------------------
 export function defaultPolicy() {
   return { execute: { allow: [], deny: [] }, allowShellTemplates: false, maxArgs: 16 };
 }
