@@ -4,7 +4,7 @@
   <circle cx="30" cy="42" r="5" fill="#0F172A"/>
   <circle cx="30" cy="58" r="5" fill="#0F172A"/>
   <!-- forward slashes -->
-  <g stroke="#6366F1" stroke-width="9" stroke-linecap="round">
+  <g stroke="#2AD7FF" stroke-width="9" stroke-linecap="round">
     <path d="M44 64 L56 36"/>
     <path d="M60 64 L72 36"/>
   </g>
