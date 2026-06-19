@@ -36,6 +36,9 @@ services:
     networks: [uri-flow]
     volumes:
       - ./flows:/flows:ro
+      - ./generated:/registry:ro
+    environment:
+      URI_REGISTRY: /registry/registry.json
     command: ["python", "/app/flow_runner.py", "/flows/cross_service_report.yaml"]
 
 networks:

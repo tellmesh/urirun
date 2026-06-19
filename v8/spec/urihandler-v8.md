@@ -108,6 +108,36 @@ enabled:boolean=true
 The command updates or creates a standard v8 bindings document, so the next
 step is still the normal compile/run flow.
 
+## Adopting installed package commands
+
+Decorators cover code you own. `urihandler.v8_adopt` covers code you *install* -
+the CLI commands PyPI and npm packages ship - by reading their declared entry
+points and emitting passthrough bindings (a fixed command prefix plus a
+`{...args}` array, schema-described):
+
+```bash
+# expose a PyPI package's console_scripts as URIs
+python -m urihandler.v8_adopt add-python-package black --out urihandler.bindings.v8.json
+#   -> cli://black/black/run   argv: ["black", "{...args}"]
+
+# expose an installed npm package's bin commands
+python -m urihandler.v8_adopt add-npm-package prettier --out urihandler.bindings.v8.json
+#   -> cli://prettier/prettier/run   argv: ["npx", "--no-install", "prettier", "{...args}"]
+
+# one-command project onboarding: scan + write bindings + registry
+python -m urihandler.v8_adopt init . --out urihandler.bindings.v8.json --registry-out .urihandler/registry.merged.json
+```
+
+Then call it like any other URI, passing arbitrary arguments through the array:
+
+```bash
+urihandler-v8 run 'cli://black/black/run' --payload '{"args":["--check","src/"]}'
+```
+
+The `{...name}` spread placeholder expands an array param in place inside an
+`argv-template`; it is what makes passthrough adoption possible while keeping the
+argv structure (no shell, no injection).
+
 ## Language generators
 
 The examples under `v8/examples/generators` show native declaration styles:
@@ -176,3 +206,16 @@ The orchestrator maps `python://python-worker/...` to
 manifest and `/run` endpoint. The flow sees URI resources only; the backing
 implementation can be Python, Node.js, a shell script, a PyPI package entry
 point, an npm script, or another Docker image.
+
+The registry can be generated from supplied artifacts before the flow starts:
+
+```bash
+urihandler-v8 scan . --out generated/bindings.v8.json --registry-out generated/registry.json
+urihandler-v8 validate generated/bindings.v8.json
+urihandler-v8 list generated/registry.json
+```
+
+For Dockerfiles, an image-level label such as
+`io.tellmesh.urihandler.manifest=/app/bindings.json` points the scanner to the
+service URI contract. If the label points to a container path, the scanner also
+checks the Dockerfile directory for a file with the same basename.

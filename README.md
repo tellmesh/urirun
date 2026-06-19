@@ -187,6 +187,11 @@ can discover and call the endpoints — still through the policy gate.
 python -m urihandler.v8 add-pypi sampleproject --out urihandler.bindings.v8.json
 python -m urihandler.v8 compile urihandler.bindings.v8.json --out registry.json
 
+# adopt the CLI commands installed packages ship (PyPI console_scripts, npm bin)
+python -m urihandler.v8_adopt add-python-package black --out urihandler.bindings.v8.json
+python -m urihandler.v8_adopt add-npm-package prettier --out urihandler.bindings.v8.json
+python -m urihandler.v8_adopt init .   # scan project -> bindings + registry in one command
+
 # project the registry to MCP / A2A, or serve MCP over stdio
 python -m urihandler.v8_mcp tools registry.json     # MCP tools/list manifest
 python -m urihandler.v8_mcp card  registry.json     # A2A agent card

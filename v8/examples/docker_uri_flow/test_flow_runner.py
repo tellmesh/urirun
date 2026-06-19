@@ -27,6 +27,24 @@ def test_parse_compact_uri_flow():
     assert flow["steps"][2]["payload"]["slug_from"] == "slugify_text.result.slug"
 
 
+def test_registry_uri_lookup():
+    runner = load_runner()
+    registry = {
+        "routes": {
+            "python": {
+                "text": {
+                    "normalize": {"kind": "command", "adapter": "local-service"}
+                }
+            }
+        }
+    }
+
+    assert runner.registry_has_uri(registry, "python://python-worker/text/normalize")
+    assert not runner.registry_has_uri(registry, "node://node-worker/text/slugify")
+    assert runner.registry_route_count(registry) == 1
+
+
 if __name__ == "__main__":
     test_parse_compact_uri_flow()
+    test_registry_uri_lookup()
     print("PASS docker_uri_flow parser")

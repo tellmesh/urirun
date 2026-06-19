@@ -217,13 +217,36 @@ def render_sequence(parts, params: dict) -> list[str]:
     return [render_value(part, params) for part in parts]
 
 
+SPREAD_RE = re.compile(r"^\{\.\.\.([a-zA-Z0-9_]+)\}$")
+
+
+def render_argv(argv, params: dict) -> list[str]:
+    """Render an argv list, expanding ``{...name}`` array params in place.
+
+    ``{...args}`` lets a binding accept a passthrough list of arguments, which is
+    what adopting an existing CLI (a PyPI console script, an npm bin) needs: the
+    fixed prefix is the command, the array carries whatever the caller passes.
+    """
+    rendered: list[str] = []
+    for part in argv:
+        spread = SPREAD_RE.match(part) if isinstance(part, str) else None
+        if spread:
+            value = params.get(spread.group(1)) or []
+            if not isinstance(value, list):
+                raise ValueError(f"spread param '{spread.group(1)}' must be an array")
+            rendered.extend(str(item) for item in value)
+        else:
+            rendered.append(render_value(part, params))
+    return rendered
+
+
 # --------------------------------------------------------------------------- #
 # Executors
 # --------------------------------------------------------------------------- #
 def run_argv_template(ctx: dict, policy: dict, execute: bool) -> dict:
     config = ctx["routeEntry"].get("config", {})
     argv = config.get("argv") or config.get("command") or []
-    command = render_sequence(argv, ctx["params"])
+    command = render_argv(argv, ctx["params"])
     if not command:
         raise ValueError("argv-template route has no argv")
     if not execute:
@@ -592,7 +615,10 @@ def validate_binding_document(doc) -> dict:
         for key in ("argv", "command", "template", "shell", "env", "stdin", "url"):
             placeholders.update(_placeholders_in(config.get(key)))
         allowed = properties | {"target"}
-        unresolved = sorted(name for name in placeholders if name not in allowed and not name.isdigit())
+        unresolved = sorted(
+            name for name in placeholders
+            if name.lstrip(".") not in allowed and not name.lstrip(".").isdigit()
+        )
         if unresolved:
             errors.append({"uri": uri, "error": f"unresolved placeholders: {', '.join(unresolved)}"})
 
@@ -720,6 +746,13 @@ def _parse_dockerfile_labels(path: Path) -> dict[str, str]:
     return labels
 
 
+def _manifest_candidates(dockerfile: Path, manifest_ref: str) -> list[Path]:
+    ref = Path(manifest_ref)
+    if ref.is_absolute():
+        return [dockerfile.parent / ref.name, dockerfile.parent / manifest_ref.lstrip("/")]
+    return [dockerfile.parent / ref]
+
+
 def _scan_dockerfile(path: Path, root: Path) -> list[dict]:
     bindings: list[dict] = []
     source_file = _rel(path, root)
@@ -727,11 +760,13 @@ def _scan_dockerfile(path: Path, root: Path) -> list[dict]:
     labels = _parse_dockerfile_labels(path)
     manifest_ref = labels.get(OCI_MANIFEST_LABEL)
     if manifest_ref:
-        manifest_path = (path.parent / manifest_ref).resolve()
-        if manifest_path.exists():
-            for binding in _load_manifest(manifest_path):
+        for manifest_path in _manifest_candidates(path, manifest_ref):
+            if not manifest_path.exists():
+                continue
+            for binding in _load_manifest(manifest_path.resolve()):
                 binding.setdefault("source", {}).update({"type": "dockerfile-manifest", "file": source_file})
                 bindings.append(binding)
+            break
 
     bindings.append(
         expand_binding(

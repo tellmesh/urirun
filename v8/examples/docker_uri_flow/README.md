@@ -17,6 +17,43 @@ Every worker exposes:
 The Dockerfiles include `io.tellmesh.urihandler.manifest=/app/bindings.json`,
 so the image declares where its URI package manifest lives.
 
+## Registry Generation
+
+Generate a registry from the supplied artifacts:
+
+```bash
+cd v8/examples/docker_uri_flow
+make registry
+```
+
+This runs:
+
+```bash
+PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 scan . \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json
+
+PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 validate generated/bindings.v8.json
+PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 list generated/registry.json
+```
+
+The scanner discovers:
+
+- Dockerfile labels `io.tellmesh.urihandler.manifest=/app/bindings.json`
+- each worker `bindings.json`
+- image build routes such as `image://python-worker/docker/build`
+- script artifacts such as `shell-worker/write_report.sh`
+
+Generated files are written to `generated/`:
+
+- `generated/bindings.v8.json`
+- `generated/registry.json`
+- `generated/routes.txt`
+
+The orchestrator mounts `generated/registry.json` and validates that every URI
+referenced by the flow exists in the generated registry before it calls any
+service.
+
 ## Flow
 
 The flow format mirrors the compact office examples from `uri2flow`:
@@ -42,6 +79,15 @@ Fields ending in `_from` read values from previous step results.
 
 ```bash
 bash v8/examples/docker_uri_flow/run.sh
+```
+
+Equivalent explicit steps:
+
+```bash
+cd v8/examples/docker_uri_flow
+make registry
+docker compose up --build --abort-on-container-exit --exit-code-from orchestrator
+docker compose down -v --remove-orphans
 ```
 
 Expected final path:

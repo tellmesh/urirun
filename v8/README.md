@@ -97,9 +97,17 @@ Run it with:
 bash v8/examples/docker_uri_flow/run.sh
 ```
 
+Generate only the registry from supplied Docker/package/script artifacts:
+
+```bash
+cd v8/examples/docker_uri_flow
+make registry
+```
+
 The orchestrator reads a compact YAML flow similar to
 `uri2flow/examples/33_office_workflows`, resolves `_from` references between
-steps, and dispatches each URI to the service named by the URI target.
+steps, validates every referenced URI against `generated/registry.json`, and
+dispatches each URI to the service named by the URI target.
 
 ## Generators from other languages
 

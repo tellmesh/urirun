@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 from pathlib import Path
 from urllib import request
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
 def parse_scalar(value: str):
@@ -90,6 +91,45 @@ def service_url(uri: str) -> str:
     return f"http://{parsed.netloc}:8080"
 
 
+def route_key(uri: str) -> tuple[str, str, str]:
+    parsed = urlparse(uri)
+    segments = [unquote(part) for part in parsed.path.split("/") if part]
+    if not parsed.scheme or len(segments) < 2:
+        raise ValueError(f"URI must include package/resource/operation: {uri}")
+    return parsed.scheme, segments[0], segments[1]
+
+
+def registry_has_uri(registry: dict, uri: str) -> bool:
+    package, resource, operation = route_key(uri)
+    return operation in registry.get("routes", {}).get(package, {}).get(resource, {})
+
+
+def registry_route_count(registry: dict) -> int:
+    count = 0
+    for resources in registry.get("routes", {}).values():
+        for operations in resources.values():
+            count += len(operations)
+    return count
+
+
+def load_registry(path: str | None) -> dict | None:
+    if not path:
+        return None
+    registry_path = Path(path)
+    if not registry_path.exists():
+        return None
+    return json.loads(registry_path.read_text(encoding="utf-8"))
+
+
+def validate_flow_registry(flow: dict, registry: dict | None) -> dict:
+    if registry is None:
+        return {"enabled": False, "routeCount": 0, "missing": []}
+    missing = [step["uri"] for step in flow["steps"] if not registry_has_uri(registry, step["uri"])]
+    if missing:
+        raise RuntimeError(f"Flow references URI not present in registry: {missing}")
+    return {"enabled": True, "routeCount": registry_route_count(registry), "missing": []}
+
+
 def json_get(url: str) -> dict:
     with request.urlopen(url, timeout=3) as response:
         return json.loads(response.read().decode("utf-8"))
@@ -121,6 +161,7 @@ def wait_for_services(uris: list[str]) -> dict:
 
 
 def run_flow(flow: dict) -> dict:
+    registry_status = validate_flow_registry(flow, load_registry(os.getenv("URI_REGISTRY")))
     steps = flow["steps"]
     wait_for_services([step["uri"] for step in steps])
     results: dict = {}
@@ -135,9 +176,9 @@ def run_flow(flow: dict) -> dict:
         results[step["id"]] = result
         timeline.append({"id": step["id"], "uri": step["uri"], "ok": result.get("ok"), "service": result.get("service")})
         if not result.get("ok"):
-            return {"ok": False, "task": flow.get("task"), "timeline": timeline, "results": results}
+            return {"ok": False, "task": flow.get("task"), "registry": registry_status, "timeline": timeline, "results": results}
 
-    return {"ok": True, "task": flow.get("task"), "timeline": timeline, "results": results}
+    return {"ok": True, "task": flow.get("task"), "registry": registry_status, "timeline": timeline, "results": results}
 
 
 def main(argv: list[str] | None = None) -> int:
