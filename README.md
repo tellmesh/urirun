@@ -52,8 +52,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `adapters/c/` - C firmware-style reference adapter
 - `v1/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v2/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
-- `examples/reference_adapters/` - minimal base adapter examples for JS, Python, C/firmware, and browser usage
-- `docs/` - current documentation for naming, quick start, CLI, registry, and transports
+- external docs: `https://github.com/if-uri/docs`
+- external examples: `https://github.com/if-uri/examples`
 - `www/` - PHP project site and documentation viewer using generated urirun logo assets
 - `logo/` - generated SVG logo family for icon, wordmark, horizontal and stacked marks
 - `project/` - generated architecture maps and analysis artifacts, including `map.toon.yaml`
@@ -119,13 +119,14 @@ make test
 
 ## Documentation
 
-- [docs/index.md](docs/index.md) - documentation index
-- [docs/getting-started.md](docs/getting-started.md) - shortest path to a registry and URI run
-- [docs/naming.md](docs/naming.md) - exact package, import, schema, and repo naming rules
-- [docs/commands.md](docs/commands.md) - CLI command reference
-- [docs/registry-and-bindings.md](docs/registry-and-bindings.md) - binding and registry lifecycle
-- [docs/transports.md](docs/transports.md) - local, HTTP, gRPC, Docker, MCP/A2A and browser use
-- [docs/roadmap.md](docs/roadmap.md) - remaining work to make `urirun` easier to use
+Documentation now lives in the dedicated docs repository:
+
+- `https://github.com/if-uri/docs` - source repository
+- `https://tellmesh.github.io/urihandler/www` - published project site
+
+Runnable examples live in:
+
+- `https://github.com/if-uri/examples`
 
 The PHP site can be served locally with:
 
@@ -141,10 +142,10 @@ easy to drive, plus a string shorthand, Docker adapters, and `env`/`stdin`/
 
 ```bash
 # string shorthand + named params; dry-run prints the exact command first
-PYTHONPATH=adapters/python urirun-v1 compile v1/examples/json/bindings.v1.example.json \
+PYTHONPATH=adapters/python urirun-v1 compile bindings.v1.json \
   --out /tmp/registry.json
 PYTHONPATH=adapters/python urirun-v1 run 'media://local/video/transcode' /tmp/registry.json \
-  --payload '{"input":"a.mp4","output":"b.mp4"}'
+  --payload '{"input":"a.mp4","output":"b.mp4","width":1280,"height":720}'
 # -> result.command: ["ffmpeg","-i","a.mp4","-vf","scale=1280:720","b.mp4"]
 
 # Docker as an execution surface (target = container; or one-shot from an image)
@@ -188,14 +189,16 @@ python -m urirun.v2_mcp card  registry.json     # A2A agent card
 python -m urirun.v2_mcp serve registry.json     # MCP stdio server (dry-run by default)
 ```
 
-Multi-language authoring lives in `v2/examples/generators/` (JS, Node.js, TS,
-PHP), the HTTP console with live MCP/A2A discovery in `v2/examples/html_uri_app/`.
+Multi-language authoring examples live in `if-uri/examples/05-generators` (JS,
+Node.js, TS, PHP). The HTTP console with live MCP/A2A discovery lives in
+`if-uri/examples/06-html_uri_app`.
 
 v2 also includes a Docker Compose flow where URI packages are discovered from
 real artifacts before the flow starts:
 
 ```bash
-cd v2/examples/docker_uri_flow
+git clone https://github.com/if-uri/examples.git
+cd examples/09-docker_uri_flow
 make registry   # Dockerfile/package/script artifacts -> generated registry
 make run        # generate registry, build services, validate flow URIs, dispatch
 ```

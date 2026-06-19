@@ -1,6 +1,0 @@
-[project]
-name = "urirun-v2-artifact-demo"
-version = "0.1.0"
-
-[project.scripts]
-demo-tool = "demo:main"

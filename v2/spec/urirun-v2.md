@@ -165,7 +165,8 @@ argv structure (no shell, no injection).
 
 ## Language generators
 
-The examples under `v2/examples/generators` show native declaration styles:
+The examples under `https://github.com/if-uri/examples/tree/main/05-generators`
+show native declaration styles:
 
 - JavaScript helper functions,
 - Node.js generator scripts,

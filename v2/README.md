@@ -91,19 +91,21 @@ clients, MCP servers, or Docker services.
 ## HTML app
 
 ```bash
-bash v2/examples/html_uri_app/run.sh
+git clone https://github.com/if-uri/examples.git
+cd examples/06-html_uri_app
+bash run.sh
 ```
 
 The app renders routes and forms from `bindings.json`, then calls the Python v2
 runtime through `POST /api/run`.
 
-Execution is disabled by default. Use `v2/examples/html_uri_app/.env.example`
+Execution is disabled by default. Use `06-html_uri_app/.env.example`
 as the local `.env` template when you want to enable real argv or shell
 execution.
 
 ## Docker URI flow
 
-`v2/examples/docker_uri_flow` demonstrates multiple Docker services
+`if-uri/examples/09-docker_uri_flow` demonstrates multiple Docker services
 communicating through URI-addressed resources:
 
 - `python://python-worker/text/normalize`
@@ -114,7 +116,8 @@ communicating through URI-addressed resources:
 Generate the registry from supplied Docker/package/script artifacts:
 
 ```bash
-cd v2/examples/docker_uri_flow
+git clone https://github.com/if-uri/examples.git
+cd examples/09-docker_uri_flow
 make registry
 ```
 
@@ -126,7 +129,7 @@ routes, shell scripts, and Makefile targets.
 Run the full Docker flow with:
 
 ```bash
-cd v2/examples/docker_uri_flow
+cd examples/09-docker_uri_flow
 make run
 ```
 
@@ -137,7 +140,7 @@ dispatches each URI to the service named by the URI target.
 
 ## Generators from other languages
 
-`v2/examples/generators` contains small generators for:
+`if-uri/examples/05-generators` contains small generators for:
 
 - plain JavaScript,
 - Node.js scripts,
@@ -167,7 +170,8 @@ urirun add-command 'util://local/echo/message' \
 ## CLI
 
 ```bash
-urirun scan v2/examples/artifacts --out /tmp/v2.bindings.json
+git clone https://github.com/if-uri/examples.git
+urirun scan examples/03-artifacts --out /tmp/v2.bindings.json
 urirun validate /tmp/v2.bindings.json
 urirun compile /tmp/v2.bindings.json --out /tmp/v2.registry.json
 urirun run tool://local/report/render --registry /tmp/v2.registry.json --payload '{"name":"Ada"}'

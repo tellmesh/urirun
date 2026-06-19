@@ -1,6 +1,0 @@
-{
-  "name": "urirun-node-worker",
-  "private": true,
-  "type": "commonjs",
-  "description": "Node worker uses CommonJS; this scope overrides the repo-root type:module so server.js runs locally and in Docker."
-}

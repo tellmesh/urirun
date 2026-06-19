@@ -6,12 +6,11 @@
   "main": "./adapters/js/index.js",
   "exports": {
     ".": "./adapters/js/index.js",
-    "./v1/js": "./v1/examples/js/urirun-v1.js"
+    "./v1/js": "./v1/js/urirun-v1.js"
   },
   "files": [
     "adapters/js/index.js",
-    "v1/examples/js/urirun-v1.js",
-    "spec/urirun-spec.md",
+    "v1/js/urirun-v1.js",
     "v1/spec/urirun-v1.md",
     "v2/spec/urirun-v2.md",
     "README.md",
