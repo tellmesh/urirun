@@ -22,7 +22,7 @@ watch the preview become `ffmpeg -i a.mp4 -vf scale=1280:720 b.mp4`. Toggle
 **Execute** to see the policy decision per endpoint; `shell://` stays denied.
 
 > The browser cannot spawn ffmpeg/docker, so those runs are simulated but show
-> the exact command — the same command the `urihandler.v7` CLI runs for real.
+> the exact command — the same command the `urirun.v7` CLI runs for real.
 > The GitHub GET endpoint performs a real request.
 
 ## Run
@@ -42,6 +42,6 @@ node v7/examples/html_uri_app/test.mjs
 
 - `bindings.json` - endpoints with `params` specs (+ string shorthand) and `meta.label`
 - `policy.json` - allow/deny globs (shell denied)
-- `uri-runtime-v7.js` - browser-safe v7 runtime (param binding + policy + preview), mirrors `urihandler/v7.py`
+- `uri-runtime-v7.js` - browser-safe v7 runtime (param binding + policy + preview), mirrors `urirun/v7.py`
 - `app.js` - the form UI, live preview, and demo adapters
 - `index.html` - controls + endpoint list + detail form

@@ -1,19 +1,19 @@
 {
-  "name": "urihandler",
-  "version": "0.3.4",
+  "name": "urirun",
+  "version": "0.3.6",
   "description": "Language-agnostic URI to handler adapter",
   "type": "module",
   "main": "./adapters/js/index.js",
   "exports": {
     ".": "./adapters/js/index.js",
-    "./v7/js": "./v7/examples/js/urihandler-v7.js"
+    "./v7/js": "./v7/examples/js/urirun-v7.js"
   },
   "files": [
     "adapters/js/index.js",
-    "v7/examples/js/urihandler-v7.js",
-    "spec/urihandler-spec.md",
-    "v7/spec/urihandler-v7.md",
-    "v8/spec/urihandler-v8.md",
+    "v7/examples/js/urirun-v7.js",
+    "spec/urirun-spec.md",
+    "v7/spec/urirun-v7.md",
+    "v8/spec/urirun-v8.md",
     "README.md",
     "LICENSE"
   ],

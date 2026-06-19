@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Nazewnictwo</title>
+  <meta name="description" content="urirun documentation - Nazewnictwo">
+  <link rel="icon" href="../../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="../naming.html">
+  <link rel="alternate" hreflang="pl" href="naming.html">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../../index.html" aria-label="urirun home"><img src="../../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../../index.html">Strona główna</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="" href="../naming.html" hreflang="en" lang="en">EN</a>
+        <a class="active" href="naming.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Dokumentacja</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Pierwsze kroki</span></a>
+      <a class="active" data-slug="naming" href="naming.html"><span>Nazewnictwo</span></a>
+      <a data-slug="commands" href="commands.html"><span>Komendy</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transporty</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Nazewnictwo</h2>
+<p>Publiczna nazwa runtime to <code>urirun</code>. URL repozytorium na GitHubie to nadal <code>tellmesh/urihandler</code>.</p>
+<h3>Używaj `urirun` dla powierzchni runtime</h3>
+<p>Używaj <code>urirun</code> dla:</p>
+<ul>
+<li>nazwy dystrybucji Pythona</li>
+<li>przestrzeni importu w Pythonie</li>
+<li>nazwy i importów paczki JS</li>
+<li>głównej komendy CLI</li>
+<li>wersjonowanych komend CLI</li>
+<li>wersji dokumentów JSON</li>
+<li>etykiet Docker/OCI</li>
+<li>plików adaptera C dla firmware</li>
+<li>tytułu dokumentacji</li>
+<li>logo i identyfikacji strony</li>
+</ul>
+<p>Zalecane komendy:</p>
+<pre><code>urirun --help
+urirun scan ./project
+urirun validate generated/bindings.v8.json
+urirun list generated/registry.json
+urirun run &#039;tool://local/report/render&#039; --registry generated/registry.json
+</code></pre>
+<p></p>
+<pre><code>urirun-v7 --help
+urirun-v8 --help
+</code></pre>
+<p>Przykłady:</p>
+<pre><code>from urirun import v8
+from urirun.v8 import uri_command
+</code></pre>
+<pre><code>import { parseUri } from &quot;urirun&quot;;
+</code></pre>
+<pre><code>{ &quot;version&quot;: &quot;urirun.bindings.v8&quot; }
+</code></pre>
+<pre><code>LABEL io.tellmesh.urirun.manifest=&quot;/app/bindings.json&quot;
+</code></pre>
+<h3>`urihandler` zostaje tylko w URL repozytorium</h3>
+<p></p>
+<pre><code>git@github.com:tellmesh/urihandler.git
+</code></pre>
+<p></p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+npm install github:tellmesh/urihandler
+</code></pre>
+<p></p>
+    </article>
+  </main>
+</body>
+</html>

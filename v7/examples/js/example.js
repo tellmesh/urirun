@@ -1,4 +1,4 @@
-import { compileRegistry, run } from './urihandler-v7.js';
+import { compileRegistry, run } from './urirun-v7.js';
 
 const registry = compileRegistry({
   bindings: {

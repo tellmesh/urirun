@@ -1,5 +1,5 @@
 {
-  "version": "urihandler.policy.v7",
+  "version": "urirun.policy.v7",
   "defaultMode": "dry-run",
   "execute": {
     "allow": [

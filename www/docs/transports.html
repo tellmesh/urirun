@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Transports</title>
+  <meta name="description" content="urirun documentation - Transports">
+  <link rel="icon" href="../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="transports.html">
+  <link rel="alternate" hreflang="pl" href="pl/transports.html">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html" aria-label="urirun home"><img src="../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="active" href="transports.html" hreflang="en" lang="en">EN</a>
+        <a class="" href="pl/transports.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Docs index</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Getting started</span></a>
+      <a data-slug="naming" href="naming.html"><span>Naming</span></a>
+      <a data-slug="commands" href="commands.html"><span>Commands</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a class="active" data-slug="transports" href="transports.html"><span>Transports</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Transports</h2>
+<p><code>urirun</code> keeps the URI contract separate from the transport. The same URI can be called locally, through a service endpoint, or by a flow orchestrator. The registry, JSON Schema and policy gate are the contract; a transport only moves <code>{uri, payload}</code> to where <code>v8.run</code> executes it.</p>
+<p><code>v8/examples/transports</code> drives one registry over five transports (in-process, queue, serverless, HTTP, gRPC) and ships a one-command <code>scan_and_run.py</code>.</p>
+<h3>Local and shell</h3>
+<ul>
+<li><code>local-function</code> calls an in-process function registered by code.</li>
+<li><code>argv-template</code> renders an argv list and executes it without a shell.</li>
+<li><code>shell-template</code> renders a shell string and requires explicit policy approval.</li>
+</ul>
+<h3>Queue and serverless</h3>
+<ul>
+<li>A queue/event consumer maps a topic message to <code>v8.run</code> (the MQTT/NATS/Kafka shape) and publishes a reply.</li>
+<li>A serverless function is a pure <code>handler(event)</code> that calls <code>v8.run</code> per request, with the registry compiled in memory.</li>
+</ul>
+<h3>Docker</h3>
+<p>Docker examples use URI targets as service names:</p>
+<pre><code>python://python-worker/text/normalize
+node://node-worker/text/slugify
+shell://shell-worker/report/write
+</code></pre>
+<p>See <code>v8/examples/docker_uri_flow</code> for a Compose flow where services publish bindings and an orchestrator runs a multi-step URI flow.</p>
+<h3>HTTP and browser</h3>
+<p>The HTML example in <code>v8/examples/html_uri_app</code> loads a binding document, renders URI forms, and calls a Python backend through <code>POST /api/run</code>.</p>
+<p>The backend can expose logs, recent calls, MCP tools, and A2A cards from the same registry, so frontend actions use the same URI names as backend actions.</p>
+<h3>gRPC</h3>
+<p><code>urirun.v8_grpc</code> provides a small RPC surface for route listing, unary calls, and stream-style calls. Install the optional dependency set when using it:</p>
+<pre><code>pip install &quot;urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+</code></pre>
+<p><code>v8/examples/multi_transport</code> is a Docker stack that mixes HTTP and gRPC workers, auto-generates one registry from their <code>/routes</code> and <code>ListRoutes</code>, detects route conflicts, and runs a cross-environment flow whose steps land on both transports.</p>
+<h3>MCP and A2A</h3>
+<p>Because v8 bindings include JSON Schema, the registry can be projected into:</p>
+<ul>
+<li>MCP <code>tools/list</code></li>
+<li>MCP <code>tools/call</code></li>
+<li>A2A agent card skills</li>
+</ul>
+<p>Execution still goes through the same <code>urirun</code> policy gate.</p>
+    </article>
+  </main>
+</body>
+</html>

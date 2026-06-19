@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Keep the Python distribution GitHub-installable as `urirun`.
 - Remove public console entry points for versions below v7.
-- Keep only `urirun`, `urirun-v7`, `urirun-v8`, `urihandler-v7`, and
-  `urihandler-v8` as installed scripts.
+- Keep only `urirun`, `urirun-v7`, `urirun-v8`, `urirun-v7`, and
+  `urirun-v8` as installed scripts.
 - Move legacy registry/scanner/policy helpers behind private module names used
   internally by v7/v8.
 
@@ -26,13 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update adapters/python/README.md
 - Update v8/README.md
 - Update v8/examples/docker_uri_flow/README.md
-- Update v8/spec/urihandler-v8.md
+- Update v8/spec/urirun-v8.md
 
 ### Other
 - Update adapters/python/VERSION
 - Update adapters/python/pyproject.toml
-- Update adapters/python/urihandler/v8.py
-- Update adapters/python/urihandler/v8_service.py
+- Update adapters/python/urirun/v8.py
+- Update adapters/python/urirun/v8_service.py
 - Update adapters/python/uv.lock
 - Update v8/examples/docker_uri_flow/shell-worker/bindings.json
 - Update v8/examples/docker_uri_flow/test_service_adapter.py
@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update adapters/python/README.md
 - Update v8/README.md
 - Update v8/examples/docker_uri_flow/README.md
-- Update v8/spec/urihandler-v8.md
+- Update v8/spec/urirun-v8.md
 
 ### Other
 - Update Makefile

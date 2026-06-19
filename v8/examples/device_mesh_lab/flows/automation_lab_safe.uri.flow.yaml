@@ -1,0 +1,63 @@
+task:
+  id: automation-lab-safe-device-mesh
+  title: Safe urisys automation lab flow ported to urirun
+
+steps:
+  - id: desktop_health
+    uri: env://desktop/runtime/query/health
+    payload: {}
+
+  - id: laptop_health
+    uri: env://laptop/runtime/query/health
+    payload: {}
+    depends_on:
+      - desktop_health
+
+  - id: desktop_processes
+    uri: proc://desktop/process/query/list
+    payload:
+      limit: 8
+    depends_on:
+      - laptop_health
+
+  - id: laptop_processes
+    uri: proc://laptop/process/query/list
+    payload:
+      limit: 8
+    depends_on:
+      - desktop_processes
+
+  - id: desktop_python
+    uri: shell://desktop/command/which
+    payload:
+      binary: python3
+    depends_on:
+      - laptop_processes
+
+  - id: laptop_python
+    uri: shell://laptop/command/which
+    payload:
+      binary: python3
+    depends_on:
+      - desktop_python
+
+  - id: open_reference_page
+    uri: browser://desktop/page/command/open
+    payload:
+      url: https://example.com/
+    depends_on:
+      - laptop_python
+
+  - id: write_operator_note
+    uri: note://desktop/operator/command/write
+    payload:
+      text: Safe automation lab flow executed through urirun device mesh.
+    depends_on:
+      - open_reference_page
+
+  - id: read_desktop_logs
+    uri: log://desktop/session/query/recent
+    payload:
+      limit: 12
+    depends_on:
+      - write_operator_note

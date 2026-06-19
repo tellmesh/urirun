@@ -21,7 +21,7 @@ line) and recompiling. Nothing else changes.
 
 ```bash
 cd v7/examples/extend
-urihandler compile \
+urirun compile \
   base.bindings.json \
   bash-function.bindings.json \
   http-request.bindings.json \
@@ -34,7 +34,7 @@ keep|replace|error` to control collisions). To grow the base later, just add a
 file to the list and recompile — or append to an existing one.
 
 ```bash
-urihandler list /tmp/extend.registry.json
+urirun list /tmp/extend.registry.json
 # api://github/issue/create   http   fetch
 # api://github/repo/get       http   fetch
 # cli://local/git/log         cli    spawn
@@ -54,18 +54,18 @@ code) — safe by construction:
 ```json
 "fn://local/greet/call": {
   "kind": "cli", "adapter": "spawn",
-  "command": ["bash", "-c", "source \"$1\"; greet \"$2\"", "urihandler", "{lib}", "{name}"],
+  "command": ["bash", "-c", "source \"$1\"; greet \"$2\"", "urirun", "{lib}", "{name}"],
   "params": { "lib": { "default": "lib.sh" }, "name": { "required": true } }
 }
 ```
 
 ```bash
 # dry-run prints the exact argv first
-urihandler run 'fn://local/greet/call' /tmp/extend.registry.json --payload '{"name":"Ada"}'
-#   command: ["bash","-c","source \"$1\"; greet \"$2\"","urihandler","lib.sh","Ada"]
+urirun run 'fn://local/greet/call' /tmp/extend.registry.json --payload '{"name":"Ada"}'
+#   command: ["bash","-c","source \"$1\"; greet \"$2\"","urirun","lib.sh","Ada"]
 
 # execute (allow it first; default-deny otherwise)
-urihandler run 'fn://local/greet/call' /tmp/extend.registry.json \
+urirun run 'fn://local/greet/call' /tmp/extend.registry.json \
   --payload '{"name":"Ada"}' --allow 'fn://**' --execute
 #   stdout: hello, Ada (from bash function greet)
 ```
@@ -84,7 +84,7 @@ or the query string:
 ```
 
 ```bash
-urihandler run 'api://github/repo/get' /tmp/extend.registry.json \
+urirun run 'api://github/repo/get' /tmp/extend.registry.json \
   --payload '{"owner":"tellmesh","repo":"urihandler"}'
 #   GET https://api.github.com/repos/tellmesh/urihandler   (dry-run)
 
@@ -107,7 +107,7 @@ values are templated and injected into the process:
 ```
 
 ```bash
-urihandler run 'ops://local/notify/send' /tmp/extend.registry.json \
+urirun run 'ops://local/notify/send' /tmp/extend.registry.json \
   --payload '{"channel":"deploys","message":"v7 shipped"}' \
   --allow 'ops://local/notify/send' --execute
 #   stdout: notify -> #deploys: v7 shipped

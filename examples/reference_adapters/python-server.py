@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "adapters" / "python"))
 
-from urihandler import dispatch
+from urirun import dispatch
 
 
 class DeviceModule:
@@ -42,10 +42,10 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     server = ThreadingHTTPServer(("127.0.0.1", 3001), Handler)
-    print("urihandler python example listening on http://127.0.0.1:3001", flush=True)
+    print("urirun python example listening on http://127.0.0.1:3001", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("urihandler python example stopped", flush=True)
+        print("urirun python example stopped", flush=True)
     finally:
         server.server_close()

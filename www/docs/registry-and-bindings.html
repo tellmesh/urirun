@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Registry</title>
+  <meta name="description" content="urirun documentation - Registry">
+  <link rel="icon" href="../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="registry-and-bindings.html">
+  <link rel="alternate" hreflang="pl" href="pl/registry-and-bindings.html">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html" aria-label="urirun home"><img src="../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="active" href="registry-and-bindings.html" hreflang="en" lang="en">EN</a>
+        <a class="" href="pl/registry-and-bindings.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Docs index</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Getting started</span></a>
+      <a data-slug="naming" href="naming.html"><span>Naming</span></a>
+      <a data-slug="commands" href="commands.html"><span>Commands</span></a>
+      <a class="active" data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transports</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Registry and bindings</h2>
+<p><code>urirun</code> separates the package contract from the runtime lookup tree.</p>
+<h3>Binding document</h3>
+<p>A binding document is portable JSON. It describes URI routes, input schemas, and adapter configuration.</p>
+<pre><code>{
+  &quot;version&quot;: &quot;urirun.bindings.v8&quot;,
+  &quot;bindings&quot;: {
+    &quot;report://local/render/pdf&quot;: {
+      &quot;kind&quot;: &quot;command&quot;,
+      &quot;adapter&quot;: &quot;argv-template&quot;,
+      &quot;inputSchema&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;required&quot;: [&quot;input&quot;, &quot;output&quot;],
+        &quot;properties&quot;: {
+          &quot;input&quot;: { &quot;type&quot;: &quot;string&quot; },
+          &quot;output&quot;: { &quot;type&quot;: &quot;string&quot; }
+        },
+        &quot;additionalProperties&quot;: false
+      },
+      &quot;argv&quot;: [&quot;python3&quot;, &quot;render.py&quot;, &quot;{input}&quot;, &quot;{output}&quot;]
+    }
+  }
+}
+</code></pre>
+<h3>Registry</h3>
+<p>The registry is compiled from one or more binding documents:</p>
+<pre><code>urirun compile bindings.v8.json --out registry.json
+</code></pre>
+<p>The runtime dispatches from the registry only. This makes a generated registry reviewable, reproducible, and safe to pass between shell clients, HTTP services, browser consoles, Docker orchestrators, and agent projections.</p>
+<h3>Route identity</h3>
+<p>The full URI matters. A route such as:</p>
+<pre><code>device://device-01/led/command/set
+</code></pre>
+<p>can coexist with:</p>
+<pre><code>device://device-02/led/command/set
+</code></pre>
+<p>because the target is part of the route identity. This avoids conflicts when multiple services expose the same operation shape for different targets.</p>
+<h3>Conflict policy</h3>
+<p>Generated bindings should be deterministic:</p>
+<ul>
+<li>explicit binding files win over inferred script/package routes</li>
+<li>duplicate full URIs should fail validation unless the scanner marks them as the same source</li>
+<li>generated files should be written to <code>generated/</code> or <code>.urirun/</code>, not edited as primary source</li>
+<li>source artifacts remain the source of truth when using scanner adoption</li>
+</ul>
+    </article>
+  </main>
+</body>
+</html>

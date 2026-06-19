@@ -1,0 +1,114 @@
+services:
+  pc1:
+    build:
+      context: ./computer
+    image: urirun-novnc-pc:local
+    hostname: pc1
+    environment:
+      PC_NAME: pc1
+      PC_ROLE: controller
+      PEERS: pc1,pc2,pc3,pc4
+    ports:
+      - "${PC1_NOVNC_PORT:-7901}:6080"
+      - "${PC1_API_PORT:-9001}:9000"
+    networks: [uri-lan]
+    volumes:
+      - pc1-data:/workspace
+
+  pc2:
+    build:
+      context: ./computer
+    image: urirun-novnc-pc:local
+    hostname: pc2
+    environment:
+      PC_NAME: pc2
+      PC_ROLE: service-node
+      PEERS: pc1,pc2,pc3,pc4
+    ports:
+      - "${PC2_NOVNC_PORT:-7902}:6080"
+      - "${PC2_API_PORT:-9002}:9000"
+    networks: [uri-lan]
+    volumes:
+      - pc2-data:/workspace
+
+  pc3:
+    build:
+      context: ./computer
+    image: urirun-novnc-pc:local
+    hostname: pc3
+    environment:
+      PC_NAME: pc3
+      PC_ROLE: client-node
+      PEERS: pc1,pc2,pc3,pc4
+    ports:
+      - "${PC3_NOVNC_PORT:-7903}:6080"
+      - "${PC3_API_PORT:-9003}:9000"
+    networks: [uri-lan]
+    volumes:
+      - pc3-data:/workspace
+
+  pc4:
+    build:
+      context: ./computer
+    image: urirun-novnc-pc:local
+    hostname: pc4
+    environment:
+      PC_NAME: pc4
+      PC_ROLE: monitor-node
+      PEERS: pc1,pc2,pc3,pc4
+    ports:
+      - "${PC4_NOVNC_PORT:-7904}:6080"
+      - "${PC4_API_PORT:-9004}:9000"
+    networks: [uri-lan]
+    volumes:
+      - pc4-data:/workspace
+
+  dashboard:
+    build:
+      context: ./dashboard
+    image: urirun-novnc-dashboard:local
+    working_dir: /site
+    command: ["python", "server.py"]
+    depends_on:
+      - pc1
+      - pc2
+      - pc3
+      - pc4
+    environment:
+      DASHBOARD_INTERNAL_PORT: "8080"
+      URI_REGISTRY: /registry/registry.json
+      LLM_MODEL: ${LLM_MODEL:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ports:
+      - "${DASHBOARD_PORT:-8192}:8080"
+    volumes:
+      - ./dashboard:/site:ro
+      - ./generated:/registry:ro
+    networks: [uri-lan]
+
+  orchestrator:
+    image: python:3.12-slim
+    profiles: [flow]
+    working_dir: /app
+    command: ["python", "/app/run_flow.py", "/flows/lan_demo.yaml"]
+    depends_on:
+      - pc1
+      - pc2
+      - pc3
+      - pc4
+    environment:
+      URI_REGISTRY: /registry/registry.json
+    volumes:
+      - ./orchestrator:/app:ro
+      - ./flows:/flows:ro
+      - ./generated:/registry:ro
+    networks: [uri-lan]
+
+networks:
+  uri-lan:
+
+volumes:
+  pc1-data:
+  pc2-data:
+  pc3-data:
+  pc4-data:

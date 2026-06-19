@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from urihandler.v7 import compile_registry, run
+from urirun.v7 import compile_registry, run
 
 bindings = json.loads((Path(__file__).resolve().parents[1] / "json" / "bindings.v7.example.json").read_text())
 registry = compile_registry(bindings)

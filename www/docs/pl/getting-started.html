@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Pierwsze kroki</title>
+  <meta name="description" content="urirun documentation - Pierwsze kroki">
+  <link rel="icon" href="../../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="../getting-started.html">
+  <link rel="alternate" hreflang="pl" href="getting-started.html">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../../index.html" aria-label="urirun home"><img src="../../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../../index.html">Strona główna</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="" href="../getting-started.html" hreflang="en" lang="en">EN</a>
+        <a class="active" href="getting-started.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Dokumentacja</span></a>
+      <a class="active" data-slug="getting-started" href="getting-started.html"><span>Pierwsze kroki</span></a>
+      <a data-slug="naming" href="naming.html"><span>Nazewnictwo</span></a>
+      <a data-slug="commands" href="commands.html"><span>Komendy</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transporty</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Pierwsze kroki</h2>
+<p>Instalacja bezpośrednio z GitHuba:</p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+</code></pre>
+<p>Zainstalowane CLI oraz przestrzeń importu w Pythonie to w obu przypadkach <code>urirun</code>.</p>
+<h3>Wygeneruj registry</h3>
+<p></p>
+<pre><code>urirun scan ./project \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json
+</code></pre>
+<p>Skaner czyta jawne pliki bindingów, etykiety Dockerfile, skrypty paczek, punkty wejścia Pythona, cele Makefile i skrypty shell.</p>
+<h3>Podejrzyj trasy</h3>
+<pre><code>urirun validate generated/bindings.v8.json
+urirun list generated/registry.json
+</code></pre>
+<h3>Uruchom URI</h3>
+<p>Dla tras typu komenda domyślny jest dry-run:</p>
+<pre><code>urirun run &#039;cli://local/git/status&#039; --registry generated/registry.json
+</code></pre>
+<p>Realne wykonanie wymaga pliku polityki i flagi <code>--execute</code>:</p>
+<pre><code>urirun run &#039;cli://local/git/status&#039; \
+  --registry generated/registry.json \
+  --policy policy.json \
+  --allow &#039;cli://local/**&#039; \
+  --execute
+</code></pre>
+<p></p>
+    </article>
+  </main>
+</body>
+</html>

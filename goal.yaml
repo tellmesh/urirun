@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-06-19 14:46:01
+# Generated: 2026-06-19 15:31:53
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -15,13 +15,14 @@ version: '1.0'
 project:
   name: urirun
   type:
-  - python
+  - nodejs
   description: Language-agnostic URI to handler adapter
 versioning:
   strategy: semver
   files:
   - VERSION
-  - adapters/python/pyproject.toml:version
+  - package.json:version
+  - venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__
   bump_rules:
     patch: 10
     minor: 50

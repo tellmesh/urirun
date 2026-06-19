@@ -5,6 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Add a gRPC transport (`urirun.v8_grpc`): a generic `Run` / `RunStream` /
+  `ListRoutes` service over JSON-over-gRPC, with a client `call()` that mirrors
+  the HTTP service path (schema-validated, target via `URI_GRPC_MAP`).
+- Add `urirun.v8_service` for library-native, adapter-agnostic HTTP dispatch
+  (validate against the registry schema, then `POST /run`).
+- Add `urirun.v8_mcp` (MCP tools manifest, A2A agent card, stdio MCP server) and
+  `urirun.v8_adopt` (adopt PyPI `console_scripts` and npm `bin` as URI commands).
+- Add `v8/examples/transports` (one registry over in-process, queue, serverless,
+  HTTP and gRPC, plus a one-command `scan_and_run.py`).
+- Add `v8/examples/multi_transport` (Docker stack mixing HTTP and gRPC workers,
+  auto-generated registry, route-conflict detection, cross-environment flow).
+- Add docker-free and Docker integration tests for the example flows.
+- Add `docs/` with current urirun quick start, naming, commands, registry,
+  transports, logo notes, and roadmap.
+- Add `www/` PHP documentation site wired to the generated SVG logo assets.
+- Add static `www/index.html` and `www/index.en.html` pages with SEO
+  `hreflang`, language memory, and a GitHub Pages deployment workflow.
+- Add technology tabs to the static `www` landing page showing how Python,
+  JavaScript, C, Shell, Docker, TypeScript, and PHP generate bindings and
+  compile registries.
+- Add generated `logo/` SVG assets for icon, wordmark, favicon, horizontal,
+  stacked, and logo sheet variants.
+- Add a curated `TODO.md` focused on urirun usability work.
+- Add a noVNC LAN flow example with four Docker "computers", a four-iframe
+  dashboard, URI agents, and a cross-computer flow.
+
+### Changed
+- Disable `[tool.pfix] auto_apply` so configuration and documentation changes
+  are explicit rather than auto-applied.
+- Standardize the website and docs on the full transport set (in-process, CLI/
+  shell, HTTP, gRPC, queue, serverless, Docker, MCP/A2A) and the current example
+  list; make `www/index.html` consistent with the canonical site.
+- Update README for the current `urirun` runtime name while keeping the GitHub
+  repository URL as `tellmesh/urihandler`.
+- Refresh the PHP project site with current positioning, workflow, transport,
+  examples, docs, and roadmap content.
+- Rename the portable spec path to `spec/urirun-spec.md`.
+- Align examples and docs on `urirun` imports, schema versions, Docker labels,
+  C adapter files, and CLI commands.
+- Keep `tellmesh/urihandler` only where it refers to the actual GitHub
+  repository URL or historical changelog entries.
+
+### Fixed
+- Fix stale references to a non-existing `tellmesh/urirun` GitHub repository in
+  examples.
+
+## [0.3.6] - 2026-06-19
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update adapters/python/README.md
+- Update docs/commands.md
+- Update docs/getting-started.md
+- Update docs/index.md
+- Update docs/logo.md
+- Update docs/naming.md
+- Update docs/registry-and-bindings.md
+- ... and 7 more files
+
+### Other
+- Update adapters/c/urirun.c
+- Update adapters/c/urirun.h
+- Update adapters/c/urirun_test.c
+- Update adapters/python/pyproject.toml
+- Update examples/reference_adapters/firmware-pseudo.c
+- Update v7/examples/html_uri_app/bindings.json
+- Update v7/examples/html_uri_app/test.mjs
+- Update v7/examples/js/urirun-v7.js
+- Update v7/examples/js/urirun-v7.test.js
+- Update v7/examples/python/test_extend.py
+- ... and 7 more files
+
 ## [0.1.10] - 2026-06-19
 
 ### Fixed
@@ -45,7 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix magic-numbers issues (ticket-4d1e8444)
 - Fix ai-boilerplate issues (ticket-3d1e91c1)
 
-## [Unreleased]
+## [Pre-0.3.5 Notes]
 
 ### Docs
 - Document v8 generated registry workflow for Docker URI flows.
@@ -56,6 +133,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rename the Python distribution from `urihandler` to `urirun`.
 - Remove public project versions below v7.
 - Keep GitHub Release / Git install as the supported Python package channel.
+
+## [0.3.5] - 2026-06-19
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update adapters/python/CHANGELOG.md
+- Update adapters/python/README.md
+- Update v7/examples/extend/README.md
+- Update v7/examples/html_uri_app/README.md
+- Update v7/spec/urihandler-v7.md
+
+### Test
+- Update test/urirun.test.js
+
+### Other
+- Update Makefile
+- Update adapters/js/package.json
+- Update adapters/python/pyproject.toml
+- Update adapters/python/tests/test_urihandler.py
+- Update adapters/python/urirun/__init__.py
+- Update adapters/python/urirun/_registry.py
+- Update adapters/python/urirun/_runtime.py
+- Update adapters/python/urirun/_scan.py
+- Update adapters/python/urirun/v7.py
+- Update adapters/python/urirun/v8.py
+- ... and 24 more files
 
 ## [0.3.2] - 2026-06-19
 

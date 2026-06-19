@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Transporty</title>
+  <meta name="description" content="urirun documentation - Transporty">
+  <link rel="icon" href="../../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="../transports.html">
+  <link rel="alternate" hreflang="pl" href="transports.html">
+  <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../../index.html" aria-label="urirun home"><img src="../../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../../index.html">Strona główna</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="" href="../transports.html" hreflang="en" lang="en">EN</a>
+        <a class="active" href="transports.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Dokumentacja</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Pierwsze kroki</span></a>
+      <a data-slug="naming" href="naming.html"><span>Nazewnictwo</span></a>
+      <a data-slug="commands" href="commands.html"><span>Komendy</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a class="active" data-slug="transports" href="transports.html"><span>Transporty</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Transporty</h2>
+<p><code>urirun</code> trzyma kontrakt URI oddzielnie od transportu. Ten sam URI można wywołać lokalnie, przez endpoint usługi albo przez orkiestrator przepływu. Registry, JSON Schema i bramka polityki to kontrakt; transport jedynie przenosi <code>{uri, payload}</code> tam, gdzie <code>v8.run</code> to wykonuje.</p>
+<p><code>v8/examples/transports</code> napędza jedno registry przez pięć transportów (in-process, kolejka, serverless, HTTP, gRPC) i dostarcza jednokomendowy <code>scan_and_run.py</code>.</p>
+<h3>Lokalnie i shell</h3>
+<ul>
+<li></li>
+</ul>
+<p>przez kod.</p>
+<ul>
+<li></li>
+</ul>
+<p>bez shella.</p>
+<ul>
+<li><code>shell-template</code> renderuje string powłoki i wymaga jawnej zgody polityki.</li>
+</ul>
+<h3>Kolejka i serverless</h3>
+<ul>
+<li>Konsument kolejki/zdarzeń mapuje wiadomość z tematu na <code>v8.run</code> (kształt MQTT/NATS/Kafka) i publikuje odpowiedź.</li>
+<li></li>
+</ul>
+<p>danie woła <code>v8.run</code>, z registry skompilowanym w pamięci.</p>
+<h3>Docker</h3>
+<p></p>
+<pre><code>python://python-worker/text/normalize
+node://node-worker/text/slugify
+shell://shell-worker/report/write
+</code></pre>
+<p></p>
+<h3></h3>
+<p>darka</p>
+<p>Przykład HTML w <code>v8/examples/html_uri_app</code> ładuje dokument bindingów, renderuje formularze URI i woła backend Pythona przez <code>POST /api/run</code>.</p>
+<p></p>
+<h3>gRPC</h3>
+<p><code>urirun.v8_grpc</code> udostępnia mały interfejs RPC: listowanie tras, wywołania unary i strumieniowe. Zainstaluj opcjonalny zestaw zależności:</p>
+<pre><code>pip install &quot;urirun[grpc] @ git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+</code></pre>
+<p></p>
+<h3>MCP i A2A</h3>
+<p></p>
+<ul>
+<li>MCP <code>tools/list</code></li>
+<li>MCP <code>tools/call</code></li>
+<li>umiejętności karty agenta A2A</li>
+</ul>
+<p></p>
+    </article>
+  </main>
+</body>
+</html>

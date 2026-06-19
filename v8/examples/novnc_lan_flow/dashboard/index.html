@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun noVNC LAN flow</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="kicker">flow://lan/novnc/demo</p>
+      <h1>Four virtual computers, one URI flow.</h1>
+    </div>
+    <div class="actions">
+      <button id="browser-demo" type="button">Run browser demo</button>
+      <button id="refresh-routes" type="button">Refresh routes</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="grid" aria-label="noVNC computers">
+      <article class="pc-card">
+        <div class="pc-head"><strong>pc1</strong><span>controller</span></div>
+        <iframe title="pc1 noVNC" data-pc="pc1"></iframe>
+      </article>
+      <article class="pc-card">
+        <div class="pc-head"><strong>pc2</strong><span>service node</span></div>
+        <iframe title="pc2 noVNC" data-pc="pc2"></iframe>
+      </article>
+      <article class="pc-card">
+        <div class="pc-head"><strong>pc3</strong><span>client node</span></div>
+        <iframe title="pc3 noVNC" data-pc="pc3"></iframe>
+      </article>
+      <article class="pc-card">
+        <div class="pc-head"><strong>pc4</strong><span>monitor node</span></div>
+        <iframe title="pc4 noVNC" data-pc="pc4"></iframe>
+      </article>
+    </section>
+
+    <section class="nl-panel panel" aria-label="Natural language URI flow">
+      <div class="nl-head">
+        <div>
+          <p class="kicker">llm://dashboard/flow/command/generate</p>
+          <h2>Natural language to URI flow</h2>
+        </div>
+        <button id="run-nl-flow" type="button">Generate and run</button>
+      </div>
+      <textarea id="nl-prompt" rows="4"></textarea>
+      <div class="flow-preview">
+        <div>
+          <h2>Generated workflow</h2>
+          <pre id="generated-flow">{}</pre>
+        </div>
+        <div>
+          <h2>Generator</h2>
+          <pre id="generator-status">{}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom">
+      <article class="panel">
+        <h2>URI process flow</h2>
+        <ol id="timeline">
+          <li><code>log://pc1/session/command/write</code></li>
+          <li><code>pc://pc2/service/command/start</code></li>
+          <li><code>pc://pc3/http/command/get</code></li>
+          <li><code>pc://pc4/http/command/get</code></li>
+        </ol>
+      </article>
+      <article class="panel">
+        <h2>Result</h2>
+        <pre id="output">{}</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="runtime-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

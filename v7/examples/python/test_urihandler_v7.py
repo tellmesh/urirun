@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from urihandler.v7 import compile_registry, load_registry_arg, run
+from urirun.v7 import compile_registry, load_registry_arg, run
 
 BINDINGS = Path(__file__).resolve().parents[1] / "json" / "bindings.v7.example.json"
 
@@ -118,12 +118,12 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             registry_path = Path(tmp) / "registry.json"
             subprocess.run(
-                [sys.executable, "-m", "urihandler.v7", "compile", str(BINDINGS),
+                [sys.executable, "-m", "urirun.v7", "compile", str(BINDINGS),
                  "--out", str(registry_path), "--generated-at", "2026-06-19T00:00:00.000Z"],
                 check=True,
             )
             result = subprocess.run(
-                [sys.executable, "-m", "urihandler.v7", "run", "media://local/video/transcode",
+                [sys.executable, "-m", "urirun.v7", "run", "media://local/video/transcode",
                  "--registry", str(registry_path), "--payload", '{"input":"a.mp4","output":"b.mp4"}'],
                 check=True, capture_output=True, text=True,
             )

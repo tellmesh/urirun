@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Roadmap</title>
+  <meta name="description" content="urirun documentation - Roadmap">
+  <link rel="icon" href="../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="roadmap.html">
+  <link rel="alternate" hreflang="pl" href="pl/roadmap.html">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html" aria-label="urirun home"><img src="../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="active" href="roadmap.html" hreflang="en" lang="en">EN</a>
+        <a class="" href="pl/roadmap.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Docs index</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Getting started</span></a>
+      <a data-slug="naming" href="naming.html"><span>Naming</span></a>
+      <a data-slug="commands" href="commands.html"><span>Commands</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transports</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a class="active" data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Roadmap</h2>
+<p>The most useful next work for making <code>urirun</code> easier:</p>
+<ul>
+<li>Add <code>urirun init</code> as a guided command that writes <code>.urirun/</code> defaults, sample policy, and an example binding.</li>
+<li>Add <code>urirun doctor</code> to check Python version, optional dependencies, Docker, PHP, Node, generated registry freshness, and duplicate route conflicts.</li>
+<li>Add <code>urirun serve</code> as a single HTTP console command for logs, route listing, dry-runs, and real execution behind policy.</li>
+<li>Add a canonical <code>.env</code> loader shared by examples so ports and registry paths have one source of truth.</li>
+<li>Add first-class <code>log://</code> routes for frontend, backend, shell, firmware, and Docker services.</li>
+<li>Add a registry diff command: <code>urirun diff old-registry.json new-registry.json</code>.</li>
+<li>Add scanner explanations: every generated binding should include source file, source standard, and reason.</li>
+<li>Add installer smoke tests for GitHub installs and GitHub Release wheels.</li>
+<li>Keep public docs focused on v7 and v8; older experiment folders should remain removed or archived outside the main project.</li>
+</ul>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Docs index</title>
+  <meta name="description" content="urirun documentation - Docs index">
+  <link rel="icon" href="../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="index.html">
+  <link rel="alternate" hreflang="pl" href="pl/index.html">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html" aria-label="urirun home"><img src="../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="active" href="index.html" hreflang="en" lang="en">EN</a>
+        <a class="" href="pl/index.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a class="active" data-slug="index" href="index.html"><span>Docs index</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Getting started</span></a>
+      <a data-slug="naming" href="naming.html"><span>Naming</span></a>
+      <a data-slug="commands" href="commands.html"><span>Commands</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transports</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>urirun docs</h2>
+<p><code>urirun</code> is the user-facing CLI for URI-addressed command packages. A project can declare a URI once and call it from a shell, backend, frontend, service flow, or agent tool projection.</p>
+<h3>Start here</h3>
+<ul>
+<li><a href="getting-started.html">Getting started</a> - install from GitHub, scan artifacts, compile a registry, and run a URI.</li>
+<li><a href="naming.html">Naming</a> - what uses <code>urirun</code> and why the GitHub repo URL still contains <code>urihandler</code>.</li>
+<li><a href="commands.html">Commands</a> - CLI commands and versioned entry points.</li>
+<li><a href="registry-and-bindings.html">Registry and bindings</a> - how bindings become a dispatchable registry.</li>
+<li><a href="transports.html">Transports</a> - local functions, shell, Docker, HTTP, gRPC, browser, MCP, and A2A.</li>
+<li><a href="logo.html">Logo</a> - generated SVG logo assets and usage notes.</li>
+<li><a href="roadmap.html">Roadmap</a> - practical TODO list for making the tool easier.</li>
+</ul>
+<h3>Current recommendation</h3>
+<p>Use v8 for new projects:</p>
+<pre><code>pip install &quot;git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python&quot;
+urirun scan ./project --out generated/bindings.v8.json --registry-out generated/registry.json
+urirun list generated/registry.json
+</code></pre>
+<p>Keep v7 only for older examples that depend on the first parameter-binding contract.</p>
+    </article>
+  </main>
+</body>
+</html>

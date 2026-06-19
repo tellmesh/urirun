@@ -1,6 +1,6 @@
-// Browser-safe urihandler v7 runtime: policy gate + dry-run/execute, plus
+// Browser-safe urirun v7 runtime: policy gate + dry-run/execute, plus
 // named parameter binding ({name} from query/payload/positional/target),
-// string shorthand bindings, and Docker adapters. Mirrors urihandler/v7.py.
+// string shorthand bindings, and Docker adapters. Mirrors urirun/v7.py.
 
 const URI_RE = /^(?<scheme>[a-z][a-z0-9+.-]*):\/\/(?<target>[^/?#]+)(?<path>\/[^?#]*)?(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/i;
 const PLACEHOLDER_RE = /\{([a-zA-Z0-9_.]+)\}/g;

@@ -39,5 +39,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(3000, '127.0.0.1', () => {
-  console.log('urihandler node example listening on http://127.0.0.1:3000');
+  console.log('urirun node example listening on http://127.0.0.1:3000');
 });

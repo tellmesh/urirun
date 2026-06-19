@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun docs: Commands</title>
+  <meta name="description" content="urirun documentation - Commands">
+  <link rel="icon" href="../assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="alternate" hreflang="en" href="commands.html">
+  <link rel="alternate" hreflang="pl" href="pl/commands.html">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="../index.html" aria-label="urirun home"><img src="../assets/urirun-horizontal.svg" alt="urirun"></a>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch">
+        <a class="active" href="commands.html" hreflang="en" lang="en">EN</a>
+        <a class="" href="pl/commands.html" hreflang="pl" lang="pl">PL</a>
+      </span>
+    </nav>
+  </header>
+  <main class="docs-layout">
+    <aside>
+      <a data-slug="index" href="index.html"><span>Docs index</span></a>
+      <a data-slug="getting-started" href="getting-started.html"><span>Getting started</span></a>
+      <a data-slug="naming" href="naming.html"><span>Naming</span></a>
+      <a class="active" data-slug="commands" href="commands.html"><span>Commands</span></a>
+      <a data-slug="registry-and-bindings" href="registry-and-bindings.html"><span>Registry</span></a>
+      <a data-slug="transports" href="transports.html"><span>Transports</span></a>
+      <a data-slug="logo" href="logo.html"><span>Logo</span></a>
+      <a data-slug="roadmap" href="roadmap.html"><span>Roadmap</span></a>
+    </aside>
+    <article class="doc-body">
+<h2>Commands</h2>
+<h3>v8 CLI</h3>
+<p><code>urirun</code> defaults to the v8 schema-first runtime.</p>
+<pre><code>urirun scan PATH --out generated/bindings.v8.json --registry-out generated/registry.json
+urirun validate generated/bindings.v8.json
+urirun compile generated/bindings.v8.json --out generated/registry.json
+urirun list generated/registry.json
+urirun run URI --registry generated/registry.json --payload &#039;{&quot;name&quot;:&quot;Ada&quot;}&#039;
+</code></pre>
+<h3>Generate bindings in one line</h3>
+<p>Expose a package command:</p>
+<pre><code>urirun add-pypi sampleproject --out urirun.bindings.v8.json
+</code></pre>
+<p>Expose a command template:</p>
+<pre><code>urirun add-command &#039;util://local/echo/message&#039; \
+  --argv &#039;python3 -c &quot;import sys; print(sys.argv[1])&quot; {text}&#039; \
+  --param text:string:required \
+  --out urirun.bindings.v8.json
+</code></pre>
+<h3>Versioned commands</h3>
+<pre><code>urirun-v7 compile v7/examples/json/bindings.v7.example.json --out /tmp/registry.json
+urirun-v7 run &#039;media://local/video/transcode&#039; /tmp/registry.json --payload &#039;{&quot;input&quot;:&quot;a.mp4&quot;,&quot;output&quot;:&quot;b.mp4&quot;}&#039;
+urirun-v8 --help
+</code></pre>
+<p>Use these versioned commands when a script must stay pinned to a major registry contract.</p>
+<h3>Module commands</h3>
+<p>The module namespace is <code>urirun</code>, so these are also valid:</p>
+<pre><code>python -m urirun.v8 --help
+python -m urirun.v8_mcp tools generated/registry.json
+python -m urirun.v8_mcp card generated/registry.json
+</code></pre>
+    </article>
+  </main>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import unittest
 
-from urihandler import build_invocation, dispatch, parse_uri
+from urirun import build_invocation, dispatch, parse_uri
 
 
 class UriHandlerTests(unittest.TestCase):

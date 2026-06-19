@@ -13,24 +13,23 @@ pip install "https://github.com/tellmesh/urihandler/releases/download/v0.3.4/uri
 ```
 
 PyPI publishing is not required. The distribution is named `urirun`; the Python
-import package remains `urihandler`:
+import package remains `urirun`:
 
 ```python
-import urihandler
+import urirun
 ```
 
 After installation the `urirun` CLI is available:
 
 ```bash
-urirun scan ./project --out .urihandler/bindings.v8.json --registry-out .urihandler/registry.merged.json
-urirun validate .urihandler/bindings.v8.json
-urirun list .urihandler/registry.merged.json
-urirun run 'cli://local/git/status' .urihandler/registry.merged.json
+urirun scan ./project --out .urirun/bindings.v8.json --registry-out .urirun/registry.merged.json
+urirun validate .urirun/bindings.v8.json
+urirun list .urirun/registry.merged.json
+urirun run 'cli://local/git/status' .urirun/registry.merged.json
 ```
 
 `urirun-v7` and `urirun-v8` are also installed as explicit versioned entry
-points. Compatibility aliases `urihandler-v7` and `urihandler-v8` are kept for
-existing v7/v8 scripts.
+points for scripts that need a stable major-version command.
 
 The optional v8 gRPC transport can be installed with:
 

@@ -1,497 +1,457 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>urirun — address any command with a URI</title>
-<meta name="description" content="urirun gives every command, script, container, and endpoint a URI. One registry is the contract; the same URI runs in-process, over HTTP, gRPC, MCP, a queue, or serverless.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='f' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366F1'/%3E%3Cstop offset='1' stop-color='%234338CA'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='1' y='1' width='30' height='30' rx='8' fill='url(%23f)'/%3E%3Ccircle cx='9.5' cy='13.2' r='1.9' fill='%23A5B4FC'/%3E%3Ccircle cx='9.5' cy='18.8' r='1.9' fill='%23A5B4FC'/%3E%3Cg stroke='%23fff' stroke-width='3.4' stroke-linecap='round'%3E%3Cpath d='M14.5 20.5 L18.5 11.5'/%3E%3Cpath d='M19.5 20.5 L23.5 11.5'/%3E%3C/g%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#FAFBFC; --ink:#0F172A; --ink2:#475569; --muted:#94A3B8;
-  --line:#E6E9EF; --line2:#D8DEE9;
-  --indigo:#6366F1; --indigo-d:#4338CA; --indigo-l:#A5B4FC; --indigo-wash:#EEF0FE;
-  --cyan:#06B6D4; --violet:#8B5CF6; --emerald:#10B981;
-  --dark:#0F172A; --dark2:#1E293B; --dark3:#334155;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
-  --disp:'Space Grotesk',system-ui,sans-serif;
-  --body:'Inter',system-ui,sans-serif;
-  --maxw:1080px;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
-  font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;
-}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-h1,h2,h3{font-family:var(--disp);font-weight:600;letter-spacing:-.02em;line-height:1.08;margin:0}
-
-/* ── eyebrow: sections are addressed like resources ── */
-.eyebrow{
-  font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.02em;
-  color:var(--indigo);display:inline-flex;align-items:center;gap:7px;margin-bottom:18px;
-}
-.eyebrow::before{content:"";width:18px;height:1px;background:var(--indigo-l)}
-
-/* ── nav ── */
-header{position:sticky;top:0;z-index:50;background:rgba(250,251,252,.82);
-  backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--line)}
-.nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:11px}
-.brand svg{display:block}
-.brand .wm{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:-.04em}
-.brand .wm b{color:var(--indigo);font-weight:700}
-.nav-links{display:flex;align-items:center;gap:26px}
-.nav-links a{font-size:14.5px;color:var(--ink2);font-weight:500}
-.nav-links a:hover{color:var(--ink)}
-.nav-cta{font-family:var(--mono);font-size:13px;font-weight:500;
-  border:1px solid var(--line2);padding:8px 13px;border-radius:9px;color:var(--ink)}
-.nav-cta:hover{border-color:var(--indigo);color:var(--indigo)}
-@media(max-width:720px){.nav-links a:not(.nav-cta){display:none}}
-
-/* ── hero ── */
-.hero{padding:78px 0 64px;position:relative;overflow:hidden}
-.hero::before{ /* faint coordinate grid — everything is addressable */
-  content:"";position:absolute;inset:0;z-index:0;opacity:.5;
-  background-image:linear-gradient(var(--line) 1px,transparent 1px),
-                   linear-gradient(90deg,var(--line) 1px,transparent 1px);
-  background-size:46px 46px;
-  -webkit-mask-image:radial-gradient(120% 80% at 18% 0%,#000 0%,transparent 70%);
-          mask-image:radial-gradient(120% 80% at 18% 0%,#000 0%,transparent 70%);
-}
-.hero .wrap{position:relative;z-index:1}
-.hero h1{font-size:clamp(40px,6.2vw,68px);max-width:14ch}
-.hero h1 em{font-style:normal;color:var(--indigo);font-weight:600}
-.lede{font-size:clamp(18px,2.2vw,21px);color:var(--ink2);max-width:54ch;margin:22px 0 0;line-height:1.5}
-.hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
-.btn{font-family:var(--disp);font-weight:600;font-size:15.5px;padding:13px 22px;border-radius:11px;
-  display:inline-flex;align-items:center;gap:9px;transition:transform .15s ease,box-shadow .15s ease}
-.btn-pri{background:var(--ink);color:#fff;box-shadow:0 1px 0 #000 inset, 0 6px 18px rgba(15,23,42,.18)}
-.btn-pri:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(15,23,42,.24)}
-.btn-sec{border:1px solid var(--line2);color:var(--ink);background:#fff}
-.btn-sec:hover{border-color:var(--indigo);color:var(--indigo)}
-
-/* ── URI inspector: the signature ── */
-.inspector{margin-top:52px;border:1px solid var(--line);border-radius:18px;background:#fff;
-  box-shadow:0 1px 0 #fff inset,0 20px 50px -28px rgba(15,23,42,.35);overflow:hidden}
-.insp-bar{display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid var(--line);
-  font-family:var(--mono);font-size:12px;color:var(--muted)}
-.dot{width:9px;height:9px;border-radius:50%;background:var(--line2)}
-.insp-bar .tag{margin-left:auto;color:var(--ink2)}
-.insp-body{padding:34px 28px 30px;text-align:center}
-.uri-row{display:flex;align-items:flex-start;justify-content:center;gap:.45rem;
-  font-family:var(--mono);font-size:clamp(16px,2.6vw,27px);font-weight:500;
-  overflow-x:auto;padding-bottom:6px;white-space:nowrap}
-.seg-group{display:flex;flex-direction:column;align-items:center;flex:0 0 auto}
-.seg{padding-bottom:7px;border-bottom:3px solid;line-height:1}
-.s-scheme{color:var(--indigo);border-color:var(--indigo)}
-.s-target{color:var(--cyan);border-color:var(--cyan)}
-.s-res{color:var(--violet);border-color:var(--violet)}
-.s-op{color:var(--emerald);border-color:var(--emerald)}
-.cap{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:11px;letter-spacing:.04em;
-  opacity:0;transform:translateY(4px);transition:opacity .5s ease,transform .5s ease}
-.sep{color:var(--muted);font-weight:400;padding-top:1px}
-.reveal .cap{opacity:1;transform:none}
-.cap.d1{transition-delay:.15s}.cap.d2{transition-delay:.3s}.cap.d3{transition-delay:.45s}.cap.d4{transition-delay:.6s}
-.resolves{margin-top:30px;padding-top:24px;border-top:1px dashed var(--line2);
-  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
-.resolves .lbl{font-family:var(--mono);font-size:12px;color:var(--muted)}
-.chip{font-family:var(--mono);font-size:12.5px;color:var(--ink2);background:var(--indigo-wash);
-  border:1px solid #E0E3FB;padding:5px 11px;border-radius:999px;
-  opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
-.reveal .chip{opacity:1;transform:none}
-.reveal .chip:nth-child(2){transition-delay:.5s}.reveal .chip:nth-child(3){transition-delay:.58s}
-.reveal .chip:nth-child(4){transition-delay:.66s}.reveal .chip:nth-child(5){transition-delay:.74s}
-.reveal .chip:nth-child(6){transition-delay:.82s}.reveal .chip:nth-child(7){transition-delay:.9s}
-
-/* ── polyglot strip ── */
-.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
-.strip .wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;padding-top:18px;padding-bottom:18px}
-.strip .k{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.05em}
-.strip .langs{display:flex;gap:22px;flex-wrap:wrap}
-.strip .langs span{font-family:var(--mono);font-size:14px;color:var(--ink2);font-weight:500}
-
-/* ── generic section ── */
-.section{padding:88px 0;border-bottom:1px solid var(--line)}
-.section h2{font-size:clamp(28px,4vw,40px);max-width:18ch}
-.section .sub{color:var(--ink2);max-width:58ch;margin-top:16px;font-size:18px}
-
-/* ── transports (dark) ── */
-.dark{background:var(--dark);color:#E2E8F0;border-color:var(--dark2)}
-.dark .eyebrow{color:var(--indigo-l)}
-.dark .eyebrow::before{background:var(--dark3)}
-.dark h2{color:#fff}
-.dark .sub{color:#94A3B8}
-.t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:46px}
-@media(max-width:820px){.t-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.t-grid{grid-template-columns:1fr}}
-.tcard{border:1px solid var(--dark2);border-radius:14px;padding:22px;background:#131c2e;
-  transition:border-color .2s ease,transform .2s ease}
-.tcard:hover{border-color:var(--indigo);transform:translateY(-2px)}
-.tcard .nm{font-family:var(--mono);font-weight:700;font-size:15px;color:#fff}
-.tcard .nm i{color:var(--indigo-l);font-style:normal}
-.tcard p{margin:9px 0 0;font-size:14.5px;color:#94A3B8;line-height:1.5}
-.t-note{margin-top:30px;font-family:var(--mono);font-size:13.5px;color:#cbd5e1;
-  background:#131c2e;border:1px solid var(--dark2);border-left:3px solid var(--emerald);
-  padding:14px 18px;border-radius:0 10px 10px 0}
-
-/* ── code blocks ── */
-.code{background:#0F172A;border-radius:14px;border:1px solid var(--dark2);overflow:hidden;
-  font-family:var(--mono);font-size:13.5px;line-height:1.7}
-.code .head{display:flex;gap:7px;align-items:center;padding:11px 15px;border-bottom:1px solid var(--dark2)}
-.code .head .fn{margin-left:8px;color:#64748B;font-size:12px}
-.code pre{margin:0;padding:20px 22px;overflow-x:auto;color:#E2E8F0}
-.code .cm{color:#64748B}
-.code .kw{color:var(--violet)}
-.code .st{color:var(--emerald)}
-.code .fnc{color:#60A5FA}
-.code .pa{color:var(--indigo-l)}
-.code .num{color:#FBBF24}
-
-/* ── two-col layouts ── */
-.split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin-top:48px}
-@media(max-width:860px){.split{grid-template-columns:1fr;gap:32px}}
-.flow{display:flex;flex-direction:column;gap:0}
-.flow .step{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
-.flow .step:last-child{border-bottom:0}
-.flow .ic{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--indigo-wash);
-  border:1px solid #E0E3FB;display:grid;place-items:center;font-family:var(--mono);
-  font-size:13px;font-weight:700;color:var(--indigo)}
-.flow .step h3{font-size:17px;font-family:var(--disp)}
-.flow .step p{margin:4px 0 0;font-size:15px;color:var(--ink2)}
-
-/* ── adopt grid ── */
-.adopt{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:46px}
-@media(max-width:820px){.adopt{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.adopt{grid-template-columns:1fr}}
-.acard{border:1px solid var(--line);border-radius:13px;padding:18px;background:#fff}
-.acard .nm{font-family:var(--mono);font-size:13.5px;font-weight:500;color:var(--ink)}
-.acard p{margin:6px 0 0;font-size:13.5px;color:var(--ink2)}
-.acard .nm b{color:var(--indigo);font-weight:500}
-
-/* ── standards row ── */
-.std{display:flex;gap:10px;flex-wrap:wrap;margin-top:40px}
-.std span{font-family:var(--mono);font-size:13px;color:var(--ink2);border:1px solid var(--line);
-  padding:7px 13px;border-radius:8px;background:#fff}
-
-/* ── footer ── */
-footer{padding:60px 0 50px;background:#fff}
-.foot{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap}
-.foot .col h4{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;
-  letter-spacing:.08em;margin:0 0 14px;font-weight:500}
-.foot .col a{display:block;font-size:14.5px;color:var(--ink2);margin-bottom:9px}
-.foot .col a:hover{color:var(--indigo)}
-.foot-brand{max-width:300px}
-.foot-brand p{font-size:14px;color:var(--ink2);margin:14px 0 0;line-height:1.55}
-.foot-bottom{margin-top:46px;padding-top:22px;border-top:1px solid var(--line);
-  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
-  font-family:var(--mono);font-size:12.5px;color:var(--muted)}
-
-/* ── scroll reveal ── */
-.r{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
-.r.in{opacity:1;transform:none}
-
-@media(prefers-reduced-motion:reduce){
-  *{animation:none!important;transition:none!important}
-  .r,.cap,.chip{opacity:1!important;transform:none!important}
-  html{scroll-behavior:auto}
-}
-:focus-visible{outline:2px solid var(--indigo);outline-offset:3px;border-radius:4px}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun - runtime komend adresowanych URI</title>
+  <meta name="description" content="urirun zmienia funkcje, skrypty, kontenery i usługi w reużywalne trasy URI kompilowane do jednego registry.">
+  <link rel="icon" href="assets/urirun-favicon.svg" type="image/svg+xml">
+  <link rel="canonical" href="https://tellmesh.github.io/urihandler/">
+  <link rel="alternate" hreflang="pl" href="https://tellmesh.github.io/urihandler/">
+  <link rel="alternate" hreflang="en" href="https://tellmesh.github.io/urihandler/index.en.html">
+  <link rel="alternate" hreflang="x-default" href="https://tellmesh.github.io/urihandler/">
+  <meta property="og:title" content="urirun - runtime komend adresowanych URI">
+  <meta property="og:description" content="urirun zmienia funkcje, skrypty, kontenery i usługi w reużywalne trasy URI kompilowane do jednego registry.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tellmesh.github.io/urihandler/">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<header>
-  <div class="wrap nav">
-    <a class="brand" href="#top" aria-label="urirun home">
-      <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true">
-        <defs><linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#4338CA"/>
-        </linearGradient></defs>
-        <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#tile)"/>
-        <circle cx="30" cy="42" r="5" fill="#A5B4FC"/><circle cx="30" cy="58" r="5" fill="#A5B4FC"/>
-        <g stroke="#fff" stroke-width="9" stroke-linecap="round">
-          <path d="M44 64 L56 36"/><path d="M60 64 L72 36"/>
-        </g>
-      </svg>
-      <span class="wm">uri<b>run</b></span>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="urirun home">
+      <img src="assets/urirun-horizontal.svg" alt="urirun">
     </a>
-    <nav class="nav-links">
-      <a href="#transports">Transports</a>
-      <a href="#schema">Schema</a>
-      <a href="#adopt">Adopt</a>
-      <a href="#quickstart">Quickstart</a>
-      <a class="nav-cta" href="https://github.com/tellmesh/urihandler">GitHub →</a>
+    <nav aria-label="Nawigacja główna">
+      <a href="docs/pl/index.html">Dokumentacja</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#examples">Przykłady</a>
+      <a href="https://github.com/tellmesh/urihandler">GitHub</a>
+      <span class="language-switch" aria-label="Wersje językowe">
+        <a class="active" href="index.html" hreflang="pl" lang="pl" data-lang-choice="pl">PL</a>
+        <a class="" href="index.en.html" hreflang="en" lang="en" data-lang-choice="en">EN</a>
+      </span>
     </nav>
-  </div>
-</header>
+  </header>
 
-<main id="top">
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="wrap">
-      <span class="eyebrow">urirun://overview</span>
-      <h1>Address any command with a <em>URI</em>.</h1>
-      <p class="lede">Give every function, script, container, and HTTP endpoint a stable URI.
-        Compile one registry from artifacts you already have — then run that exact URI
-        in-process, over HTTP, gRPC, MCP, a queue, or serverless. The registry is the contract.</p>
-
-      <div class="hero-cta">
-        <a class="btn btn-pri" href="#quickstart">Get started <span aria-hidden="true">→</span></a>
-        <a class="btn btn-sec" href="https://github.com/tellmesh/urihandler">View on GitHub</a>
-      </div>
-
-      <!-- SIGNATURE: the URI, decomposed -->
-      <div class="inspector" id="inspector">
-        <div class="insp-bar">
-          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-          <span class="tag">registry.json · 1 of 4 routes</span>
-        </div>
-        <div class="insp-body">
-          <div class="uri-row">
-            <span class="seg-group"><span class="seg s-scheme">python</span><span class="cap d1">scheme · adapter</span></span>
-            <span class="sep">://</span>
-            <span class="seg-group"><span class="seg s-target">python-worker</span><span class="cap d2">target · who owns it</span></span>
-            <span class="sep">/</span>
-            <span class="seg-group"><span class="seg s-res">text</span><span class="cap d3">resource</span></span>
-            <span class="sep">/</span>
-            <span class="seg-group"><span class="seg s-op">normalize</span><span class="cap d4">operation</span></span>
-          </div>
-          <div class="resolves">
-            <span class="lbl">resolves to&nbsp;→</span>
-            <span class="chip">in-process</span>
-            <span class="chip">HTTP</span>
-            <span class="chip">gRPC</span>
-            <span class="chip">MCP tool</span>
-            <span class="chip">queue</span>
-            <span class="chip">serverless</span>
-          </div>
+  <main>
+    <p class="language-memory" data-language-memory hidden><a href="index.en.html"></a></p>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="kicker">urirun://project/home</p>
+        <h1>Jedno registry URI dla komend w kodzie, shellu, kontenerach i usługach.</h1>
+        <p class="lede">Deklarujesz trasę raz, kompilujesz ją do registry i wywołujesz ten sam URI lokalnie albo przez HTTP, gRPC, kolejkę, serverless, Docker, MCP lub kartę agenta A2A.</p>
+        <div class="actions">
+          <a class="button primary" href="docs/pl/getting-started.html">Zacznij od v8</a>
+          <a class="button" href="docs/pl/commands.html">Komendy CLI</a>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- POLYGLOT STRIP -->
-  <div class="strip">
-    <div class="wrap">
-      <span class="k">ONE CONTRACT, MANY RUNTIMES</span>
-      <div class="langs">
-        <span>Python</span><span>JavaScript</span><span>C</span><span>Shell</span>
-        <span>Docker</span><span>TypeScript</span><span>PHP</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- TRANSPORTS -->
-  <section class="section dark" id="transports">
-    <div class="wrap">
-      <span class="eyebrow r">urirun://transports</span>
-      <h2 class="r">The same URI runs everywhere it needs to.</h2>
-      <p class="sub r">A URI names <em>what</em> to run, not how to reach it. Swap the transport without
-        touching the call site — the payload is validated against the registry's JSON Schema first,
-        every time, so behavior stays identical across them all.</p>
-
-      <div class="t-grid">
-        <div class="tcard r"><div class="nm">in-<i>process</i></div><p>Direct dispatch inside your own process. No network, no server.</p></div>
-        <div class="tcard r"><div class="nm">HTTP <i>service</i></div><p>POST a URI + payload to a worker. <code>v8_service</code> resolves the host and validates before sending.</p></div>
-        <div class="tcard r"><div class="nm">gRPC</div><p>Unary and streaming calls over a channel for low-latency service meshes.</p></div>
-        <div class="tcard r"><div class="nm">MCP <i>tool</i></div><p>Every route is projected as an MCP tool with JSON Schema — agents call it like any other tool.</p></div>
-        <div class="tcard r"><div class="nm">queue</div><p>Hand a URI to a worker pool and collect the result asynchronously.</p></div>
-        <div class="tcard r"><div class="nm">serverless</div><p>A single handler turns an event into a URI dispatch — drop it into any function runtime.</p></div>
-      </div>
-
-      <p class="t-note r">Cross-transport agreement is a tested guarantee: the dry-run plan and the executed
-        result are the same whether the call goes in-process, over HTTP, or through gRPC.</p>
-    </div>
-  </section>
-
-  <!-- SCHEMA-FIRST -->
-  <section class="section" id="schema">
-    <div class="wrap">
-      <span class="eyebrow r">urirun://schema</span>
-      <h2 class="r">Schema-first command packaging.</h2>
-      <p class="sub r">Decorate a function and urirun reads its signature into JSON Schema (Draft 2020-12)
-        with Pydantic. The runtime validates input, applies defaults, renders the placeholders, then runs.</p>
-
-      <div class="split">
-        <div class="flow r">
-          <div class="step"><div class="ic">fn</div><div><h3>Write a function</h3><p>Types and defaults are the source of truth — no separate parameter file to keep in sync.</p></div></div>
-          <div class="step"><div class="ic">{ }</div><div><h3>Schema is generated</h3><p>The signature becomes an <code>inputSchema</code> stored alongside the argv or shell template.</p></div></div>
-          <div class="step"><div class="ic">✓</div><div><h3>Input is validated</h3><p>Missing required fields are a schema error before anything executes — in dry-run too.</p></div></div>
-          <div class="step"><div class="ic">▶</div><div><h3>Placeholders render</h3><p>Validated values fill <code>{input}</code>, <code>{width}</code>, and the command is built deterministically.</p></div></div>
+      <section class="command-panel" aria-label="Sekwencja szybkiego startu">
+        <div class="panel-head">
+          <span>quickstart</span>
+          <strong>Instalacja z GitHuba</strong>
         </div>
-
-        <div class="code r">
-          <div class="head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">transcode.py</span></div>
-<pre><span class="kw">from</span> urihandler.v8 <span class="kw">import</span> uri_command
-
-<span class="pa">@uri_command</span>(<span class="st">"media://local/video/transcode"</span>)
-<span class="kw">def</span> <span class="fnc">transcode</span>(input: str, output: str,
-              width: int = <span class="num">1280</span>,
-              height: int = <span class="num">720</span>):
-    <span class="kw">return</span> [
-        <span class="st">"ffmpeg"</span>, <span class="st">"-i"</span>, <span class="st">"{input}"</span>,
-        <span class="st">"-vf"</span>, <span class="st">"scale={width}:{height}"</span>,
-        <span class="st">"{output}"</span>,
-    ]
-
-<span class="cm"># width/height now carry JSON-Schema</span>
-<span class="cm"># defaults; payload is checked, then run.</span></pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ADOPT -->
-  <section class="section" id="adopt">
-    <div class="wrap">
-      <span class="eyebrow r">urirun://adopt</span>
-      <h2 class="r">Make a repo behave like a URI package — without rewriting it.</h2>
-      <p class="sub r">Point the scanner at a project and it reads the artifacts that already describe your
-        system. Existing metadata becomes routes; you don't hand-write every endpoint.</p>
-
-      <div class="adopt">
-        <div class="acard r"><div class="nm">Dockerfile labels</div><p><b>io.tellmesh.urihandler.manifest</b> declares where a manifest lives; OCI labels are read too.</p></div>
-        <div class="acard r"><div class="nm">package.json</div><p>npm <b>scripts</b> become runnable command routes.</p></div>
-        <div class="acard r"><div class="nm">pyproject.toml</div><p><b>[project.scripts]</b> console entry points map to URIs.</p></div>
-        <div class="acard r"><div class="nm">Makefile</div><p>Targets surface as <b>make://local/target/…</b> routes.</p></div>
-        <div class="acard r"><div class="nm">*.sh scripts</div><p>Shell scripts are adopted behind the policy gate.</p></div>
-        <div class="acard r"><div class="nm">OpenAPI</div><p>Paths and methods compile into HTTP routes with a base URL.</p></div>
-      </div>
-
-      <div class="std r" aria-label="Standards used">
-        <span>JSON Schema 2020-12</span><span>Pydantic v2</span><span>OCI image labels</span>
-        <span>package.json</span><span>pyproject.toml</span><span>MCP</span><span>A2A agent card</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- AGENTS -->
-  <section class="section dark" id="agents">
-    <div class="wrap">
-      <span class="eyebrow r">urirun://agents</span>
-      <h2 class="r">Your registry is already an agent surface.</h2>
-      <p class="sub r">The same routes project into an MCP tool list and an A2A agent card — JSON Schema and all.
-        Tool names map back to URIs, so an agent calling a tool is dispatching the registry directly.</p>
-      <div class="code r" style="margin-top:40px">
-        <div class="head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">project the registry for agents</span></div>
-<pre><span class="cm"># expose every route as an MCP tool (JSON Schema included)</span>
-python -m urihandler.v8_mcp tools registry.json
-
-<span class="cm"># publish an A2A agent card listing the same skills</span>
-python -m urihandler.v8_mcp card  registry.json</pre>
-      </div>
-    </div>
-  </section>
-
-  <!-- QUICKSTART -->
-  <section class="section" id="quickstart">
-    <div class="wrap">
-      <span class="eyebrow r">urirun://quickstart</span>
-      <h2 class="r">Scan, validate, compile, run.</h2>
-      <p class="sub r">Install the package, generate a registry from a project, then dispatch a route.
-        Execution is denied by default — runs are dry until a policy allows them.</p>
-
-      <div class="split" style="align-items:start">
-        <div class="code r">
-          <div class="head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">install</span></div>
-<pre><span class="cm"># Node / JS adapter</span>
-npm install urihandler
-
-<span class="cm"># Python adapter (module CLI: urirun)</span>
-python -m urihandler.v8 --help</pre>
-        </div>
-
-        <div class="code r">
-          <div class="head"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="fn">build a registry &amp; run a route</span></div>
-<pre><span class="cm"># 1 · adopt a project's artifacts</span>
+        <pre><code>pip install "git+https://github.com/tellmesh/urihandler.git@main#subdirectory=adapters/python"
 urirun scan ./project \
   --out generated/bindings.v8.json \
   --registry-out generated/registry.json
+urirun list generated/registry.json
+urirun run 'tool://local/report/render' --registry generated/registry.json</code></pre>
+      </section>
+    </section>
 
-<span class="cm"># 2 · check the contract, list the routes</span>
-urirun validate generated/bindings.v8.json
-urirun list     generated/registry.json
+    <section class="facts" aria-label="Fakty o projekcie">
+      <div><span>Runtime</span><strong>urirun</strong></div>
+      <div><span>Repozytorium</span><strong>tellmesh/urihandler</strong></div>
+      <div><span>Domyślny kontrakt</span><strong>v8 JSON Schema</strong></div>
+      <div><span>Wykonanie</span><strong>dry-run first</strong></div>
+    </section>
 
-<span class="cm"># 3 · run one URI (dry by default)</span>
-urirun run media://local/video/transcode \
-  --registry generated/registry.json \
-  --payload <span class="st">'{"input":"a.mp4","output":"b.mp4"}'</span></pre>
+    <section class="section contract-section" id="contract">
+      <div class="contract-intro">
+        <div>
+          <p class="kicker">urirun://schema</p>
+          <h2>Jeden kontrakt, wiele runtime’ów.</h2>
+          <p class="section-copy">Pakowanie komend zaczyna się od schematu. Dekorator, helper albo skan artefaktu generuje binding, potem urirun kompiluje go do registry i uruchamia po tym samym adresie URI.</p>
+        </div>
+        <div class="schema-steps" aria-label="Proces tworzenia komendy URI">
+          <div class="schema-step">
+            <span>fn</span>
+            <strong>Napisz funkcję</strong>
+            <small>Typy i wartości domyślne są źródłem prawdy.</small>
+          </div>
+          <div class="schema-step">
+            <span>{ }</span>
+            <strong>Wygeneruj binding</strong>
+            <small>Powstaje inputSchema i szablon argv lub shell.</small>
+          </div>
+          <div class="schema-step">
+            <span>✓</span>
+            <strong>Skompiluj registry</strong>
+            <small>Trasy są walidowane i gotowe do odkrywania.</small>
+          </div>
+          <div class="schema-step">
+            <span>▶</span>
+            <strong>Uruchom URI</strong>
+            <small>Dry-run najpierw, execute dopiero z polityką.</small>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
 
-</main>
+      <div class="tech-tabs" data-tech-tabs>
+        <div class="tab-list" role="tablist" aria-label="Technologie generujące bindingi URI">
+          <button class="tab-button active" type="button" role="tab" aria-selected="true" aria-controls="panel-python" id="tab-python" data-tech-tab="python">Python</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-javascript" id="tab-javascript" data-tech-tab="javascript">JavaScript</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-c" id="tab-c" data-tech-tab="c">C</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-shell" id="tab-shell" data-tech-tab="shell">Shell</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-docker" id="tab-docker" data-tech-tab="docker">Docker</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-typescript" id="tab-typescript" data-tech-tab="typescript">TypeScript</button>
+          <button class="tab-button" type="button" role="tab" aria-selected="false" aria-controls="panel-php" id="tab-php" data-tech-tab="php">PHP</button>
+        </div>
+        <article class="tech-panel active" id="panel-python" role="tabpanel" aria-labelledby="tab-python">
+          <div class="tech-copy">
+            <span>decorator + Pydantic</span>
+            <h3>Dekorator robi binding z sygnatury funkcji.</h3>
+            <p>Typy i wartości domyślne trafiają do JSON Schema, a lista argv zostaje deterministycznym szablonem komendy.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>from urirun.v8 import decorated_bindings, uri_command
 
-<footer>
-  <div class="wrap">
-    <div class="foot">
-      <div class="foot-brand">
-        <a class="brand" href="#top" aria-label="urirun">
-          <svg width="30" height="30" viewBox="0 0 100 100" aria-hidden="true">
-            <defs><linearGradient id="tile2" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#6366F1"/><stop offset="1" stop-color="#4338CA"/>
-            </linearGradient></defs>
-            <rect x="4" y="4" width="92" height="92" rx="24" fill="url(#tile2)"/>
-            <circle cx="30" cy="42" r="5" fill="#A5B4FC"/><circle cx="30" cy="58" r="5" fill="#A5B4FC"/>
-            <g stroke="#fff" stroke-width="9" stroke-linecap="round"><path d="M44 64 L56 36"/><path d="M60 64 L72 36"/></g>
-          </svg>
-          <span class="wm">uri<b>run</b></span>
-        </a>
-        <p>A language-agnostic URI-to-handler adapter. One registry is the contract; the URI is the call.</p>
-      </div>
-      <div class="col">
-        <h4>Docs</h4>
-        <a href="#transports">Transports</a>
-        <a href="#schema">Schema-first</a>
-        <a href="#adopt">Artifact adoption</a>
-        <a href="#agents">MCP &amp; A2A</a>
-      </div>
-      <div class="col">
-        <h4>Project</h4>
-        <a href="https://github.com/tellmesh/urihandler">Repository</a>
-        <a href="https://github.com/tellmesh/urihandler/issues">Issues</a>
-        <a href="https://www.npmjs.com/package/urihandler">npm package</a>
-      </div>
-      <div class="col">
-        <h4>Adapters</h4>
-        <a href="#">Python</a><a href="#">JavaScript</a><a href="#">C</a><a href="#">Shell</a>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <span>tellmesh/urihandler · v0.3.4</span>
-      <span>github://tellmesh/urihandler</span>
-    </div>
-  </div>
-</footer>
+@uri_command(&quot;media://local/video/transcode&quot;)
+def transcode(input: str, output: str, width: int = 1280, height: int = 720):
+    return [&quot;ffmpeg&quot;, &quot;-i&quot;, &quot;{input}&quot;, &quot;-vf&quot;, &quot;scale={width}:{height}&quot;, &quot;{output}&quot;]</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>from urirun.v8 import compile_registry, decorated_bindings
 
-<script>
-(function(){
-  var rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+bindings = decorated_bindings()
+registry = compile_registry(bindings)</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-javascript" role="tabpanel" aria-labelledby="tab-javascript" hidden>
+          <div class="tech-copy">
+            <span>plain JS helper</span>
+            <h3>Helper JS składa binding bez transpilerów.</h3>
+            <p>Deklaracja pól tworzy inputSchema, a factory komendy zwraca argv z placeholderami.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>import { bindingDocument, string, uriCommand } from &quot;./uri-command.mjs&quot;;
 
-  // scroll reveal
-  var io = new IntersectionObserver(function(es){
-    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
-  }, {threshold:.14, rootMargin:'0px 0px -8% 0px'});
-  document.querySelectorAll('.r').forEach(function(el){ io.observe(el); });
-
-  // hero inspector: reveal captions + transport chips once
-  var insp = document.getElementById('inspector');
-  if(rm){ insp.classList.add('reveal'); }
-  else {
-    var iio = new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('reveal'); iio.unobserve(e.target);} });
-    }, {threshold:.4});
-    iio.observe(insp);
+const greet = uriCommand(
+  &quot;js://local/greet/message&quot;,
+  { name: string({ required: true }) },
+  ({ name }) =&gt; [&quot;node&quot;, &quot;-e&quot;, &quot;console.log(process.argv[1])&quot;, name],
+);</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>node generate-bindings.mjs &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-c" role="tabpanel" aria-labelledby="tab-c" hidden>
+          <div class="tech-copy">
+            <span>firmware route table</span>
+            <h3>Firmware może mieć prostą tabelę tras URI.</h3>
+            <p>Kod C obsługuje lokalny dispatch, a registry dla reszty systemu można wygenerować jako kontrakt obok firmware.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>static const UriRoute routes[] = {
+  {&quot;firmware://device-01/led/command/set&quot;, led_set},
+  {&quot;firmware://device-01/telemetry/query/latest&quot;, telemetry_latest},
+};</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 add-command &quot;firmware://device-01/led/command/set&quot; \
+  --argv &quot;./firmware-cli led set {state}&quot; \
+  --param state:boolean:required \
+  --out generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-shell" role="tabpanel" aria-labelledby="tab-shell" hidden>
+          <div class="tech-copy">
+            <span>scan scripts</span>
+            <h3>Skrypt shell staje się URI przez skan projektu.</h3>
+            <p>Nie trzeba przepisywać istniejących skryptów. urirun skanuje pliki i tworzy bindingi do kontrolowanego wykonania.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>#!/usr/bin/env bash
+# scripts/render-report.sh
+set -euo pipefail
+echo &quot;report for ${1:-today}&quot;</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 scan ./scripts \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-docker" role="tabpanel" aria-labelledby="tab-docker" hidden>
+          <div class="tech-copy">
+            <span>image label + manifest</span>
+            <h3>Obraz Dockera wskazuje manifest URI.</h3>
+            <p>Kontener niesie własne bindings.json, a skan Dockerfile zbiera manifesty do wspólnego registry.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>FROM python:3.12-slim
+LABEL io.tellmesh.urirun.manifest=&quot;/app/bindings.json&quot;
+COPY bindings.json /app/bindings.json
+COPY worker.py /app/worker.py</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>python -m urirun.v8 scan ./docker-stack \
+  --out generated/bindings.v8.json \
+  --registry-out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-typescript" role="tabpanel" aria-labelledby="tab-typescript" hidden>
+          <div class="tech-copy">
+            <span>decorator-style declaration</span>
+            <h3>Dekorator TS daje typowaną deklarację komendy.</h3>
+            <p>Metoda zwraca argv, a pola dekoratora są schematem wejścia dla runtime.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>class MathCommands {
+  @uriCommand(&quot;ts://local/math/add&quot;, {
+    a: { type: &quot;integer&quot;, required: true },
+    b: { type: &quot;integer&quot;, default: 0 },
+  })
+  add({ a, b }) {
+    return [&quot;node&quot;, &quot;-e&quot;, &quot;console.log(Number(process.argv[1]) + Number(process.argv[2]))&quot;, a, b];
   }
-})();
-</script>
+}</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>npx tsx decorators.ts &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+        <article class="tech-panel" id="panel-php" role="tabpanel" aria-labelledby="tab-php" hidden>
+          <div class="tech-copy">
+            <span>PHP 8 attribute + reflection</span>
+            <h3>Atrybut PHP generuje binding przez reflection.</h3>
+            <p>Parametry funkcji stają się inputSchema, a atrybut trzyma URI i argv.</p>
+          </div>
+          <div class="tech-code-grid">
+            <div class="code-block">
+              <span>deklaracja</span>
+              <pre><code>#[UriCommand(
+  uri: &quot;php://local/slug/create&quot;,
+  argv: [&quot;php&quot;, &quot;-r&quot;, &quot;echo strtolower($argv[1]);&quot;, &quot;{text}&quot;],
+)]
+function slug(string $text, int $limit = 64): void {}</code></pre>
+            </div>
+            <div class="code-block">
+              <span>binding + registry</span>
+              <pre><code>php examples/php/generate-bindings.php &gt; generated/bindings.v8.json
+python -m urirun.v8 compile generated/bindings.v8.json \
+  --out generated/registry.json</code></pre>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split" id="workflow">
+      <div>
+        <p class="kicker">flow://registry/build</p>
+        <h2>Używaj istniejących artefaktów jako paczek URI.</h2>
+        <p class="section-copy">Najprostsza droga to nie nowe SDK. Wskazujesz urirun to, co projekt już ma, generujesz bindingi, walidujesz registry i uruchamiasz po URI.</p>
+      </div>
+      <div class="flow-list">
+          <article class="flow-item">
+            <code>repo://project/artifacts/query/scan</code>
+            <h3>Skanuj artefakty</h3>
+            <p>Czytaj etykiety Dockerfile, metadane paczek, targety Make, skrypty shell i jawne bindingi.</p>
+          </article>
+          <article class="flow-item">
+            <code>registry://local/routes/command/compile</code>
+            <h3>Kompiluj registry</h3>
+            <p>Zamień przenośne pliki bindingów w jedno drzewo lookup dla każdego runtime.</p>
+          </article>
+          <article class="flow-item">
+            <code>policy://local/execution/query/check</code>
+            <h3>Kontroluj wykonanie</h3>
+            <p>Najpierw dry-run, potem jawne allow rules dla argv, shell, Docker lub wywołań sieciowych.</p>
+          </article>
+          <article class="flow-item">
+            <code>flow://local/task/command/run</code>
+            <h3>Uruchamiaj ten sam URI</h3>
+            <p>Wołaj go z shella, backendu, przeglądarki, usługi Docker, narzędzia MCP albo karty A2A.</p>
+          </article>
+      </div>
+    </section>
+    <section class="section runtime-map">
+      <div>
+        <p class="kicker">transport://any/adapter/query</p>
+        <h2>Ten sam URI, inny runtime.</h2>
+        <p class="section-copy">URI nazywa to, co ma się wykonać. Transport decyduje jak: in-process, argv, shell, Docker, HTTP, gRPC, kolejka, serverless, MCP lub A2A. Kontrakt i bramka policy zostają w jednym miejscu.</p>
+      </div>
+      <div class="transport-grid">
+          <div class="transport">
+            <strong>in-process</strong>
+            <span>v8.run / local-function dispatch</span>
+          </div>
+          <div class="transport">
+            <strong>argv</strong>
+            <span>Safe argument templates, no shell</span>
+          </div>
+          <div class="transport">
+            <strong>shell</strong>
+            <span>Policy-gated shell templates</span>
+          </div>
+          <div class="transport">
+            <strong>Docker</strong>
+            <span>docker-run / docker-exec, image labels</span>
+          </div>
+          <div class="transport">
+            <strong>HTTP</strong>
+            <span>v8_service: POST /run, GET /routes</span>
+          </div>
+          <div class="transport">
+            <strong>gRPC</strong>
+            <span>v8_grpc: Run, RunStream, ListRoutes</span>
+          </div>
+          <div class="transport">
+            <strong>queue</strong>
+            <span>topic -&gt; v8.run consumer (MQTT/NATS/Kafka shape)</span>
+          </div>
+          <div class="transport">
+            <strong>serverless</strong>
+            <span>pure handler(event) function</span>
+          </div>
+          <div class="transport">
+            <strong>MCP / A2A</strong>
+            <span>tools/list, tools/call, agent card</span>
+          </div>
+      </div>
+    </section>
+
+    <section class="section docs-grid" aria-labelledby="doc-list">
+      <div class="section-head">
+        <p class="kicker">docs://local/index/query</p>
+        <h2 id="doc-list">Dokumentacja.</h2>
+      </div>
+      <div class="grid">
+          <a class="doc-card" href="docs/pl/getting-started.html">
+            <span>Start</span>
+            <small>Instalacja z GitHuba, skanowanie artefaktów, walidacja i pierwsze uruchomienie URI.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/naming.html">
+            <span>Nazewnictwo</span>
+            <small>Gdzie używać nazwy urirun i czemu URL repozytorium nadal zawiera urihandler.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/commands.html">
+            <span>Komendy</span>
+            <small>CLI, wersjonowane entry pointy i generowanie bindingów w jednej linii.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/registry-and-bindings.html">
+            <span>Registry</span>
+            <small>Jak przenośne bindingi stają się trasami runtime do wykonania.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/transports.html">
+            <span>Transporty</span>
+            <small>Funkcje lokalne, shell, Docker, HTTP, gRPC, przeglądarka, MCP i A2A.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/logo.html">
+            <span>Logo</span>
+            <small>Wektory SVG dla ikony, wordmarka, favicony i lockupów.</small>
+          </a>
+          <a class="doc-card" href="docs/pl/roadmap.html">
+            <span>Roadmap</span>
+            <small>Praktyczne kroki, które uproszczą użycie urirun.</small>
+          </a>
+      </div>
+    </section>
+
+    <section class="section split" id="examples">
+      <div>
+        <p class="kicker">examples://repo/current/query</p>
+        <h2>Przykłady pokazujące współpracę warstw.</h2>
+        <p class="section-copy">Przykłady są małe celowo: pokazują, jak jedno registry obsługuje UI w przeglądarce, backend, usługi Docker, generatory i adaptery firmware.</p>
+        <figure class="showcase">
+          <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/novnc_lan_flow"><img src="assets/pc4.png" alt="Cztery pulpity noVNC (pc1 controller, pc2 service-node, pc3 client-node, pc4 monitor-node) w jednym dashboardzie, każdy terminal pokazuje zdarzenia JSON z przepływu URI" loading="lazy" width="1200" height="740"></a>
+          <figcaption>novnc_lan_flow: cztery komputery Docker komunikują się przez ten sam kontrakt URI (pc://…, log://…), pokazane razem w dashboardzie.</figcaption>
+        </figure>
+      </div>
+      <div class="example-list">
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/transports"><code>v8/examples/transports</code></a>
+            <p>One registry driven over five transports (in-process, queue, serverless, HTTP, gRPC) plus a simple scan &amp; run.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/multi_transport"><code>v8/examples/multi_transport</code></a>
+            <p>Docker stack mixing HTTP and gRPC workers: auto-generated registry, conflict detection, and a cross-environment flow.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/docker_uri_flow"><code>v8/examples/docker_uri_flow</code></a>
+            <p>Docker Compose services communicating through generated URI bindings, with a library-native service dispatcher.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/novnc_lan_flow"><code>v8/examples/novnc_lan_flow</code></a>
+            <p>Four noVNC computers in one Docker LAN, shown together in a dashboard and coordinated by a URI flow.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/html_uri_app"><code>v8/examples/html_uri_app</code></a>
+            <p>Browser UI that calls a Python backend through URI actions and exposes logs, MCP tools, and an A2A card.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/v8/examples/generators"><code>v8/examples/generators</code></a>
+            <p>JS, Node.js, TypeScript, and PHP declarations that generate the same v8 binding contract.</p>
+          </article>
+          <article class="example">
+            <a href="https://github.com/tellmesh/urihandler/tree/main/examples/reference_adapters"><code>examples/reference_adapters</code></a>
+            <p>Minimal adapters for JavaScript, Python, C/firmware, and browser use.</p>
+          </article>
+      </div>
+    </section>
+
+    <section class="section roadmap" id="roadmap">
+      <div class="section-head">
+        <p class="kicker">todo://urirun/usability/query</p>
+        <h2>Następne prace nad użytecznością.</h2>
+      </div>
+      <ol>
+        <li>urirun init dla startowego registry, policy i przykładowej trasy</li>
+        <li>urirun doctor dla środowiska, zależności, portów i konfliktów tras</li>
+        <li>urirun serve dla lokalnej przeglądarki tras, logów, dry-run console i policy-gated execution</li>
+        <li>standardowe log:// w frontendzie, backendzie, shellu, firmware i przykładach Docker</li>
+        <li>urirun diff do porównywania registry przed wdrożeniem</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <span>Runtime: urirun</span>
+    <span>Repo: tellmesh/urihandler</span>
+    <span><a href="docs/pl/naming.html">Zasady nazewnictwa</a></span>
+  </footer>
+  <script src="language.js" defer></script>
 </body>
 </html>

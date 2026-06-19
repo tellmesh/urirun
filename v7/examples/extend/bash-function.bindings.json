@@ -3,7 +3,7 @@
     "fn://local/greet/call": {
       "kind": "cli",
       "adapter": "spawn",
-      "command": ["bash", "-c", "source \"$1\"; greet \"$2\"", "urihandler", "{lib}", "{name}"],
+      "command": ["bash", "-c", "source \"$1\"; greet \"$2\"", "urirun", "{lib}", "{name}"],
       "params": {
         "lib": { "default": "lib.sh" },
         "name": { "required": true }
@@ -12,7 +12,7 @@
     "fn://local/disk/free": {
       "kind": "cli",
       "adapter": "spawn",
-      "command": ["bash", "-c", "source \"$1\"; disk_free \"$2\"", "urihandler", "{lib}", "{path}"],
+      "command": ["bash", "-c", "source \"$1\"; disk_free \"$2\"", "urirun", "{lib}", "{path}"],
       "params": {
         "lib": { "default": "lib.sh" },
         "path": { "default": "/" }

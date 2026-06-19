@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>urirun device mesh lab</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="kicker">mesh://local/devices/query/discover</p>
+      <h1>Device mesh URI orchestrator</h1>
+    </div>
+    <div class="actions">
+      <button id="refresh-devices" type="button">Refresh</button>
+      <button id="run-nl-flow" type="button">Generate and run</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="nl-panel panel" aria-label="Natural language orchestration">
+      <div>
+        <p class="kicker">llm://controller/flow/command/generate</p>
+        <h2>Natural language to URI flow across devices</h2>
+      </div>
+      <textarea id="nl-prompt" rows="4"></textarea>
+      <div class="flow-grid">
+        <article>
+          <h2>Generated workflow</h2>
+          <pre id="generated-flow">{}</pre>
+        </article>
+        <article>
+          <h2>Execution</h2>
+          <ol id="timeline"></ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Device summary">
+      <article class="metric">
+        <span>Devices</span>
+        <strong id="device-count">0</strong>
+      </article>
+      <article class="metric">
+        <span>Reachable</span>
+        <strong id="reachable-count">0</strong>
+      </article>
+      <article class="metric">
+        <span>URI routes</span>
+        <strong id="route-count">0</strong>
+      </article>
+      <article class="metric">
+        <span>Safe routes</span>
+        <strong id="safe-route-count">0</strong>
+      </article>
+    </section>
+
+    <section class="device-grid" id="devices" aria-label="Devices"></section>
+
+    <section class="bottom-grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Available URI commands</h2>
+          <input id="route-filter" type="search" placeholder="filter URI">
+        </div>
+        <div id="routes" class="route-list"></div>
+      </article>
+      <article class="panel">
+        <h2>Result</h2>
+        <pre id="output">{}</pre>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
