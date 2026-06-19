@@ -458,6 +458,25 @@ def format_routes(routes: list[dict]) -> str:
     return format_table(rows, ["uri", "node", "kind", "adapter"], {"uri": "URI", "node": "NODE", "kind": "KIND", "adapter": "ADAPTER"})
 
 
+def format_tickets(tickets: list[dict]) -> str:
+    rows = [
+        {
+            "id": ticket.get("id", ""),
+            "status": ticket.get("status", ""),
+            "state": (ticket.get("execution") or {}).get("state", ""),
+            "queue": (ticket.get("execution") or {}).get("queue", ""),
+            "priority": ticket.get("priority", ""),
+            "name": ticket.get("name") or ticket.get("title") or "",
+        }
+        for ticket in tickets
+    ]
+    return format_table(
+        rows,
+        ["id", "status", "state", "queue", "priority", "name"],
+        {"id": "ID", "status": "STATUS", "state": "STATE", "queue": "QUEUE", "priority": "PRIORITY", "name": "NAME"},
+    )
+
+
 def format_table(rows: list[dict], columns: list[str], headers: dict[str, str]) -> str:
     if not rows:
         return "(none)"
@@ -474,13 +493,458 @@ def format_table(rows: list[dict], columns: list[str], headers: dict[str, str]) 
     return "\n".join(output)
 
 
+def _parse_json_option(value: str | None, default=None):
+    if value is None:
+        return default
+    return json.loads(value)
+
+
+def data_command(args: argparse.Namespace) -> int:
+    from urirun import host_db
+
+    if args.data_command == "bindings":
+        doc = v2.host_data_bindings(target=args.target, db=args.db)
+        reglib._emit_json(doc, args.out)
+        if args.registry_out:
+            reglib.write_json(args.registry_out, v2.compile_registry(doc))
+        return 0
+
+    if args.data_command == "init":
+        reglib._emit_json(host_db.init_db(args.db), "-")
+        return 0
+
+    if args.data_command == "dataset-create":
+        dataset = host_db.create_dataset(
+            args.db,
+            args.name,
+            description=args.description or "",
+            schema=_parse_json_option(args.schema, {"type": "object"}),
+        )
+        reglib._emit_json({"ok": True, "dataset": dataset}, "-")
+        return 0
+
+    if args.data_command == "datasets":
+        reglib._emit_json({"datasets": host_db.list_datasets(args.db)}, "-")
+        return 0
+
+    if args.data_command == "record-upsert":
+        record = host_db.upsert_record(
+            args.db,
+            args.dataset,
+            args.key,
+            _parse_json_option(args.data, {}),
+            source_uri=args.source_uri,
+            confidence=args.confidence,
+        )
+        reglib._emit_json({"ok": True, "record": record}, "-")
+        return 0
+
+    if args.data_command == "records":
+        records = host_db.search_records(args.db, query=args.query or "", dataset=args.dataset, limit=args.limit)
+        reglib._emit_json({"records": records}, "-")
+        return 0
+
+    if args.data_command == "artifact-register":
+        artifact = host_db.register_artifact(args.db, args.kind, args.uri, args.path, _parse_json_option(args.meta, {}))
+        reglib._emit_json({"ok": True, "artifact": artifact}, "-")
+        return 0
+
+    if args.data_command == "artifacts":
+        reglib._emit_json({"artifacts": host_db.list_artifacts(args.db, kind=args.kind, limit=args.limit)}, "-")
+        return 0
+
+    if args.data_command == "check-add":
+        check = host_db.add_check(args.db, args.subject, args.check_uri, args.status, _parse_json_option(args.result, {}))
+        reglib._emit_json({"ok": True, "check": check}, "-")
+        return 0
+
+    if args.data_command == "checks":
+        reglib._emit_json({"checks": host_db.recent_checks(args.db, subject=args.subject, limit=args.limit)}, "-")
+        return 0
+
+    if args.data_command == "sql":
+        reglib._emit_json({"rows": host_db.read_only_sql(args.db, args.query, _parse_json_option(args.params, []), args.limit)}, "-")
+        return 0
+
+    return 1
+
+
+def monitor_command(args: argparse.Namespace) -> int:
+    from urirun import domain_monitor
+
+    if args.monitor_command == "bindings":
+        doc = v2.domain_monitor_bindings(
+            target=args.target,
+            db=args.db,
+            project=args.project,
+            screenshot_dir=args.screenshot_dir,
+        )
+        reglib._emit_json(doc, args.out)
+        if args.registry_out:
+            reglib.write_json(args.registry_out, v2.compile_registry(doc))
+        return 0
+
+    if args.monitor_command == "http":
+        result = domain_monitor.http_status(args.url, timeout=args.timeout, expected_status=args.expected_status)
+        reglib._emit_json({"ok": result.get("ok"), "http": result}, "-")
+        return 0 if result.get("ok") else 1
+
+    if args.monitor_command == "dns":
+        result = domain_monitor.dns_records(args.domain, args.record_type)
+        reglib._emit_json({"ok": result.get("ok"), "dns": result}, "-")
+        return 0 if result.get("ok") else 1
+
+    if args.monitor_command == "domain":
+        expected = _parse_json_option(args.expected_records, {}) or {}
+        if args.expected_a:
+            expected["A"] = args.expected_a
+        if args.expected_aaaa:
+            expected["AAAA"] = args.expected_aaaa
+        result = domain_monitor.check_domain(
+            domain=args.domain,
+            url=args.url,
+            expected=expected,
+            db=args.db,
+            project=args.project,
+            execute=args.execute,
+            timeout=args.timeout,
+            screenshot_when=args.screenshot_when,
+            screenshot_dir=args.screenshot_dir,
+            create_repair_ticket=not args.no_repair_ticket,
+        )
+        reglib._emit_json(result, "-")
+        return 0 if result.get("ok") else 1
+
+    if args.monitor_command == "daily":
+        result = domain_monitor.run_daily(
+            db=args.db,
+            project=args.project,
+            execute=args.execute,
+            dataset=args.dataset,
+            limit=args.limit,
+            screenshot_when=args.screenshot_when,
+            screenshot_dir=args.screenshot_dir,
+        )
+        reglib._emit_json(result, "-")
+        return 0 if result.get("ok") else 1
+
+    return 1
+
+
+def _task_prompt(ticket: dict) -> str:
+    inputs = ticket.get("inputs") or {}
+    prompt = inputs.get("prompt")
+    if prompt:
+        return str(prompt)
+    description = ticket.get("description")
+    if description:
+        return str(description)
+    return str(ticket.get("name") or ticket.get("title") or ticket.get("id") or "")
+
+
+def _ticket_payload(ticket: dict) -> dict:
+    """Build a handler payload from ticket source.context and inputs."""
+    payload: dict = {}
+    context = (ticket.get("source") or {}).get("context")
+    if isinstance(context, dict):
+        payload.update(context)
+    inputs = ticket.get("inputs") or {}
+    if isinstance(inputs, dict):
+        payload.update({key: value for key, value in inputs.items() if value is not None})
+    return payload
+
+
+def _host_local_registry(args: argparse.Namespace) -> dict:
+    """Compile the host-local bindings (planfile + domain monitor) into a registry.
+
+    These are the URI processes a ticket ``executor.handler`` can target without
+    going through a remote node, e.g. ``flow://host/domain/command/check``.
+    """
+    base = Path(args.project or ".") / ".urirun"
+    db = getattr(args, "db", None) or str(base / "host.db")
+    screenshot_dir = getattr(args, "screenshot_dir", None) or str(base / "screenshots")
+    planfile_doc = v2.planfile_task_bindings(target="host", project=args.project)
+    monitor_doc = v2.domain_monitor_bindings(target="host", db=db, project=args.project, screenshot_dir=screenshot_dir)
+    merged = {
+        "version": planfile_doc.get("version"),
+        "bindings": {**planfile_doc.get("bindings", {}), **monitor_doc.get("bindings", {})},
+    }
+    return v2.compile_registry(merged)
+
+
+def _run_executor_handler(args: argparse.Namespace, ticket: dict, handler: str) -> dict:
+    """Dispatch a ticket's executor.handler URI on the host-local registry."""
+    registry = _host_local_registry(args)
+    envelope = v2.run(
+        handler,
+        registry,
+        payload=_ticket_payload(ticket),
+        mode="execute" if args.execute else "dry-run",
+    )
+    ok = bool(envelope.get("ok"))
+    timeline = [{"id": "handler", "uri": handler, "target": route_target(handler), "ok": ok}]
+    return {"ok": ok, "timeline": timeline, "results": {"handler": envelope}}
+
+
+def _resolves_locally(args: argparse.Namespace, handler: str) -> bool:
+    if not handler or "://" not in handler:
+        return False
+    try:
+        known = {item["uri"] for item in reglib.flatten_registry_document(_host_local_registry(args))}
+        return reglib.parse_uri(handler)["normalized"] in known
+    except Exception:  # noqa: BLE001 - any resolution failure means "not a local handler".
+        return False
+
+
+def _run_task_flow(args: argparse.Namespace, ticket: dict, *, mutate: bool) -> dict:
+    from urirun import planfile_adapter
+
+    handler = (ticket.get("executor") or {}).get("handler")
+    handler = str(handler) if handler else None
+    use_handler = _resolves_locally(args, handler)
+
+    prompt = _task_prompt(ticket)
+    if not use_handler and not prompt:
+        raise ValueError(f"ticket {ticket.get('id')} has no executor.handler, inputs.prompt, description or name")
+
+    if mutate:
+        planfile_adapter.claim_ticket(args.project, ticket["id"], assigned_to=args.assigned_to, lease_seconds=args.lease_seconds)
+        planfile_adapter.start_ticket(args.project, ticket["id"], assigned_to=args.assigned_to)
+
+    if use_handler:
+        execution = _run_executor_handler(args, ticket, handler)
+        generator = {"kind": "executor-handler", "handler": handler}
+        flow = {"handler": handler}
+    else:
+        config = load_host_config(args.config)
+        mesh = discover_mesh(config)
+        flow, generator = make_flow(prompt, mesh, selected_nodes=args.node, use_llm=not args.no_llm)
+        registry = registry_from_routes(mesh["routes"])
+        execution = execute_flow(flow, mesh, registry, execute=args.execute)
+
+    result = {
+        "ok": execution["ok"],
+        "ticket": ticket,
+        "prompt": prompt,
+        "generator": generator,
+        "flow": flow,
+        **execution,
+    }
+
+    if mutate:
+        if execution["ok"]:
+            updated = planfile_adapter.complete_ticket(
+                args.project,
+                ticket["id"],
+                note=args.note or "urirun host task run completed",
+                result={"generator": generator, "flow": flow, "timeline": execution.get("timeline"), "results": execution.get("results")},
+                artifacts=args.artifact,
+            )
+        else:
+            updated = planfile_adapter.fail_or_retry(args.project, ticket["id"], json.dumps(execution, ensure_ascii=False, default=str))
+            if updated:
+                result["retry"] = updated.get("retry")
+        result["updatedTicket"] = updated
+    return result
+
+
+def task_command(args: argparse.Namespace) -> int:
+    from urirun import planfile_adapter
+
+    if args.task_command == "plan":
+        from urirun import task_planner
+
+        prompt = " ".join(args.prompt)
+        plan = task_planner.plan_chat_request(
+            prompt,
+            default_sprint=args.sprint,
+            default_queue=args.queue,
+            extra_labels=args.label,
+            use_llm=not args.no_llm,
+        )
+        payload = {"ok": plan.ok, "dryRun": not args.create, "plan": plan.model_dump(mode="json")}
+        if args.create:
+            payload["createdTickets"] = task_planner.create_tickets_from_plan(
+                args.project,
+                plan,
+                confirm_review=args.confirm_review,
+            )
+        reglib._emit_json(payload, "-")
+        return 0 if plan.ok else 1
+
+    if args.task_command == "bindings":
+        from urirun import v2
+
+        doc = v2.planfile_task_bindings(target=args.target, project=args.project)
+        reglib._emit_json(doc, args.out)
+        if args.registry_out:
+            reglib.write_json(args.registry_out, v2.compile_registry(doc))
+        return 0
+
+    if args.task_command == "schedule":
+        from urirun import scheduler
+
+        result = scheduler.preview(
+            kind=args.kind,
+            name=args.name,
+            project=args.project,
+            config=args.config,
+            queue=args.queue,
+            max_tickets=args.max_tickets,
+            time_of_day=args.time,
+            execute=args.run_execute,
+            no_llm=args.no_llm,
+            working_directory=args.working_directory,
+        )
+        if args.install:
+            if args.kind != "systemd":
+                reglib._emit_json({"ok": False, "error": "--install is supported for systemd only"}, "-")
+                return 1
+            result["installed"] = scheduler.install_systemd_user(result["files"], args.out_dir)
+            result["enableCommand"] = ["systemctl", "--user", "enable", "--now", f"{args.name}.timer"]
+        reglib._emit_json({"ok": True, "dryRun": not args.install, "schedule": result}, "-")
+        return 0
+
+    if args.task_command == "list":
+        tickets = planfile_adapter.list_tickets(args.project, sprint=args.sprint, status=args.status, label=args.label, queue=args.queue)
+        reglib._emit_json({"tickets": tickets}, "-") if args.json else print(format_tickets(tickets))
+        return 0
+
+    if args.task_command == "show":
+        ticket = planfile_adapter.get_ticket(args.project, args.ticket_id)
+        if not ticket:
+            reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
+            return 1
+        reglib._emit_json({"ok": True, "ticket": ticket}, "-")
+        return 0
+
+    if args.task_command == "next":
+        ticket = planfile_adapter.next_ticket(args.project, sprint=args.sprint, queue=args.queue)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "create":
+        payload = {
+            "name": args.name,
+            "description": args.description or "",
+            "priority": args.priority,
+            "sprint": args.sprint,
+            "labels": args.label or [],
+            "queue": args.queue,
+            "max_attempts": args.max_attempts,
+            "executor_kind": args.executor_kind,
+            "executor_mode": args.executor_mode,
+            "executor_handler": args.executor_handler,
+            "prompt": args.prompt,
+            "source_tool": args.source,
+        }
+        extra = _parse_json_option(args.payload, {})
+        if extra:
+            payload.update(extra)
+        ticket = planfile_adapter.create_ticket(args.project, payload)
+        reglib._emit_json({"ok": True, "ticket": ticket}, "-")
+        return 0
+
+    if args.task_command == "claim":
+        ticket = planfile_adapter.claim_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to, lease_seconds=args.lease_seconds)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "start":
+        ticket = planfile_adapter.start_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "complete":
+        result = _parse_json_option(args.result, None)
+        ticket = planfile_adapter.complete_ticket(args.project, args.ticket_id, note=args.note, result=result, artifacts=args.artifact)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "fail":
+        ticket = planfile_adapter.fail_ticket(args.project, args.ticket_id, args.error)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "block":
+        ticket = planfile_adapter.update_ticket(args.project, args.ticket_id, {"status": "blocked", "description": args.reason or "BLOCKED"})
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "ready":
+        ticket = planfile_adapter.ready_ticket(args.project, args.ticket_id, note=args.note)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "wait-for-input":
+        ticket = planfile_adapter.wait_for_input(args.project, args.ticket_id, args.prompt, env_keys=args.env_key, note=args.note)
+        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+        return 0 if ticket else 1
+
+    if args.task_command == "dsl":
+        result = planfile_adapter.run_dsl(args.project, " ".join(args.dsl_command))
+        reglib._emit_json(result, "-")
+        return 0 if result.get("ok") else 1
+
+    if args.task_command == "run":
+        ticket = planfile_adapter.get_ticket(args.project, args.ticket_id)
+        if not ticket:
+            reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
+            return 1
+        try:
+            result = _run_task_flow(args, ticket, mutate=args.execute)
+        except Exception as exc:  # noqa: BLE001 - CLI should persist task failures when possible.
+            retry = planfile_adapter.fail_or_retry(args.project, args.ticket_id, str(exc)) if args.execute else None
+            reglib._emit_json({"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}, "-")
+            return 1
+        reglib._emit_json(result, "-")
+        return 0 if result.get("ok") else 1
+
+    if args.task_command == "loop":
+        if not args.execute:
+            tickets = planfile_adapter.list_tickets(args.project, sprint=args.sprint, status="open", label=args.label, queue=args.queue)
+            reglib._emit_json({"ok": True, "dryRun": True, "tickets": tickets[: args.max_tickets]}, "-")
+            return 0
+
+        results = []
+        ok = True
+        for _ in range(args.max_tickets):
+            ticket = planfile_adapter.next_ticket(args.project, sprint=args.sprint, queue=args.queue)
+            if not ticket:
+                break
+            try:
+                result = _run_task_flow(args, ticket, mutate=True)
+            except Exception as exc:  # noqa: BLE001
+                retry = planfile_adapter.fail_or_retry(args.project, ticket["id"], str(exc))
+                result = {"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}
+            ok = ok and bool(result.get("ok"))
+            results.append(result)
+            if not result.get("ok") and not args.continue_on_error:
+                break
+        reglib._emit_json({"ok": ok, "count": len(results), "results": results}, "-")
+        return 0 if ok else 1
+
+    return 1
+
+
 def host_command(args: argparse.Namespace) -> int:
+    if args.host_command == "dashboard":
+        from urirun import host_dashboard
+
+        return host_dashboard.command(args)
+
     if args.host_command == "init":
         reglib._emit_json(init_host(args.config, args.name), "-")
         return 0
     if args.host_command == "add-node":
         reglib._emit_json(add_node(args.config, args.name, args.url, args.tag), "-")
         return 0
+    if args.host_command == "data":
+        return data_command(args)
+    if args.host_command == "monitor":
+        return monitor_command(args)
+    if args.host_command == "task":
+        return task_command(args)
 
     config = load_host_config(args.config)
     mesh = discover_mesh(config)

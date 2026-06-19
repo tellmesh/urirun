@@ -16,6 +16,10 @@ dependencies = [
 
 [project.optional-dependencies]
 grpc = ["grpcio>=1.60"]
+planfile = ["planfile>=0.1.103"]
+llm = ["litellm>=1.60"]
+host = ["planfile>=0.1.103", "litellm>=1.60"]
+test = ["planfile>=0.1.103", "pytest>=7"]
 
 [project.scripts]
 urirun = "urirun.v2:main"

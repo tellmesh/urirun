@@ -50,6 +50,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `adapters/js/` - JavaScript reference adapter
 - `adapters/python/` - Python reference adapter
 - `adapters/c/` - C firmware-style reference adapter
+- `docs/URIRUN_PACKAGE_SPLIT_PLAN.md` - migration plan for splitting core,
+  connectors, runtime SDKs and the host app
 - `v1/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v2/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
 - external docs: `https://github.com/if-uri/docs`
@@ -107,6 +109,18 @@ Optional transports stay optional. For the v2 gRPC transport install:
 pip install "urirun[grpc] @ git+https://github.com/tellmesh/urirun.git@main#subdirectory=adapters/python"
 ```
 
+For planfile-backed host tasks install the optional task dependency:
+
+```bash
+pip install "urirun[planfile] @ git+https://github.com/tellmesh/urirun.git@main#subdirectory=adapters/python"
+```
+
+For the full host task planner with optional LiteLLM support:
+
+```bash
+pip install "urirun[host] @ git+https://github.com/tellmesh/urirun.git@main#subdirectory=adapters/python"
+```
+
 ## Host / Node Mesh
 
 `urirun host` is the control side. It keeps a list of nodes, discovers their
@@ -144,6 +158,195 @@ urirun node serve --execute
 Execution remains explicit: `host ask` is dry-run unless `--execute` is passed,
 and `node serve` executes only when started with `--execute` or configured with
 `execute: true`.
+
+## Planfile-backed host tasks
+
+`urirun host task` uses `planfile` as the task, sprint, status and execution
+state store. Tasks live in `.planfile/`; SQLite or other stores can still hold
+context data, but they do not replace planfile for work management.
+
+```bash
+# create a task with a prompt that host can turn into a URI flow
+urirun host task create "Daily lenovo process check" \
+  --project . \
+  --queue daily \
+  --label daily \
+  --prompt "sprawdz stan lenovo i procesy"
+
+urirun host task list --project . --sprint current
+urirun host task next --project . --queue daily
+
+# dry-run first; --execute mutates planfile and calls node /run endpoints
+urirun host task run PLF-001 --project . --config ~/.urirun/mesh.json --no-llm
+urirun host task run PLF-001 --project . --config ~/.urirun/mesh.json --no-llm --execute
+
+# run due tasks from a queue
+urirun host task loop --project . --config ~/.urirun/mesh.json --queue daily --execute
+```
+
+Serve the local operator dashboard for tasks, nodes, URI processes and recent
+host activity:
+
+```bash
+urirun host dashboard serve \
+  --project . \
+  --db ~/.urirun/host.db \
+  --config ~/.urirun/mesh.json \
+  --port 8194
+```
+
+Daily queues can be scheduled without hand-editing systemd files:
+
+```bash
+# preview systemd user timer files
+urirun host task schedule \
+  --project . \
+  --config ~/.urirun/mesh.json \
+  --queue daily \
+  --time 07:30 \
+  --run-execute \
+  --no-llm
+
+# write ~/.config/systemd/user/urirun-daily.{service,timer}
+urirun host task schedule \
+  --project . \
+  --config ~/.urirun/mesh.json \
+  --queue daily \
+  --time 07:30 \
+  --run-execute \
+  --install
+```
+
+Chat/NL requests can be converted into validated planfile tickets. The default
+mode is a dry-run proposal; `--create` writes to `.planfile/`.
+
+```bash
+urirun host task plan \
+  "Dodaj codzienne sprawdzanie ifuri.com, z screenshotem gdy strona nie odpowiada." \
+  --project . \
+  --no-llm
+
+urirun host task plan \
+  "Dodaj codzienne sprawdzanie ifuri.com, z screenshotem gdy strona nie odpowiada." \
+  --project . \
+  --create
+```
+
+Ambiguous prompts create tickets in `execution.state=waiting_input`. Destructive
+requests are routed to the `review` queue with `executor.mode=interactive`
+unless `--confirm-review` is passed.
+
+The same planfile operations can be exposed as ordinary URI bindings:
+
+```bash
+urirun host task bindings \
+  --project . \
+  --out .urirun/planfile.bindings.v2.json \
+  --registry-out .urirun/planfile.registry.json
+
+urirun run 'task://host/ticket/command/create' .urirun/planfile.registry.json \
+  --payload '{"name":"Daily domain check","prompt":"sprawdz domeny","queue":"daily"}' \
+  --execute
+
+urirun run 'task://host/tickets/query/list' .urirun/planfile.registry.json \
+  --payload '{"queue":"daily"}'
+```
+
+## Host context data
+
+`urirun host data` stores non-task context in SQLite. Tasks still live in
+planfile; the database holds datasets, records, artifacts, check results and
+LLM sessions that tickets can reference through `source.context`.
+
+```bash
+urirun host data init
+
+urirun host data dataset-create domains \
+  --schema '{"type":"object","required":["domain"],"properties":{"domain":{"type":"string"},"url":{"type":"string"}}}'
+
+urirun host data record-upsert domains ifuri.com \
+  --data '{"domain":"ifuri.com","url":"https://ifuri.com"}' \
+  --source-uri 'task://host/ticket/command/create'
+
+urirun host data records --query ifuri
+urirun host data check-add ifuri.com 'monitor://ifuri.com/http/query/status' ok \
+  --result '{"status":200}'
+```
+
+The same store can be exposed as URI bindings:
+
+```bash
+urirun host data bindings \
+  --out .urirun/data.bindings.v2.json \
+  --registry-out .urirun/data.registry.json
+
+urirun run 'data://host/records/query/search' .urirun/data.registry.json \
+  --payload '{"query":"ifuri"}'
+```
+
+## Domain Monitor Flow
+
+`urirun host monitor` provides the first operational flow: HTTP status, current
+DNS records, screenshot artifacts on failure, daily logs and review tickets for
+DNS mismatches. It observes and plans; it does not apply DNS changes.
+
+```bash
+# observe only; no writes
+urirun host monitor domain ifuri.com \
+  --url https://ifuri.com \
+  --expected-a 217.160.250.222
+
+# execute writes check/log/artifact data and creates a review ticket on mismatch
+urirun host monitor domain ifuri.com \
+  --url https://ifuri.com \
+  --expected-a 217.160.250.222 \
+  --project . \
+  --execute
+```
+
+The same flow is available as URI bindings:
+
+```bash
+urirun host monitor bindings \
+  --project . \
+  --out .urirun/monitor.bindings.v2.json \
+  --registry-out .urirun/monitor.registry.json
+
+urirun run 'flow://host/domain/command/check' .urirun/monitor.registry.json \
+  --payload '{"domain":"ifuri.com","url":"https://ifuri.com","expected_a":["217.160.250.222"],"project":"."}' \
+  --execute
+```
+
+Namecheap DNS changes use the same `dns://` contract, but are guarded by a
+plan/review/backup/apply sequence. Set credentials in the environment
+(`NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`,
+`NAMECHEAP_CLIENT_IP`; add `NAMECHEAP_SANDBOX=true` for sandbox).
+
+```bash
+# 1. Review the diff. No write is performed.
+urirun run 'dns://host/records/command/plan' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com","ensure_records":[{"Name":"www","Type":"CNAME","Address":"example.com"}]}'
+
+# 2. Save the current record set as an artifact.
+urirun run 'dns://host/records/command/backup' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com"}' \
+  --execute
+
+# 3. Apply only after review, with backup_uri and confirm=true.
+urirun run 'dns://host/records/command/apply' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com","plan":{"desiredRecords":[{"Name":"www","Type":"CNAME","Address":"example.com"}]},"backup_uri":"artifact://host/namecheap/dns-backup/example.com/REVIEWED","confirm":true}' \
+  --execute
+```
+
+The lifecycle maps directly to planfile:
+
+```txt
+open -> in_progress -> done
+execution.pending/ready -> running -> done|failed|waiting_input
+```
+
+See `docs/PLANFILE_HOST_INTEGRATION_PLAN.md` for the staged rollout plan.
+See `docs/URIRUN_PACKAGE_SPLIT_PLAN.md` for the connector/core/host split.
 
 ### C / firmware
 

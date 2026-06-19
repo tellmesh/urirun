@@ -214,6 +214,157 @@ If the LLM is unavailable, `host ask` falls back to a deterministic heuristic
 for common requests such as process listing, logs, browser open, `which python3`,
 `date` and `uname`.
 
+## Host tasks through planfile
+
+Install the optional dependency when the host should manage work items:
+
+```bash
+pip install "urirun[planfile] @ git+https://github.com/tellmesh/urirun.git@main#subdirectory=adapters/python"
+```
+
+`urirun host task` keeps tasks in planfile's `.planfile/` store and uses
+planfile status/execution models. A ticket can carry `inputs.prompt`; `task run`
+uses that prompt to build the same URI flow that `host ask` would build.
+
+```bash
+urirun host task create "Check lenovo daily" \
+  --project . \
+  --queue daily \
+  --prompt "sprawdz stan lenovo i procesy"
+
+urirun host task list --project .
+urirun host task next --project . --queue daily
+
+# dry-run by default
+urirun host task run PLF-001 --project . --config ~/.urirun/mesh.json --no-llm
+
+# execute and write result back to planfile outputs/history
+urirun host task run PLF-001 --project . --config ~/.urirun/mesh.json --no-llm --execute
+urirun host task loop --project . --config ~/.urirun/mesh.json --queue daily --execute
+```
+
+Serve the local host dashboard:
+
+```bash
+urirun host dashboard serve \
+  --project . \
+  --db ~/.urirun/host.db \
+  --config ~/.urirun/mesh.json \
+  --port 8194
+```
+
+Generate a daily scheduler:
+
+```bash
+urirun host task schedule \
+  --project . \
+  --config ~/.urirun/mesh.json \
+  --queue daily \
+  --time 07:30 \
+  --run-execute \
+  --no-llm
+```
+
+Chat/NL planning is a dry-run by default and writes only with `--create`:
+
+```bash
+urirun host task plan \
+  "Dodaj codzienne sprawdzanie ifuri.com, z screenshotem gdy strona nie odpowiada." \
+  --project . \
+  --no-llm
+
+urirun host task plan \
+  "Dodaj codzienne sprawdzanie ifuri.com, z screenshotem gdy strona nie odpowiada." \
+  --project . \
+  --create
+```
+
+Ambiguous prompts produce a `waiting_input` ticket. Destructive prompts are
+planned into the `review` queue with `executor.mode=interactive`.
+
+Host context data lives in SQLite, separate from planfile tasks:
+
+```bash
+urirun host data init
+urirun host data dataset-create domains \
+  --schema '{"type":"object","required":["domain"],"properties":{"domain":{"type":"string"}}}'
+urirun host data record-upsert domains ifuri.com --data '{"domain":"ifuri.com"}'
+urirun host data records --query ifuri
+```
+
+Generate data URI bindings when the same store should be called through
+`urirun run`:
+
+```bash
+urirun host data bindings \
+  --out .urirun/data.bindings.v2.json \
+  --registry-out .urirun/data.registry.json
+
+urirun run 'data://host/records/query/search' .urirun/data.registry.json \
+  --payload '{"query":"ifuri"}'
+```
+
+Domain monitoring builds on that store:
+
+```bash
+urirun host monitor domain ifuri.com \
+  --url https://ifuri.com \
+  --expected-a 217.160.250.222 \
+  --execute
+
+urirun host monitor bindings \
+  --project . \
+  --out .urirun/monitor.bindings.v2.json \
+  --registry-out .urirun/monitor.registry.json
+
+urirun run 'flow://host/domain/command/check' .urirun/monitor.registry.json \
+  --payload '{"domain":"ifuri.com","url":"https://ifuri.com","expected_a":["217.160.250.222"],"project":"."}' \
+  --execute
+```
+
+HTTP/DNS failures are recorded as checks and logs. DNS mismatch creates a review
+ticket; it does not apply DNS changes.
+
+Namecheap DNS apply is available as an explicit reviewed flow. The adapter can
+read `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`,
+`NAMECHEAP_CLIENT_IP` and optional `NAMECHEAP_SANDBOX=true` from the
+environment.
+
+```bash
+# generate a diff; no write
+urirun run 'dns://host/records/command/plan' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com","ensure_records":[{"Name":"www","Type":"CNAME","Address":"example.com"}]}'
+
+# create a backup artifact of the current Namecheap host records
+urirun run 'dns://host/records/command/backup' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com"}' \
+  --execute
+
+# apply only with a reviewed full desiredRecords set, backup_uri and confirm=true
+urirun run 'dns://host/records/command/apply' .urirun/monitor.registry.json \
+  --payload '{"provider":"namecheap","domain":"example.com","plan":{"desiredRecords":[{"Name":"www","Type":"CNAME","Address":"example.com"}]},"backup_uri":"artifact://host/namecheap/dns-backup/example.com/REVIEWED","confirm":true}' \
+  --execute
+```
+
+To use planfile through the regular URI runtime, generate task bindings:
+
+```bash
+urirun host task bindings \
+  --project . \
+  --out .urirun/planfile.bindings.v2.json \
+  --registry-out .urirun/planfile.registry.json
+
+urirun run 'task://host/ticket/command/create' .urirun/planfile.registry.json \
+  --payload '{"name":"Daily domain check","prompt":"sprawdz domeny","queue":"daily"}' \
+  --execute
+
+urirun run 'task://host/tickets/query/list' .urirun/planfile.registry.json \
+  --payload '{"queue":"daily"}'
+```
+
+The implementation plan lives in
+`docs/PLANFILE_HOST_INTEGRATION_PLAN.md`.
+
 ## Standards used
 
 - JSON Schema Draft 2020-12 for input validation.

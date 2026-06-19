@@ -263,10 +263,380 @@ def run_shell_template(ctx: dict, policy: dict, execute: bool) -> dict:
     return {"type": "shell", "command": command, "shell": True, **v1._run_process(command, config, policy, ctx["params"], shell=True)}
 
 
+PLANFILE_TASK_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "project": {"type": "string", "default": "."},
+        "ticket_id": {"type": "string"},
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "priority": {"type": "string", "default": "normal"},
+        "sprint": {"type": "string", "default": "current"},
+        "status": {"type": "string"},
+        "queue": {"type": "string"},
+        "label": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "labels": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "prompt": {"type": "string"},
+        "assigned_to": {"type": "string"},
+        "lease_seconds": {"type": "integer"},
+        "note": {"type": "string"},
+        "result": {},
+        "artifacts": {"type": "array", "items": {"type": "string"}},
+        "artifact": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "error": {"type": "string"},
+        "reason": {"type": "string"},
+        "env_keys": {"type": "array", "items": {"type": "string"}},
+        "env_key": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "command": {"type": "string"},
+        "updates": {"type": "object"},
+    },
+    "additionalProperties": True,
+}
+
+
+def planfile_task_bindings(target: str = "host", project: str | None = None) -> dict:
+    """Return built-in URI bindings for planfile-backed host tasks."""
+    config = {"inputSchema": PLANFILE_TASK_SCHEMA}
+    if project:
+        config["project"] = project
+    route_entry = {
+        "kind": "task",
+        "adapter": "planfile-task",
+        "config": config,
+        "policy": {"allowExecute": True},
+        "meta": {"label": "Planfile task runtime"},
+    }
+    uris = [
+        f"task://{target}/tickets/query/list",
+        f"task://{target}/ticket/query/next",
+        f"task://{target}/ticket/query/show",
+        f"task://{target}/ticket/command/create",
+        f"task://{target}/ticket/command/update",
+        f"task://{target}/ticket/command/claim",
+        f"task://{target}/ticket/command/start",
+        f"task://{target}/ticket/command/complete",
+        f"task://{target}/ticket/command/fail",
+        f"task://{target}/ticket/command/block",
+        f"task://{target}/ticket/command/wait-for-input",
+        f"task://{target}/ticket/command/ready",
+        f"planfile://{target}/dsl/command/run",
+    ]
+    return {
+        "version": VERSION,
+        "bindings": {uri: dict(route_entry) for uri in uris},
+    }
+
+
+def _list_param(value) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [str(item) for item in value]
+    return [item.strip() for item in str(value).split(",") if item.strip()]
+
+
+def _ticket_id(payload: dict, args: list[str]) -> str:
+    value = payload.get("ticket_id") or payload.get("id") or (args[1] if len(args) > 1 else None)
+    if not value:
+        raise ValueError("ticket_id is required")
+    return str(value)
+
+
+def _planfile_action(ctx: dict) -> str:
+    descriptor = ctx["descriptor"]
+    resource = ctx["translation"]["resource"]
+    operation = ctx["translation"]["operation"]
+    args = ctx["translation"]["args"]
+    if descriptor["package"] == "planfile" and resource == "dsl" and operation == "command":
+        return "dsl"
+    if args:
+        return args[0]
+    if resource == "tickets" and operation == "query":
+        return "list"
+    raise ValueError(f"cannot infer planfile task action from {descriptor['normalized']}")
+
+
+def _planfile_project(ctx: dict, payload: dict) -> str:
+    config = ctx["routeEntry"].get("config", {})
+    return str(payload.get("project") or config.get("project") or ctx["params"].get("project") or ".")
+
+
+def _simulate_planfile(ctx: dict, action: str, payload: dict, project: str) -> dict:
+    return {
+        "simulated": True,
+        "type": "planfile-task",
+        "action": action,
+        "project": str(Path(project).expanduser()),
+        "payload": payload,
+        "uri": ctx["descriptor"]["normalized"],
+    }
+
+
+def run_planfile_task(ctx: dict, policy: dict, execute: bool) -> dict:
+    from urirun import planfile_adapter
+
+    payload = dict(ctx["payload"] or {})
+    args = list(ctx["translation"]["args"])
+    action = _planfile_action(ctx)
+    project = _planfile_project(ctx, payload)
+
+    if action == "list":
+        tickets = planfile_adapter.list_tickets(
+            project,
+            sprint=str(payload.get("sprint") or "current"),
+            status=payload.get("status"),
+            label=_list_param(payload.get("label") or payload.get("labels")),
+            queue=payload.get("queue"),
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "tickets": tickets}
+
+    if action == "next":
+        ticket = planfile_adapter.next_ticket(
+            project,
+            sprint=str(payload.get("sprint") or "current"),
+            queue=payload.get("queue"),
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action in {"show", "get"}:
+        ticket = planfile_adapter.get_ticket(project, _ticket_id(payload, args))
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if not execute:
+        return _simulate_planfile(ctx, action, payload, project)
+
+    if action == "create":
+        ticket = planfile_adapter.create_ticket(project, payload)
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "claim":
+        ticket = planfile_adapter.claim_ticket(
+            project,
+            _ticket_id(payload, args),
+            assigned_to=payload.get("assigned_to"),
+            lease_seconds=payload.get("lease_seconds"),
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "start":
+        ticket = planfile_adapter.start_ticket(project, _ticket_id(payload, args), assigned_to=payload.get("assigned_to"))
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "complete":
+        ticket = planfile_adapter.complete_ticket(
+            project,
+            _ticket_id(payload, args),
+            note=payload.get("note"),
+            result=payload.get("result"),
+            artifacts=_list_param(payload.get("artifact") or payload.get("artifacts")),
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "fail":
+        ticket = planfile_adapter.fail_ticket(project, _ticket_id(payload, args), str(payload.get("error") or "failed"))
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "block":
+        ticket = planfile_adapter.update_ticket(
+            project,
+            _ticket_id(payload, args),
+            {"status": "blocked", "description": str(payload.get("reason") or payload.get("description") or "BLOCKED")},
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "ready":
+        ticket = planfile_adapter.ready_ticket(project, _ticket_id(payload, args), note=payload.get("note"))
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "wait-for-input":
+        ticket = planfile_adapter.wait_for_input(
+            project,
+            _ticket_id(payload, args),
+            str(payload.get("prompt") or ""),
+            env_keys=_list_param(payload.get("env_key") or payload.get("env_keys")),
+            note=payload.get("note"),
+        )
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "update":
+        updates = payload.get("updates") if isinstance(payload.get("updates"), dict) else {}
+        if not updates:
+            updates = {
+                key: value
+                for key, value in payload.items()
+                if key not in {"project", "ticket_id", "id"}
+            }
+        ticket = planfile_adapter.update_ticket(project, _ticket_id(payload, args), updates)
+        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
+
+    if action == "dsl":
+        command = payload.get("command") or " ".join(args[1:])
+        if not command:
+            raise ValueError("command is required for planfile DSL")
+        result = planfile_adapter.run_dsl(project, str(command))
+        return {"type": "planfile-task", "action": action, "project": project, "result": result}
+
+    raise ValueError(f"unsupported planfile task action: {action}")
+
+
+HOST_DATA_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "db": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "schema": {"type": "object"},
+        "dataset": {"type": "string"},
+        "key": {"type": "string"},
+        "data": {"type": "object"},
+        "source_uri": {"type": "string"},
+        "confidence": {"type": "number"},
+        "query": {"type": "string"},
+        "params": {"type": "array"},
+        "limit": {"type": "integer", "default": 20},
+        "kind": {"type": "string"},
+        "uri": {"type": "string"},
+        "path": {"type": "string"},
+        "meta": {"type": "object"},
+        "subject": {"type": "string"},
+        "check_uri": {"type": "string"},
+        "status": {"type": "string"},
+        "result": {"type": "object"},
+    },
+    "additionalProperties": True,
+}
+
+
+def host_data_bindings(target: str = "host", db: str | None = None) -> dict:
+    """Return built-in URI bindings for the host SQLite context store."""
+    config = {"inputSchema": HOST_DATA_SCHEMA}
+    if db:
+        config["db"] = db
+    route_entry = {
+        "kind": "data",
+        "adapter": "host-sqlite-data",
+        "config": config,
+        "policy": {"allowExecute": True},
+        "meta": {"label": "Host SQLite context store"},
+    }
+    uris = [
+        f"data://{target}/datasets/query/list",
+        f"data://{target}/dataset/command/create",
+        f"data://{target}/record/command/upsert",
+        f"data://{target}/records/query/search",
+        f"data://{target}/sql/query/read-only",
+        f"artifact://{target}/artifact/command/register",
+        f"artifact://{target}/artifacts/query/list",
+        f"check://{target}/check/command/add",
+        f"check://{target}/checks/query/recent",
+    ]
+    return {"version": VERSION, "bindings": {uri: dict(route_entry) for uri in uris}}
+
+
+def run_host_data(ctx: dict, policy: dict, execute: bool) -> dict:
+    from urirun import host_db
+
+    return host_db.run_uri_route(ctx, execute)
+
+
+DOMAIN_MONITOR_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "db": {"type": "string"},
+        "project": {"type": "string"},
+        "domain": {"type": "string"},
+        "url": {"type": "string"},
+        "timeout": {"type": "number", "default": 10},
+        "expected_status": {"type": "integer"},
+        "record_types": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "expected": {"oneOf": [{"type": "object"}, {"type": "array", "items": {"type": "string"}}, {"type": "string"}]},
+        "expected_records": {"type": "object"},
+        "expected_a": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "expected_aaaa": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"type": "string"}}]},
+        "provider": {"type": "string"},
+        "profile": {"type": "string"},
+        "current_records": {"type": "array", "items": {"type": "object"}},
+        "mock_records": {"type": "array", "items": {"type": "object"}},
+        "desired_records": {"type": "array", "items": {"type": "object"}},
+        "ensure_records": {"type": "array", "items": {"type": "object"}},
+        "remove_records": {"type": "array", "items": {"type": "object"}},
+        "backup_uri": {"type": "string"},
+        "backup_dir": {"type": "string"},
+        "confirm": {"type": "boolean", "default": False},
+        "mock_apply": {"type": "boolean", "default": False},
+        "plan": {"type": "object"},
+        "plan_current_records": {"type": "array", "items": {"type": "object"}},
+        "allow_current_drift": {"type": "boolean", "default": False},
+        "screenshot_when": {"type": "string", "default": "failure"},
+        "screenshot_dir": {"type": "string"},
+        "create_repair_ticket": {"type": "boolean", "default": True},
+        "dataset": {"type": "string", "default": "domains"},
+        "limit": {"type": "integer", "default": 20},
+        "stream": {"type": "string"},
+        "event": {"type": "string"},
+        "detail": {"type": "object"},
+        "reason": {"type": "string"},
+        "meta": {"type": "object"},
+    },
+    "additionalProperties": True,
+}
+
+
+def domain_monitor_bindings(
+    target: str = "host",
+    db: str | None = None,
+    project: str | None = None,
+    screenshot_dir: str | None = None,
+) -> dict:
+    """Return URI bindings for HTTP/DNS/domain monitoring flows."""
+    config = {"inputSchema": DOMAIN_MONITOR_SCHEMA}
+    if db:
+        config["db"] = db
+    if project:
+        config["project"] = project
+    if screenshot_dir:
+        config["screenshot_dir"] = screenshot_dir
+    route_entry = {
+        "kind": "monitor",
+        "adapter": "domain-monitor",
+        "config": config,
+        "policy": {"allowExecute": True},
+        "meta": {"label": "Domain monitor runtime"},
+    }
+    uris = [
+        f"monitor://{target}/http/query/status",
+        f"dns://{target}/records/query/current",
+        f"dns://{target}/records/query/expected",
+        f"dns://{target}/records/command/plan",
+        f"dns://{target}/records/command/backup",
+        f"dns://{target}/records/command/apply",
+        f"browser://{target}/page/command/screenshot",
+        f"log://{target}/daily/command/write",
+        f"log://{target}/logs/query/recent",
+        f"flow://{target}/domain/command/check",
+        f"flow://{target}/daily/command/run",
+    ]
+    return {"version": VERSION, "bindings": {uri: dict(route_entry) for uri in uris}}
+
+
+def run_domain_monitor(ctx: dict, policy: dict, execute: bool) -> dict:
+    from urirun import domain_monitor
+
+    result = domain_monitor.run_uri_route(ctx, execute)
+    if isinstance(result.get("ok"), bool):
+        result.setdefault("exitCode", 0 if result["ok"] else 1)
+    return result
+
+
 EXECUTORS = {
     **v1.EXECUTORS,
     "argv-template": run_argv_template,
     "command": run_argv_template,
+    "domain-monitor": run_domain_monitor,
+    "host-sqlite-data": run_host_data,
+    "planfile-task": run_planfile_task,
     "shell-template": run_shell_template,
 }
 
@@ -891,11 +1261,238 @@ def main(argv: list[str] | None = None) -> int:
 
     host_sub.add_parser("agents", parents=[host_common], help="List A2A cards, MCP tools and URI processes")
 
+    host_dashboard = host_sub.add_parser("dashboard", parents=[host_common], help="Serve a local operator dashboard")
+    dashboard_sub = host_dashboard.add_subparsers(dest="dashboard_command", required=True)
+    dashboard_serve = dashboard_sub.add_parser("serve", parents=[host_common], help="Serve the host dashboard over HTTP")
+    dashboard_serve.add_argument("--project", default=".", help="planfile project directory")
+    dashboard_serve.add_argument("--db", help="host SQLite db path; default ~/.urirun/host.db")
+    dashboard_serve.add_argument("--host", default="127.0.0.1")
+    dashboard_serve.add_argument("--port", type=int, default=8194)
+    dashboard_url = dashboard_sub.add_parser("url", parents=[host_common], help="Print the dashboard URL")
+    dashboard_url.add_argument("--host", default="127.0.0.1")
+    dashboard_url.add_argument("--port", type=int, default=8194)
+
+    host_data = host_sub.add_parser("data", help="Manage host SQLite context data")
+    data_sub = host_data.add_subparsers(dest="data_command", required=True)
+    data_common = argparse.ArgumentParser(add_help=False)
+    data_common.add_argument("--db", help="host SQLite db path; default ~/.urirun/host.db")
+
+    data_bindings = data_sub.add_parser("bindings", parents=[data_common], help="Emit data:// host SQLite bindings")
+    data_bindings.add_argument("--target", default="host")
+    data_bindings.add_argument("--out", default="-")
+    data_bindings.add_argument("--registry-out")
+
+    data_sub.add_parser("init", parents=[data_common], help="Initialize host SQLite db")
+
+    data_dataset_create = data_sub.add_parser("dataset-create", parents=[data_common], help="Create or update a dataset")
+    data_dataset_create.add_argument("name")
+    data_dataset_create.add_argument("--description", default="")
+    data_dataset_create.add_argument("--schema", help="JSON Schema for dataset records")
+
+    data_sub.add_parser("datasets", parents=[data_common], help="List datasets")
+
+    data_record_upsert = data_sub.add_parser("record-upsert", parents=[data_common], help="Upsert one dataset record")
+    data_record_upsert.add_argument("dataset")
+    data_record_upsert.add_argument("key")
+    data_record_upsert.add_argument("--data", required=True, help="record JSON object")
+    data_record_upsert.add_argument("--source-uri")
+    data_record_upsert.add_argument("--confidence", type=float)
+
+    data_records = data_sub.add_parser("records", parents=[data_common], help="Search records")
+    data_records.add_argument("--query", default="")
+    data_records.add_argument("--dataset")
+    data_records.add_argument("--limit", type=int, default=20)
+
+    data_artifact_register = data_sub.add_parser("artifact-register", parents=[data_common], help="Register an artifact")
+    data_artifact_register.add_argument("kind")
+    data_artifact_register.add_argument("uri")
+    data_artifact_register.add_argument("--path")
+    data_artifact_register.add_argument("--meta")
+
+    data_artifacts = data_sub.add_parser("artifacts", parents=[data_common], help="List artifacts")
+    data_artifacts.add_argument("--kind")
+    data_artifacts.add_argument("--limit", type=int, default=20)
+
+    data_check_add = data_sub.add_parser("check-add", parents=[data_common], help="Store one check result")
+    data_check_add.add_argument("subject")
+    data_check_add.add_argument("check_uri")
+    data_check_add.add_argument("status")
+    data_check_add.add_argument("--result")
+
+    data_checks = data_sub.add_parser("checks", parents=[data_common], help="List recent checks")
+    data_checks.add_argument("--subject")
+    data_checks.add_argument("--limit", type=int, default=20)
+
+    data_sql = data_sub.add_parser("sql", parents=[data_common], help="Run read-only SQL")
+    data_sql.add_argument("query")
+    data_sql.add_argument("--params")
+    data_sql.add_argument("--limit", type=int, default=100)
+
+    host_monitor = host_sub.add_parser("monitor", help="Run HTTP/DNS domain monitoring flows")
+    monitor_sub = host_monitor.add_subparsers(dest="monitor_command", required=True)
+    monitor_common = argparse.ArgumentParser(add_help=False)
+    monitor_common.add_argument("--db", help="host SQLite db path; default ~/.urirun/host.db")
+    monitor_common.add_argument("--project", default=".", help="planfile project for repair tickets")
+    monitor_common.add_argument("--screenshot-dir")
+
+    monitor_bindings = monitor_sub.add_parser("bindings", parents=[monitor_common], help="Emit monitor:// dns:// flow:// bindings")
+    monitor_bindings.add_argument("--target", default="host")
+    monitor_bindings.add_argument("--out", default="-")
+    monitor_bindings.add_argument("--registry-out")
+
+    monitor_http = monitor_sub.add_parser("http", help="Check one HTTP URL")
+    monitor_http.add_argument("url")
+    monitor_http.add_argument("--timeout", type=float, default=10.0)
+    monitor_http.add_argument("--expected-status", type=int)
+
+    monitor_dns = monitor_sub.add_parser("dns", help="Resolve current DNS A/AAAA records")
+    monitor_dns.add_argument("domain")
+    monitor_dns.add_argument("--record-type", action="append", default=[])
+
+    monitor_domain = monitor_sub.add_parser("domain", parents=[monitor_common], help="Run one domain check flow")
+    monitor_domain.add_argument("domain")
+    monitor_domain.add_argument("--url")
+    monitor_domain.add_argument("--expected-a", action="append", default=[])
+    monitor_domain.add_argument("--expected-aaaa", action="append", default=[])
+    monitor_domain.add_argument("--expected-records")
+    monitor_domain.add_argument("--timeout", type=float, default=10.0)
+    monitor_domain.add_argument("--screenshot-when", choices=["failure", "always", "never"], default="failure")
+    monitor_domain.add_argument("--no-repair-ticket", action="store_true")
+    monitor_domain.add_argument("--execute", action="store_true", help="write checks/artifacts/tickets; default only observes")
+
+    monitor_daily = monitor_sub.add_parser("daily", parents=[monitor_common], help="Run checks for records in the domains dataset")
+    monitor_daily.add_argument("--dataset", default="domains")
+    monitor_daily.add_argument("--limit", type=int, default=50)
+    monitor_daily.add_argument("--screenshot-when", choices=["failure", "always", "never"], default="failure")
+    monitor_daily.add_argument("--execute", action="store_true", help="write checks/artifacts/tickets; default only observes")
+
     host_ask = host_sub.add_parser("ask", parents=[host_common], help="Generate a URI flow from natural language and dispatch it")
     host_ask.add_argument("prompt", nargs="+")
     host_ask.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")
     host_ask.add_argument("--execute", action="store_true", help="execute on nodes; default is dry-run")
     host_ask.add_argument("--no-llm", action="store_true", help="use heuristic flow generation only")
+
+    host_task = host_sub.add_parser("task", help="Manage planfile-backed host tasks")
+    task_sub = host_task.add_subparsers(dest="task_command", required=True)
+    task_common = argparse.ArgumentParser(add_help=False)
+    task_common.add_argument("--project", default=".", help="project directory containing .planfile; default current directory")
+    task_mesh_common = argparse.ArgumentParser(add_help=False)
+    task_mesh_common.add_argument("--config", default=None, help="host mesh config path; default .urirun/mesh.json")
+
+    task_bindings = task_sub.add_parser("bindings", parents=[task_common], help="Emit task:// planfile bindings")
+    task_bindings.add_argument("--target", default="host")
+    task_bindings.add_argument("--out", default="-")
+    task_bindings.add_argument("--registry-out")
+
+    task_schedule = task_sub.add_parser("schedule", parents=[task_common, task_mesh_common], help="Generate a daily queue scheduler")
+    task_schedule.add_argument("--kind", choices=["systemd", "cron"], default="systemd")
+    task_schedule.add_argument("--name", default="urirun-daily")
+    task_schedule.add_argument("--queue", default="daily")
+    task_schedule.add_argument("--max-tickets", type=int, default=20)
+    task_schedule.add_argument("--time", default="09:00", help="HH:MM local time")
+    task_schedule.add_argument("--run-execute", action="store_true", help="include --execute in the scheduled task loop")
+    task_schedule.add_argument("--no-llm", action="store_true")
+    task_schedule.add_argument("--working-directory")
+    task_schedule.add_argument("--install", action="store_true", help="write systemd user unit/timer files")
+    task_schedule.add_argument("--out-dir", help="systemd user dir for --install; default ~/.config/systemd/user")
+
+    task_plan = task_sub.add_parser("plan", parents=[task_common], help="Plan planfile ticket(s) from chat/NL text")
+    task_plan.add_argument("prompt", nargs="+")
+    task_plan.add_argument("--sprint", default="current")
+    task_plan.add_argument("--queue", default="default")
+    task_plan.add_argument("--label", action="append", default=[])
+    task_plan.add_argument("--create", action="store_true", help="write proposed tickets to planfile; default is dry-run")
+    task_plan.add_argument("--confirm-review", action="store_true", help="do not force destructive tasks into review queue")
+    task_plan.add_argument("--no-llm", action="store_true", help="use deterministic heuristic planning only")
+
+    task_list = task_sub.add_parser("list", parents=[task_common], help="List planfile tickets")
+    task_list.add_argument("--sprint", default="current")
+    task_list.add_argument("--status")
+    task_list.add_argument("--queue")
+    task_list.add_argument("--label", action="append", default=[])
+    task_list.add_argument("--json", action="store_true")
+
+    task_show = task_sub.add_parser("show", parents=[task_common], help="Show one planfile ticket")
+    task_show.add_argument("ticket_id")
+
+    task_next = task_sub.add_parser("next", parents=[task_common], help="Show next runnable planfile ticket")
+    task_next.add_argument("--sprint", default="current")
+    task_next.add_argument("--queue")
+
+    task_create = task_sub.add_parser("create", parents=[task_common], help="Create a planfile ticket")
+    task_create.add_argument("name")
+    task_create.add_argument("--description", default="")
+    task_create.add_argument("--priority", default="normal")
+    task_create.add_argument("--sprint", default="current")
+    task_create.add_argument("--label", action="append", default=[])
+    task_create.add_argument("--queue", default="default")
+    task_create.add_argument("--max-attempts", type=int, default=1)
+    task_create.add_argument("--executor-kind", default="uri-flow")
+    task_create.add_argument("--executor-mode", default="automatic")
+    task_create.add_argument("--executor-handler")
+    task_create.add_argument("--prompt")
+    task_create.add_argument("--source", default="urirun-host")
+    task_create.add_argument("--payload", help="extra ticket JSON merged into the create payload")
+
+    task_claim = task_sub.add_parser("claim", parents=[task_common], help="Claim a planfile ticket")
+    task_claim.add_argument("ticket_id")
+    task_claim.add_argument("--assigned-to")
+    task_claim.add_argument("--lease-seconds", type=int)
+
+    task_start = task_sub.add_parser("start", parents=[task_common], help="Start a planfile ticket")
+    task_start.add_argument("ticket_id")
+    task_start.add_argument("--assigned-to")
+
+    task_complete = task_sub.add_parser("complete", parents=[task_common], help="Complete a planfile ticket")
+    task_complete.add_argument("ticket_id")
+    task_complete.add_argument("--note")
+    task_complete.add_argument("--result", help="result JSON")
+    task_complete.add_argument("--artifact", action="append", default=[])
+
+    task_fail = task_sub.add_parser("fail", parents=[task_common], help="Mark a planfile ticket execution as failed")
+    task_fail.add_argument("ticket_id")
+    task_fail.add_argument("--error", required=True)
+
+    task_block = task_sub.add_parser("block", parents=[task_common], help="Block a planfile ticket")
+    task_block.add_argument("ticket_id")
+    task_block.add_argument("--reason")
+
+    task_ready = task_sub.add_parser("ready", parents=[task_common], help="Mark a waiting ticket as ready")
+    task_ready.add_argument("ticket_id")
+    task_ready.add_argument("--note")
+
+    task_wait = task_sub.add_parser("wait-for-input", parents=[task_common], help="Mark a ticket as waiting for input")
+    task_wait.add_argument("ticket_id")
+    task_wait.add_argument("--prompt", required=True)
+    task_wait.add_argument("--env-key", action="append", default=[])
+    task_wait.add_argument("--note")
+
+    task_dsl = task_sub.add_parser("dsl", parents=[task_common], help="Run a planfile DSL command")
+    task_dsl.add_argument("dsl_command", nargs="+")
+
+    task_run = task_sub.add_parser("run", parents=[task_common, task_mesh_common], help="Run one planfile ticket via host URI flow")
+    task_run.add_argument("ticket_id")
+    task_run.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")
+    task_run.add_argument("--execute", action="store_true", help="mutate ticket and execute on nodes; default is dry-run")
+    task_run.add_argument("--no-llm", action="store_true", help="use heuristic flow generation only")
+    task_run.add_argument("--assigned-to")
+    task_run.add_argument("--lease-seconds", type=int)
+    task_run.add_argument("--note")
+    task_run.add_argument("--artifact", action="append", default=[])
+
+    task_loop = task_sub.add_parser("loop", parents=[task_common, task_mesh_common], help="Run next planfile tickets from a queue")
+    task_loop.add_argument("--sprint", default="current")
+    task_loop.add_argument("--queue")
+    task_loop.add_argument("--label", action="append", default=[])
+    task_loop.add_argument("--max-tickets", type=int, default=20)
+    task_loop.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")
+    task_loop.add_argument("--execute", action="store_true", help="mutate tickets and execute on nodes; default is dry-run preview")
+    task_loop.add_argument("--no-llm", action="store_true", help="use heuristic flow generation only")
+    task_loop.add_argument("--assigned-to")
+    task_loop.add_argument("--lease-seconds", type=int)
+    task_loop.add_argument("--note")
+    task_loop.add_argument("--artifact", action="append", default=[])
+    task_loop.add_argument("--continue-on-error", action="store_true")
 
     node_parser = subparsers.add_parser("node", help="Configure or serve a URI node")
     node_sub = node_parser.add_subparsers(dest="node_command", required=True)
