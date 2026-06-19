@@ -14,7 +14,7 @@ import argparse
 import json
 import sys
 
-from urihandler import v8, v8_service
+from urirun import v8, v8_service
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.transport == "http":
         result = v8_service.call(args.uri, payload, registry, target=args.target, mode=mode)
     else:
-        from urihandler import v8_grpc
+        from urirun import v8_grpc
         result = v8_grpc.call(args.uri, payload, registry, target=args.target, mode=mode)
 
     json.dump(result, sys.stdout, indent=2)

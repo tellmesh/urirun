@@ -8,6 +8,6 @@ assert.equal(routes.length, 4);
 assert.ok(routes.includes('say://local/echo/message'));
 assert.ok(routes.includes('shell://local/echo/message'));
 assert.equal(bindings.bindings['media://local/video/transcode'].inputSchema.properties.width.default, 1280);
-assert.equal(bindings.bindings['package://pypi/urihandler/install'].argv.at(-1), '{requirement}');
+assert.equal(bindings.bindings['package://pypi/urirun/install'].argv.at(-1), '{requirement}');
 
 console.log('PASS html_uri_app v8');

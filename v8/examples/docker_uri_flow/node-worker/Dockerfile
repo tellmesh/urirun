@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.title="urihandler v8 Node worker"
-LABEL io.tellmesh.urihandler.manifest="/app/bindings.json"
+LABEL org.opencontainers.image.title="urirun v8 Node worker"
+LABEL io.tellmesh.urirun.manifest="/app/bindings.json"
 
 WORKDIR /app
 COPY bindings.json server.js ./

@@ -1,5 +1,5 @@
 {
-  "version": "urihandler.bindings.v8",
+  "version": "urirun.bindings.v8",
   "bindings": {
     "media://local/video/transcode": {
       "kind": "command",
@@ -131,19 +131,19 @@
         "generatedBy": "v8/examples/generators/php/example.php"
       }
     },
-    "package://pypi/urihandler/install": {
+    "package://pypi/urirun/install": {
       "kind": "command",
       "adapter": "argv-template",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "requirement": { "type": "string", "default": "urihandler" }
+          "requirement": { "type": "string", "default": "urirun" }
         },
         "additionalProperties": false
       },
       "argv": ["python3", "-m", "pip", "install", "{requirement}"],
       "meta": {
-        "generatedBy": "urihandler.v8 add-pypi urihandler",
+        "generatedBy": "urirun.v8 add-pypi urirun",
         "standard": "PyPI requirement specifier"
       }
     }

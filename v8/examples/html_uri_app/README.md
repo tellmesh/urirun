@@ -1,6 +1,6 @@
 # HTML URI app v8
 
-Schema-first HTML app for `urihandler.v8`.
+Schema-first HTML app for `urirun.v8`.
 
 The frontend renders routes and input forms from `bindings.json`. The backend
 uses the Python v8 runtime, so the same URI contract drives dry-runs, real argv

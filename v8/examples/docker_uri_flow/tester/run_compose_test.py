@@ -1,11 +1,11 @@
-"""In-container test: drive the whole flow with the urihandler library.
+"""In-container test: drive the whole flow with the urirun library.
 
 This runs inside its own container on the Compose network and proves the
 library path end to end against real services:
 
 1. discover  - GET /routes on each worker and merge into one registry,
 2. validate  - reject a bad payload and an unknown URI via the registry schema,
-3. dispatch  - run the full cross-service flow with `urihandler.v8_service`
+3. dispatch  - run the full cross-service flow with `urirun.v8_service`
                over Docker DNS (URI_SERVICE_MAP unset -> http://<host>:8080).
 
 Exit code drives `docker compose ... --exit-code-from tester`.
@@ -17,7 +17,7 @@ import json
 import time
 import urllib.request
 
-from urihandler import v8, v8_service
+from urirun import v8, v8_service
 
 SERVICES = ["python-worker", "node-worker", "shell-worker"]
 

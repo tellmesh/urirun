@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from urihandler.v8 import compile_registry, decorated_bindings, run, uri_command, uri_shell
+from urirun.v8 import compile_registry, decorated_bindings, run, uri_command, uri_shell
 
 
 @uri_command("say://local/echo/message")

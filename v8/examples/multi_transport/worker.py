@@ -17,7 +17,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from urihandler import _registry as reglib, v8
+from urirun import _registry as reglib, v8
 
 ALLOW = {"execute": {"allow": ["*"]}}
 TRANSPORT = os.getenv("WORKER_TRANSPORT", "http")
@@ -67,7 +67,7 @@ def serve_http() -> None:
 
 
 def serve_grpc() -> None:
-    from urihandler import v8_grpc
+    from urirun import v8_grpc
 
     print(f"grpc worker on :{PORT}", flush=True)
     v8_grpc.serve(REGISTRY, host="0.0.0.0", port=PORT, policy=ALLOW, mode="execute", block=True)

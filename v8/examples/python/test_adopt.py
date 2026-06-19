@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from urihandler import v8
-from urihandler.v8_adopt import (
+from urirun import v8
+from urirun.v8_adopt import (
     init_project,
     npm_package_bindings,
     passthrough_schema,
@@ -85,11 +85,11 @@ class CliTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             bindings = Path(tmp) / "b.json"
             registry = Path(tmp) / "r.json"
-            subprocess.run([sys.executable, "-m", "urihandler.v8_adopt", "add-python-package", "pip", "--out", str(bindings)], check=True)
-            subprocess.run([sys.executable, "-m", "urihandler.v8", "validate", str(bindings)], check=True, capture_output=True)
-            subprocess.run([sys.executable, "-m", "urihandler.v8", "compile", str(bindings), "--out", str(registry)], check=True)
+            subprocess.run([sys.executable, "-m", "urirun.v8_adopt", "add-python-package", "pip", "--out", str(bindings)], check=True)
+            subprocess.run([sys.executable, "-m", "urirun.v8", "validate", str(bindings)], check=True, capture_output=True)
+            subprocess.run([sys.executable, "-m", "urirun.v8", "compile", str(bindings), "--out", str(registry)], check=True)
             result = subprocess.run(
-                [sys.executable, "-m", "urihandler.v8", "run", "cli://pip/pip/run",
+                [sys.executable, "-m", "urirun.v8", "run", "cli://pip/pip/run",
                  "--registry", str(registry), "--payload", '{"args":["--version"]}'],
                 check=True, capture_output=True, text=True,
             )

@@ -1,5 +1,5 @@
 {
-  "version": "urihandler.bindings.v8",
+  "version": "urirun.bindings.v8",
   "bindings": {
     "shell://shell-worker/report/write": {
       "kind": "command",

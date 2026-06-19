@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from urllib import request
 
-from urihandler.v8 import (
+from urirun.v8 import (
     compile_registry,
     decorated_bindings,
     run,
@@ -145,7 +145,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "scan",
                     str(ARTIFACTS),
                     "--out",
@@ -154,7 +154,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 check=True,
             )
             subprocess.run(
-                [sys.executable, "-m", "urihandler.v8", "validate", str(bindings_path)],
+                [sys.executable, "-m", "urirun.v8", "validate", str(bindings_path)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -163,7 +163,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "compile",
                     str(bindings_path),
                     "--out",
@@ -175,7 +175,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "run",
                     "tool://local/report/render",
                     "--registry",
@@ -198,7 +198,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "add-pypi",
                     "sampleproject",
                     "--out",
@@ -210,7 +210,7 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "add-command",
                     "util://local/echo/message",
                     "--argv",
@@ -223,20 +223,20 @@ class ArtifactAdoptionTests(unittest.TestCase):
                 check=True,
             )
             subprocess.run(
-                [sys.executable, "-m", "urihandler.v8", "validate", str(bindings_path)],
+                [sys.executable, "-m", "urirun.v8", "validate", str(bindings_path)],
                 check=True,
                 capture_output=True,
                 text=True,
             )
             subprocess.run(
-                [sys.executable, "-m", "urihandler.v8", "compile", str(bindings_path), "--out", str(registry_path)],
+                [sys.executable, "-m", "urirun.v8", "compile", str(bindings_path), "--out", str(registry_path)],
                 check=True,
             )
             rendered = subprocess.run(
                 [
                     sys.executable,
                     "-m",
-                    "urihandler.v8",
+                    "urirun.v8",
                     "run",
                     "package://pypi/sampleproject/install",
                     "--registry",

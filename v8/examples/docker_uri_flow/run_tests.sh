@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Docker test environment: workers + a library-based tester that discovers,
-# validates and dispatches the flow via urihandler.v8_service over the network.
+# validates and dispatches the flow via urirun.v8_service over the network.
 set -euo pipefail
 
 cd "$(dirname "$0")"

@@ -2,25 +2,25 @@ services:
   python-worker:
     build:
       context: ./python-worker
-    image: urihandler-v8-python-worker:local
+    image: urirun-v8-python-worker:local
     labels:
-      io.tellmesh.urihandler.manifest: /app/bindings.json
+      io.tellmesh.urirun.manifest: /app/bindings.json
     networks: [uri-flow]
 
   node-worker:
     build:
       context: ./node-worker
-    image: urihandler-v8-node-worker:local
+    image: urirun-v8-node-worker:local
     labels:
-      io.tellmesh.urihandler.manifest: /app/bindings.json
+      io.tellmesh.urirun.manifest: /app/bindings.json
     networks: [uri-flow]
 
   shell-worker:
     build:
       context: ./shell-worker
-    image: urihandler-v8-shell-worker:local
+    image: urirun-v8-shell-worker:local
     labels:
-      io.tellmesh.urihandler.manifest: /app/bindings.json
+      io.tellmesh.urirun.manifest: /app/bindings.json
     networks: [uri-flow]
     volumes:
       - reports:/data
@@ -28,7 +28,7 @@ services:
   orchestrator:
     build:
       context: ./orchestrator
-    image: urihandler-v8-flow-orchestrator:local
+    image: urirun-v8-flow-orchestrator:local
     depends_on:
       - python-worker
       - node-worker

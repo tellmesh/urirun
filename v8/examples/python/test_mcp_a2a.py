@@ -9,8 +9,8 @@ import unittest
 from pathlib import Path
 from urllib import request
 
-from urihandler.v8 import compile_registry
-from urihandler.v8_mcp import (
+from urirun.v8 import compile_registry
+from urirun.v8_mcp import (
     build_tool_index,
     call_tool,
     serve_mcp,
@@ -77,7 +77,7 @@ class McpServerTests(unittest.TestCase):
         serve_mcp(registry(), instream=io.StringIO(requests), outstream=out)
         responses = {json.loads(line)["id"]: json.loads(line) for line in out.getvalue().splitlines()}
 
-        self.assertEqual(responses[1]["result"]["serverInfo"]["name"], "urihandler")
+        self.assertEqual(responses[1]["result"]["serverInfo"]["name"], "urirun")
         self.assertGreater(len(responses[2]["result"]["tools"]), 0)
         self.assertNotIn(3, responses)  # notifications get no response
         call = json.loads(responses[4]["result"]["content"][0]["text"])

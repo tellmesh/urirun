@@ -13,7 +13,7 @@ test: registry
 	python3 test_flow_runner.py
 	python3 test_flow_e2e.py
 	PYTHONPATH=../../../adapters/python python3 test_service_adapter.py
-	docker compose config >/tmp/urihandler-v8-docker-uri-flow.compose.yaml
+	docker compose config >/tmp/urirun-v8-docker-uri-flow.compose.yaml
 
 clean:
 	docker compose down -v --remove-orphans

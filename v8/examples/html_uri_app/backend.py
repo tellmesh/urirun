@@ -14,9 +14,9 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 sys.path.insert(0, str(REPO / "adapters" / "python"))
 
-from urihandler import _registry as reglib  # noqa: E402
-from urihandler.v8 import compile_registry, expand_bindings, run as run_uri, validate_binding_document  # noqa: E402
-from urihandler.v8_mcp import call_tool, to_a2a_card, to_mcp_manifest  # noqa: E402
+from urirun import _registry as reglib  # noqa: E402
+from urirun.v8 import compile_registry, expand_bindings, run as run_uri, validate_binding_document  # noqa: E402
+from urirun.v8_mcp import call_tool, to_a2a_card, to_mcp_manifest  # noqa: E402
 
 LOGS: list[dict] = []
 LOG_LOCK = threading.Lock()
@@ -218,7 +218,7 @@ def main() -> int:
     if server is None:
         raise OSError(f"No free port found from {port} to {port + 99}")
     add_log("backend.started", {"host": host, "port": selected_port})
-    print(f"Serving urihandler v8 HTML app at http://{host}:{selected_port}/", flush=True)
+    print(f"Serving urirun v8 HTML app at http://{host}:{selected_port}/", flush=True)
     server.serve_forever()
     return 0
 

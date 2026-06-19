@@ -12,7 +12,7 @@ All examples generate the same shape:
 
 ```json
 {
-  "version": "urihandler.bindings.v8",
+  "version": "urirun.bindings.v8",
   "bindings": {
     "scheme://target/resource/operation": {
       "kind": "command",

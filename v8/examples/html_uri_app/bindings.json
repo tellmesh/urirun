@@ -1,5 +1,5 @@
 {
-  "version": "urihandler.bindings.v8",
+  "version": "urirun.bindings.v8",
   "bindings": {
     "say://local/echo/message": {
       "kind": "command",
@@ -55,13 +55,13 @@
         "payload": { "input": "a.mp4", "output": "b.mp4" }
       }
     },
-    "package://pypi/urihandler/install": {
+    "package://pypi/urirun/install": {
       "kind": "command",
       "adapter": "argv-template",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "requirement": { "type": "string", "default": "urihandler" }
+          "requirement": { "type": "string", "default": "urirun" }
         },
         "additionalProperties": false
       },

@@ -1,9 +1,9 @@
 FROM python:3.13-slim
 
-LABEL org.opencontainers.image.title="urihandler v8 demo tool"
-LABEL org.opencontainers.image.source="https://github.com/tellmesh/urihandler"
-LABEL io.tellmesh.urihandler.manifest="urihandler.manifest.json"
+LABEL org.opencontainers.image.title="urirun v8 demo tool"
+LABEL org.opencontainers.image.source="https://github.com/tellmesh/urirun"
+LABEL io.tellmesh.urirun.manifest="urirun.manifest.json"
 
 WORKDIR /app
-COPY urihandler.manifest.json /usr/share/urihandler/manifest.json
+COPY urirun.manifest.json /usr/share/urirun/manifest.json
 CMD ["python3", "-V"]

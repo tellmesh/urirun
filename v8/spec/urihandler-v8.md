@@ -1,6 +1,6 @@
-# urihandler v8
+# urirun v8
 
-`urihandler v8` turns command endpoints into schema-first packages.
+`urirun v8` turns command endpoints into schema-first packages.
 
 ```txt
 function signature -> Pydantic model -> JSON Schema -> URI binding -> shell/argv runtime
@@ -66,7 +66,7 @@ The compiled registry remains JSON.
 
 v8 can scan a project directory and adopt common declarations:
 
-- Dockerfile labels, including `io.tellmesh.urihandler.manifest`
+- Dockerfile labels, including `io.tellmesh.urirun.manifest`
 - `package.json` scripts
 - `pyproject.toml` `project.scripts`
 - Makefile targets
@@ -77,7 +77,7 @@ For Docker images, the recommended declaration is:
 
 ```dockerfile
 LABEL org.opencontainers.image.source="https://github.com/org/repo"
-LABEL io.tellmesh.urihandler.manifest="urihandler.manifest.json"
+LABEL io.tellmesh.urirun.manifest="urirun.manifest.json"
 ```
 
 The image/build artifact points to the URI manifest; the manifest describes the
@@ -135,22 +135,22 @@ step is still the normal compile/run flow.
 
 ## Adopting installed package commands
 
-Decorators cover code you own. `urihandler.v8_adopt` covers code you *install* -
+Decorators cover code you own. `urirun.v8_adopt` covers code you *install* -
 the CLI commands PyPI and npm packages ship - by reading their declared entry
 points and emitting passthrough bindings (a fixed command prefix plus a
 `{...args}` array, schema-described):
 
 ```bash
 # expose a PyPI package's console_scripts as URIs
-python -m urihandler.v8_adopt add-python-package black --out urihandler.bindings.v8.json
+python -m urirun.v8_adopt add-python-package black --out urirun.bindings.v8.json
 #   -> cli://black/black/run   argv: ["black", "{...args}"]
 
 # expose an installed npm package's bin commands
-python -m urihandler.v8_adopt add-npm-package prettier --out urihandler.bindings.v8.json
+python -m urirun.v8_adopt add-npm-package prettier --out urirun.bindings.v8.json
 #   -> cli://prettier/prettier/run   argv: ["npx", "--no-install", "prettier", "{...args}"]
 
 # one-command project onboarding: scan + write bindings + registry
-python -m urihandler.v8_adopt init . --out urihandler.bindings.v8.json --registry-out .urihandler/registry.merged.json
+python -m urirun.v8_adopt init . --out urirun.bindings.v8.json --registry-out .urirun/registry.merged.json
 ```
 
 Then call it like any other URI, passing arbitrary arguments through the array:
@@ -173,7 +173,7 @@ The examples under `v8/examples/generators` show native declaration styles:
 - PHP attributes and reflection.
 
 These are authoring conveniences only. Each generator emits the same
-`urihandler.bindings.v8` JSON document.
+`urirun.bindings.v8` JSON document.
 
 ## Interop: MCP and A2A (agent discovery)
 
@@ -186,13 +186,13 @@ urirun registry        ->  MCP tools/list   (LLM tool calling)
                        ->  tools/call        ->  v8 policy gate -> run
 ```
 
-`urihandler.v8_mcp` provides the projection and a minimal MCP server:
+`urirun.v8_mcp` provides the projection and a minimal MCP server:
 
 ```bash
-python -m urihandler.v8_mcp tools bindings.v8.example.json     # MCP tool manifest
-python -m urihandler.v8_mcp card  bindings.v8.example.json     # A2A agent card
-python -m urihandler.v8_mcp serve registry.json               # MCP stdio server (dry-run)
-python -m urihandler.v8_mcp serve registry.json --execute --policy policy.json
+python -m urirun.v8_mcp tools bindings.v8.example.json     # MCP tool manifest
+python -m urirun.v8_mcp card  bindings.v8.example.json     # A2A agent card
+python -m urirun.v8_mcp serve registry.json               # MCP stdio server (dry-run)
+python -m urirun.v8_mcp serve registry.json --execute --policy policy.json
 ```
 
 An LLM (via MCP) or another agent (via the A2A card) **discovers** the endpoints
@@ -203,7 +203,7 @@ same policy gate, so discovery never implies permission to execute. The
 
 MCP and A2A are complementary: MCP standardises *LLM -> tool* calls (one tool
 per URI, schema-validated arguments); A2A standardises *agent -> agent*
-discovery (the card advertises skills at a URL). urihandler keeps one registry
+discovery (the card advertises skills at a URL). urirun keeps one registry
 as the source of truth and projects to both, so the contract and the safety gate
 stay in one place.
 
@@ -241,7 +241,7 @@ urirun list generated/registry.json
 ```
 
 For Dockerfiles, an image-level label such as
-`io.tellmesh.urihandler.manifest=/app/bindings.json` points the scanner to the
+`io.tellmesh.urirun.manifest=/app/bindings.json` points the scanner to the
 service URI contract. If the label points to a container path, the scanner also
 checks the Dockerfile directory for a file with the same basename.
 

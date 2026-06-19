@@ -14,7 +14,7 @@ Every worker exposes:
 - `GET /routes` - its v8 bindings
 - `POST /run` - execute one URI resource
 
-The Dockerfiles include `io.tellmesh.urihandler.manifest=/app/bindings.json`,
+The Dockerfiles include `io.tellmesh.urirun.manifest=/app/bindings.json`,
 so the image declares where its URI package manifest lives.
 
 The important idea is that the registry is generated from the artifacts that
@@ -42,17 +42,17 @@ make registry
 This runs:
 
 ```bash
-PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 scan . \
+PYTHONPATH=../../../adapters/python python3 -m urirun.v8 scan . \
   --out generated/bindings.v8.json \
   --registry-out generated/registry.json
 
-PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 validate generated/bindings.v8.json
-PYTHONPATH=../../../adapters/python python3 -m urihandler.v8 list generated/registry.json
+PYTHONPATH=../../../adapters/python python3 -m urirun.v8 validate generated/bindings.v8.json
+PYTHONPATH=../../../adapters/python python3 -m urirun.v8 list generated/registry.json
 ```
 
 The scanner discovers:
 
-- Dockerfile labels `io.tellmesh.urihandler.manifest=/app/bindings.json`
+- Dockerfile labels `io.tellmesh.urirun.manifest=/app/bindings.json`
 - each worker `bindings.json`
 - image build routes such as `image://python-worker/docker/build`
 - script artifacts such as `shell-worker/write_report.sh`
@@ -149,8 +149,8 @@ curl -s http://127.0.0.1:18080/run \
 For the shell-backed URI, start the shell worker with an output directory:
 
 ```bash
-mkdir -p /tmp/urihandler-reports
-REPORT_DIR=/tmp/urihandler-reports WORKER_PORT=18082 python3 shell-worker/server.py
+mkdir -p /tmp/urirun-reports
+REPORT_DIR=/tmp/urirun-reports WORKER_PORT=18082 python3 shell-worker/server.py
 ```
 
 Then call the shell command through the same `/run` shape:
@@ -183,7 +183,7 @@ To add another service or package to this example:
 3. Add this label to its Dockerfile:
 
 ```dockerfile
-LABEL io.tellmesh.urihandler.manifest=/app/bindings.json
+LABEL io.tellmesh.urirun.manifest=/app/bindings.json
 ```
 
 4. Add the service to `docker-compose.yml`.
@@ -273,18 +273,18 @@ the Docker path is unchanged):
 URI_SERVICE_MAP='{"python-worker":"http://127.0.0.1:9001","node-worker":"http://127.0.0.1:9002","shell-worker":"http://127.0.0.1:9003"}'
 ```
 
-## Library-native dispatch (`urihandler.v8_service`)
+## Library-native dispatch (`urirun.v8_service`)
 
 Workers implement their URI resources natively, so their images stay
 dependency-free; the registry is the shared contract. A coordinator therefore
-needs no bespoke HTTP code - `urihandler.v8_service` turns "call this URI on its
+needs no bespoke HTTP code - `urirun.v8_service` turns "call this URI on its
 worker" into one library call that **validates the payload against the registry's
 JSON Schema first**, then POSTs to the worker (resolving the host via the same
 `URI_SERVICE_MAP`). It is adapter-agnostic - it works whatever the worker labels
 the route.
 
 ```python
-from urihandler import v8, v8_service
+from urirun import v8, v8_service
 
 registry = v8.compile_registry(merged_worker_bindings)
 env = v8_service.call("python://python-worker/text/normalize", {"text": "Hi"}, registry)
@@ -297,12 +297,12 @@ live-call coverage.
 ## Docker test environment
 
 `docker-compose.test.yml` builds the three workers plus a **library-based
-tester** container (`tester/`) that has `urihandler` installed. On the Compose
+tester** container (`tester/`) that has `urirun` installed. On the Compose
 network the tester:
 
 1. **discovers** routes by calling each worker's `GET /routes`,
 2. **validates** a bad payload and an unknown URI against the registry schema,
-3. **dispatches** the whole flow with `urihandler.v8_service` over Docker DNS
+3. **dispatches** the whole flow with `urirun.v8_service` over Docker DNS
    (`URI_SERVICE_MAP` unset -> `http://<service>:8080`).
 
 Its exit code drives the run, so this is a self-contained integration test of the

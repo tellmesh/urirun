@@ -68,4 +68,4 @@ cd v8/examples/multi_transport
 make test-docker          # or: bash run_tests.sh
 ```
 
-Requires Docker. The images install `urihandler` + `grpcio`.
+Requires Docker. The images install `urirun` + `grpcio`.

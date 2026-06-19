@@ -1,11 +1,11 @@
-# Build context is the repository root so the urihandler package is available.
+# Build context is the repository root so the urirun package is available.
 # One image runs both the workers (CMD overridden per service) and the tester.
 FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY adapters/python /app/urihandler-pkg
-RUN pip install --no-cache-dir /app/urihandler-pkg grpcio
+COPY adapters/python /app/urirun-pkg
+RUN pip install --no-cache-dir /app/urirun-pkg grpcio
 
 COPY v8/examples/multi_transport/worker.py /app/worker.py
 COPY v8/examples/multi_transport/run_multi_test.py /app/run_multi_test.py

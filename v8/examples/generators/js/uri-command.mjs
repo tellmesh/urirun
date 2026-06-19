@@ -38,7 +38,7 @@ export function uriCommand(uri, fields, commandFactory, options = {}) {
 
 export function bindingDocument(bindings) {
   return {
-    version: 'urihandler.bindings.v8',
+    version: 'urirun.bindings.v8',
     bindings: Object.fromEntries(bindings.map((binding) => [binding.uri, binding])),
   };
 }

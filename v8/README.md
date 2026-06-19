@@ -1,4 +1,4 @@
-# urihandler v8
+# urirun v8
 
 v8 is schema-first command packaging.
 
@@ -9,7 +9,7 @@ signatures.
 ## Decorator
 
 ```python
-from urihandler.v8 import uri_command, uri_shell
+from urirun.v8 import uri_command, uri_shell
 
 @uri_command("media://local/video/transcode")
 def transcode(input: str, output: str, width: int = 1280, height: int = 720):
@@ -55,15 +55,15 @@ execution needs both an allow rule and `allowShellTemplates: true`.
 
 ## Artifact adoption
 
-`urihandler.v8 scan ./project` adopts common package standards:
+`urirun.v8 scan ./project` adopts common package standards:
 
-- Dockerfile with `io.tellmesh.urihandler.manifest=...`
+- Dockerfile with `io.tellmesh.urirun.manifest=...`
 - OCI-compatible labels such as `org.opencontainers.image.source`
 - `package.json` scripts
 - `pyproject.toml` `[project.scripts]`
 - `Makefile` targets
 - `*.sh` scripts
-- explicit `urihandler.manifest.json` / `bindings.v8.json`
+- explicit `urirun.manifest.json` / `bindings.v8.json`
 
 This makes existing repositories behave like URI packages without manually
 writing every endpoint.

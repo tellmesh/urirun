@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
 sys.path.insert(0, str(REPO / "adapters" / "python"))
 
-from urihandler import v8
+from urirun import v8
 
 RUNNER = ROOT / "orchestrator" / "flow_runner.py"
 FLOW = ROOT / "flows" / "cross_service_report.yaml"

@@ -16,7 +16,7 @@ import os
 import time
 import urllib.request
 
-from urihandler import _registry as reglib, v8, v8_grpc, v8_service
+from urirun import _registry as reglib, v8, v8_grpc, v8_service
 
 WEB = "web-worker"
 RPC = "rpc-worker"

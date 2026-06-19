@@ -59,4 +59,4 @@ class MathCommands {
 }
 
 new MathCommands();
-console.log(JSON.stringify({ version: 'urihandler.bindings.v8', bindings: registry }, null, 2));
+console.log(JSON.stringify({ version: 'urirun.bindings.v8', bindings: registry }, null, 2));

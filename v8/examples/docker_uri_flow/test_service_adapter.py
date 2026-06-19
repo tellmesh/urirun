@@ -1,6 +1,6 @@
 """Drive the workers through the library's service dispatch (no bespoke code).
 
-Shows the orchestrator's job expressed with `urihandler.v8_service`: it validates
+Shows the orchestrator's job expressed with `urirun.v8_service`: it validates
 the payload against the registry's JSON Schema, then POSTs to the worker. It is
 adapter-agnostic, so the worker images and their bindings stay unchanged.
 """
@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 from urllib import request
 
-from urihandler import v8, v8_service
+from urirun import v8, v8_service
 
 ROOT = Path(__file__).resolve().parent
 

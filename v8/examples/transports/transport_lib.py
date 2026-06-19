@@ -24,7 +24,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from urihandler import _registry as reglib, v8, v8_service
+from urirun import _registry as reglib, v8, v8_service
 
 ROOT = Path(__file__).resolve().parent
 ALLOW = {"execute": {"allow": ["*"]}}
@@ -126,7 +126,7 @@ def run_via(transport: str, uri: str, payload: dict, registry: dict) -> dict:
             server.shutdown()
             os.environ.pop("URI_SERVICE_MAP", None)
     if transport == "grpc":
-        from urihandler import v8_grpc  # optional dependency (grpcio)
+        from urirun import v8_grpc  # optional dependency (grpcio)
         server, port = v8_grpc.serve(registry, host="127.0.0.1", port=0, policy=ALLOW, mode="execute", block=False)
         os.environ["URI_GRPC_MAP"] = json.dumps({target: f"127.0.0.1:{port}"})
         try:

@@ -8,15 +8,15 @@ OUT_DIR="$DIR/generated"
 mkdir -p "$OUT_DIR"
 
 echo "== scan artifacts -> generated/bindings.v8.json =="
-PYTHONPATH="$ROOT/adapters/python" python3 -m urihandler.v8 scan "$DIR" \
+PYTHONPATH="$ROOT/adapters/python" python3 -m urirun.v8 scan "$DIR" \
   --out "$OUT_DIR/bindings.v8.json" \
   --registry-out "$OUT_DIR/registry.json"
 
 echo "== validate generated bindings =="
-PYTHONPATH="$ROOT/adapters/python" python3 -m urihandler.v8 validate "$OUT_DIR/bindings.v8.json"
+PYTHONPATH="$ROOT/adapters/python" python3 -m urirun.v8 validate "$OUT_DIR/bindings.v8.json"
 
 echo "== list generated registry =="
-PYTHONPATH="$ROOT/adapters/python" python3 -m urihandler.v8 list "$OUT_DIR/registry.json" \
+PYTHONPATH="$ROOT/adapters/python" python3 -m urirun.v8 list "$OUT_DIR/registry.json" \
   | tee "$OUT_DIR/routes.txt"
 
 echo

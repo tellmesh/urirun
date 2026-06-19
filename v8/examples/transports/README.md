@@ -54,7 +54,7 @@ the policy gate.
 | Layer / transport | Module | Shape | Status | When to use |
 |-------------------|--------|-------|--------|-------------|
 | In-process | `v8.run` | `run(uri, registry, payload)` | ✅ working | same-process, tests, embedding |
-| CLI / shell | `argv-template` / `shell-template` | `urihandler-v8 run` | ✅ working | local tools, scripts, ffmpeg/git |
+| CLI / shell | `argv-template` / `shell-template` | `urirun-v8 run` | ✅ working | local tools, scripts, ffmpeg/git |
 | HTTP `/run` `/routes` | `v8_service` | `call(uri, payload, registry)` | ✅ working | services, browser, public API |
 | gRPC (generic `Run`) | `v8_grpc` | `call(...)` / `RunStream` | ✅ working | east-west mesh, streaming, deadlines |
 | Async queue / event bus | (stdlib demo) | consumer: topic → `v8.run` | ✅ demo (in-mem) | fan-out, retry, decoupling (MQTT/NATS/Kafka) |

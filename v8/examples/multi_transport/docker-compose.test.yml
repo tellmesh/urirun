@@ -3,7 +3,7 @@ services:
     build:
       context: ../../..
       dockerfile: v8/examples/multi_transport/Dockerfile
-    image: urihandler-v8-multi-worker:local
+    image: urirun-v8-multi-worker:local
     environment:
       WORKER_TRANSPORT: http
       WORKER_BINDINGS: /app/web-bindings.json
@@ -11,7 +11,7 @@ services:
     networks: [mt]
 
   rpc-worker:
-    image: urihandler-v8-multi-worker:local
+    image: urirun-v8-multi-worker:local
     build:
       context: ../../..
       dockerfile: v8/examples/multi_transport/Dockerfile
@@ -22,7 +22,7 @@ services:
     networks: [mt]
 
   tester:
-    image: urihandler-v8-multi-worker:local
+    image: urirun-v8-multi-worker:local
     depends_on:
       - web-worker
       - rpc-worker

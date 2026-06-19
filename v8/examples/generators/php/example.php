@@ -61,4 +61,4 @@ function bindingFromFunction(string $function): array
 function slug(string $text, int $limit = 64): void {}
 
 $binding = bindingFromFunction('slug');
-echo json_encode(['version' => 'urihandler.bindings.v8', 'bindings' => [$binding['uri'] => $binding]], JSON_PRETTY_PRINT) . PHP_EOL;
+echo json_encode(['version' => 'urirun.bindings.v8', 'bindings' => [$binding['uri'] => $binding]], JSON_PRETTY_PRINT) . PHP_EOL;
