@@ -13,7 +13,7 @@
       Namecheap, log and daily domain flow connector package.
 - [ ] Move Planfile, domain monitor and Namecheap runtime code fully out of the
       core package after downstream users migrate to connector packages.
-- [ ] Extract host SQLite data bindings into a dedicated connector package.
+- [x] Extract host SQLite data bindings into a dedicated connector package.
 - [ ] Move host/app-specific modules into `if-uri/app` or a dedicated host
       package once the public API is stable.
 - [ ] Add stable connector discovery commands, for example `urirun connector

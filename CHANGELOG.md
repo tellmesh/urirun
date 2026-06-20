@@ -125,6 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document the external `urirun-connector-planfile` and
   `urirun-connector-domain-monitor` packages as the preferred task/domain
   workflow path.
+- Document `urirun-connector-sqlite-context` as the preferred host context data
+  connector package.
 
 ### Changed
 - Load host dashboard and Namecheap/domain-monitor dependencies lazily at call

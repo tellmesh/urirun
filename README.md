@@ -123,6 +123,7 @@ installed without expanding the core runtime:
 ```bash
 pip install "urirun-connector-planfile @ git+https://github.com/if-uri/urirun-connector-planfile.git@v0.1.1"
 pip install "urirun-connector-domain-monitor @ git+https://github.com/if-uri/urirun-connector-domain-monitor.git@v0.1.0"
+pip install "urirun-connector-sqlite-context @ git+https://github.com/if-uri/urirun-connector-sqlite-context.git@v0.1.0"
 ```
 
 For the legacy full host task planner with optional LiteLLM support:
@@ -270,6 +271,13 @@ urirun run 'task://host/tickets/query/list' .urirun/planfile.registry.json \
 ```
 
 ## Host context data
+
+Preferred path: use the external SQLite Context connector package:
+
+```bash
+urirun-sqlite-context bindings > .urirun/sqlite-context.bindings.v2.json
+urirun compile .urirun/sqlite-context.bindings.v2.json --out .urirun/sqlite-context.registry.json
+```
 
 `urirun host data` stores non-task context in SQLite. Tasks still live in
 planfile; the database holds datasets, records, artifacts, check results and
