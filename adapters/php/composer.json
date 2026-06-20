@@ -1,0 +1,7 @@
+{
+  "name": "if-uri/urirun",
+  "description": "urirun SDK for PHP — build urirun.bindings.v2 connector documents",
+  "type": "library",
+  "license": "MIT",
+  "autoload": { "psr-4": { "Urirun\\": "" } }
+}
