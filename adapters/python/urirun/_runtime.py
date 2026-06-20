@@ -21,6 +21,7 @@ import urllib.request
 from pathlib import Path
 
 from urirun import _registry as reglib, _scan as scan
+from urirun import errors as _errors
 
 POLICY_VERSION = "urirun.policy.v1"
 OUTPUT_LIMIT = 4000
@@ -255,12 +256,12 @@ def run(
     if not decision["allowed"]:
         envelope["ok"] = False
         envelope["error"] = {"type": "policy", "message": decision["reason"]}
-        return envelope
+        return _errors.record(envelope)
 
     if decision.get("requireConfirm") and not confirm:
         envelope["ok"] = False
         envelope["error"] = {"type": "confirm", "message": "route requires confirmation; pass confirm=True"}
-        return envelope
+        return _errors.record(envelope)
 
     executor = executor_registry.get(route_entry.get("adapter")) or executor_registry.get(route_entry.get("kind"))
     if executor is None:
@@ -272,7 +273,7 @@ def run(
     except (PolicyError, subprocess.TimeoutExpired, OSError, ValueError) as err:
         envelope["ok"] = False
         envelope["error"] = {"type": type(err).__name__, "message": str(err)}
-    return envelope
+    return _errors.record(envelope)
 
 
 def check(uri: str, registry: dict, policy: dict | None = None) -> dict:
