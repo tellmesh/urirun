@@ -125,6 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document the external `urirun-connector-planfile` and
   `urirun-connector-domain-monitor` packages as the preferred task/domain
   workflow path.
+- Document the external `urirun-connector-namecheap-dns` package as the
+  preferred Namecheap DNS workflow path.
 - Document `urirun-connector-sqlite-context` as the preferred host context data
   connector package.
 
@@ -139,6 +141,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add a curated `TODO.md` focused on urirun usability work.
 - Add links to the current ifURI cross-repository work summary, connector hub,
   examples, installer and app/host integration repositories.
+- Record the runtime-boundary audit for remaining host/domain/app modules that
+  still need to move out of core.
 
 ### Changed
 - Update README for the current `urirun` runtime name; the GitHub repository is

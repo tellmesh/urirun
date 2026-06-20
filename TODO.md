@@ -11,6 +11,8 @@
       connector package.
 - [x] Publish `urirun-connector-domain-monitor` as the preferred HTTP/DNS,
       Namecheap, log and daily domain flow connector package.
+- [x] Publish `urirun-connector-namecheap-dns` as the dedicated Namecheap DNS
+      connector package for `dns://` query/plan/backup/apply routes.
 - [ ] Move Planfile, domain monitor and Namecheap runtime code fully out of the
       core package after downstream users migrate to connector packages.
 - [x] Extract host SQLite data bindings into a dedicated connector package.
@@ -22,6 +24,21 @@
       expected `urirun_bindings()` export.
 - [ ] Keep downstream noVNC and full E2E examples green after runtime changes.
 - [ ] Align README install commands with the latest published GitHub release tag.
+
+Runtime-boundary audit:
+
+- `adapters/python/urirun/namecheap_dns.py` - domain/vendor integration; now
+  covered by `if-uri/urirun-connector-namecheap-dns`.
+- `adapters/python/urirun/domain_monitor.py` - domain workflow plus host-db and
+  planfile side effects; keep only compatibility until connector migration is
+  complete.
+- `adapters/python/urirun/planfile_adapter.py` - task store integration; covered
+  by `if-uri/urirun-connector-planfile`.
+- `adapters/python/urirun/host_db.py` - app/host data store; covered by
+  `if-uri/urirun-connector-sqlite-context`.
+- `adapters/python/urirun/host_dashboard.py`, `mesh.py`, `scheduler.py`,
+  `task_planner.py` - ifURI host/app layer, not runtime core. Move to
+  `if-uri/app` or a dedicated host package after CLI compatibility is settled.
 
 Current cross-repository status:
 https://github.com/if-uri/docs/blob/main/work-summary-2026-06-20.md

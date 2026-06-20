@@ -5,8 +5,7 @@ functions, scripts, Docker services, HTTP endpoints, MQTT topics, firmware
 commands, and package entry points as stable URI routes compiled into one
 registry.
 
-The GitHub repository is `tellmesh/urirun` (renamed from the original
-`tellmesh/urihandler`). The runtime, CLI, Python import namespace, JS package
+The GitHub repository is `if-uri/urirun`. The runtime, CLI, Python import namespace, JS package
 name, schema prefix, Docker labels, and C adapter names are all `urirun`.
 
 ## Goal
@@ -39,8 +38,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 
 - `urirun` is the runtime name used by the CLI, Python import namespace, JS
   package name, JSON schema prefix, Docker/OCI label prefix, and C adapter files.
-- `tellmesh/urirun` remains the GitHub repository URL and may still appear
-  in historical changelog entries.
+- `if-uri/urirun` is the current GitHub repository URL. Older tellmesh URLs may
+  still appear in historical changelog entries.
 - New user-facing commands should use `urirun`, `urirun-v1`, or `urirun-v2`.
 - Do not change the GitHub remote URL unless the repository is actually renamed
   or moved on GitHub.
@@ -73,7 +72,7 @@ Current cross-repository status:
 ### JavaScript / Node
 
 ```bash
-npm install github:tellmesh/urirun
+npm install github:if-uri/urirun
 ```
 
 ```js
@@ -88,13 +87,13 @@ or vendor the adapter folder directly into your repo.
 PyPI publishing is intentionally not required. Install directly from GitHub:
 
 ```bash
-pip install "git+https://github.com/tellmesh/urirun.git@v0.3.14#subdirectory=adapters/python"
+pip install "git+https://github.com/if-uri/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
 Or install a GitHub Release wheel:
 
 ```bash
-pip install "https://github.com/tellmesh/urirun/releases/download/v0.3.14/urirun-0.3.14-py3-none-any.whl"
+pip install "https://github.com/if-uri/urirun/releases/download/v0.3.14/urirun-0.3.14-py3-none-any.whl"
 ```
 
 The distribution and import package are named `urirun`.
@@ -123,6 +122,7 @@ installed without expanding the core runtime:
 ```bash
 pip install "urirun-connector-planfile @ git+https://github.com/if-uri/urirun-connector-planfile.git@v0.1.1"
 pip install "urirun-connector-domain-monitor @ git+https://github.com/if-uri/urirun-connector-domain-monitor.git@v0.1.0"
+pip install "urirun-connector-namecheap-dns @ git+https://github.com/if-uri/urirun-connector-namecheap-dns.git@v0.1.0"
 pip install "urirun-connector-sqlite-context @ git+https://github.com/if-uri/urirun-connector-sqlite-context.git@v0.1.0"
 ```
 
@@ -349,24 +349,32 @@ urirun run 'flow://host/domain/command/check' .urirun/monitor.registry.json \
   --execute
 ```
 
+Preferred path: use the external Namecheap DNS connector package:
+
+```bash
+urirun-namecheap-dns bindings > .urirun/namecheap-dns.bindings.v2.json
+urirun compile .urirun/namecheap-dns.bindings.v2.json --out .urirun/namecheap-dns.registry.json
+```
+
 Namecheap DNS changes use the same `dns://` contract, but are guarded by a
-plan/review/backup/apply sequence. Set credentials in the environment
-(`NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`,
-`NAMECHEAP_CLIENT_IP`; add `NAMECHEAP_SANDBOX=true` for sandbox).
+plan/review/backup/apply sequence. Set credentials in the environment for real
+API calls (`NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`, `NAMECHEAP_USERNAME`,
+`NAMECHEAP_CLIENT_IP`; add `NAMECHEAP_SANDBOX=true` for sandbox). Mock payloads
+can be used without credentials.
 
 ```bash
 # 1. Review the diff. No write is performed.
-urirun run 'dns://host/records/command/plan' .urirun/monitor.registry.json \
-  --payload '{"provider":"namecheap","domain":"example.com","ensure_records":[{"Name":"www","Type":"CNAME","Address":"example.com"}]}'
+urirun run 'dns://host/records/command/plan' .urirun/namecheap-dns.registry.json \
+  --payload '{"domain":"example.com","ensure_records":"[{\"Name\":\"www\",\"Type\":\"CNAME\",\"Address\":\"example.com\"}]"}'
 
 # 2. Save the current record set as an artifact.
-urirun run 'dns://host/records/command/backup' .urirun/monitor.registry.json \
-  --payload '{"provider":"namecheap","domain":"example.com"}' \
+urirun run 'dns://host/records/command/backup' .urirun/namecheap-dns.registry.json \
+  --payload '{"domain":"example.com"}' \
   --execute
 
 # 3. Apply only after review, with backup_uri and confirm=true.
-urirun run 'dns://host/records/command/apply' .urirun/monitor.registry.json \
-  --payload '{"provider":"namecheap","domain":"example.com","plan":{"desiredRecords":[{"Name":"www","Type":"CNAME","Address":"example.com"}]},"backup_uri":"artifact://host/namecheap/dns-backup/example.com/REVIEWED","confirm":true}' \
+urirun run 'dns://host/records/command/apply' .urirun/namecheap-dns.registry.json \
+  --payload '{"domain":"example.com","plan":"{\"desiredRecords\":[{\"Name\":\"www\",\"Type\":\"CNAME\",\"Address\":\"example.com\"}]}","backup_uri":"artifact://host/namecheap/dns-backup/example.com/REVIEWED","confirm":true}' \
   --execute
 ```
 
@@ -395,7 +403,7 @@ make test
 Documentation now lives in the dedicated docs repository:
 
 - `https://github.com/if-uri/docs` - source repository
-- `https://tellmesh.github.io/urirun/www` - published project site
+- `https://if-uri.github.io/urirun/www` - published project site
 
 Runnable examples live in:
 
