@@ -108,6 +108,13 @@ def entry_point_registry(
     )
 
 
+def error_bindings(target: str = "local") -> dict:
+    """Return built-in ``error://`` bindings for registry/flow use."""
+    from urirun import errors
+
+    return errors.bindings(target=target)
+
+
 def compile_registry(doc, generated_at: str | None = None, on_conflict: str = "keep"):
     """Compile a v2 binding document through the stable top-level API."""
     from urirun.v2 import compile_registry as _compile_registry

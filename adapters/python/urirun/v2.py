@@ -28,7 +28,7 @@ from typing import Any, Callable, Iterable
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
 
-from urirun import _registry as reglib, _scan as scan, _runtime as runtime, v1
+from urirun import _registry as reglib, _scan as scan, _runtime as runtime, errors as uri_errors, v1
 
 VERSION = "urirun.bindings.v2"
 ENTRY_POINT_GROUP = "urirun.bindings"
@@ -351,6 +351,58 @@ def run_shell_template(ctx: dict, policy: dict, execute: bool) -> dict:
     return {"type": "shell", "command": command, "shell": True, **v1._run_process(command, config, policy, ctx["params"], shell=True)}
 
 
+def _first_payload_value(payload: dict, *names: str):
+    for name in names:
+        value = payload.get(name)
+        if value not in (None, ""):
+            return value
+    return None
+
+
+def run_error_store(ctx: dict, policy: dict, execute: bool) -> dict:
+    translation = ctx["translation"]
+    payload = ctx["payload"] if isinstance(ctx.get("payload"), dict) else {}
+    args = list(translation.get("args") or [])
+    resource = translation.get("resource")
+    operation = translation.get("operation")
+
+    if resource and str(resource).startswith("E-") and operation == "query":
+        action = args[0] if args else "info"
+        code = resource
+    else:
+        action = args[0] if args else payload.get("action") or ("ticket" if operation == "command" else "recent")
+        code = _first_payload_value(payload, "code")
+        if code is None and len(args) > 1:
+            code = args[1]
+
+    store = _first_payload_value(payload, "store")
+    if action == "recent":
+        return {
+            "type": "error-store",
+            "action": "recent",
+            "errors": uri_errors.recent(int(payload.get("limit") or 20), store=store),
+        }
+    if action == "search":
+        query = _first_payload_value(payload, "query", "q")
+        if query is None and len(args) > 1:
+            query = args[1]
+        if query is None:
+            raise ValueError("error search requires payload.query or URI argument")
+        return {"type": "error-store", "action": "search", "errors": uri_errors.search(str(query), store=store)}
+    if action == "info":
+        if not code:
+            raise ValueError("error info requires payload.code or error://local/<code>/query/info")
+        return {"type": "error-store", "action": "info", "error": uri_errors.info(str(code), store=store)}
+    if action == "ticket":
+        if not code:
+            raise ValueError("error ticket requires payload.code")
+        project = _first_payload_value(payload, "project")
+        if not execute:
+            return {"simulated": True, "type": "error-store", "action": "ticket", "code": code, "project": project}
+        return {"type": "error-store", "action": "ticket", **uri_errors.to_ticket(str(code), project=project, store=store)}
+    raise ValueError(f"unsupported error:// action: {action}")
+
+
 def _host_integrations():
     from urirun import host_integrations
 
@@ -399,10 +451,32 @@ EXECUTORS = {
     "argv-template": run_argv_template,
     "command": run_argv_template,
     "domain-monitor": run_domain_monitor,
+    "error-store": run_error_store,
     "host-sqlite-data": run_host_data,
     "planfile-task": run_planfile_task,
     "shell-template": run_shell_template,
 }
+
+
+def _builtin_error_route_entry(translation: dict) -> dict | None:
+    if translation.get("package") != "error":
+        return None
+    operation = translation.get("operation")
+    if operation == "query":
+        return {
+            "kind": "query",
+            "adapter": "error-store",
+            "config": {},
+            "policy": {"allowExecute": True},
+            "meta": {"connector": "urirun-core"},
+        }
+    if operation == "command":
+        return {"kind": "command", "adapter": "error-store", "config": {}, "meta": {"connector": "urirun-core"}}
+    return None
+
+
+def _record_error(envelope: dict) -> dict:
+    return uri_errors.record(envelope)
 
 
 def run(
@@ -416,9 +490,34 @@ def run(
 ) -> dict:
     policy = runtime.merge_policy(policy)
     executor_registry = EXECUTORS if executors is None else executors
-    descriptor = reglib.parse_uri(uri)
-    translation = reglib.translate(descriptor)
-    route_entry = reglib.resolve_route(translation, registry)
+    try:
+        descriptor = reglib.parse_uri(uri)
+        translation = reglib.translate(descriptor)
+    except Exception as err:  # noqa: BLE001 - expose invalid URI errors as resources.
+        envelope = {
+            "uri": str(uri),
+            "mode": mode,
+            "kind": None,
+            "adapter": None,
+            "ok": False,
+            "error": {"type": type(err).__name__, "message": str(err)},
+        }
+        return _record_error(envelope)
+
+    try:
+        route_entry = reglib.resolve_route(translation, registry)
+    except KeyError as err:
+        route_entry = _builtin_error_route_entry(translation)
+        if route_entry is None:
+            envelope = {
+                "uri": descriptor["normalized"],
+                "mode": mode,
+                "kind": None,
+                "adapter": None,
+                "ok": False,
+                "error": {"type": "route", "message": str(err)},
+            }
+            return _record_error(envelope)
     envelope = {
         "uri": descriptor["normalized"],
         "mode": mode,
@@ -431,11 +530,11 @@ def run(
     except jsonschema_exceptions.ValidationError as err:
         envelope["ok"] = False
         envelope["error"] = {"type": "schema", "message": err.message}
-        return envelope
+        return _record_error(envelope)
     except jsonschema_exceptions.SchemaError as err:
         envelope["ok"] = False
         envelope["error"] = {"type": "schema", "message": err.message}
-        return envelope
+        return _record_error(envelope)
 
     ctx = {
         "routeEntry": route_entry,
@@ -451,7 +550,12 @@ def run(
 
     executor = executor_registry.get(route_entry.get("adapter")) or executor_registry.get(route_entry.get("kind"))
     if executor is None:
-        raise ValueError(f"Executor not found: {route_entry.get('adapter') or route_entry.get('kind')}")
+        envelope["ok"] = False
+        envelope["error"] = {
+            "type": "NotImplementedError",
+            "message": f"Executor not found: {route_entry.get('adapter') or route_entry.get('kind')}",
+        }
+        return _record_error(envelope)
 
     if mode != "execute":
         try:
@@ -463,16 +567,16 @@ def run(
         except ValueError as err:
             envelope["ok"] = False
             envelope["error"] = {"type": "error", "message": str(err)}
-        return envelope
+        return _record_error(envelope)
 
     if not decision["allowed"]:
         envelope["ok"] = False
         envelope["error"] = {"type": "policy", "message": decision["reason"]}
-        return envelope
+        return _record_error(envelope)
     if decision.get("requireConfirm") and not confirm:
         envelope["ok"] = False
         envelope["error"] = {"type": "confirm", "message": "route requires confirmation; pass confirm=True"}
-        return envelope
+        return _record_error(envelope)
 
     try:
         result = executor(ctx, policy, True)
@@ -484,7 +588,7 @@ def run(
     except (runtime.PolicyError, OSError, ValueError) as err:
         envelope["ok"] = False
         envelope["error"] = {"type": type(err).__name__, "message": str(err)}
-    return envelope
+    return _record_error(envelope)
 
 
 def check(uri: str, registry: dict, policy: dict | None = None) -> dict:
@@ -1038,6 +1142,13 @@ def main(argv: list[str] | None = None) -> int:
     connectors_check.add_argument("manifest", help="Path to a connector.manifest.json")
     connectors_check.add_argument("--json", action="store_true")
 
+    errors_parser = subparsers.add_parser("errors", help="Browse error:// runtime errors")
+    errors_parser.add_argument(
+        "errors_args",
+        nargs=argparse.REMAINDER,
+        help="recent | info <code> | search <q> | ticket <code> | bindings",
+    )
+
     host_parser = subparsers.add_parser("host", help="Configure a host that controls URI nodes")
     host_sub = host_parser.add_subparsers(dest="host_command", required=True)
     host_common = argparse.ArgumentParser(add_help=False)
@@ -1406,6 +1517,9 @@ def main(argv: list[str] | None = None) -> int:
         from urirun import connect_catalog
 
         return connect_catalog.connectors_command(args)
+
+    if args.command == "errors":
+        return uri_errors.main(args.errors_args)
 
     if args.command == "host":
         from urirun import mesh
