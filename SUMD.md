@@ -21,7 +21,7 @@ urirun
 
 ## Metadata
 
-- **name**: `urihandler`
+- **name**: `urirun`
 - **version**: `0.0.0`
 - **ecosystem**: SUMD + DOQL + testql + taskfile
 - **generated_from**: Makefile, testql(1), app.doql.less, goal.yaml, .env.example, package.json, project/(3 analysis files)
@@ -170,7 +170,7 @@ npm install urirun
 ## Release Management (`goal.yaml`)
 
 - **versioning**: `semver`
-- **commits**: `conventional` scope=`urihandler`
+- **commits**: `conventional` scope=`urirun`
 - **changelog**: `keep-a-changelog`
 - **build strategies**: `python`, `nodejs`, `rust`
 - **version files**: `VERSION`, `package.json:version`, `venv/lib/python3.13/site-packages/cryptography/__init__.py:__version__`

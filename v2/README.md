@@ -29,6 +29,15 @@ command.
 older code, but new connector packages should prefer the top-level
 `@urirun.command(...)` and `@urirun.shell(...)` API.
 
+The same top-level API also exposes registry helpers, so simple connector smoke
+tests do not need versioned imports:
+
+```python
+bindings = urirun.connector_bindings(connector="media-tools")
+registry = urirun.compile_registry(bindings)
+routes = urirun.list_routes(registry)
+```
+
 Shell routes are real shell execution, but they stay behind the policy gate:
 execution needs both an allow rule and `allowShellTemplates: true`.
 

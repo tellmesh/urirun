@@ -16,6 +16,14 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Check version metadata
+        run: make version-check
+
+      - name: Check release tag matches package version
+        run: |
+          VERSION="$(cat adapters/python/VERSION)"
+          test "${GITHUB_REF_NAME}" = "v${VERSION}"
+
       - name: Build wheel + sdist
         working-directory: adapters/python
         run: |
@@ -29,6 +37,13 @@ jobs:
           /tmp/venv/bin/pip install dist/*.whl
           /tmp/venv/bin/python -c "import urirun, urirun.v1, urirun.v2; print('urirun', getattr(urirun,'__version__','?'), 'ok')"
           /tmp/venv/bin/urirun --help >/dev/null
+
+      - name: Package C adapter
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          tar -czf "adapters/python/dist/urirun-c-${VERSION}.tar.gz" \
+            -C adapters/c urirun.c urirun.h urirun_test.c
+          ls -l adapters/python/dist/urirun-c-*.tar.gz
 
       - name: Checksums
         working-directory: adapters/python/dist

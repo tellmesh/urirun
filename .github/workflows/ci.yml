@@ -15,4 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - run: make version-check
       - run: make test
+      - name: Verify urirun[grpc] optional extra
+        run: |
+          python -m venv /tmp/grpc-venv
+          /tmp/grpc-venv/bin/pip install "./adapters/python[grpc]"
+          /tmp/grpc-venv/bin/python -c "import grpc, urirun; print('urirun[grpc] ok:', grpc.__version__)"

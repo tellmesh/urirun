@@ -79,6 +79,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.13] - 2026-06-20
 
+### Changed
+- Align root, Python and JavaScript package metadata to the same runtime
+  version and add a CI version check.
+- Expose `compile_registry`, `list_routes` and `validate_binding_document` from
+  the top-level Python API so connector packages can avoid versioned imports in
+  normal smoke tests.
+
 ### Added
 - Add `urirun.connector(...)`, a convention helper for connector packages. It
   builds full URI routes from short paths, fills `meta.connector`, and exports
@@ -111,9 +118,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `docs/` with current urirun quick start, naming, commands, registry,
   transports, logo notes, and roadmap.
 - Add `www/` PHP documentation site wired to the generated SVG logo assets.
+- Add a minimal-import regression test so core imports stay independent from
+  host, dashboard, domain-monitor, planfile and optional transport modules.
+- Add `urirun.host_integrations` as the compatibility home for host, planfile
+  and domain-monitor v2 bindings while those integrations move out of core.
+
+### Changed
+- Load host dashboard and Namecheap/domain-monitor dependencies lazily at call
+  time, keeping the minimal `urirun` runtime boundary smaller.
+- Keep `urirun.v2` host/domain public functions as thin lazy wrappers instead
+  of storing the integration implementations directly in the core module.
 - Add generated `logo/` SVG assets for icon, wordmark, favicon, horizontal,
   stacked, and logo sheet variants.
 - Add a curated `TODO.md` focused on urirun usability work.
+- Add links to the current ifURI cross-repository work summary, connector hub,
+  examples, installer and app/host integration repositories.
 
 ### Changed
 - Update README for the current `urirun` runtime name; the GitHub repository is
@@ -125,6 +144,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   C adapter files, and CLI commands.
 - Keep `tellmesh/urihandler` only in historical changelog entries that refer to
   the pre-rename repository.
+- Clarify the manual runtime TODO around core/runtime boundaries, connector
+  discovery and downstream E2E coverage.
+- Align README install examples with the current Python package version
+  `v0.3.14`.
 
 ### Fixed
 - Point all repository references at the renamed `tellmesh/urirun` URL.
@@ -256,7 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Document GitHub-only Python installation.
 
 ### Changed
-- Rename the Python distribution from `urihandler` to `urirun`.
+- Rename the Python distribution from `urirun` to `urirun`.
 - Remove public project versions below v7.
 - Keep GitHub Release / Git install as the supported Python package channel.
 

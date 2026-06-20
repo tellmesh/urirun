@@ -14,7 +14,7 @@ SUMD - Structured Unified Markdown Descriptor for AI-aware project refactorizati
 
 ## Metadata
 
-- **name**: `urihandler`
+- **name**: `urirun`
 - **version**: `0.0.0`
 - **ecosystem**: SUMD + DOQL + testql + taskfile
 - **generated_from**: Makefile, testql(1), app.doql.less, goal.yaml, .env.example, package.json, project/(5 analysis files)

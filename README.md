@@ -57,10 +57,16 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 - `v2/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
 - external docs: `https://github.com/if-uri/docs`
 - external examples: `https://github.com/if-uri/examples`
+- connector hub: `https://connect.ifuri.com`
+- host/app integration: `https://github.com/if-uri/app`
+- installer site: `https://get.ifuri.com`
 - `www/` - PHP project site and documentation viewer using generated urirun logo assets
 - `logo/` - generated SVG logo family for icon, wordmark, horizontal and stacked marks
 - `project/` - generated architecture maps and analysis artifacts, including `map.toon.yaml`
 - `github/` - GitHub integration notes
+
+Current cross-repository status:
+`https://github.com/if-uri/docs/blob/main/work-summary-2026-06-20.md`
 
 ## Install
 
@@ -82,13 +88,13 @@ or vendor the adapter folder directly into your repo.
 PyPI publishing is intentionally not required. Install directly from GitHub:
 
 ```bash
-pip install "git+https://github.com/tellmesh/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install "git+https://github.com/tellmesh/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
 Or install a GitHub Release wheel:
 
 ```bash
-pip install "https://github.com/tellmesh/urirun/releases/download/v0.3.13/urirun-0.3.13-py3-none-any.whl"
+pip install "https://github.com/tellmesh/urirun/releases/download/v0.3.14/urirun-0.3.14-py3-none-any.whl"
 ```
 
 The distribution and import package are named `urirun`.
@@ -107,19 +113,19 @@ urirun-v2 --help
 Optional transports stay optional. For the v2 gRPC transport install:
 
 ```bash
-pip install "urirun[grpc] @ git+https://github.com/tellmesh/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install "urirun[grpc] @ git+https://github.com/tellmesh/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
 For planfile-backed host tasks install the optional task dependency:
 
 ```bash
-pip install "urirun[planfile] @ git+https://github.com/tellmesh/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install "urirun[planfile] @ git+https://github.com/tellmesh/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
 For the full host task planner with optional LiteLLM support:
 
 ```bash
-pip install "urirun[host] @ git+https://github.com/tellmesh/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install "urirun[host] @ git+https://github.com/tellmesh/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
 ## Host / Node Mesh
@@ -431,13 +437,25 @@ python -m urirun.v2_mcp card  registry.json     # A2A agent card
 python -m urirun.v2_mcp serve registry.json     # MCP stdio server (dry-run by default)
 ```
 
-In Python the preferred way to author connector commands is the top-level
-`urirun.connector(...)` helper. It gives you short route paths, default
-`scheme://host/...` URI construction, automatic `meta.connector`, and
-serializable bindings through `.bindings()`. The lower-level
-`@urirun.command(...)`, `@urirun.shell(...)` and `urirun.connector_bindings()`
-remain available; `urirun.v2.uri_command` / `urirun.v2.uri_shell` remain
-supported for existing code.
+In Python the preferred primitive is the top-level `@urirun.command(...)`
+decorator. A connector can declare a URI, let the function signature become the
+JSON Schema, and export serializable bindings without importing a versioned
+module:
+
+```python
+import urirun
+
+@urirun.command("demo://host/http/query/status", meta={"connector": "demo-tools"})
+def status(url: str):
+    return ["curl", "-sS", "{url}"]
+
+bindings = urirun.connector_bindings(connector="demo-tools")
+registry = urirun.compile_registry(bindings)
+```
+
+For larger connector packages, `urirun.connector(...)` gives you short route
+paths, default `scheme://host/...` URI construction, automatic
+`meta.connector`, and serializable bindings through `.bindings()`:
 
 ```python
 import urirun
@@ -450,6 +468,9 @@ def status(url: str):
 
 bindings = connector.bindings()
 ```
+
+`urirun.v2.uri_command` / `urirun.v2.uri_shell` remain supported for existing
+code, but new connector packages should use the top-level API.
 
 Multi-language authoring examples live in `if-uri/examples/05-generators` (JS,
 Node.js, TS, PHP). The HTTP console with live MCP/A2A discovery lives in
