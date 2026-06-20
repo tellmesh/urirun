@@ -143,6 +143,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   examples, installer and app/host integration repositories.
 - Record the runtime-boundary audit for remaining host/domain/app modules that
   still need to move out of core.
+- Align the preferred Domain Monitor connector documentation with
+  `urirun-connector-domain-monitor` v0.2.0, where provider-specific `dns://`
+  mutation routes live in `urirun-connector-namecheap-dns`.
 
 ### Changed
 - Update README for the current `urirun` runtime name; the GitHub repository is

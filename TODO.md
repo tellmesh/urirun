@@ -9,12 +9,13 @@
       compatibility module before extracting them to packages.
 - [x] Publish `urirun-connector-planfile` as the preferred Planfile task
       connector package.
-- [x] Publish `urirun-connector-domain-monitor` as the preferred HTTP/DNS,
-      Namecheap, log and daily domain flow connector package.
+- [x] Publish `urirun-connector-domain-monitor` as the preferred HTTP/DNS read,
+      log and daily domain flow connector package.
 - [x] Publish `urirun-connector-namecheap-dns` as the dedicated Namecheap DNS
       connector package for `dns://` query/plan/backup/apply routes.
-- [ ] Move Planfile, domain monitor and Namecheap runtime code fully out of the
-      core package after downstream users migrate to connector packages.
+- [ ] Move Planfile, domain monitor and Namecheap compatibility modules fully
+      out of the core package after downstream users migrate to connector
+      packages.
 - [x] Extract host SQLite data bindings into a dedicated connector package.
 - [ ] Move host/app-specific modules into `if-uri/app` or a dedicated host
       package once the public API is stable.
@@ -30,8 +31,9 @@ Runtime-boundary audit:
 - `adapters/python/urirun/namecheap_dns.py` - domain/vendor integration; now
   covered by `if-uri/urirun-connector-namecheap-dns`.
 - `adapters/python/urirun/domain_monitor.py` - domain workflow plus host-db and
-  planfile side effects; keep only compatibility until connector migration is
-  complete.
+  planfile side effects; URI bindings are now covered by
+  `if-uri/urirun-connector-domain-monitor` v0.2.0 and provider-specific DNS
+  mutation routes are delegated to `if-uri/urirun-connector-namecheap-dns`.
 - `adapters/python/urirun/planfile_adapter.py` - task store integration; covered
   by `if-uri/urirun-connector-planfile`.
 - `adapters/python/urirun/host_db.py` - app/host data store; covered by
