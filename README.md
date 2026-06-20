@@ -120,6 +120,14 @@ urirun connectors install planfile --execute  # actually run pip
 urirun connectors check path/to/connector.manifest.json  # CI guard: package vs hub
 ```
 
+Connectors are polyglot — the runtime only needs a v2 bindings document and an
+executable. Scaffold a new one in Python, JavaScript, Go or PHP:
+
+```bash
+urirun connectors new my-thing --lang python   # also: js | go | php
+# every skeleton's `bindings` output passes `urirun validate` out of the box
+```
+
 Before removing old imports from a downstream project, inspect the compatibility
 surface that is moving out of the core runtime:
 

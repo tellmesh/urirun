@@ -1141,6 +1141,17 @@ def main(argv: list[str] | None = None) -> int:
     connectors_check = connectors_sub.add_parser("check", parents=[connectors_common], help="Check a local connector manifest against the hub catalog")
     connectors_check.add_argument("manifest", help="Path to a connector.manifest.json")
     connectors_check.add_argument("--json", action="store_true")
+    connectors_new = connectors_sub.add_parser("new", help="Scaffold a new connector package")
+    connectors_new.add_argument("id", help="Connector id, e.g. my-thing")
+    connectors_new.add_argument("--lang", choices=["python", "js", "go", "php"], default="python")
+    connectors_new.add_argument("--scheme", default=None, help="URI scheme (defaults to the id without dashes)")
+    connectors_new.add_argument("--out", default=None, help="Output directory (defaults to urirun-connector-<id>)")
+    connectors_smoke = connectors_sub.add_parser("smoke", help="Smoke-test a bindings document (validate/compile/run/MCP/A2A)")
+    connectors_smoke.add_argument("bindings", help="Path to a v2 bindings JSON, or - for stdin")
+    connectors_smoke.add_argument("--run", default=None, help="URI to execute as part of the smoke")
+    connectors_smoke.add_argument("--payload", default="{}", help="JSON payload for --run")
+    connectors_smoke.add_argument("--allow", default=None, help="Policy allow glob for --run, e.g. 'time://*'")
+    connectors_smoke.add_argument("--name", default="connector", help="A2A card name")
 
     errors_parser = subparsers.add_parser("errors", help="Browse error:// runtime errors")
     errors_parser.add_argument(
@@ -1517,6 +1528,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "connectors":
+        if getattr(args, "connectors_command", None) == "new":
+            from urirun import connector_scaffold
+
+            return connector_scaffold.new_command(args)
+        if getattr(args, "connectors_command", None) == "smoke":
+            from urirun import connector_smoke
+
+            return connector_smoke.smoke_command(args)
         from urirun import connect_catalog
 
         return connect_catalog.connectors_command(args)

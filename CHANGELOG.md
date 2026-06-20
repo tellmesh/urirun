@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `urirun.connector_cli(prog, manifest=, bindings=, register=, dispatch=)`
   (wires `manifest`/`bindings` subcommands so a connector CLI only declares its
   domain commands). All 9 connectors had duplicated copies of these.
+- `urirun connectors new <id> --lang python|js|go|php` scaffolds a working
+  connector package in any of the four languages. The Python skeleton uses the
+  `connector_sdk`; the JS/Go/PHP skeletons emit a v2 bindings document and a CLI
+  the argv-template adapter invokes. Every generated skeleton's `bindings`
+  output passes `urirun validate` out of the box.
 - `urirun connectors` command group that reads the connect.ifuri.com catalog:
   `list` (optionally `--available`), `show <id>`, `install <id...>` and
   `check <manifest>`. Install resolves each id against the catalog's `install`
