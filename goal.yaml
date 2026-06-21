@@ -1,5 +1,5 @@
 # goal.yaml - Goal configuration file
-# Generated: 2026-06-21 21:17:09
+# Generated: 2026-06-21 21:52:46
 # Documentation: https://github.com/wronai/goal#configuration
 #
 # This file configures Goal's behavior for:
@@ -222,10 +222,8 @@ git:
     prefix: v
     format: '{prefix}{version}'
 publishing:
-  enabled: true
-  registries: [pypi]
-  # Safety gate: stays in dry-run until PYPI_API_TOKEN is set. Flip to false to
-  # publish urirun to PyPI for real (name verified available 2026-06-21).
+  enabled: false
+  registries: []
   dry_run: true
   fallback:
     github_release:
@@ -240,10 +238,8 @@ strategies:
   python:
     test: pytest tests/ -v
     build: cd adapters/python && python -m build
-    # Publish the Python adapter to PyPI (twine reads __token__/PYPI_API_TOKEN
-    # via TWINE_USERNAME/TWINE_PASSWORD env). Was gh-release-only before.
-    publish: cd adapters/python && python -m twine upload --non-interactive dist/urirun-{version}*
-    publish_enabled: true
+    publish: gh release upload v{version} adapters/python/dist/urirun-{version}* --clobber
+    publish_enabled: false
     dependencies:
       file: requirements.txt
       lock: pip freeze > requirements.txt

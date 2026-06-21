@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write   # PyPI Trusted Publishing (OIDC) — no token needed once configured
 
 jobs:
   release:
@@ -37,6 +38,18 @@ jobs:
           /tmp/venv/bin/pip install dist/*.whl
           /tmp/venv/bin/python -c "import urirun, urirun.v1, urirun.v2; print('urirun', getattr(urirun,'__version__','?'), 'ok')"
           /tmp/venv/bin/urirun --help >/dev/null
+
+      # Publish the Python adapter to PyPI. Runs here while dist/ holds only the
+      # wheel + sdist (the C tarball is added in the next step). Uses PyPI Trusted
+      # Publishing (OIDC) — configure a publisher (or "pending publisher" for the
+      # first release) for if-uri/urirun · workflow release.yml on pypi.org.
+      # continue-on-error keeps the proven GitHub Release working until that's set
+      # up; drop it once PyPI publishing is confirmed.
+      - name: Publish to PyPI (Trusted Publishing)
+        continue-on-error: true
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: adapters/python/dist
 
       - name: Package C adapter
         run: |

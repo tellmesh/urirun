@@ -187,17 +187,32 @@ def run_shell_template(ctx: dict, policy: dict) -> dict:
 
 def run_fetch(ctx: dict, policy: dict) -> dict:
     config = ctx["routeEntry"].get("config", {})
-    url = config.get("url")
+    payload = ctx["payload"] if isinstance(ctx["payload"], dict) else {}
     method = (config.get("method") or "POST").upper()
+
+    # url: explicit (templated) or environments[target] + path (declarative connectors)
+    url = config.get("url")
+    if not url and config.get("path"):
+        environments = config.get("environments") or {}
+        base = environments.get(ctx.get("target")) or environments.get("default")
+        if not base:
+            raise ValueError(f"http route has no base URL for target '{ctx.get('target')}' (set environments)")
+        url = base.rstrip("/") + "/" + str(config["path"]).lstrip("/")
     if not url:
-        raise ValueError("http route has no url")
+        raise ValueError("http route has no url or path")
+    url = _fetch_fill(url, payload)
     if not str(url).lower().startswith(("http://", "https://")):
         raise PolicyError(f"refusing non-http url: {url}")
+
+    headers = {key: _fetch_fill(value, payload) for key, value in (config.get("headers") or {}).items()}
     body = None
-    headers = dict(config.get("headers") or {})
-    if ctx["payload"] is not None:
-        body = json.dumps(ctx["payload"]).encode("utf-8")
-        headers.setdefault("Content-Type", "application/json")
+    if method not in ("GET", "HEAD"):
+        if config.get("body") is not None:
+            body = json.dumps(_fetch_render(config["body"], payload)).encode("utf-8")
+            headers.setdefault("Content-Type", "application/json")
+        elif ctx["payload"] is not None:
+            body = json.dumps(ctx["payload"]).encode("utf-8")
+            headers.setdefault("Content-Type", "application/json")
     request = urllib.request.Request(url, data=body, method=method, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=policy.get("timeout", DEFAULT_TIMEOUT)) as response:

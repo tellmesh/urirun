@@ -1152,6 +1152,8 @@ def main(argv: list[str] | None = None) -> int:
     connectors_smoke.add_argument("--payload", default="{}", help="JSON payload for --run")
     connectors_smoke.add_argument("--allow", default=None, help="Policy allow glob for --run, e.g. 'time://*'")
     connectors_smoke.add_argument("--name", default="connector", help="A2A card name")
+    connectors_from_spec = connectors_sub.add_parser("from-spec", help="Emit bindings from a declarative connector spec (TOML/JSON)")
+    connectors_from_spec.add_argument("spec", help="Path to a connector spec (.toml or .json)")
 
     agent_parser = subparsers.add_parser("agent", help="Drive a registry as an LLM/agent action space")
     agent_sub = agent_parser.add_subparsers(dest="agent_command", required=True)
@@ -1552,6 +1554,10 @@ def main(argv: list[str] | None = None) -> int:
             from urirun import connector_smoke
 
             return connector_smoke.smoke_command(args)
+        if getattr(args, "connectors_command", None) == "from-spec":
+            from urirun.connectors import declarative
+
+            return declarative.from_spec_command(args)
         from urirun import connect_catalog
 
         return connect_catalog.connectors_command(args)

@@ -93,6 +93,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Declarative HTTP/REST connectors: `urirun connectors from-spec <spec.toml|json>`
+  turns an `environments` + `routes` spec into v2 `fetch` bindings (config, not
+  code). The `fetch` adapter now resolves the URL from `environments[<target>] +
+  path`, templates `{placeholder}` in url/path/headers/body from the payload, and
+  omits the body for GET/HEAD; a `{env}` in a route uri expands to one binding per
+  environment. Expresses e.g. KSeF 2.0 routes with auth/crypto left as helpers.
+- `urirun agent space/run` — drive a registry as an LLM/agent action space (see above).
+
+### Added
 - `urirun agent space <registry>` / `urirun agent run <registry> --goal ... --planner mod:func` — drive a registry as an LLM/agent action space. `space`
   prints routes (query/command, inputs); `run` executes a pluggable planner's
   steps under policy (query routes run freely, command routes need
@@ -166,6 +175,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Record IFURI-015 follow-up work: remove remaining host/domain/app
   compatibility modules from core after downstream migration.
 - Point active runtime install references at the `if-uri/urirun` namespace.
+
+## [0.3.17] - 2026-06-21
+
+### Docs
+- Update CHANGELOG.md
+
+### Other
+- Update adapters/python/tests/test_declarative.py
+- Update adapters/python/urirun/connectors/declarative.py
+- Update adapters/python/urirun/runtime/_runtime.py
+- Update adapters/python/urirun/runtime/v2.py
 
 ## [0.3.16] - 2026-06-21
 
