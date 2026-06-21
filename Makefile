@@ -15,6 +15,10 @@ test: version-check test-js test-python test-c conformance test-v1 test-v2 ## Ru
 version-check: ## Verify root, Python and JavaScript package versions match.
 	$(PYTHON) -c 'import json, pathlib, sys, tomllib; root = pathlib.Path("."); versions = {"VERSION": (root / "VERSION").read_text().strip(), "package.json": json.loads((root / "package.json").read_text())["version"], "adapters/python/VERSION": (root / "adapters/python/VERSION").read_text().strip(), "adapters/python/pyproject.toml": tomllib.loads((root / "adapters/python/pyproject.toml").read_text())["project"]["version"], "adapters/js/package.json": json.loads((root / "adapters/js/package.json").read_text())["version"]}; print("urirun versions:", ", ".join(f"{k}={v}" for k, v in versions.items())); sys.exit(0 if len(set(versions.values())) == 1 else 1)'
 
+.PHONY: release-bump
+release-bump: ## Set every version file to V=X.Y.Z and open a CHANGELOG section (then: make version-check).
+	bash scripts/release-bump.sh $(V)
+
 .PHONY: test-js
 test-js: ## Run JavaScript adapter tests.
 	$(NODE) --test adapters/js/*.test.js

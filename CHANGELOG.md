@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0]
+
+### Added
+- `error://` engine on nodes: standardized error codes (gRPC/POSIX/HTTP/RFC 9457),
+  a `@capture` decorator, an `/errors` route and links to docs.ifuri.com/errors.
+- `adopt-pack` — least-invasive URI adoption: zero-change CLI→URI, a capability
+  `manifest` bridge, and config via `[tool.urirun]` (pyproject) or a `"urirun"` key
+  (package.json). First-class `urirun adopt-pack` command; installed packs are
+  discovered without importing them.
+- Connector SDKs for Go, PHP, Ruby, Perl, Bash, Rust, TypeScript, Java and C#
+  (alongside Python/JS), kept in lockstep by a conformance check (structural + a
+  functional execution pass).
+
+### Changed
+- Param-aware routing: templated mid-path `{param}` segments now resolve from a
+  concrete URI and bind to the handler; exact segment matches still take priority.
+- IFURI-007: runtime split into `urirun.runtime.*` with `host`/`connector`
+  subpackages and back-compat shims.
+- `make release-bump V=X.Y.Z` unifies all five version files in one move.
+
+## [0.1.10] - 2026-06-21
+
+### Fixed
+- Fix unused-imports issues (ticket-8f8553e1)
+- Fix string-concat issues (ticket-c02cd211)
+- Fix unused-imports issues (ticket-b4fd1d67)
+- Fix ai-boilerplate issues (ticket-5abec008)
+- Fix unused-imports issues (ticket-0b89872b)
+- Fix unused-imports issues (ticket-08bf3a1d)
+
 ## [0.1.10] - 2026-06-21
 
 ### Fixed
@@ -93,6 +123,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- secret:// providers `vault` (HashiCorp Vault KV v2 via `VAULT_ADDR`/`VAULT_TOKEN`)
+  and `oauth` (cached access token with in-place refresh, bundle in keyring). The
+  `browser` provider deliberately refuses (infostealer pattern the OS blocks by
+  design) and points to the keyring instead.
+- `urirun validate -` / `urirun compile -` now read a bindings document from stdin,
+  so `add-openapi … | urirun validate -` and `from-spec … | urirun compile -` pipe.
+- `urirun add-openapi <openapi.json|url> --scheme <s>` — import an OpenAPI doc
+  into declarative `fetch` routes: each path x method becomes a
+  `<scheme>://<target>/...` route with `environments` + `path` resolution and an
+  `inputSchema` from the path parameters (so `{param}` placeholders validate and
+  template at run time). Auth/crypto stay as the one referenced helper. In
+  `urirun/connectors/openapi_import.py`.
+- `secret://` credentials by reference: a URI carries a *reference*
+  (`secret://keyring/svc/acct`, `getv://NAME`), resolved lazily only in
+  `--execute`, behind a deny-by-default policy (`--secret-allow GLOB`), and
+  injected at the executor boundary (fetch headers/body). Values are wrapped in
+  `SecretStr` (`****` everywhere serialized) and never appear in the registry,
+  route table, error store or results. Providers: env/getv, dotenv, keyring
+  (vault/oauth/browser reserved). In `urirun/runtime/secrets.py`.
+- Node secret guard: `urirun node serve` resolves no `secret://` references by
+  default (a remote `/run` must not read the host's local secrets); opt in with
+  `--allow-secrets`.
 - Declarative HTTP/REST connectors: `urirun connectors from-spec <spec.toml|json>`
   turns an `environments` + `routes` spec into v2 `fetch` bindings (config, not
   code). The `fetch` adapter now resolves the URL from `environments[<target>] +
