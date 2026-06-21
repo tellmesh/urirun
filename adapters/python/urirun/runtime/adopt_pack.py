@@ -47,11 +47,23 @@ def _policy(pattern: dict) -> dict:
     return policy
 
 
+def _handlers(manifest: dict) -> dict:
+    """The operation->handler map, language-agnostic (python first, then node/js)."""
+    handlers = manifest.get("handlers") or {}
+    for lang in ("python", "node", "js", "javascript"):
+        if isinstance(handlers.get(lang), dict):
+            return handlers[lang]
+    for value in handlers.values():  # any single-language map
+        if isinstance(value, dict):
+            return value
+    return {}
+
+
 def manifest_bindings(manifest: dict) -> list[dict]:
     """Map a manifest dict (scheme/uri_patterns/handlers) to v2 binding dicts."""
     scheme = manifest.get("scheme")
     pack = manifest.get("id")
-    handlers = (manifest.get("handlers") or {}).get("python") or {}
+    handlers = _handlers(manifest)
     bindings: list[dict] = []
     for pat in manifest.get("uri_patterns") or []:
         operation = pat.get("operation")
@@ -67,7 +79,7 @@ def manifest_bindings(manifest: dict) -> list[dict]:
                 "operation": operation,
                 "uriKind": pat.get("kind"),
                 "scheme": scheme,
-                "standard": f"tellmesh pack '{pack}' manifest.yaml",
+                "standard": f"pack '{pack}' manifest",
             },
             "source": {"type": "pack-manifest", "pack": pack, "scheme": scheme, "handler": raw},
         }
@@ -78,12 +90,16 @@ def manifest_bindings(manifest: dict) -> list[dict]:
     return bindings
 
 
-def adopt_document(path: str | Path) -> dict:
+def _document(manifest: dict) -> dict:
     from urirun import v2
 
-    bindings = manifest_bindings(_load(path))
+    bindings = manifest_bindings(manifest)
     expanded = {b["uri"]: v2.expand_binding(b["uri"], b) for b in bindings}
     return {"version": v2.VERSION, "bindings": expanded}
+
+
+def adopt_document(path: str | Path) -> dict:
+    return _document(_load(path))
 
 
 # --------------------------------------------------------------------------- #
@@ -129,21 +145,56 @@ def installed_manifest_path(package: str) -> Path | None:
     return None
 
 
+def _package_json_manifest(package_json: Path) -> dict:
+    """Read the ``"urirun"`` key from a package.json (node/js adoption). It either
+    points at a manifest file or carries an inline manifest (scheme/uri_patterns)."""
+    data = json.loads(package_json.read_text(encoding="utf-8"))
+    cfg = data.get("urirun")
+    if not isinstance(cfg, dict):
+        raise FileNotFoundError(f"no 'urirun' key in {package_json}")
+    if cfg.get("manifest"):
+        return _load(package_json.parent / cfg["manifest"])
+    manifest = dict(cfg)
+    manifest.setdefault("id", data.get("name"))
+    return manifest
+
+
+def _config_manifest(cfg: dict, base: Path, name: str | None) -> dict | None:
+    """A [tool.urirun] / package.json config -> manifest dict (file ref or inline)."""
+    if not isinstance(cfg, dict):
+        return None
+    if cfg.get("manifest"):
+        return _load(base / cfg["manifest"])
+    if cfg.get("uri_patterns"):
+        manifest = dict(cfg)
+        manifest.setdefault("id", name)
+        return manifest
+    return None
+
+
 def adopt(target: str | Path) -> dict:
-    """Adopt a manifest file, a project dir ([tool.urirun] or manifest.yaml),
-    or an installed package name — whichever ``target`` resolves to."""
+    """Adopt a manifest file, a package.json, a project dir ([tool.urirun] for
+    Python or a ``urirun`` key for node), or an installed package name."""
     path = Path(target)
     if path.is_file():
+        if path.name == "package.json":
+            return _document(_package_json_manifest(path))
         return adopt_document(path)
     if path.is_dir():
         pyproject = path / "pyproject.toml"
         if pyproject.exists():
-            cfg = _tool_urirun(pyproject)
-            if cfg.get("manifest"):
-                return adopt_document(path / cfg["manifest"])
+            manifest = _config_manifest(_tool_urirun(pyproject), path, path.name)
+            if manifest is not None:
+                return _document(manifest)
+        package_json = path / "package.json"
+        if package_json.exists():
+            try:
+                return _document(_package_json_manifest(package_json))
+            except FileNotFoundError:
+                pass
         for candidate in path.glob("*/manifest.yaml"):
             return adopt_document(candidate)
-        raise FileNotFoundError(f"no [tool.urirun].manifest or */manifest.yaml under {path}")
+        raise FileNotFoundError(f"no [tool.urirun]/urirun config or */manifest.yaml under {path}")
     manifest = installed_manifest_path(str(target))
     if manifest is None:
         raise FileNotFoundError(f"no manifest for installed package {target!r} (urirun.packs entry point or <pkg>/manifest.yaml)")

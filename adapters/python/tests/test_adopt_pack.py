@@ -70,6 +70,33 @@ class AdoptPackTests(unittest.TestCase):
         finally:
             os.unlink(path)
 
+    def test_package_json_inline_manifest(self):
+        import tempfile, os
+        pkg = {
+            "name": "my-browser-pack",
+            "urirun": {
+                "scheme": "browser",
+                "uri_patterns": [
+                    {"pattern": "browser://{host}/page/command/open", "kind": "command",
+                     "operation": "browser.page.open", "side_effects": True, "approval": "required"},
+                    {"pattern": "browser://{host}/page/query/title", "kind": "query",
+                     "operation": "browser.page.title"},
+                ],
+                "handlers": {"node": {"browser.page.open": "js://handlers:open",
+                                      "browser.page.title": "js://handlers:title"}},
+            },
+        }
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "package.json"), "w") as f:
+            json.dump(pkg, f)
+        doc = adopt_pack.adopt(d)  # dir with a urirun package.json
+        self.assertEqual(set(doc["bindings"]),
+                         {"browser://{host}/page/command/open", "browser://{host}/page/query/title"})
+        cmd = doc["bindings"]["browser://{host}/page/command/open"]
+        self.assertEqual(cmd["ref"], "handlers:open")           # node handler mapped
+        self.assertEqual(cmd["policy"], {"approval": "required", "sideEffects": True})
+        v2.compile_registry(doc)  # validates
+
 
 if __name__ == "__main__":
     unittest.main()
