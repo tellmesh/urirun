@@ -21,13 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   self-describing without disambiguation suffixes — what an MCP client/LLM selects on.
 
 ### Added
-- `urirun connectors doctor` now also reports **cross-connector route collisions**:
-  two connectors whose URIs resolve to the same registry route path (the URI *target*
-  is not part of the key, so `browser://host/page/command/screenshot` and
-  `browser://chrome/page/command/screenshot` collide, as does an exact-URI duplicate).
-  In a merged/served registry only one wins (`on_conflict`), silently shadowing the
-  others — `doctor` lists each colliding path with its owners and exits non-zero
-  (gates CI). New `connector_collisions()` powers it.
+- `urirun connectors doctor` now reports **cross-connector route collisions**, classified
+  by severity. `duplicate-uri`: two connectors define the **identical** URI — the index
+  keeps one, silently shadowing the other in any merged/served registry (a real bug;
+  fails the doctor / gates CI). `shared-path`: different URIs (e.g. different target)
+  that share one registry tree path (`package.resource.operation`) — index resolution
+  disambiguates them, so they collide only under tree-fallback (informational, does not
+  fail). New `connector_collisions()` powers it; `--json` carries the classified list.
 - `agent.action_space` now includes each route's **full input JSON Schema** (`schema`),
   not just field names — the same schema the MCP projection exposes. Handing it to an
   LLM lets the model pick a command *and fill its typed parameters* from a natural
@@ -36,6 +36,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.12] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update adapters/python/.urirun/discovered-registry.json
+- Update adapters/python/tests/test_urihandler.py
+- Update adapters/python/urirun/runtime/v2.py
 
 ## [0.4.11] - 2026-06-22
 

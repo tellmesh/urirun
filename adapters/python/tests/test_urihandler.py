@@ -278,20 +278,9 @@ class UriHandlerTests(unittest.TestCase):
         with self.assertRaises(_runtime.PolicyError):
             _runtime.run_local_function(ctx, policy={"denyRefImport": True})
 
-    def test_connector_collisions_flag_shared_route_paths(self):
-        """Two connectors claiming the same route-tree path (target differs) collide:
-        the merged registry shadows all but one. doctor must surface this."""
-        def provider_a():
-            return {"version": v2.VERSION, "bindings": {
-                "foo://host/x/command/do": {"kind": "command", "adapter": "argv-template",
-                                            "argv": ["a"], "meta": {"connector": "conn-a"}}}}
-
-        def provider_b():
-            # different target ("other") → different URI, but SAME route path foo.x.command
-            return {"version": v2.VERSION, "bindings": {
-                "foo://other/x/command/do": {"kind": "command", "adapter": "argv-template",
-                                             "argv": ["b"], "meta": {"connector": "conn-b"}}}}
-
+    def test_connector_collisions_classify_duplicate_vs_shared_path(self):
+        """duplicate-uri (same exact URI → index shadows one) is a real conflict;
+        shared-path (different target, same tree path) is latent (index resolves it)."""
         class EP:
             def __init__(self, name, fn):
                 self.name, self._fn = name, fn
@@ -300,16 +289,33 @@ class UriHandlerTests(unittest.TestCase):
             def load(self):
                 return self._fn
 
+        def binding(uri, conn):
+            return {uri: {"kind": "command", "adapter": "argv-template", "argv": ["x"], "meta": {"connector": conn}}}
+
         original = v2.metadata.entry_points
-        v2.metadata.entry_points = lambda: [EP("conn-a", provider_a), EP("conn-b", provider_b)]
         try:
-            collisions = v2.connector_collisions()
-            self.assertEqual(len(collisions), 1)
-            self.assertEqual(collisions[0]["route"], "foo.x.command")
-            self.assertEqual({o["connector"] for o in collisions[0]["owners"]}, {"conn-a", "conn-b"})
+            # shared-path: different target → different URI, same route path foo.x.command
+            v2.metadata.entry_points = lambda: [
+                EP("a", lambda: {"version": v2.VERSION, "bindings": binding("foo://host/x/command/do", "a")}),
+                EP("b", lambda: {"version": v2.VERSION, "bindings": binding("foo://other/x/command/do", "b")}),
+            ]
+            cols = v2.connector_collisions()
+            self.assertEqual([c["kind"] for c in cols], ["shared-path"])
+            self.assertEqual(cols[0]["route"], "foo.x.command")
+            self.assertEqual({o["connector"] for o in cols[0]["owners"]}, {"a", "b"})
+
+            # duplicate-uri: two connectors define the IDENTICAL uri
+            v2.metadata.entry_points = lambda: [
+                EP("a", lambda: {"version": v2.VERSION, "bindings": binding("foo://host/x/command/do", "a")}),
+                EP("b", lambda: {"version": v2.VERSION, "bindings": binding("foo://host/x/command/do", "b")}),
+            ]
+            cols = v2.connector_collisions()
+            self.assertEqual([c["kind"] for c in cols], ["duplicate-uri"])  # not also shared-path
+            self.assertEqual(cols[0]["uri"], "foo://host/x/command/do")
+            self.assertEqual(cols[0]["connectors"], ["a", "b"])
 
             # a single connector owning a path is NOT a collision
-            v2.metadata.entry_points = lambda: [EP("conn-a", provider_a)]
+            v2.metadata.entry_points = lambda: [EP("a", lambda: {"version": v2.VERSION, "bindings": binding("foo://host/x/command/do", "a")})]
             self.assertEqual(v2.connector_collisions(), [])
         finally:
             v2.metadata.entry_points = original

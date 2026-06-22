@@ -359,30 +359,51 @@ def connector_health(group: str = ENTRY_POINT_GROUP) -> list[dict]:
 
 
 def connector_collisions(group: str = ENTRY_POINT_GROUP) -> list[dict]:
-    """Cross-connector route collisions across the installed fleet.
+    """Cross-connector route collisions across the installed fleet, classified by severity.
 
-    Routes are keyed in the registry tree by their resolved path
-    (``package.resource.operation``) — the URI *target* is bound at resolve time and
-    is NOT part of that key. So ``browser://host/page/command/screenshot`` (one
-    connector) and ``browser://chrome/page/command/screenshot`` (another) collide on
-    the same tree path, and an exact-URI duplicate collides outright: in a merged
-    registry only one wins (``on_conflict``), silently shadowing the others. Returns
-    ``[{route, owners: [{connector, uri}]}]`` for every path claimed by >1 connector.
+    Resolution is index-first (exact normalized URI → route), with the route *tree*
+    (keyed by ``package.resource.operation``; target/action are not in the key) as a
+    fallback. So two kinds of overlap exist:
+
+    * ``duplicate-uri`` — two connectors define the **identical** URI. The index keeps
+      one, silently shadowing the other in any merged/served registry. A real bug.
+    * ``shared-path`` — different URIs (e.g. different target) that share one tree path.
+      Index resolution disambiguates them, so they only collide under *tree-fallback*
+      (a registry compiled without an index, or a wildcard-target route). Latent.
+
+    Returns ``[{kind, ...}]`` — ``duplicate-uri`` rows carry ``{uri, connectors}``,
+    ``shared-path`` rows carry ``{route, owners:[{connector, uri}]}``.
     """
     from collections import defaultdict
 
+    by_uri: dict[str, list[str]] = defaultdict(list)
     by_path: dict[str, list[dict]] = defaultdict(list)
     for binding in entry_point_bindings(group=group):  # fault-isolated load
-        uri = binding.get("uri")
+        uri = str(binding.get("uri") or "")
+        if not uri:
+            continue
+        conn = (binding.get("meta") or {}).get("connector") or "?"
+        by_uri[uri].append(conn)
         try:
-            route = ".".join(reglib.translate(reglib.parse_uri(str(uri)))["route"])
+            route = ".".join(reglib.translate(reglib.parse_uri(uri))["route"])
         except Exception:  # noqa: BLE001 - an unparseable uri can't collide; skip it.
             continue
-        by_path[route].append({"connector": (binding.get("meta") or {}).get("connector") or "?", "uri": uri})
-    collisions = []
+        by_path[route].append({"connector": conn, "uri": uri})
+
+    collisions: list[dict] = []
+    for uri, conns in sorted(by_uri.items()):
+        distinct = sorted(set(conns))
+        if len(distinct) > 1:
+            collisions.append({"kind": "duplicate-uri", "uri": uri, "connectors": distinct})
+    duplicate_uris = {c["uri"] for c in collisions}
     for route, owners in sorted(by_path.items()):
-        if len({owner["connector"] for owner in owners}) > 1:
-            collisions.append({"route": route, "owners": owners})
+        uris = {o["uri"] for o in owners}
+        # only a *latent* shared-path collision: >1 connector, >1 distinct uri, and not
+        # already reported as an exact duplicate above.
+        if len({o["connector"] for o in owners}) > 1 and len(uris) > 1 and not (uris & duplicate_uris):
+            collisions.append({"kind": "shared-path", "route": route,
+                               "owners": sorted(({"connector": o["connector"], "uri": o["uri"]} for o in owners),
+                                                key=lambda o: (o["connector"], o["uri"]))})
     return collisions
 
 
@@ -2177,11 +2198,16 @@ def _cmd_connectors_doctor(args, parser) -> int:
     group = getattr(args, "entry_point_group", ENTRY_POINT_GROUP)
     report = connector_health(group)
     collisions = connector_collisions(group)
+    # duplicate-uri is a real conflict (index shadows one); shared-path is latent
+    # (index resolves it, only the tree fallback collides) → informational, not a gate.
+    dup = [c for c in collisions if c["kind"] == "duplicate-uri"]
+    shared = [c for c in collisions if c["kind"] == "shared-path"]
     unhealthy = [r for r in report if not r["ok"] or r.get("scriptIssues")]
+    failing = bool(unhealthy or dup)
     if getattr(args, "json", False):
-        reglib._emit_json({"ok": not unhealthy and not collisions, "total": len(report),
-                           "unhealthy": len(unhealthy), "connectors": report, "collisions": collisions}, "-")
-        return 1 if (unhealthy or collisions) else 0
+        reglib._emit_json({"ok": not failing, "total": len(report), "unhealthy": len(unhealthy),
+                           "connectors": report, "collisions": collisions}, "-")
+        return 1 if failing else 0
     for r in report:
         if not r["ok"]:
             print(f"  [FAIL] {r['name']:22s} {r.get('error', '')}")
@@ -2191,12 +2217,12 @@ def _cmd_connectors_doctor(args, parser) -> int:
         else:
             print(f"  [ok  ] {r['name']:22s} {r['bindingCount']} bindings")
     print(f"\n{len(report) - len(unhealthy)}/{len(report)} connectors healthy")
-    if collisions:
-        print(f"\n{len(collisions)} cross-connector route collision(s) — merged registry shadows all but one:")
-        for c in collisions:
-            owners = ", ".join(f"{o['connector']}({o['uri']})" for o in c["owners"])
-            print(f"  [COLLISION] {c['route']}: {owners}")
-    return 1 if (unhealthy or collisions) else 0
+    for c in dup:
+        print(f"  [DUPLICATE-URI] {c['uri']} claimed by {', '.join(c['connectors'])} — registry shadows all but one")
+    for c in shared:
+        owners = ", ".join(f"{o['connector']}({o['uri']})" for o in c["owners"])
+        print(f"  [shared-path]   {c['route']} — distinct URIs resolve via index; collide only on tree-fallback: {owners}")
+    return 1 if failing else 0
 
 
 def _cmd_connectors(args, parser) -> int:
