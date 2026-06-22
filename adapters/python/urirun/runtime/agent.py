@@ -29,18 +29,32 @@ from urirun.runtime import _runtime, v2
 
 
 def action_space(registry: dict) -> list[dict[str, Any]]:
-    """Routes an agent can choose from: uri, query/command kind, label, inputs."""
+    """Routes an agent can choose from: uri, query/command kind, label, and the full
+    input JSON Schema.
+
+    ``schema`` is the route's ``inputSchema`` verbatim — types, ``required``, ``enum``,
+    ``default``, descriptions. Handing the schema to an LLM (the same JSON Schema MCP
+    tools use) is what lets it pick a command *and fill typed parameters* from a natural
+    language intent, instead of guessing field names. ``inputs``/``required`` are kept as
+    flat conveniences for simpler callers."""
+    from urirun import _registry as reglib
+
     space = []
-    for route in v2.list_routes(registry):
-        schema = route.get("inputSchema") or {}
+    for route in reglib.flatten_registry_document(registry):
+        uri = route["uri"]
+        entry = route.get("routeEntry") or {}
+        config = entry.get("config") or {}
+        schema = config.get("inputSchema") or entry.get("inputSchema") or {"type": "object", "properties": {}}
+        meta = entry.get("meta") or {}
         space.append({
-            "uri": route["uri"],
-            "kind": "query" if "/query/" in route["uri"] else "command",
-            "label": (route.get("meta") or {}).get("label", ""),
+            "uri": uri,
+            "kind": "query" if "/query/" in uri else "command",
+            "label": meta.get("label", ""),
+            "schema": schema,
             "inputs": list((schema.get("properties") or {}).keys()),
             "required": schema.get("required", []),
         })
-    return space
+    return sorted(space, key=lambda r: r["uri"])
 
 
 def _parse_stdout(result: dict) -> Any:

@@ -1084,17 +1084,20 @@ def read_json(handler: BaseHTTPRequestHandler) -> dict:
 def _pool_executors(pools):
     """Swap the argv-template executor for a warm-worker dispatch, keeping v2.run's
     validate -> policy gate -> execute flow intact (only execution changes)."""
-    from urirun.runtime.v2 import EXECUTORS, run_argv_template
+    from urirun.runtime.v2 import EXECUTORS
 
     def run_pooled(ctx, policy, execute):
+        adapter = ctx["routeEntry"].get("adapter")
         result = pools.run_route(ctx["routeEntry"], ctx.get("payload") or {})
-        if result is None:
-            return run_argv_template(ctx, policy, execute)   # not poolable -> normal spawn
+        if result is None:                                   # not poolable -> original spawn
+            return EXECUTORS[adapter](ctx, policy, execute)
         inner = result.get("result", result)
-        return {"type": "command", "pooled": True, "exitCode": 0 if result.get("ok") else 1,
+        return {"type": "pooled", "pooled": True, "adapter": adapter,
+                "exitCode": 0 if result.get("ok") else 1, "value": inner,
                 "stdout": json.dumps(inner) if isinstance(inner, (dict, list)) else str(inner), "stderr": ""}
 
-    return {**EXECUTORS, "argv-template": run_pooled, "command": run_pooled}
+    return {**EXECUTORS, "argv-template": run_pooled, "command": run_pooled,
+            "local-function-subprocess": run_pooled}
 
 
 def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, public_url: str | None = None,

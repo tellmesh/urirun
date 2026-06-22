@@ -368,11 +368,29 @@ class Connector:
         if manifest_prose is not None:
             sub.add_parser("manifest", help="Print the connector manifest JSON")
 
+        from collections import Counter
+
+        def _simple(binding: dict) -> str:
+            return (binding.get("meta") or {}).get("cliAlias") or binding["uri"].rsplit("/", 1)[-1]
+
+        def _qualified(binding: dict) -> str:
+            # resource + operation, dropping the query/command kind segment, so two
+            # routes that share a last segment (datasets/.../list, artifacts/.../list)
+            # get distinct commands (datasets-list, artifacts-list).
+            path = binding["uri"].split("://", 1)[-1].split("/", 1)[-1]
+            return "-".join(p for p in path.split("/") if p not in ("query", "command")) or _simple(binding)
+
+        # A bare last segment is ambiguous when >1 route shares it; only an explicit
+        # cliAlias keeps the short name. Otherwise fall back to the qualified name.
+        clashing = {name for name, n in Counter(_simple(b) for b in live).items() if n > 1}
         route_by_cmd: dict[str, dict] = {}
         for binding in live:
-            name = (binding.get("meta") or {}).get("cliAlias") or binding["uri"].rsplit("/", 1)[-1]
-            p = sub.add_parser(name, help=(binding.get("meta") or {}).get("label") or binding["uri"])
-            self._add_route_arguments(p, binding.get("inputSchema") or {}, bool((binding.get("meta") or {}).get("external")))
+            meta = binding.get("meta") or {}
+            name = meta.get("cliAlias") or (_qualified(binding) if _simple(binding) in clashing else _simple(binding))
+            while name in route_by_cmd:  # last-resort uniqueness guard
+                name = f"{name}-{binding['uri'].split('://', 1)[0]}"
+            p = sub.add_parser(name, help=meta.get("label") or binding["uri"])
+            self._add_route_arguments(p, binding.get("inputSchema") or {}, bool(meta.get("external")))
             route_by_cmd[name] = binding
         return parser, route_by_cmd
 

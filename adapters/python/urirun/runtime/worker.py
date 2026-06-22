@@ -86,6 +86,45 @@ def _worker_main(cli_ref: str) -> int:
     return 0
 
 
+def _handler_worker_main() -> int:
+    """Warm runner for ``local-function`` handlers — the pooled twin of
+    ``python -m urirun.exec``. Reads ``{"ref": "module:export", "payload": {...}}``
+    line by line, imports each ref **once** (cached), and calls the handler
+    in-process, so a flow with many steps pays the connector import only once."""
+    import inspect
+
+    cache: dict = {}
+
+    def resolve(ref: str):
+        fn = cache.get(ref)
+        if fn is None:
+            module_name, _, export = ref.partition(":")
+            fn = getattr(importlib.import_module(module_name), export)
+            cache[ref] = fn
+        return fn
+
+    sys.stdout.write(json.dumps({"ready": True}) + "\n")
+    sys.stdout.flush()
+    for line in sys.stdin:
+        line = line.strip()
+        if not line:
+            continue
+        request = json.loads(line)
+        ref, payload = request.get("ref", ""), request.get("payload") or {}
+        try:
+            fn = resolve(ref)
+            params = inspect.signature(fn).parameters
+            if not any(p.kind == p.VAR_KEYWORD for p in params.values()):
+                payload = {k: v for k, v in payload.items() if k in params}
+            result = fn(**payload)
+            ok = result.get("ok", True) if isinstance(result, dict) else True
+            sys.stdout.write(json.dumps({"ok": bool(ok), "result": result}) + "\n")
+        except Exception as exc:  # noqa: BLE001 - report, keep the worker alive
+            sys.stdout.write(json.dumps({"ok": False, "error": str(exc), "result": {"ok": False, "error": str(exc)}}) + "\n")
+        sys.stdout.flush()
+    return 0
+
+
 # --------------------------------------------------------------------------- #
 # client / pool
 # --------------------------------------------------------------------------- #
@@ -126,6 +165,37 @@ class WorkerPool:
         self.close()
 
 
+class HandlerPool:
+    """A single long-lived worker that runs ``local-function`` handlers by ref,
+    caching imports. Reuse across many calls/steps so the connector import (and
+    urirun import) is paid once instead of per ``python -m urirun.exec`` spawn."""
+
+    def __init__(self, *, python: str | None = None):
+        self._lock = threading.Lock()
+        self.proc = subprocess.Popen(
+            [python or sys.executable, "-m", "urirun.runtime.worker", "--handler"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1,
+        )
+        self.proc.stdout.readline()  # consume {"ready": true}
+
+    def run_ref(self, ref: str, payload: dict) -> dict:
+        with self._lock:
+            self.proc.stdin.write(json.dumps({"ref": ref, "payload": payload}) + "\n")
+            self.proc.stdin.flush()
+            return json.loads(self.proc.stdout.readline())
+
+    def close(self) -> None:
+        with contextlib.suppress(Exception):
+            self.proc.stdin.close()
+            self.proc.wait(timeout=5)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+
+
 def _cli_ref_for_script(script_name: str) -> str | None:
     """Map a console-script name (a route's argv[0]) to its ``module:func`` so a
     warm worker can import that connector's CLI."""
@@ -144,12 +214,22 @@ class ConnectorPools:
 
     def __init__(self):
         self._pools: dict[str, WorkerPool] = {}
+        self._handler_pool: HandlerPool | None = None
 
     def run_route(self, route_entry: dict, payload: dict) -> dict | None:
-        """Run an argv-template route through a warm worker; return ``None`` if the
-        route can't be pooled (not argv-template, or no console script found) so the
-        caller can fall back to a normal spawn."""
-        if route_entry.get("adapter") != "argv-template":
+        """Run an argv-template or local-function-subprocess route through a warm
+        worker; return ``None`` if the route can't be pooled so the caller can fall
+        back to a normal spawn."""
+        adapter = route_entry.get("adapter")
+        if adapter == "local-function-subprocess":
+            py = route_entry.get("python") or {}
+            module, export = py.get("module"), py.get("export")
+            if not module or not export:
+                return None
+            if self._handler_pool is None:
+                self._handler_pool = HandlerPool()
+            return self._handler_pool.run_ref(f"{module}:{export}", payload)
+        if adapter != "argv-template":
             return None
         argv = route_entry.get("argv") or (route_entry.get("config") or {}).get("argv") or []
         if not argv:
@@ -169,7 +249,12 @@ class ConnectorPools:
         for pool in self._pools.values():
             pool.close()
         self._pools.clear()
+        if self._handler_pool is not None:
+            self._handler_pool.close()
+            self._handler_pool = None
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--handler":
+        raise SystemExit(_handler_worker_main())
     raise SystemExit(_worker_main(sys.argv[1] if len(sys.argv) > 1 else ""))

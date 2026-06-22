@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `agent.action_space` now includes each route's **full input JSON Schema** (`schema`),
+  not just field names — the same schema the MCP projection exposes. Handing it to an
+  LLM lets the model pick a command *and fill its typed parameters* from a natural
+  language intent (types, `required`, defaults, enums), instead of guessing field names.
+  It now reads route entries via `flatten_registry_document`, so handler/manifest routes
+  expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
+  Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
+  the action space is the only core change).
+
+## [0.4.7] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update adapters/js/package.json
+- Update adapters/python/.urirun/discovered-registry.json
+- Update adapters/python/VERSION
+- Update adapters/python/pyproject.toml
+- Update adapters/python/tests/test_worker_pool.py
+- Update adapters/python/urirun/__init__.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/agent.py
+- Update adapters/python/urirun/runtime/worker.py
+
+## [0.4.6] - 2026-06-22
+
+### Added
 - `urirun agent run` now threads data between plan steps: a step payload may carry
   `$ref:<step>.<field>` (e.g. `{"image_id": "$ref:0.image_id"}`), resolved from the
   earlier step's real output at execution time. An agent's static `(goal, space) -> steps`
