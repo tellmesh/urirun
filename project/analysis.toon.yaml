@@ -1,11 +1,12 @@
-# code2llm | 136f 21435L | python:77,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-22
-# generated in 0.04s
-# CC̅=4.3 | critical:14/1009 | dups:0 | cycles:0
+# code2llm | 136f 21455L | python:77,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-22
+# generated in 0.05s
+# CC̅=4.3 | critical:13/1012 | dups:0 | cycles:0
 
-HEALTH[14]:
+HEALTH[13]:
   🟡 CC    main CC=18 (limit:15)
   🟡 CC    main CC=17 (limit:15)
-  🟡 CC    watch_node CC=15 (limit:15)
+  🟡 CC    resolveParams CC=15 (limit:15)
+  🟡 CC    run CC=19 (limit:15)
   🟡 CC    normalize_flow CC=15 (limit:15)
   🟡 CC    data_command CC=15 (limit:15)
   🟡 CC    watch_command CC=17 (limit:15)
@@ -15,11 +16,9 @@ HEALTH[14]:
   🟡 CC    _handle_run CC=22 (limit:15)
   🟡 CC    _stream_events CC=19 (limit:15)
   🟡 CC    _resolve_serve_opts CC=17 (limit:15)
-  🟡 CC    resolveParams CC=15 (limit:15)
-  🟡 CC    run CC=19 (limit:15)
 
 REFACTOR[1]:
-  1. split 14 high-CC methods  (CC>15)
+  1. split 13 high-CC methods  (CC>15)
 
 PIPELINES[353]:
   [1] Src [http]: http
@@ -131,7 +130,7 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.3    ←in:9  →out:0
-  │ !! mesh                      2650L  3C  149m  CC=32     ←1
+  │ !! mesh                      2670L  3C  152m  CC=32     ←1
   │ !! v2                        2542L  1C  125m  CC=14     ←3
   │ !! _registry                  718L  0C   43m  CC=14     ←0
   │ !! __init__                   702L  1C   49m  CC=14     ←10
@@ -194,9 +193,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0

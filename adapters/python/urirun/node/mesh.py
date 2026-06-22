@@ -1636,17 +1636,16 @@ def run_command(args: argparse.Namespace) -> int:
     stop, done = threading.Event(), {"env": None}
 
     def watch() -> None:
-        try:
-            for ev in client.watch(run=run_id, stop=stop, timeout=timeout + 10):
-                if ev.get("event") == "progress":
-                    extra = {k: v for k, v in ev.items() if k not in ("event", "run", "uri", "at", "service")}
-                    sys.stdout.write(f"  ░ {extra.get('line', json.dumps(extra, ensure_ascii=False))}\n")
-                    sys.stdout.flush()
-                elif ev.get("event") == "result":
-                    done["env"] = ev
-                    return
-        except Exception:  # noqa: BLE001
-            return
+        # resilient: stream_run reconnects from the last event id after a drop, so a long
+        # run's progress isn't lost mid-stream.
+        for ev in client.stream_run(run_id, stop=stop, timeout=timeout + 10):
+            if ev.get("event") == "progress":
+                extra = {k: v for k, v in ev.items() if k not in ("event", "run", "uri", "at", "service", "_id")}
+                sys.stdout.write(f"  ░ {extra.get('line', json.dumps(extra, ensure_ascii=False))}\n")
+                sys.stdout.flush()
+            elif ev.get("event") == "result":
+                done["env"] = ev
+                return
 
     tw = threading.Thread(target=watch, daemon=True)
     tw.start()
@@ -1933,7 +1932,9 @@ def probe_command(args: argparse.Namespace) -> int:
         try:
             with urllib.request.urlopen(request, timeout=args.timeout) as resp:
                 env = json.loads(resp.read() or b"{}")
-            degraded = urirun.result_degraded(env) if env.get("ok") else None
+            # only meaningful with --execute: a dry-run result is inherently "simulated",
+            # which is NOT the connector running in mock mode.
+            degraded = urirun.result_degraded(env) if (env.get("ok") and args.execute) else None
             rows.append({"uri": uri, "ok": bool(env.get("ok")), "degraded": degraded,
                          "error": (env.get("error") or {}) if not env.get("ok") else None})
         except urllib.error.HTTPError as exc:

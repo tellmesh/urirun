@@ -344,6 +344,48 @@ class MeshTests(unittest.TestCase):
         finally:
             server.shutdown()
 
+    def test_watch_resume_replays_missed_progress_by_event_id(self):
+        # a client that connects with last_event_id replays the run's earlier progress it
+        # missed — the basis for resilient stream_run resume after a drop.
+        import socket as _socket
+        import sys as _sys
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        def streamer(**payload):
+            for i in range(4):
+                mesh.emit({"line": f"r{i}"})
+            return {"ok": True}
+
+        mod = type(_sys)("res_mod"); mod.go = streamer
+        _sys.modules["res_mod"] = mod
+        try:
+            registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+                "proc://r/d/command/go": {"kind": "command", "adapter": "local-function", "ref": "res_mod:go",
+                                          "python": {"type": "python", "module": "res_mod", "export": "go"},
+                                          "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("r", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            _wait_healthy(base)
+            c = NodeClient(base)
+            # run synchronously first so all 4 progress events land in the ring buffer
+            env = c.run("proc://r/d/command/go", run_id="resumeX")
+            self.assertTrue(env["ok"])
+            # now a late subscriber replays from id 0, filtered to this run → gets all 4 + nothing else
+            got = []
+            for ev in c.watch(run="resumeX", last_event_id=0, timeout=3):
+                if ev.get("event") == "progress":
+                    got.append(ev["line"])
+                    if len(got) >= 4:
+                        break
+            self.assertEqual(got, ["r0", "r1", "r2", "r3"])
+        finally:
+            server.shutdown()
+            _sys.modules.pop("res_mod", None)
+
     def test_host_run_stream_command(self):
         # `urirun host run <url> <uri> --stream` drives an async run and returns 0 on success.
         import argparse

@@ -132,22 +132,55 @@ class NodeClient:
 
     # --- live events (node -> host) ---
     def watch(self, scheme: str | list | None = None, run: str | None = None,
-              stop: threading.Event | None = None, timeout: float = 30.0) -> Iterator[dict]:
-        """Yield the node's SSE events live. `scheme`/`run` filter server-side."""
+              stop: threading.Event | None = None, timeout: float = 30.0,
+              last_event_id: int = 0) -> Iterator[dict]:
+        """Yield the node's SSE events live, each tagged with its `_id`. `scheme`/`run`
+        filter server-side; `last_event_id` replays what was missed (resume after a drop)."""
         params = []
         if scheme:
             params.append("scheme=" + (",".join(scheme) if isinstance(scheme, list) else scheme))
         if run:
             params.append("run=" + run)
+        if last_event_id:
+            params.append(f"last_event_id={last_event_id}")
         url = self.base + "/events" + ("?" + "&".join(params) if params else "")
-        req = urllib.request.Request(url, headers=self._auth({"Accept": "text/event-stream"}))
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        headers = self._auth({"Accept": "text/event-stream"})
+        if last_event_id:
+            headers["Last-Event-ID"] = str(last_event_id)
+        cur_id = last_event_id
+        with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=timeout) as resp:
             for raw in resp:
                 if stop is not None and stop.is_set():
                     return
                 line = raw.decode("utf-8", "replace").strip()
-                if line.startswith("data:") and line[5:].strip():
+                if line.startswith("id:"):
                     try:
-                        yield json.loads(line[5:].strip())
+                        cur_id = int(line[3:].strip())
+                    except ValueError:
+                        pass
+                elif line.startswith("data:") and line[5:].strip():
+                    try:
+                        ev = json.loads(line[5:].strip())
                     except Exception:
                         continue
+                    ev.setdefault("_id", cur_id)
+                    yield ev
+
+    def stream_run(self, run_id: str, stop: threading.Event | None = None,
+                   timeout: float = 120.0) -> Iterator[dict]:
+        """Resilient run stream: yield a run's progress/result, reconnecting from the last
+        seen event id after a drop so nothing is missed until the terminal `result`."""
+        last = 0
+        deadline = None  # set by caller-side timeout via stop; we bound each connection
+        while True:
+            try:
+                for ev in self.watch(run=run_id, stop=stop, timeout=timeout, last_event_id=last):
+                    last = max(last, int(ev.get("_id") or 0))
+                    yield ev
+                    if ev.get("event") == "result":
+                        return
+            except Exception:  # noqa: BLE001 - connection drop; reconnect from `last`
+                pass
+            if stop is not None and stop.is_set():
+                return
+            _ = deadline  # reconnect loop; caller stops via `stop` or process exit

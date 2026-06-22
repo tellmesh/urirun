@@ -1,5 +1,4 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
 
 ## Overview
 
@@ -7,7 +6,7 @@
 - **Primary Language**: python
 - **Languages**: python: 77, json: 12, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1009
+- **Total Functions**: 1012
 - **Total Classes**: 27
 - **Modules**: 135
 - **Entry Points**: 392
@@ -15,7 +14,7 @@
 ## Architecture by Module
 
 ### adapters.python.urirun.node.mesh
-- **Functions**: 149
+- **Functions**: 152
 - **Classes**: 3
 - **File**: `mesh.py`
 
@@ -465,83 +464,6 @@ Supported forms:
 ### adapters.python.urirun.runtime._registry._parse_command
 - **Output to**: shlex.split, json.loads, isinstance, str
 
-## Behavioral Patterns
-
-### recursion_command
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.command
-
-### recursion_shell
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.shell
-
-### recursion_handler
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.handler
-
-### recursion__field_type
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.codegen._field_type
-
-### recursion__apply_defaults
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.v2._apply_defaults
-
-### recursion__placeholders_in
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.v2._placeholders_in
-
-### recursion__fetch_render
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime._runtime._fetch_render
-
-### recursion__resolve_refs
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.agent._resolve_refs
-
-### recursion__walk_route_entries
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime._registry._walk_route_entries
-
-### recursion_redact
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.secrets.redact
-
-### state_machine_Urirun
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.java.Urirun.Urirun.Connector, adapters.java.Urirun.Urirun.Connector, adapters.java.Urirun.Urirun.command, adapters.java.Urirun.Urirun.bindingsJson
-
-### state_machine_Connector
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.ts.urirun.Connector.command, adapters.ts.urirun.Connector.document, adapters.ts.urirun.Connector.toJSON, adapters.ts.urirun.Connector.connector
-
-### state_machine_Connector
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.php.Urirun.Connector.__construct, adapters.php.Urirun.Connector.target, adapters.php.Urirun.Connector.command, adapters.php.Urirun.Connector.bindings, adapters.php.Urirun.Connector.bindingsJson
-
-### state_machine_Connector
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.python.urirun.Connector.__post_init__, adapters.python.urirun.Connector.uri, adapters.python.urirun.Connector._meta, adapters.python.urirun.Connector.command, adapters.python.urirun.Connector.shell
-
-### state_machine_WorkerPool
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.python.urirun.runtime.worker.WorkerPool.__init__, adapters.python.urirun.runtime.worker.WorkerPool.run_argv, adapters.python.urirun.runtime.worker.WorkerPool.run_uri, adapters.python.urirun.runtime.worker.WorkerPool.close, adapters.python.urirun.runtime.worker.WorkerPool.__enter__
-
 ## Public API Surface
 
 Functions exposed as public API (no underscore prefix):
@@ -572,7 +494,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
-- `adapters.python.urirun.node.mesh.watch_node` - 22 calls
 - `adapters.python.urirun.node.mesh.apply_deploy` - 22 calls
 - `adapters.python.urirun.node.mesh.serve_node` - 22 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
@@ -586,6 +507,7 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.mesh.monitor_command` - 19 calls
 - `adapters.python.urirun.runtime._registry.discover_docker_labels` - 18 calls
 - `adapters.python.urirun.host.host_dashboard.create_handler` - 17 calls
+- `adapters.python.urirun.runtime.errors.to_ticket` - 17 calls
 
 ## System Interactions
 
