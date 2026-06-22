@@ -100,26 +100,44 @@ def diff_manifest(local: dict, hub: dict) -> list[dict]:
     membership (a reorder is not a drift); scalars and install fields compare
     exactly. Useful as a CI guard inside each connector repo.
     """
+    return _diff_scalar_fields(local, hub, ("id", "status")) + _diff_set_fields(local, hub, ("uriSchemes", "routes")) + _diff_install(local, hub)
+
+
+def _diff_scalar_fields(local: dict, hub: dict, fields: tuple[str, ...]) -> list[dict]:
+    """Exact (stringified) scalar comparison for the given fields."""
+    return [
+        {"field": field, "local": local.get(field), "hub": hub.get(field)}
+        for field in fields
+        if str(local.get(field) or "") != str(hub.get(field) or "")
+    ]
+
+
+def _diff_set_fields(local: dict, hub: dict, fields: tuple[str, ...]) -> list[dict]:
+    """Membership comparison (order-insensitive) for list-valued fields."""
     diffs: list[dict] = []
-    for field in ("id", "status"):
-        if str(local.get(field) or "") != str(hub.get(field) or ""):
-            diffs.append({"field": field, "local": local.get(field), "hub": hub.get(field)})
-    for field in ("uriSchemes", "routes"):
+    for field in fields:
         local_set = {str(item) for item in (local.get(field) or [])}
         hub_set = {str(item) for item in (hub.get(field) or [])}
         if local_set != hub_set:
             diffs.append({"field": field, "onlyLocal": sorted(local_set - hub_set), "onlyHub": sorted(hub_set - local_set)})
+    return diffs
+
+
+def _diff_install(local: dict, hub: dict) -> list[dict]:
+    """Compare the install section, tolerating the legacy string form."""
     raw_install = local.get("install")
     hub_install = hub.get("install") if isinstance(hub.get("install"), dict) else {}
     if isinstance(raw_install, dict):
-        for key in ("mode", "pipSpec"):
-            if str(raw_install.get(key) or "") != str(hub_install.get(key) or ""):
-                diffs.append({"field": f"install.{key}", "local": raw_install.get(key), "hub": hub_install.get(key)})
-    elif hub_install:
+        return [
+            {"field": f"install.{key}", "local": raw_install.get(key), "hub": hub_install.get(key)}
+            for key in ("mode", "pipSpec")
+            if str(raw_install.get(key) or "") != str(hub_install.get(key) or "")
+        ]
+    if hub_install:
         # Legacy packages declare install as a "pip install ..." string instead
         # of the structured {mode, pipSpec} the hub catalog standardizes on.
-        diffs.append({"field": "install", "local": raw_install, "hub": hub_install, "note": "legacy string install; hub expects {mode, pipSpec}"})
-    return diffs
+        return [{"field": "install", "local": raw_install, "hub": hub_install, "note": "legacy string install; hub expects {mode, pipSpec}"}]
+    return []
 
 
 # --- CLI -------------------------------------------------------------------

@@ -240,13 +240,13 @@ publishing:
       asset_glob: adapters/python/dist/*
 strategies:
   python:
-    test: pytest tests/ -v
+    test: cd adapters/python && python -m pytest -q
     build: cd adapters/python && python -m build
     publish: twine upload --skip-existing adapters/python/dist/urirun-{version}*
     publish_enabled: true
     dependencies:
-      file: requirements.txt
-      lock: pip freeze > requirements.txt
+      file: adapters/python/requirements.txt
+      lock: 'true'
   nodejs:
     test: npm test
     build: npm run build

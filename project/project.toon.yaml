@@ -1,52 +1,52 @@
-# urirun | 608 func | 49f | 14289L | python | 2026-06-21
+# urirun | 813 func | 60f | 17762L | python | 2026-06-22
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.4  critical=65 (limit:10)  dup=2  cycles=0
+  CC̄=4.1  critical=75 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     main = 129 (limit:10)
-  !!! cc_exceeded      task_command = 52 (limit:15)
-  !!! cc_exceeded      run_uri_route = 46 (limit:15)
-  !!! cc_exceeded      run_uri_route = 45 (limit:15)
-  !!! cc_exceeded      main = 40 (limit:15)
-  !!! cc_exceeded      classify = 36 (limit:15)
-  !!! cc_exceeded      build_ticket_payload = 35 (limit:15)
-  !!! high_fan_out     task_command = 35 (limit:10)
-  !!! cc_exceeded      run_planfile_task = 31 (limit:15)
+  !!! high_fan_out     _build_parser = 95 (limit:10)
   !!! high_fan_out     main = 29 (limit:10)
+  !!! cc_exceeded      _flags = 26 (limit:15)
+  !!! high_fan_out     main = 26 (limit:10)
+  !!! high_fan_out     serve_node = 26 (limit:10)
+  !!! high_fan_out     main = 25 (limit:10)
+  !!! high_fan_out     main = 23 (limit:10)
+  !!! high_fan_out     main = 20 (limit:10)
+  !!! high_fan_out     proto_from_registry = 20 (limit:10)
+  !!  cc_exceeded      main = 24 (limit:15)
 
-MODULES[101] (top by size):
-  M[adapters/python/urirun/runtime/v2.py] 1627L C:0 F:66 CC↑40 D:1 (python)
-  M[planfile.yaml] 1189L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/node/mesh.py] 1092L C:0 F:51 CC↑52 D:0 (python)
-  M[adapters/python/urirun/runtime/_registry.py] 701L C:0 F:41 CC↑18 D:0 (python)
+MODULES[126] (top by size):
+  M[adapters/python/urirun/runtime/v2.py] 2011L C:1 F:109 CC↑14 D:1 (python)
+  M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
+  M[adapters/python/urirun/node/mesh.py] 1183L C:0 F:76 CC↑15 D:0 (python)
+  M[adapters/python/urirun/runtime/_registry.py] 712L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/_scan.py] 670L C:0 F:36 CC↑15 D:0 (python)
-  M[adapters/python/urirun/host/host_dashboard.py] 614L C:0 F:15 CC↑8 D:0 (python)
-  M[goal.yaml] 531L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/runtime/errors.py] 511L C:0 F:21 CC↑36 D:0 (python)
-  M[adapters/python/urirun/host/host_db.py] 475L C:0 F:27 CC↑45 D:0 (python)
-  M[adapters/python/urirun/runtime/_runtime.py] 474L C:1 F:20 CC↑17 D:1 (python)
-  M[adapters/python/urirun/runtime/v1.py] 423L C:0 F:24 CC↑14 D:0 (python)
-  M[adapters/python/urirun/host/domain_monitor.py] 393L C:0 F:18 CC↑46 D:0 (python)
-  M[adapters/python/urirun/connectors/connector_scaffold.py] 386L C:0 F:10 CC↑3 D:0 (python)
-  M[adapters/python/urirun/host/host_integrations.py] 382L C:0 F:11 CC↑31 D:0 (python)
-  M[adapters/python/urirun/host/task_planner.py] 344L C:2 F:13 CC↑22 D:0 (python)
-  LANGS: python:56/json:8/shell:5/csharp:4/yaml:4/javascript:3/c:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/toml:2/other:1/txt:1/pm:1/perl:1
+  M[adapters/python/urirun/host/host_dashboard.py] 609L C:0 F:16 CC↑13 D:0 (python)
+  M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
+  M[goal.yaml] 533L C:0 F:0 CC↑0 D:0 (yaml)
+  M[adapters/python/urirun/runtime/_runtime.py] 504L C:1 F:26 CC↑13 D:1 (python)
+  M[adapters/python/urirun/host/host_db.py] 499L C:0 F:29 CC↑11 D:0 (python)
+  M[adapters/python/urirun/host/domain_monitor.py] 485L C:1 F:25 CC↑11 D:0 (python)
+  M[adapters/python/urirun/__init__.py] 441L C:1 F:38 CC↑11 D:10 (python)
+  M[adapters/python/urirun/runtime/v1.py] 431L C:0 F:24 CC↑14 D:0 (python)
+  M[adapters/python/urirun/connectors/connector_scaffold.py] 400L C:0 F:11 CC↑3 D:0 (python)
+  M[adapters/python/urirun/runtime/codegen.py] 379L C:0 F:16 CC↑15 D:0 (python)
+  LANGS: python:68/json:12/shell:8/csharp:4/txt:4/yaml:4/javascript:3/c:3/java:3/ruby:2/typescript:2/go:2/php:2/rust:2/toml:2/other:1/proto:1/pm:1/perl:1/yml:1
 
 HOTSPOTS[10]:
-  ★ main fan=129  // Orchestrates 129 calls
-  ★ task_command fan=35  // Orchestrates 35 calls
+  ★ _build_parser fan=95  // Orchestrates 95 calls
   ★ main fan=29  // Orchestrates 29 calls
-  ★ run_fetch fan=29  // Orchestrates 29 calls
   ★ main fan=26  // Orchestrates 26 calls
+  ★ serve_node fan=26  // Orchestrates 26 calls
+  ★ main fan=25  // Orchestrates 25 calls
 
 REFACTOR[15]:
-  [1] H/L Split run_uri_route (CC=45)
-  [2] H/L Split run_uri_route (CC=46)
-  [3] H/L Split run_planfile_task (CC=31)
-  [4] H/L Split build_ticket_payload (CC=35)
-  [5] H/L Split classify (CC=36)
+  [1] H/L Split _flags (CC=26)
+  [2] H/H Split god module adapters/python/urirun/node/mesh.py (1183L, 0 classes)
+  [3] H/H Split god module adapters/python/urirun/runtime/_scan.py (670L, 0 classes)
+  [4] H/H Split god module adapters/python/urirun/runtime/_registry.py (712L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/runtime/v2.py (2011L, 1 classes)
 
 EVOLUTION:
-  2026-06-21 CC̄=4.4 crit=65 14289L // Automated analysis
+  2026-06-22 CC̄=4.1 crit=75 17762L // Automated analysis

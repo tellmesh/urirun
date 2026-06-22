@@ -1,0 +1,2 @@
+# urirun python package lives in adapters/python
+-e ./adapters/python

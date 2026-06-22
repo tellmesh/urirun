@@ -1,0 +1,5 @@
+# Rust runtime column.
+FROM rust:1-slim
+COPY adapters/rust /src/rust
+WORKDIR /src/rust
+CMD ["sh","-c","cargo run --quiet --example hash_connector > /shared/rust.json && echo 'rust: emitted /shared/rust.json'"]

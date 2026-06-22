@@ -1,0 +1,19 @@
+{
+  "version": "urirun.bindings.v2",
+  "bindings": {
+    "hash://host/sha256/command/file": {
+      "uri": "hash://host/sha256/command/file",
+      "kind": "command",
+      "adapter": "argv-template",
+      "meta": { "connector": "hash" },
+      "argv": ["sha256sum", "{path}"],
+      "inputSchema": {
+        "type": "object",
+        "title": "fInput",
+        "properties": { "path": { "title": "Path", "type": "string" } },
+        "required": ["path"],
+        "additionalProperties": false
+      }
+    }
+  }
+}

@@ -51,8 +51,25 @@ def test_bindings_show_over_uri(tmp_path):
     assert binding["inputSchema"] is not None
 
 
-def test_missing_registry_payload(tmp_path):
+def test_no_registry_payload_introspects_live_runtime(tmp_path):
+    # No payload.registry -> default to the live runtime (installed connectors via
+    # the urirun.bindings entry-point group), like error:// / log://. Always succeeds.
     reg = _registry(tmp_path)
     policy = v2.runtime.build_policy(None, ["registry://*"], None)
     out = v2.run("registry://local/routes/query/list", v2.load_registry_arg(reg), {}, mode="execute", policy=policy)
-    assert out["result"]["ok"] is False
+    assert out["result"]["ok"] is True
+    assert out["result"]["type"] == "registry" and "count" in out["result"]
+
+
+def test_zero_config_registry_carries_builtin_routes():
+    # `urirun list` / `urirun run` with no source discover entry points AND mount
+    # the builtin error:// / registry:// routes, so they are discoverable, not just
+    # runnable via the resolver fallback.
+    import types
+
+    args = types.SimpleNamespace(registry=None, source=None, entry_points=True, entry_point_group=v2.ENTRY_POINT_GROUP)
+    registry = v2._resolve_list_registry(args)
+    routes = {route["uri"] for route in v2.reglib.flatten_registry_document(registry)}
+    assert "registry://local/routes/query/list" in routes
+    assert "registry://local/bindings/query/show" in routes
+    assert "error://local/errors/query" in routes

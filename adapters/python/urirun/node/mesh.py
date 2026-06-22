@@ -264,40 +264,53 @@ def append_if_available(steps: list[dict], route_uris: set[str], uri: str, paylo
     return step_id
 
 
+_FLOW_INTENT_WORDS = {
+    "browser": ("browser", "przeglad", "stron", "url", "otworz", "open"),
+    "processes": ("proces", "process", "aplikac", "program"),
+    "logs": ("log", "logi"),
+    "python": ("python3", "python"),
+    "git": ("git",),
+    "date": ("date", "data"),
+    "uname": ("uname", "system"),
+}
+
+
+def _flow_intents(lowered: str) -> dict[str, bool]:
+    """Map a lowered prompt to the set of host intents, defaulting to a process listing."""
+    intents = {name: any(word in lowered for word in words) for name, words in _FLOW_INTENT_WORDS.items()}
+    if not any(intents.values()):
+        intents["processes"] = True
+    return intents
+
+
+def _append_target_steps(steps: list[dict], route_uris: set, target: str, intents: dict[str, bool], url: str, previous):
+    """Append the available steps for one target node, returning the new previous-step id."""
+    previous = append_if_available(steps, route_uris, f"env://{target}/runtime/query/health", {}, previous)
+    if intents["processes"]:
+        previous = append_if_available(steps, route_uris, f"proc://{target}/process/query/list", {"limit": 12}, previous)
+    if intents["browser"]:
+        previous = append_if_available(steps, route_uris, f"browser://{target}/page/command/open", {"url": url}, previous)
+    for binary, enabled in (("python3", intents["python"]), ("git", intents["git"])):
+        if enabled:
+            previous = append_if_available(steps, route_uris, f"shell://{target}/command/which", {"binary": binary}, previous)
+    if intents["date"]:
+        previous = append_if_available(steps, route_uris, f"shell://{target}/command/date", {}, previous)
+    if intents["uname"]:
+        previous = append_if_available(steps, route_uris, f"shell://{target}/command/uname", {}, previous)
+    if intents["logs"]:
+        previous = append_if_available(steps, route_uris, f"log://{target}/session/query/recent", {"limit": 20}, previous)
+    return previous
+
+
 def heuristic_flow(prompt: str, routes: list[dict], nodes: list[dict], selected_nodes: list[str] | None = None) -> dict:
     route_uris = {route["uri"] for route in routes if safe_route(route)}
     targets = target_nodes(prompt, nodes, selected_nodes)
-    lowered = prompt.lower()
+    intents = _flow_intents(prompt.lower())
+    url = first_url(prompt) or "https://example.com/"
     steps: list[dict] = []
     previous = None
-
-    wants_browser = any(word in lowered for word in ("browser", "przeglad", "stron", "url", "otworz", "open"))
-    wants_processes = any(word in lowered for word in ("proces", "process", "aplikac", "program"))
-    wants_logs = any(word in lowered for word in ("log", "logi"))
-    wants_python = "python3" in lowered or "python" in lowered
-    wants_git = "git" in lowered
-    wants_date = "date" in lowered or "data" in lowered
-    wants_uname = "uname" in lowered or "system" in lowered
-
-    if not any((wants_browser, wants_processes, wants_logs, wants_python, wants_git, wants_date, wants_uname)):
-        wants_processes = True
-
-    url = first_url(prompt) or "https://example.com/"
     for target in targets:
-        previous = append_if_available(steps, route_uris, f"env://{target}/runtime/query/health", {}, previous)
-        if wants_processes:
-            previous = append_if_available(steps, route_uris, f"proc://{target}/process/query/list", {"limit": 12}, previous)
-        if wants_browser:
-            previous = append_if_available(steps, route_uris, f"browser://{target}/page/command/open", {"url": url}, previous)
-        for binary, enabled in (("python3", wants_python), ("git", wants_git)):
-            if enabled:
-                previous = append_if_available(steps, route_uris, f"shell://{target}/command/which", {"binary": binary}, previous)
-        if wants_date:
-            previous = append_if_available(steps, route_uris, f"shell://{target}/command/date", {}, previous)
-        if wants_uname:
-            previous = append_if_available(steps, route_uris, f"shell://{target}/command/uname", {}, previous)
-        if wants_logs:
-            previous = append_if_available(steps, route_uris, f"log://{target}/session/query/recent", {"limit": 20}, previous)
+        previous = _append_target_steps(steps, route_uris, target, intents, url, previous)
 
     return {
         "task": {"id": f"nl_uri_flow_{now_id()}", "title": "NL to URI host flow", "source": "heuristic"},
@@ -782,191 +795,217 @@ def _run_task_flow(args: argparse.Namespace, ticket: dict, *, mutate: bool) -> d
     return result
 
 
+def _emit_ticket_result(ticket) -> int:
+    """Emit the standard {ok, ticket} envelope and map presence to an exit code."""
+    reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
+    return 0 if ticket else 1
+
+
+def _task_plan(args, pa) -> int:
+    from urirun import task_planner
+
+    plan = task_planner.plan_chat_request(
+        " ".join(args.prompt),
+        default_sprint=args.sprint,
+        default_queue=args.queue,
+        extra_labels=args.label,
+        use_llm=not args.no_llm,
+    )
+    payload = {"ok": plan.ok, "dryRun": not args.create, "plan": plan.model_dump(mode="json")}
+    if args.create:
+        payload["createdTickets"] = task_planner.create_tickets_from_plan(args.project, plan, confirm_review=args.confirm_review)
+    reglib._emit_json(payload, "-")
+    return 0 if plan.ok else 1
+
+
+def _task_bindings(args, pa) -> int:
+    from urirun import v2
+
+    doc = v2.planfile_task_bindings(target=args.target, project=args.project)
+    reglib._emit_json(doc, args.out)
+    if args.registry_out:
+        reglib.write_json(args.registry_out, v2.compile_registry(doc))
+    return 0
+
+
+def _task_schedule(args, pa) -> int:
+    from urirun import scheduler
+
+    result = scheduler.preview(
+        kind=args.kind,
+        name=args.name,
+        project=args.project,
+        config=args.config,
+        queue=args.queue,
+        max_tickets=args.max_tickets,
+        time_of_day=args.time,
+        execute=args.run_execute,
+        no_llm=args.no_llm,
+        working_directory=args.working_directory,
+    )
+    if args.install:
+        if args.kind != "systemd":
+            reglib._emit_json({"ok": False, "error": "--install is supported for systemd only"}, "-")
+            return 1
+        result["installed"] = scheduler.install_systemd_user(result["files"], args.out_dir)
+        result["enableCommand"] = ["systemctl", "--user", "enable", "--now", f"{args.name}.timer"]
+    reglib._emit_json({"ok": True, "dryRun": not args.install, "schedule": result}, "-")
+    return 0
+
+
+def _task_list(args, pa) -> int:
+    tickets = pa.list_tickets(args.project, sprint=args.sprint, status=args.status, label=args.label, queue=args.queue)
+    reglib._emit_json({"tickets": tickets}, "-") if args.json else print(format_tickets(tickets))
+    return 0
+
+
+def _task_show(args, pa) -> int:
+    ticket = pa.get_ticket(args.project, args.ticket_id)
+    if not ticket:
+        reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
+        return 1
+    reglib._emit_json({"ok": True, "ticket": ticket}, "-")
+    return 0
+
+
+def _task_next(args, pa) -> int:
+    return _emit_ticket_result(pa.next_ticket(args.project, sprint=args.sprint, queue=args.queue))
+
+
+def _task_create(args, pa) -> int:
+    payload = {
+        "name": args.name,
+        "description": args.description or "",
+        "priority": args.priority,
+        "sprint": args.sprint,
+        "labels": args.label or [],
+        "queue": args.queue,
+        "max_attempts": args.max_attempts,
+        "executor_kind": args.executor_kind,
+        "executor_mode": args.executor_mode,
+        "executor_handler": args.executor_handler,
+        "prompt": args.prompt,
+        "source_tool": args.source,
+    }
+    extra = _parse_json_option(args.payload, {})
+    if extra:
+        payload.update(extra)
+    ticket = pa.create_ticket(args.project, payload)
+    reglib._emit_json({"ok": True, "ticket": ticket}, "-")
+    return 0
+
+
+def _task_claim(args, pa) -> int:
+    return _emit_ticket_result(pa.claim_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to, lease_seconds=args.lease_seconds))
+
+
+def _task_start(args, pa) -> int:
+    return _emit_ticket_result(pa.start_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to))
+
+
+def _task_complete(args, pa) -> int:
+    result = _parse_json_option(args.result, None)
+    return _emit_ticket_result(pa.complete_ticket(args.project, args.ticket_id, note=args.note, result=result, artifacts=args.artifact))
+
+
+def _task_fail(args, pa) -> int:
+    return _emit_ticket_result(pa.fail_ticket(args.project, args.ticket_id, args.error))
+
+
+def _task_block(args, pa) -> int:
+    return _emit_ticket_result(pa.update_ticket(args.project, args.ticket_id, {"status": "blocked", "description": args.reason or "BLOCKED"}))
+
+
+def _task_ready(args, pa) -> int:
+    return _emit_ticket_result(pa.ready_ticket(args.project, args.ticket_id, note=args.note))
+
+
+def _task_wait(args, pa) -> int:
+    return _emit_ticket_result(pa.wait_for_input(args.project, args.ticket_id, args.prompt, env_keys=args.env_key, note=args.note))
+
+
+def _task_dsl(args, pa) -> int:
+    result = pa.run_dsl(args.project, " ".join(args.dsl_command))
+    reglib._emit_json(result, "-")
+    return 0 if result.get("ok") else 1
+
+
+def _task_run(args, pa) -> int:
+    ticket = pa.get_ticket(args.project, args.ticket_id)
+    if not ticket:
+        reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
+        return 1
+    try:
+        result = _run_task_flow(args, ticket, mutate=args.execute)
+    except Exception as exc:  # noqa: BLE001 - CLI should persist task failures when possible.
+        retry = pa.fail_or_retry(args.project, args.ticket_id, str(exc)) if args.execute else None
+        reglib._emit_json({"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}, "-")
+        return 1
+    reglib._emit_json(result, "-")
+    return 0 if result.get("ok") else 1
+
+
+def _task_loop(args, pa) -> int:
+    if not args.execute:
+        tickets = pa.list_tickets(args.project, sprint=args.sprint, status="open", label=args.label, queue=args.queue)
+        reglib._emit_json({"ok": True, "dryRun": True, "tickets": tickets[: args.max_tickets]}, "-")
+        return 0
+
+    results = []
+    ok = True
+    for _ in range(args.max_tickets):
+        ticket = pa.next_ticket(args.project, sprint=args.sprint, queue=args.queue)
+        if not ticket:
+            break
+        try:
+            result = _run_task_flow(args, ticket, mutate=True)
+        except Exception as exc:  # noqa: BLE001
+            retry = pa.fail_or_retry(args.project, ticket["id"], str(exc))
+            result = {"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}
+        ok = ok and bool(result.get("ok"))
+        results.append(result)
+        if not result.get("ok") and not args.continue_on_error:
+            break
+    reglib._emit_json({"ok": ok, "count": len(results), "results": results}, "-")
+    return 0 if ok else 1
+
+
+_TASK_COMMANDS = {
+    "plan": _task_plan,
+    "bindings": _task_bindings,
+    "schedule": _task_schedule,
+    "list": _task_list,
+    "show": _task_show,
+    "next": _task_next,
+    "create": _task_create,
+    "claim": _task_claim,
+    "start": _task_start,
+    "complete": _task_complete,
+    "fail": _task_fail,
+    "block": _task_block,
+    "ready": _task_ready,
+    "wait-for-input": _task_wait,
+    "dsl": _task_dsl,
+    "run": _task_run,
+    "loop": _task_loop,
+}
+
+
 def task_command(args: argparse.Namespace) -> int:
     from urirun import planfile_adapter
 
-    if args.task_command == "plan":
-        from urirun import task_planner
-
-        prompt = " ".join(args.prompt)
-        plan = task_planner.plan_chat_request(
-            prompt,
-            default_sprint=args.sprint,
-            default_queue=args.queue,
-            extra_labels=args.label,
-            use_llm=not args.no_llm,
-        )
-        payload = {"ok": plan.ok, "dryRun": not args.create, "plan": plan.model_dump(mode="json")}
-        if args.create:
-            payload["createdTickets"] = task_planner.create_tickets_from_plan(
-                args.project,
-                plan,
-                confirm_review=args.confirm_review,
-            )
-        reglib._emit_json(payload, "-")
-        return 0 if plan.ok else 1
-
-    if args.task_command == "bindings":
-        from urirun import v2
-
-        doc = v2.planfile_task_bindings(target=args.target, project=args.project)
-        reglib._emit_json(doc, args.out)
-        if args.registry_out:
-            reglib.write_json(args.registry_out, v2.compile_registry(doc))
-        return 0
-
-    if args.task_command == "schedule":
-        from urirun import scheduler
-
-        result = scheduler.preview(
-            kind=args.kind,
-            name=args.name,
-            project=args.project,
-            config=args.config,
-            queue=args.queue,
-            max_tickets=args.max_tickets,
-            time_of_day=args.time,
-            execute=args.run_execute,
-            no_llm=args.no_llm,
-            working_directory=args.working_directory,
-        )
-        if args.install:
-            if args.kind != "systemd":
-                reglib._emit_json({"ok": False, "error": "--install is supported for systemd only"}, "-")
-                return 1
-            result["installed"] = scheduler.install_systemd_user(result["files"], args.out_dir)
-            result["enableCommand"] = ["systemctl", "--user", "enable", "--now", f"{args.name}.timer"]
-        reglib._emit_json({"ok": True, "dryRun": not args.install, "schedule": result}, "-")
-        return 0
-
-    if args.task_command == "list":
-        tickets = planfile_adapter.list_tickets(args.project, sprint=args.sprint, status=args.status, label=args.label, queue=args.queue)
-        reglib._emit_json({"tickets": tickets}, "-") if args.json else print(format_tickets(tickets))
-        return 0
-
-    if args.task_command == "show":
-        ticket = planfile_adapter.get_ticket(args.project, args.ticket_id)
-        if not ticket:
-            reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
-            return 1
-        reglib._emit_json({"ok": True, "ticket": ticket}, "-")
-        return 0
-
-    if args.task_command == "next":
-        ticket = planfile_adapter.next_ticket(args.project, sprint=args.sprint, queue=args.queue)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "create":
-        payload = {
-            "name": args.name,
-            "description": args.description or "",
-            "priority": args.priority,
-            "sprint": args.sprint,
-            "labels": args.label or [],
-            "queue": args.queue,
-            "max_attempts": args.max_attempts,
-            "executor_kind": args.executor_kind,
-            "executor_mode": args.executor_mode,
-            "executor_handler": args.executor_handler,
-            "prompt": args.prompt,
-            "source_tool": args.source,
-        }
-        extra = _parse_json_option(args.payload, {})
-        if extra:
-            payload.update(extra)
-        ticket = planfile_adapter.create_ticket(args.project, payload)
-        reglib._emit_json({"ok": True, "ticket": ticket}, "-")
-        return 0
-
-    if args.task_command == "claim":
-        ticket = planfile_adapter.claim_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to, lease_seconds=args.lease_seconds)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "start":
-        ticket = planfile_adapter.start_ticket(args.project, args.ticket_id, assigned_to=args.assigned_to)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "complete":
-        result = _parse_json_option(args.result, None)
-        ticket = planfile_adapter.complete_ticket(args.project, args.ticket_id, note=args.note, result=result, artifacts=args.artifact)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "fail":
-        ticket = planfile_adapter.fail_ticket(args.project, args.ticket_id, args.error)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "block":
-        ticket = planfile_adapter.update_ticket(args.project, args.ticket_id, {"status": "blocked", "description": args.reason or "BLOCKED"})
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "ready":
-        ticket = planfile_adapter.ready_ticket(args.project, args.ticket_id, note=args.note)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "wait-for-input":
-        ticket = planfile_adapter.wait_for_input(args.project, args.ticket_id, args.prompt, env_keys=args.env_key, note=args.note)
-        reglib._emit_json({"ok": bool(ticket), "ticket": ticket}, "-")
-        return 0 if ticket else 1
-
-    if args.task_command == "dsl":
-        result = planfile_adapter.run_dsl(args.project, " ".join(args.dsl_command))
-        reglib._emit_json(result, "-")
-        return 0 if result.get("ok") else 1
-
-    if args.task_command == "run":
-        ticket = planfile_adapter.get_ticket(args.project, args.ticket_id)
-        if not ticket:
-            reglib._emit_json({"ok": False, "error": f"ticket not found: {args.ticket_id}"}, "-")
-            return 1
-        try:
-            result = _run_task_flow(args, ticket, mutate=args.execute)
-        except Exception as exc:  # noqa: BLE001 - CLI should persist task failures when possible.
-            retry = planfile_adapter.fail_or_retry(args.project, args.ticket_id, str(exc)) if args.execute else None
-            reglib._emit_json({"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}, "-")
-            return 1
-        reglib._emit_json(result, "-")
-        return 0 if result.get("ok") else 1
-
-    if args.task_command == "loop":
-        if not args.execute:
-            tickets = planfile_adapter.list_tickets(args.project, sprint=args.sprint, status="open", label=args.label, queue=args.queue)
-            reglib._emit_json({"ok": True, "dryRun": True, "tickets": tickets[: args.max_tickets]}, "-")
-            return 0
-
-        results = []
-        ok = True
-        for _ in range(args.max_tickets):
-            ticket = planfile_adapter.next_ticket(args.project, sprint=args.sprint, queue=args.queue)
-            if not ticket:
-                break
-            try:
-                result = _run_task_flow(args, ticket, mutate=True)
-            except Exception as exc:  # noqa: BLE001
-                retry = planfile_adapter.fail_or_retry(args.project, ticket["id"], str(exc))
-                result = {"ok": False, "ticket": ticket, "error": str(exc), "retry": (retry or {}).get("retry")}
-            ok = ok and bool(result.get("ok"))
-            results.append(result)
-            if not result.get("ok") and not args.continue_on_error:
-                break
-        reglib._emit_json({"ok": ok, "count": len(results), "results": results}, "-")
-        return 0 if ok else 1
-
-    return 1
+    handler = _TASK_COMMANDS.get(args.task_command)
+    if handler is None:
+        return 1
+    return handler(args, planfile_adapter)
 
 
-def host_command(args: argparse.Namespace) -> int:
+def _host_delegated_command(args: argparse.Namespace) -> int | None:
+    """Handle host subcommands that delegate to another module or need no mesh."""
     if args.host_command == "dashboard":
         from urirun import host_dashboard
 
         return host_dashboard.command(args)
-
     if args.host_command == "init":
         reglib._emit_json(init_host(args.config, args.name), "-")
         return 0
@@ -979,10 +1018,11 @@ def host_command(args: argparse.Namespace) -> int:
         return monitor_command(args)
     if args.host_command == "task":
         return task_command(args)
+    return None
 
-    config = load_host_config(args.config)
-    mesh = discover_mesh(config)
 
+def _host_mesh_command(args: argparse.Namespace, config: dict, mesh: dict) -> int | None:
+    """Handle host subcommands that read the discovered mesh."""
     if args.host_command == "config":
         reglib._emit_json(config, "-")
         return 0
@@ -1009,7 +1049,17 @@ def host_command(args: argparse.Namespace) -> int:
         result = {"ok": execution["ok"], "prompt": prompt, "generator": generator, "flow": flow, **execution}
         reglib._emit_json(result, "-")
         return 0 if result["ok"] else 1
-    return 1
+    return None
+
+
+def host_command(args: argparse.Namespace) -> int:
+    delegated = _host_delegated_command(args)
+    if delegated is not None:
+        return delegated
+    config = load_host_config(args.config)
+    mesh = discover_mesh(config)
+    result = _host_mesh_command(args, config, mesh)
+    return result if result is not None else 1
 
 
 def send_json(handler: BaseHTTPRequestHandler, status: int, payload: dict) -> None:
@@ -1031,10 +1081,31 @@ def read_json(handler: BaseHTTPRequestHandler) -> dict:
     return json.loads(handler.rfile.read(length).decode("utf-8") or "{}")
 
 
+def _pool_executors(pools):
+    """Swap the argv-template executor for a warm-worker dispatch, keeping v2.run's
+    validate -> policy gate -> execute flow intact (only execution changes)."""
+    from urirun.runtime.v2 import EXECUTORS, run_argv_template
+
+    def run_pooled(ctx, policy, execute):
+        result = pools.run_route(ctx["routeEntry"], ctx.get("payload") or {})
+        if result is None:
+            return run_argv_template(ctx, policy, execute)   # not poolable -> normal spawn
+        inner = result.get("result", result)
+        return {"type": "command", "pooled": True, "exitCode": 0 if result.get("ok") else 1,
+                "stdout": json.dumps(inner) if isinstance(inner, (dict, list)) else str(inner), "stderr": ""}
+
+    return {**EXECUTORS, "argv-template": run_pooled, "command": run_pooled}
+
+
 def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, public_url: str | None = None,
-               allow_secrets: bool = False) -> ThreadingHTTPServer:
+               allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False) -> ThreadingHTTPServer:
     routes = routes_from_registry(registry)
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
+
+    pool_executors = None
+    if pool:
+        from urirun.runtime.worker import ConnectorPools
+        pool_executors = _pool_executors(ConnectorPools())   # warm workers, reused across requests
 
     class Handler(BaseHTTPRequestHandler):
         def do_OPTIONS(self):
@@ -1075,12 +1146,15 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                 send_json(self, 404, {"ok": False, "error": "not found"})
                 return
             body = read_json(self)
+            run_policy = v2.runtime.build_policy(None, list(allow or []), None) or {}
+            run_policy["secretsDisabled"] = not allow_secrets
             result = v2.run(
                 str(body["uri"]),
                 registry,
                 payload=body.get("payload") or {},
                 mode="execute" if execute else "dry-run",
-                policy={"secretsDisabled": not allow_secrets},
+                policy=run_policy,
+                executors=pool_executors,
             )
             if not result.get("ok"):
                 uri_errors.record(result)  # stamp error:// address + record for /errors
@@ -1093,6 +1167,19 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
     server = ThreadingHTTPServer((host, port), Handler)
     print(json.dumps({"event": "urirun.node.started", "name": name, "host": host, "port": port, "execute": execute, "routes": len(routes)}), flush=True)
     return server
+
+
+def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict) -> int:
+    host = args.host or node.get("host") or "0.0.0.0"
+    port = args.port or int(node.get("port") or 8765)
+    execute = bool(args.execute or node.get("execute"))
+    allow_secrets = bool(getattr(args, "allow_secrets", False) or node.get("allowSecrets"))
+    allow = list(getattr(args, "allow", None) or node.get("allow") or [])
+    pool = bool(getattr(args, "pool", False) or node.get("pool"))
+    server = serve_node(name, registry, host, port, execute, public_url=args.public_url,
+                        allow_secrets=allow_secrets, allow=allow, pool=pool)
+    server.serve_forever()
+    return 0
 
 
 def node_command(args: argparse.Namespace) -> int:
@@ -1115,11 +1202,5 @@ def node_command(args: argparse.Namespace) -> int:
         reglib._emit_json({"routes": routes}, "-") if args.json else print(format_routes(routes))
         return 0
     if args.node_command == "serve":
-        host = args.host or node.get("host") or "0.0.0.0"
-        port = args.port or int(node.get("port") or 8765)
-        execute = bool(args.execute or node.get("execute"))
-        allow_secrets = bool(getattr(args, "allow_secrets", False) or node.get("allowSecrets"))
-        server = serve_node(name, registry, host, port, execute, public_url=args.public_url, allow_secrets=allow_secrets)
-        server.serve_forever()
-        return 0
+        return _node_serve(args, node, name, registry)
     return 1

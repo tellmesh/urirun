@@ -21,8 +21,6 @@ a JSON Schema. The result flows through the normal compile/run/MCP pipeline.
 from __future__ import annotations
 
 import argparse
-import json
-import sys
 from importlib import metadata
 from pathlib import Path
 

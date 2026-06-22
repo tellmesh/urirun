@@ -24,9 +24,8 @@ import argparse
 import json
 import re
 import sys
-from pathlib import Path
 
-from urirun import _registry as reglib, _runtime as runtime, v2
+from urirun import _registry as reglib, v2
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "urirun", "version": "0.8.0"}

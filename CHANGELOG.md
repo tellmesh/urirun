@@ -5,6 +5,92 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Two-line ergonomics: `urirun run '<uri>'` now **auto-discovers installed connectors**
+  via the `urirun.bindings` entry points when no source/registry is given — no compile
+  step or registry path. `urirun install <id|package>` installs from the catalog
+  (default connect.ifuri.com, `--catalog` for on-prem) with a direct `pip install`
+  fallback. And `registry://` is now a default builtin like `error://`/`log://`:
+  `urirun run 'registry://local/routes/query/list'` (no path) introspects the live
+  runtime — every installed connector's routes/bindings.
+- `urirun gen proto` now projects a registry to a *nuance-aware* gRPC surface: a
+  generic route-agnostic carrier (`rpc Run(RunRequest)`) **and** one typed rpc per
+  route, both bottoming out in the same `run(uri, payload) -> Envelope`. Where JSON
+  Schema can't map cleanly to proto3 (dropped defaults, advisory `required`, open
+  objects → `Struct`, injected enum zero value, CQRS rpc-name collisions, snake_case
+  renames) the generator records a *nuance* instead of silently lying — written to
+  `--nuances <file>` or counted in the `--out` status. Graduated from example 21 into
+  `runtime/codegen.py`; `gen openapi` / `gen client` are unchanged skins over the same
+  registry. The carrier's `Run`/`RunRequest` are reserved, so a route whose operation
+  is literally "run" is renamed rather than emitting a duplicate (invalid) symbol.
+- `urirun connectors lint` now detects **adapter drift**: a `manifest.adapterKinds`
+  entry no decorator route binds to (warning), or — the failing case — a route whose
+  adapter the manifest does not advertise (e.g. a manifest declaring `local-function`
+  while `@connector.command` binds `argv-template`). Fails the lint so CI catches it.
+- `make lint-connectors` (`scripts/lint_connectors.py`) — fleet gate that lints every
+  sibling `urirun-connector-*` package and prints a migration-status table
+  (`MIGRATED` / `OLD-STYLE` / `declarative`). Fails on genuine code/manifest *drift* —
+  exactly the half-migrated state where code says `@handler` but the manifest still
+  advertises argv — while leaving both fully-migrated and not-yet-started connectors
+  green. `STRICT=1` (`--strict`) also fails until the whole fleet is migrated.
+- `urirun connectors doctor` — loads and validates every installed connector entry
+  point in isolation and reports per-connector health (`ok`/`FAIL` with the reason);
+  `--json` for a structured report. Exit code is non-zero if any connector is broken,
+  so it can gate CI. Turns an opaque aggregate failure into a named diagnosis. Also
+  flags (`WARN`) a stale `console_scripts` wrapper whose target module no longer
+  imports — e.g. a connector refactored from `cli.py` to `core.py` whose installed
+  `urirun-foo` script still points at `…cli:main` (surfaced per-row as `scriptIssues`).
+- `discover` / `entry_point_binding_document()` now surface dropped connectors under a
+  `skipped: [{name, value, error}]` key so programmatic consumers see what was omitted.
+
+### Changed
+- Connector discovery is now fault-isolated: a single faulty connector (uninstalled
+  source, import error, malformed document) no longer blanks out every other
+  connector's bindings. `entry_point_bindings(on_error=…)` controls a failure —
+  `"warn"` (default) skips with a stderr note, `"raise"` re-raises, `"ignore"` is silent.
+- Refactored 20+ high-complexity functions (CC>15) across the package via
+  extract-method (run/main dispatchers, route handlers, policy and fetch pipelines,
+  error classification); behaviour unchanged, average CCN down to ~4.
+
+## [0.4.5] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update TODO/RELEASE_0.4.4.md
+- Update examples/matrix/README.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_urirun.py
+
+### Other
+- Update Makefile
+- Update TODO/connectors.yml
+- Update TODO/repin_connectors.py
+- Update adapters/python/.urirun/discovered-registry.json
+- Update adapters/python/VERSION
+- Update adapters/python/pyproject.toml
+- Update adapters/python/tests/test_codegen.py
+- Update adapters/python/tests/test_compat.py
+- Update adapters/python/tests/test_connector_handler.py
+- Update adapters/python/tests/test_connector_lint.py
+- ... and 74 more files
+
+## [0.1.10] - 2026-06-22
+
+### Fixed
+- Fix unused-imports issues (ticket-279c822c)
+- Fix string-concat issues (ticket-798a9185)
+- Fix unused-imports issues (ticket-c411f8f7)
+- Fix magic-numbers issues (ticket-5f071a84)
+
 ## [0.4.0]
 
 ### Added
@@ -123,6 +209,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `urirun node serve --allow GLOB` (repeatable) — a served node now gates which routes
+  it will execute via an allow-list (the node operator's security boundary), mirroring
+  `urirun run --allow`. Without it, command routes are default-denied over `/run`.
 - `registry://` self-introspection: urirun now exposes its own registry over URI,
   alongside the existing `error://` (error store) and `log://` routes —
   `registry://local/routes/query/list` (filter by `scheme`/`q`) and

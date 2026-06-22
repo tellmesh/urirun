@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urirun"
-version = "0.4.3"
+version = "0.4.4"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -58,3 +58,10 @@ max_commits = 500
 
 # Cost thresholds for badge colors (USD)
 badge_color_thresholds = { low = 1.0, medium = 5.0, high = 10.0, critical = 50.0 }
+
+[tool.ruff.lint.per-file-ignores]
+# Deferred imports placed after code break import cycles between the runtime
+# modules (introspect↔v2, _runtime↔_registry/_scan); E731 is one local table-
+# formatting lambda. These are intentional, not lint debt.
+"urirun/runtime/_runtime.py" = ["E402", "E731"]
+"urirun/runtime/v2.py" = ["E402"]

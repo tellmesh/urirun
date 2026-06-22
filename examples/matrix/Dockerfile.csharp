@@ -1,0 +1,5 @@
+# C# / .NET runtime column.
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+COPY adapters/csharp /src/csharp
+WORKDIR /src/csharp
+CMD ["sh","-c","dotnet run --project . --verbosity quiet > /shared/csharp.json && echo 'csharp: emitted /shared/csharp.json'"]

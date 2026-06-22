@@ -58,6 +58,35 @@ def _manifest(connector_id: str, scheme: str, language: str, route: str) -> str:
     return json.dumps(manifest, indent=2) + "\n"
 
 
+def _python_manifest(connector_id: str, scheme: str) -> str:
+    """Prose-only manifest for the Python (handler) shape.
+
+    Machine fields (routes, uriSchemes, adapterKinds, examples) are derived at
+    runtime by ``Connector.manifest(prose)`` from the ``@handler`` routes, so they
+    can never drift from the code. The author maintains only this description.
+    """
+    manifest = {
+        "id": connector_id,
+        "name": connector_id.replace("-", " ").title(),
+        "status": "planned",
+        "category": "Utilities",
+        "summary": f"Example {connector_id} connector exposing {scheme}:// routes.",
+        "description": "Scaffolded urirun connector (python, handler shape). Replace the example route with real operations.",
+        "useCases": ["Replace with real connector use cases."],
+        "requires": ["python>=3.10"],
+        "install": {
+            "mode": "urirun-extra",
+            "pipSpec": f"urirun-connector-{connector_id} @ git+https://github.com/if-uri/urirun-connector-{connector_id}.git@v0.1.0",
+        },
+        "provenance": "community",
+        "publisher": {"name": "if-uri", "url": "https://ifuri.com", "github": "https://github.com/if-uri"},
+        "docsUrl": f"https://github.com/if-uri/urirun-connector-{connector_id}",
+        "language": "python",
+        "keywords": [connector_id, "python", "connector"],
+    }
+    return json.dumps(manifest, indent=2) + "\n"
+
+
 def _write(files: dict[str, str], out_dir: Path) -> list[str]:
     created = []
     for rel, content in files.items():
@@ -71,70 +100,46 @@ def _write(files: dict[str, str], out_dir: Path) -> list[str]:
 def _python_files(cid: str, scheme: str, route: str) -> dict[str, str]:
     module = _pkg_module(cid)
     bin_name = f"urirun-connector-{cid}"
-    core = f'''"""Core routes for the {cid} connector."""
+    core = f'''"""Routes for the {cid} connector — one typed @handler per URI route.
+
+A single function declares the route, its input schema (from the signature) and its
+in-process implementation. No argv template, no hand-written CLI parser/dispatch:
+``conn.cli`` and ``conn.manifest`` derive both from the registered handlers.
+"""
 
 from __future__ import annotations
-
-from typing import Any
 
 import urirun
 
 CONNECTOR_ID = "{cid}"
-CONNECTOR = urirun.connector(CONNECTOR_ID, scheme="{scheme}")
+conn = urirun.connector(CONNECTOR_ID, scheme="{scheme}")
 
 
-def connector_manifest() -> dict[str, Any]:
-    return urirun.load_manifest(__package__)
+@conn.handler("{DEMO_ROUTE_SUFFIX}", meta={{"label": "Example ping"}})
+def ping(name: str = "world") -> dict:
+    """The function *is* the route. Replace with a real operation; add
+    ``external=True`` for routes that reach the outside world (dry-run by default)."""
+    return urirun.ok(message=f"hello, {{name}}")
 
 
-@CONNECTOR.command("{DEMO_ROUTE_SUFFIX}", meta={{"label": "Example ping"}})
-def ping_binding(name: str = "world") -> list[str]:
-    return ["{bin_name}", "ping", "--name", "{{name}}"]
+def bindings() -> dict:
+    """v2 bindings document — wired as the ``urirun.bindings`` entry point."""
+    return conn.bindings()
 
 
-def urirun_bindings() -> dict[str, Any]:
-    return CONNECTOR.bindings()
-
-
-def ping(name: str = "world") -> dict[str, Any]:
-    return {{"ok": True, "connector": CONNECTOR_ID, "message": f"hello, {{name}}"}}
-'''
-    cli = f'''"""CLI for the {cid} connector (built on the urirun connector SDK)."""
-
-from __future__ import annotations
-
-import sys
-
-import urirun
-
-from .core import connector_manifest, ping, urirun_bindings
-
-
-def register(sub) -> None:
-    ping_parser = sub.add_parser("ping", help="Example command")
-    ping_parser.add_argument("--name", default="world")
-
-
-def dispatch(args) -> int:
-    if args.command == "ping":
-        result = ping(name=args.name)
-        urirun.connector_emit(result)
-        return 0 if result.get("ok") else 2
-    return 1
+def manifest() -> dict:
+    """Full manifest: prose from connector.manifest.json + fields derived from code."""
+    return conn.manifest(urirun.load_manifest(__package__))
 
 
 def main(argv: list[str] | None = None) -> int:
-    return urirun.connector_cli(
-        "{bin_name}",
-        manifest=connector_manifest,
-        bindings=urirun_bindings,
-        register=register,
-        dispatch=dispatch,
-        argv=argv,
-    )
+    """CLI entry point: subcommands + dispatch derived from the @handler routes."""
+    return conn.cli(argv, manifest_prose=urirun.load_manifest(__package__))
 
 
 if __name__ == "__main__":
+    import sys
+
     sys.exit(main())
 '''
     pyproject = f'''[build-system]
@@ -157,10 +162,10 @@ dependencies = [
 test = ["pytest>=8"]
 
 [project.scripts]
-{bin_name} = "{module}.cli:main"
+{bin_name} = "{module}.core:main"
 
 [project.entry-points."urirun.bindings"]
-{cid} = "{module}:urirun_bindings"
+{cid} = "{module}.core:bindings"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -169,13 +174,22 @@ include = ["{module}*"]
 [tool.setuptools.package-data]
 {module} = ["connector.manifest.json"]
 '''
-    init = f"from .core import CONNECTOR_ID, connector_manifest, ping, urirun_bindings\n\n__all__ = [\"CONNECTOR_ID\", \"connector_manifest\", \"ping\", \"urirun_bindings\"]\n"
-    readme = f"# urirun-connector-{cid}\n\nScaffolded Python connector. Route: `{route}`.\n\n```bash\npip install -e .\n{bin_name} ping --name you\n{bin_name} bindings | urirun validate /dev/stdin\n```\n"
+    init = (
+        "from .core import CONNECTOR_ID, conn, bindings, manifest, main\n\n"
+        '__all__ = ["CONNECTOR_ID", "conn", "bindings", "manifest", "main"]\n'
+    )
+    readme = (
+        f"# urirun-connector-{cid}\n\n"
+        f"Scaffolded Python connector — one typed `@handler` per route (`{route}`), "
+        f"called in-process by urirun. No `cli.py`: `conn.cli` and `conn.manifest` "
+        f"are derived from the handlers.\n\n"
+        f"```bash\npip install -e .\n{bin_name} ping --name you      # run a route in-process\n"
+        f"{bin_name} bindings | urirun validate /dev/stdin\n{bin_name} manifest          # prose + machine fields derived from code\n```\n"
+    )
     return {
         f"{module}/__init__.py": init,
         f"{module}/core.py": core,
-        f"{module}/cli.py": cli,
-        f"{module}/connector.manifest.json": _manifest(cid, scheme, "python", route),
+        f"{module}/connector.manifest.json": _python_manifest(cid, scheme),
         "pyproject.toml": pyproject,
         "README.md": readme,
     }

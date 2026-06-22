@@ -445,33 +445,42 @@ def registry_tree(registry: dict) -> dict:
     return registry.get("routes", registry) if isinstance(registry, dict) else {}
 
 
-def resolve_route(translation: dict, registry: dict) -> dict:
-    descriptor = translation.get("descriptor") or {}
-    normalized = descriptor.get("normalized")
+def _resolve_from_index(normalized, registry: dict) -> dict | None:
+    """Fast path: a precompiled registry index maps a hashed URI to its route entry."""
     index = registry.get("index") if isinstance(registry, dict) else None
     if normalized and isinstance(index, dict):
         meta = index.get(hash_uri(normalized))
         if meta and isinstance(meta.get("routeEntry"), dict):
             return meta["routeEntry"]
+    return None
 
-    tree = registry_tree(registry)
+
+def _walk_route_tree(tree, route: list) -> tuple[dict | None, dict[str, str]]:
+    """Walk the route tree segment by segment, binding a single {param} per level."""
     node = tree
     params: dict[str, str] = {}
-    for segment in translation["route"]:
+    for segment in route:
         if not isinstance(node, dict):
-            node = None
-            break
+            return None, params
         if segment in node:
             node = node[segment]
             continue
         # no exact key: fall back to a single templated {param} segment
         templated = [k for k in node if isinstance(k, str) and len(k) > 2 and k[0] == "{" and k[-1] == "}"]
-        if len(templated) == 1:
-            params[templated[0][1:-1]] = segment
-            node = node[templated[0]]
-        else:
-            node = None
-            break
+        if len(templated) != 1:
+            return None, params
+        params[templated[0][1:-1]] = segment
+        node = node[templated[0]]
+    return node, params
+
+
+def resolve_route(translation: dict, registry: dict) -> dict:
+    descriptor = translation.get("descriptor") or {}
+    cached = _resolve_from_index(descriptor.get("normalized"), registry)
+    if cached is not None:
+        return cached
+
+    node, params = _walk_route_tree(registry_tree(registry), translation["route"])
     if not node:
         raise KeyError(f"Route not found: {'.'.join(translation['route'])}")
     if params:
@@ -500,14 +509,16 @@ def hydrate_registry(registry: dict, refs: dict[str, object]) -> dict:
 
 
 def exec_local_function(ctx: dict):
+    # dispatch_generated is the plan/simulation path (like exec_fetch / exec_spawn):
+    # it must NOT execute a side-effecting in-process handler, and must keep the
+    # result JSON-serializable. Real execution goes through run_local_function in the
+    # execute path. Stringify a live callable ref to its name.
     fn = ctx["routeEntry"].get("ref")
-    if callable(fn):
-        return fn(ctx["target"], ctx["args"], ctx["payload"], ctx["descriptor"])
     return {
         "ok": True,
         "simulated": True,
         "type": "function",
-        "ref": fn,
+        "ref": getattr(fn, "__name__", str(fn)) if callable(fn) else fn,
         "target": ctx["target"],
         "args": ctx["args"],
         "payload": ctx["payload"],

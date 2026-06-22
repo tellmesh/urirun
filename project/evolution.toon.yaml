@@ -1,58 +1,58 @@
-# code2llm/evolution | 607 func | 48f | 2026-06-21
+# code2llm/evolution | 805 func | 56f | 2026-06-22
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/runtime/v2.py
-      WHY: 1627L, 0 classes, max CC=40
-      EFFORT: ~4h  IMPACT: 65080
+      WHY: 2011L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 28154
 
   [2] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 1092L, 0 classes, max CC=52
-      EFFORT: ~4h  IMPACT: 56784
+      WHY: 1183L, 0 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 17745
 
-  [3] !! SPLIT-FUNC      main  CC=40  fan=129
-      WHY: CC=40 exceeds 15
-      EFFORT: ~1h  IMPACT: 5160
-
-  [4] !! SPLIT-FUNC      task_command  CC=52  fan=35
-      WHY: CC=52 exceeds 15
-      EFFORT: ~1h  IMPACT: 1820
-
-  [5] !! SPLIT-FUNC      run_uri_route  CC=46  fan=23
-      WHY: CC=46 exceeds 15
-      EFFORT: ~1h  IMPACT: 1058
-
-  [6] !! SPLIT-FUNC      run_uri_route  CC=45  fan=19
-      WHY: CC=45 exceeds 15
-      EFFORT: ~1h  IMPACT: 855
-
-  [7] !! SPLIT-FUNC      run_planfile_task  CC=31  fan=25
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 775
-
-  [8] !  SPLIT-FUNC      main  CC=17  fan=29
+  [3] !  SPLIT-FUNC      main  CC=17  fan=29
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 493
 
-  [9] !  SPLIT-FUNC      run_fetch  CC=17  fan=29
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 493
+  [4] !  SPLIT-FUNC      main  CC=24  fan=17
+      WHY: CC=24 exceeds 15
+      EFFORT: ~1h  IMPACT: 408
 
-  [10] !! SPLIT-FUNC      build_ticket_payload  CC=35  fan=13
-      WHY: CC=35 exceeds 15
-      EFFORT: ~1h  IMPACT: 455
+  [5] !  SPLIT-FUNC      scan_path  CC=15  fan=19
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 285
+
+  [6] !  SPLIT-FUNC      data_command  CC=15  fan=15
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 225
+
+  [7] !  SPLIT-FUNC      serve_mcp  CC=15  fan=14
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 210
+
+  [8] !! SPLIT-FUNC      _flags  CC=26  fan=8
+      WHY: CC=26 exceeds 15
+      EFFORT: ~1h  IMPACT: 208
+
+  [9] !  SPLIT-FUNC      run  CC=19  fan=9
+      WHY: CC=19 exceeds 15
+      EFFORT: ~1h  IMPACT: 171
+
+  [10] !! SPLIT           planfile.yaml
+      WHY: 1319L, 0 classes, max CC=0
+      EFFORT: ~4h  IMPACT: 0
 
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 66 import paths
+  ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 109 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 51 import paths
+  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 76 import paths
 
 METRICS-TARGET:
-  CC̄:          4.4 → ≤3.1
-  max-CC:      52 → ≤20
-  god-modules: 8 → 0
-  high-CC(≥15): 27 → ≤13
+  CC̄:          4.1 → ≤2.9
+  max-CC:      26 → ≤13
+  god-modules: 9 → 0
+  high-CC(≥15): 10 → ≤5
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.4 → now CC̄=4.4
+  prev CC̄=3.9 → now CC̄=4.1

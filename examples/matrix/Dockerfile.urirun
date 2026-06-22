@@ -1,0 +1,13 @@
+# urirun runtime + all communication-layer servers/clients (python).
+# Build context is the repo root so it can install the local adapter.
+FROM python:3.12-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl coreutils \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY adapters/python /opt/urirun/adapters/python
+RUN pip install --no-cache-dir /opt/urirun/adapters/python grpcio
+
+COPY examples/matrix /work
+WORKDIR /work

@@ -518,6 +518,35 @@ def task_action(project: str, ticket_id: str, action: str, payload: dict) -> dic
     return {"ok": True, "ticket": ticket}
 
 
+def _dashboard_api_response(path: str, project: str, db: str | None, config: str | None, query: dict) -> tuple[int, dict]:
+    """Resolve a dashboard /api/* path to an (HTTP status, JSON payload) pair."""
+    if path == "/api/summary":
+        return 200, summary(project, db, config)
+    if path == "/api/tasks":
+        tickets, error = _safe_tickets(
+            project,
+            sprint=str(_first(query, "sprint", "current")),
+            status=_first(query, "status"),
+            queue=_first(query, "queue") or None,
+        )
+        return 200, {"ok": error is None, "tickets": tickets, "error": error}
+    if path in {"/api/nodes", "/api/routes"}:
+        mesh = _mesh()
+        discovered = mesh.discover_mesh(mesh.load_host_config(config))
+        key = "nodes" if path == "/api/nodes" else "routes"
+        return 200, {"ok": True, key: discovered.get(key) or []}
+    if path == "/api/checks":
+        host_db = _host_db()
+        return 200, {"ok": True, "checks": host_db.recent_checks(db, subject=_first(query, "subject"), limit=int(_first(query, "limit", "20") or 20))}
+    if path == "/api/logs":
+        host_db = _host_db()
+        return 200, {"ok": True, "logs": host_db.recent_logs(db, stream=_first(query, "stream"), limit=int(_first(query, "limit", "20") or 20))}
+    if path == "/api/artifacts":
+        host_db = _host_db()
+        return 200, {"ok": True, "artifacts": host_db.list_artifacts(db, kind=_first(query, "kind"), limit=int(_first(query, "limit", "20") or 20))}
+    return 404, {"ok": False, "error": "not found"}
+
+
 def create_handler(project: str, db: str | None = None, config: str | None = None):
     class Handler(BaseHTTPRequestHandler):
         def do_OPTIONS(self):
@@ -525,46 +554,12 @@ def create_handler(project: str, db: str | None = None, config: str | None = Non
 
         def do_GET(self):
             parsed = urlparse(self.path)
-            query = parse_qs(parsed.query)
             try:
                 if parsed.path in {"/", "/index.html"}:
                     _html_response(self)
                     return
-                if parsed.path == "/api/summary":
-                    _json_response(self, 200, summary(project, db, config))
-                    return
-                if parsed.path == "/api/tasks":
-                    tickets, error = _safe_tickets(
-                        project,
-                        sprint=str(_first(query, "sprint", "current")),
-                        status=_first(query, "status"),
-                        queue=_first(query, "queue") or None,
-                    )
-                    _json_response(self, 200, {"ok": error is None, "tickets": tickets, "error": error})
-                    return
-                if parsed.path == "/api/nodes":
-                    mesh = _mesh()
-                    discovered = mesh.discover_mesh(mesh.load_host_config(config))
-                    _json_response(self, 200, {"ok": True, "nodes": discovered.get("nodes") or []})
-                    return
-                if parsed.path == "/api/routes":
-                    mesh = _mesh()
-                    discovered = mesh.discover_mesh(mesh.load_host_config(config))
-                    _json_response(self, 200, {"ok": True, "routes": discovered.get("routes") or []})
-                    return
-                if parsed.path == "/api/checks":
-                    host_db = _host_db()
-                    _json_response(self, 200, {"ok": True, "checks": host_db.recent_checks(db, subject=_first(query, "subject"), limit=int(_first(query, "limit", "20") or 20))})
-                    return
-                if parsed.path == "/api/logs":
-                    host_db = _host_db()
-                    _json_response(self, 200, {"ok": True, "logs": host_db.recent_logs(db, stream=_first(query, "stream"), limit=int(_first(query, "limit", "20") or 20))})
-                    return
-                if parsed.path == "/api/artifacts":
-                    host_db = _host_db()
-                    _json_response(self, 200, {"ok": True, "artifacts": host_db.list_artifacts(db, kind=_first(query, "kind"), limit=int(_first(query, "limit", "20") or 20))})
-                    return
-                _json_response(self, 404, {"ok": False, "error": "not found"})
+                status, payload = _dashboard_api_response(parsed.path, project, db, config, parse_qs(parsed.query))
+                _json_response(self, status, payload)
             except Exception as exc:  # noqa: BLE001
                 _json_response(self, 500, {"ok": False, "error": str(exc)})
 

@@ -56,29 +56,42 @@ def run_registry_introspect(ctx: dict, policy: dict, execute: bool = True) -> di
 
     payload = ctx.get("payload") if isinstance(ctx.get("payload"), dict) else {}
     registry_path = payload.get("registry")
-    if not registry_path:
-        return {"ok": False, "type": "registry", "error": "payload.registry (a registry/bindings path) is required"}
     try:
-        registry = _runtime.load_registry_arg(registry_path)
+        if registry_path:
+            registry = _runtime.load_registry_arg(registry_path)
+        else:
+            # default: introspect the live runtime — every installed connector
+            # (via the urirun.bindings entry points) plus the builtin error:// /
+            # registry:// routes, served from the fingerprint-cached full registry.
+            from urirun.runtime import discovery, v2
+            registry = discovery.full_registry(v2.ENTRY_POINT_GROUP)
     except (FileNotFoundError, ValueError) as exc:
         return {"ok": False, "type": "registry", "error": f"cannot load registry: {exc}"}
 
     flat = reglib.flatten_registry_document(registry)  # [{uri, routeEntry}, ...]
     resource = (ctx.get("translation") or {}).get("resource") or ""
-
     if resource == "bindings":
-        wanted = payload.get("uri")
-        match = next((route for route in flat if route["uri"] == wanted), None)
-        if not match:
-            return {"ok": False, "type": "binding", "uri": wanted, "binding": None}
-        entry = match["routeEntry"]
-        return {"ok": True, "type": "binding", "uri": wanted, "binding": {
-            "uri": wanted, "kind": entry.get("kind"), "adapter": entry.get("adapter"),
-            "connector": (entry.get("meta") or {}).get("connector"),
-            "inputSchema": (entry.get("config") or {}).get("inputSchema") or entry.get("inputSchema"),
-            "meta": entry.get("meta"), "policy": entry.get("policy"),
-        }}
+        return _introspect_binding(flat, payload)
+    return _introspect_list(flat, payload)
 
+
+def _introspect_binding(flat: list, payload: dict) -> dict:
+    """Report one binding's contract by exact URI match."""
+    wanted = payload.get("uri")
+    match = next((route for route in flat if route["uri"] == wanted), None)
+    if not match:
+        return {"ok": False, "type": "binding", "uri": wanted, "binding": None}
+    entry = match["routeEntry"]
+    return {"ok": True, "type": "binding", "uri": wanted, "binding": {
+        "uri": wanted, "kind": entry.get("kind"), "adapter": entry.get("adapter"),
+        "connector": (entry.get("meta") or {}).get("connector"),
+        "inputSchema": (entry.get("config") or {}).get("inputSchema") or entry.get("inputSchema"),
+        "meta": entry.get("meta"), "policy": entry.get("policy"),
+    }}
+
+
+def _introspect_list(flat: list, payload: dict) -> dict:
+    """List routes, optionally filtered by scheme prefix and a substring query."""
     scheme = payload.get("scheme")
     needle = payload.get("q")
     items = []

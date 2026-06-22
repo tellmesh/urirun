@@ -410,6 +410,71 @@ def route_db_path(ctx: dict, payload: dict) -> str | None:
     return payload.get("db") or (ctx["routeEntry"].get("config") or {}).get("db")
 
 
+def _run_query_route(payload: dict, path: str | None, package: str, resource: str, operation: str) -> dict | None:
+    """Handle read-only ``query`` routes. Returns None when nothing matches."""
+    table = {
+        ("data", "datasets", "query"): lambda: {"type": "host-db", "datasets": list_datasets(path)},
+        ("data", "records", "query"): lambda: {
+            "type": "host-db",
+            "records": search_records(path, payload.get("query", ""), dataset=payload.get("dataset"), limit=int(payload.get("limit", 20))),
+        },
+        ("data", "sql", "query"): lambda: {
+            "type": "host-db",
+            "rows": read_only_sql(path, str(payload.get("query") or ""), payload.get("params") or [], int(payload.get("limit", 100))),
+        },
+        ("artifact", "artifacts", "query"): lambda: {
+            "type": "host-db",
+            "artifacts": list_artifacts(path, kind=payload.get("kind"), limit=int(payload.get("limit", 20))),
+        },
+        ("check", "checks", "query"): lambda: {
+            "type": "host-db",
+            "checks": recent_checks(path, subject=payload.get("subject"), limit=int(payload.get("limit", 20))),
+        },
+    }
+    handler = table.get((package, resource, operation))
+    if handler is not None:
+        return handler()
+    if package == "log" and operation == "query":
+        return {"type": "host-db", "logs": recent_logs(path, stream=payload.get("stream") or resource, limit=int(payload.get("limit", 20)))}
+    return None
+
+
+def _run_command_route(payload: dict, path: str | None, package: str, resource: str, operation: str, action: str) -> dict | None:
+    """Handle mutating ``command`` routes. Returns None when nothing matches."""
+    table = {
+        ("data", "dataset", "command", "create"): lambda: {
+            "type": "host-db",
+            "dataset": create_dataset(path, payload["name"], payload.get("description", ""), payload.get("schema")),
+        },
+        ("data", "record", "command", "upsert"): lambda: {
+            "type": "host-db",
+            "record": upsert_record(
+                path,
+                payload["dataset"],
+                payload["key"],
+                payload.get("data") or {},
+                source_uri=payload.get("source_uri"),
+                confidence=payload.get("confidence"),
+            ),
+        },
+        ("artifact", "artifact", "command", "register"): lambda: {
+            "type": "host-db",
+            "artifact": register_artifact(path, payload["kind"], payload["uri"], payload.get("path"), payload.get("meta")),
+        },
+    }
+    handler = table.get((package, resource, operation, action))
+    if handler is not None:
+        return handler()
+    if package == "check" and resource == "check" and operation == "command" and action in {"add", "create"}:
+        return {
+            "type": "host-db",
+            "check": add_check(path, payload["subject"], payload["check_uri"], payload["status"], payload.get("result")),
+        }
+    if package == "log" and operation == "command" and action == "write":
+        return {"type": "host-db", "log": add_log(path, payload.get("stream") or resource, payload["event"], payload.get("detail"))}
+    return None
+
+
 def run_uri_route(ctx: dict, execute: bool) -> dict:
     payload = dict(ctx.get("payload") or {})
     descriptor = ctx["descriptor"]
@@ -420,56 +485,15 @@ def run_uri_route(ctx: dict, execute: bool) -> dict:
     action = args[0] if args else operation
     path = route_db_path(ctx, payload)
 
-    if package == "data" and resource == "datasets" and operation == "query":
-        return {"type": "host-db", "datasets": list_datasets(path)}
-    if package == "data" and resource == "records" and operation == "query":
-        return {
-            "type": "host-db",
-            "records": search_records(path, payload.get("query", ""), dataset=payload.get("dataset"), limit=int(payload.get("limit", 20))),
-        }
-    if package == "data" and resource == "sql" and operation == "query":
-        return {"type": "host-db", "rows": read_only_sql(path, str(payload.get("query") or ""), payload.get("params") or [], int(payload.get("limit", 100)))}
-    if package == "artifact" and resource == "artifacts" and operation == "query":
-        return {"type": "host-db", "artifacts": list_artifacts(path, kind=payload.get("kind"), limit=int(payload.get("limit", 20)))}
-    if package == "check" and resource == "checks" and operation == "query":
-        return {"type": "host-db", "checks": recent_checks(path, subject=payload.get("subject"), limit=int(payload.get("limit", 20)))}
-    if package == "log" and operation == "query":
-        return {"type": "host-db", "logs": recent_logs(path, stream=payload.get("stream") or resource, limit=int(payload.get("limit", 20)))}
+    queried = _run_query_route(payload, path, package, resource, operation)
+    if queried is not None:
+        return queried
 
     if not execute:
         return {"type": "host-db", "simulated": True, "action": action, "payload": payload, "db": str(db_path(path))}
 
-    if package == "data" and resource == "dataset" and operation == "command" and action == "create":
-        return {
-            "type": "host-db",
-            "dataset": create_dataset(path, payload["name"], payload.get("description", ""), payload.get("schema")),
-        }
-    if package == "data" and resource == "record" and operation == "command" and action == "upsert":
-        return {
-            "type": "host-db",
-            "record": upsert_record(
-                path,
-                payload["dataset"],
-                payload["key"],
-                payload.get("data") or {},
-                source_uri=payload.get("source_uri"),
-                confidence=payload.get("confidence"),
-            ),
-        }
-    if package == "artifact" and resource == "artifact" and operation == "command" and action == "register":
-        return {
-            "type": "host-db",
-            "artifact": register_artifact(path, payload["kind"], payload["uri"], payload.get("path"), payload.get("meta")),
-        }
-    if package == "check" and resource == "check" and operation == "command" and action in {"add", "create"}:
-        return {
-            "type": "host-db",
-            "check": add_check(path, payload["subject"], payload["check_uri"], payload["status"], payload.get("result")),
-        }
-    if package == "log" and operation == "command" and action == "write":
-        return {
-            "type": "host-db",
-            "log": add_log(path, payload.get("stream") or resource, payload["event"], payload.get("detail")),
-        }
+    commanded = _run_command_route(payload, path, package, resource, operation, action)
+    if commanded is not None:
+        return commanded
 
     raise ValueError(f"unsupported host db URI: {descriptor['normalized']}")

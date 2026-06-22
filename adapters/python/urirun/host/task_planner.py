@@ -128,44 +128,33 @@ def _short_name(prompt: str, domains: list[str], daily: bool) -> str:
     return cleaned[:1].upper() + cleaned[1:] if cleaned else "Chat task"
 
 
-def heuristic_plan_chat_request(
-    prompt: str,
-    *,
-    default_sprint: str = "current",
-    default_queue: str = "default",
-    extra_labels: list[str] | None = None,
-) -> TaskPlanningResult:
-    normalized = normalize_text(prompt)
-    labels = list(extra_labels or [])
+def _ambiguous_plan(prompt: str, default_sprint: str, labels: list[str]) -> TaskPlanningResult:
+    """Build a clarification ticket for prompts that are too ambiguous to plan."""
+    ticket = PlannedTicket(
+        name="Clarify chat request",
+        description=f"Original request was ambiguous: {prompt}",
+        priority="normal",
+        sprint=default_sprint,
+        queue="inbox",
+        labels=_unique([*labels, "chat", "needs-input"]),
+        prompt=prompt,
+        executor_mode="interactive",
+        wait_for_input=True,
+        clarification_prompt=(
+            "Clarify the target, expected result, schedule, and whether the task may execute commands."
+        ),
+    )
+    return TaskPlanningResult(
+        source="heuristic",
+        original_prompt=prompt,
+        needs_input=True,
+        tickets=[ticket],
+        warnings=["prompt is ambiguous; ticket will wait for input"],
+    )
 
-    if is_ambiguous(prompt):
-        ticket = PlannedTicket(
-            name="Clarify chat request",
-            description=f"Original request was ambiguous: {prompt}",
-            priority="normal",
-            sprint=default_sprint,
-            queue="inbox",
-            labels=_unique([*labels, "chat", "needs-input"]),
-            prompt=prompt,
-            executor_mode="interactive",
-            wait_for_input=True,
-            clarification_prompt=(
-                "Clarify the target, expected result, schedule, and whether the task may execute commands."
-            ),
-        )
-        return TaskPlanningResult(
-            source="heuristic",
-            original_prompt=prompt,
-            needs_input=True,
-            tickets=[ticket],
-            warnings=["prompt is ambiguous; ticket will wait for input"],
-        )
 
-    domains = _unique([match.lower() for match in DOMAIN_RE.findall(prompt)])
-    daily = _has_any(prompt, DAILY_WORDS)
-    screenshot = _has_any(prompt, SCREENSHOT_WORDS)
-    destructive = is_destructive(prompt)
-
+def _derive_plan_labels(labels: list[str], normalized: str, domains: list, daily: bool, screenshot: bool, destructive: bool) -> list[str]:
+    """Append intent-driven labels (caller still prepends 'chat' and de-dupes)."""
     if domains:
         labels.append("domain")
     if daily:
@@ -178,11 +167,10 @@ def heuristic_plan_chat_request(
         labels.append("namecheap")
     if destructive:
         labels.extend(["review", "destructive"])
+    return labels
 
-    queue = "daily" if daily else default_queue
-    priority = "high" if destructive or "urgent" in normalized or "pilne" in normalized else "normal"
-    executor_mode = "interactive" if destructive else "automatic"
 
+def _derive_acceptance_criteria(domains: list, screenshot: bool, daily: bool, destructive: bool) -> list[str]:
     criteria = ["URI flow is generated from this ticket prompt."]
     if domains:
         criteria.append(f"Domain availability is checked for: {', '.join(domains)}.")
@@ -192,6 +180,32 @@ def heuristic_plan_chat_request(
         criteria.append("Task can be scheduled in the daily queue.")
     if destructive:
         criteria.append("Human review is required before any destructive change is executed.")
+    return criteria
+
+
+def heuristic_plan_chat_request(
+    prompt: str,
+    *,
+    default_sprint: str = "current",
+    default_queue: str = "default",
+    extra_labels: list[str] | None = None,
+) -> TaskPlanningResult:
+    normalized = normalize_text(prompt)
+    labels = list(extra_labels or [])
+
+    if is_ambiguous(prompt):
+        return _ambiguous_plan(prompt, default_sprint, labels)
+
+    domains = _unique([match.lower() for match in DOMAIN_RE.findall(prompt)])
+    daily = _has_any(prompt, DAILY_WORDS)
+    screenshot = _has_any(prompt, SCREENSHOT_WORDS)
+    destructive = is_destructive(prompt)
+
+    labels = _derive_plan_labels(labels, normalized, domains, daily, screenshot, destructive)
+    queue = "daily" if daily else default_queue
+    priority = "high" if destructive or "urgent" in normalized or "pilne" in normalized else "normal"
+    executor_mode = "interactive" if destructive else "automatic"
+    criteria = _derive_acceptance_criteria(domains, screenshot, daily, destructive)
 
     ticket = PlannedTicket(
         name=_short_name(prompt, domains, daily),

@@ -99,30 +99,11 @@ def evaluate_policy(uri: str, route_entry: dict, ctx: dict, policy: dict) -> dic
     route_policy = route_entry.get("policy") or {}
     execute = policy.get("execute", {})
 
-    if route_policy.get("deny") is True:
-        return {"allowed": False, "reason": "route policy denies execution"}
+    denial = _policy_denial(uri, route_entry, ctx, policy, route_policy, execute)
+    if denial is not None:
+        return {"allowed": False, "reason": denial}
 
-    deny_match = _matches_any(uri, execute.get("deny", []))
-    if deny_match:
-        return {"allowed": False, "reason": f"matched deny pattern {deny_match!r}"}
-
-    args = ctx.get("args", [])
-    max_args = route_policy.get("maxArgs", policy.get("maxArgs", 16))
-    if max_args is not None and len(args) > max_args:
-        return {"allowed": False, "reason": f"too many arguments ({len(args)} > {max_args})"}
-
-    if route_entry.get("kind") == "shell" or route_entry.get("adapter") == "shell-template":
-        if not (route_policy.get("allowExecute") or policy.get("allowShellTemplates")):
-            return {"allowed": False, "reason": "shell templates require allowShellTemplates"}
-
-    allowed = route_policy.get("allowExecute") is True
-    reason = "route policy allows execution" if allowed else ""
-    if not allowed:
-        allow_match = _matches_any(uri, execute.get("allow", []))
-        if allow_match:
-            allowed = True
-            reason = f"matched allow pattern {allow_match!r}"
-
+    allowed, reason = _policy_allow(uri, route_policy, execute)
     if not allowed:
         return {"allowed": False, "reason": "no allow rule matched (default deny)"}
 
@@ -130,6 +111,33 @@ def evaluate_policy(uri: str, route_entry: dict, ctx: dict, policy: dict) -> dic
     if route_policy.get("requireConfirm") or _looks_destructive(route_entry, ctx):
         decision["requireConfirm"] = True
     return decision
+
+
+def _policy_denial(uri: str, route_entry: dict, ctx: dict, policy: dict, route_policy: dict, execute: dict) -> str | None:
+    """Return an explicit denial reason, or None if no deny rule fired."""
+    if route_policy.get("deny") is True:
+        return "route policy denies execution"
+    deny_match = _matches_any(uri, execute.get("deny", []))
+    if deny_match:
+        return f"matched deny pattern {deny_match!r}"
+    args = ctx.get("args", [])
+    max_args = route_policy.get("maxArgs", policy.get("maxArgs", 16))
+    if max_args is not None and len(args) > max_args:
+        return f"too many arguments ({len(args)} > {max_args})"
+    if route_entry.get("kind") == "shell" or route_entry.get("adapter") == "shell-template":
+        if not (route_policy.get("allowExecute") or policy.get("allowShellTemplates")):
+            return "shell templates require allowShellTemplates"
+    return None
+
+
+def _policy_allow(uri: str, route_policy: dict, execute: dict) -> tuple[bool, str]:
+    """Resolve whether execution is allowed and the human-readable reason."""
+    if route_policy.get("allowExecute") is True:
+        return True, "route policy allows execution"
+    allow_match = _matches_any(uri, execute.get("allow", []))
+    if allow_match:
+        return True, f"matched allow pattern {allow_match!r}"
+    return False, ""
 
 
 def _truncate(text: str) -> str:
@@ -185,12 +193,8 @@ def run_shell_template(ctx: dict, policy: dict) -> dict:
     }
 
 
-def run_fetch(ctx: dict, policy: dict) -> dict:
-    config = ctx["routeEntry"].get("config", {})
-    payload = ctx["payload"] if isinstance(ctx["payload"], dict) else {}
-    method = (config.get("method") or "POST").upper()
-
-    # url: explicit (templated) or environments[target] + path (declarative connectors)
+def _resolve_fetch_url(config: dict, ctx: dict, payload: dict) -> str:
+    """Resolve the request URL from an explicit url or environments[target] + path."""
     url = config.get("url")
     if not url and config.get("path"):
         environments = config.get("environments") or {}
@@ -203,9 +207,15 @@ def run_fetch(ctx: dict, policy: dict) -> dict:
     url = _fetch_fill(url, payload)
     if not str(url).lower().startswith(("http://", "https://")):
         raise PolicyError(f"refusing non-http url: {url}")
+    return url
 
-    # secrets are resolved here, at the injection boundary, only in execute, under
-    # the policy allow-list; they go into headers/body (never the returned url).
+
+def _make_secret_injector(policy: dict):
+    """Build the recursive secret-injection function bound to the policy allow-list.
+
+    Secrets are resolved here, at the injection boundary, only in execute, under the
+    policy allow-list; they go into headers/body (never the returned url).
+    """
     from urirun.runtime import secrets as _secrets
 
     secret_allow = policy.get("secretAllow") if isinstance(policy, dict) else None
@@ -220,15 +230,22 @@ def run_fetch(ctx: dict, policy: dict) -> dict:
             return [_inject(item) for item in value]
         return value
 
-    headers = {key: _inject(_fetch_fill(value, payload)) for key, value in (config.get("headers") or {}).items()}
-    body = None
-    if method not in ("GET", "HEAD"):
-        if config.get("body") is not None:
-            body = json.dumps(_inject(_fetch_render(config["body"], payload))).encode("utf-8")
-            headers.setdefault("Content-Type", "application/json")
-        elif ctx["payload"] is not None:
-            body = json.dumps(ctx["payload"]).encode("utf-8")
-            headers.setdefault("Content-Type", "application/json")
+    return _inject
+
+
+def _build_fetch_body(config: dict, ctx: dict, method: str, headers: dict, inject, payload: dict):
+    if method in ("GET", "HEAD"):
+        return None
+    if config.get("body") is not None:
+        headers.setdefault("Content-Type", "application/json")
+        return json.dumps(inject(_fetch_render(config["body"], payload))).encode("utf-8")
+    if ctx["payload"] is not None:
+        headers.setdefault("Content-Type", "application/json")
+        return json.dumps(ctx["payload"]).encode("utf-8")
+    return None
+
+
+def _send_fetch(url: str, method: str, headers: dict, body, policy: dict) -> dict:
     request = urllib.request.Request(url, data=body, method=method, headers=headers)
     try:
         with urllib.request.urlopen(request, timeout=policy.get("timeout", DEFAULT_TIMEOUT)) as response:
@@ -237,6 +254,18 @@ def run_fetch(ctx: dict, policy: dict) -> dict:
     except urllib.error.HTTPError as err:
         text = err.read().decode("utf-8", errors="replace")
         return {"type": "http", "method": method, "url": url, "status": err.code, "body": _truncate(text)}
+
+
+def run_fetch(ctx: dict, policy: dict) -> dict:
+    config = ctx["routeEntry"].get("config", {})
+    payload = ctx["payload"] if isinstance(ctx["payload"], dict) else {}
+    method = (config.get("method") or "POST").upper()
+
+    url = _resolve_fetch_url(config, ctx, payload)
+    inject = _make_secret_injector(policy)
+    headers = {key: inject(_fetch_fill(value, payload)) for key, value in (config.get("headers") or {}).items()}
+    body = _build_fetch_body(config, ctx, method, headers, inject, payload)
+    return _send_fetch(url, method, headers, body, policy)
 
 
 def run_local_function(ctx: dict, policy: dict) -> dict:

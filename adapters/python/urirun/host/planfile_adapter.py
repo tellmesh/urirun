@@ -68,20 +68,14 @@ def ticket_to_dict(ticket) -> dict:
     return _model_dict(ticket) if ticket is not None else {}
 
 
-def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    imports = _imports()
-    data = dict(payload)
-    source_tool = data.pop("source_tool", None) or data.pop("source", None) or "urirun-host"
-    source_context = data.pop("source_context", None) or {}
-    if "prompt" in data and "source_context" not in payload:
-        source_context.setdefault("prompt", data.get("prompt"))
-
+def _normalize_labels(data: dict[str, Any]) -> list:
     labels = data.get("labels") or data.pop("label", []) or []
     if isinstance(labels, str):
         labels = [item.strip() for item in labels.split(",") if item.strip()]
-    data["labels"] = list(labels)
-    data["priority"] = normalize_priority(data.get("priority"))
+    return list(labels)
 
+
+def _build_executor(data: dict[str, Any], imports: dict) -> Any:
     executor = data.pop("executor", None)
     if executor is None and any(key in data for key in ("executor_kind", "executor_mode", "executor_handler")):
         executor = imports["TicketExecutor"](
@@ -89,7 +83,10 @@ def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
             mode=data.pop("executor_mode", None) or "automatic",
             handler=data.pop("executor_handler", None),
         )
+    return executor
 
+
+def _build_execution(data: dict[str, Any], imports: dict) -> Any:
     execution = data.pop("execution", None)
     if execution is None and any(key in data for key in ("queue", "execution_state", "assigned_to", "max_attempts")):
         execution = imports["TicketExecution"](
@@ -98,7 +95,10 @@ def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
             assigned_to=data.pop("assigned_to", None),
             max_attempts=int(data.pop("max_attempts", 1) or 1),
         )
+    return execution
 
+
+def _build_inputs(data: dict[str, Any], imports: dict) -> Any:
     inputs = data.pop("inputs", None)
     if inputs is None and any(key in data for key in ("prompt", "env_keys", "llm_model", "api_endpoint")):
         inputs = imports["TicketInputs"](
@@ -107,7 +107,10 @@ def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
             llm_model=data.pop("llm_model", None),
             api_endpoint=data.pop("api_endpoint", None),
         )
+    return inputs
 
+
+def _build_outputs(data: dict[str, Any], imports: dict) -> Any:
     outputs = data.pop("outputs", None)
     if outputs is None and any(key in data for key in ("artifacts", "notes", "result")):
         outputs = imports["TicketOutputs"](
@@ -115,16 +118,31 @@ def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
             notes=list(data.pop("notes", []) or []),
             result=data.pop("result", None),
         )
+    return outputs
 
+
+def build_ticket_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    imports = _imports()
+    data = dict(payload)
+    source_tool = data.pop("source_tool", None) or data.pop("source", None) or "urirun-host"
+    source_context = data.pop("source_context", None) or {}
+    if "prompt" in data and "source_context" not in payload:
+        source_context.setdefault("prompt", data.get("prompt"))
+
+    data["labels"] = _normalize_labels(data)
+    data["priority"] = normalize_priority(data.get("priority"))
+
+    # Order matters: _build_inputs() consumes "prompt", so source_context must read it above first.
+    sections = {
+        "executor": _build_executor(data, imports),
+        "execution": _build_execution(data, imports),
+        "inputs": _build_inputs(data, imports),
+        "outputs": _build_outputs(data, imports),
+    }
     data["source"] = imports["TicketSource"](tool=str(source_tool), context=source_context)
-    if executor is not None:
-        data["executor"] = executor
-    if execution is not None:
-        data["execution"] = execution
-    if inputs is not None:
-        data["inputs"] = inputs
-    if outputs is not None:
-        data["outputs"] = outputs
+    for name, value in sections.items():
+        if value is not None:
+            data[name] = value
     return data
 
 

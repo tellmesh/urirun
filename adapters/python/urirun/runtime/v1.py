@@ -193,7 +193,15 @@ def run_fetch(ctx: dict, policy: dict, execute: bool) -> dict:
 
 def run_local_function(ctx: dict, policy: dict, execute: bool) -> dict:
     if not execute:
-        return {"simulated": True, "type": "function", "ref": ctx["routeEntry"].get("ref"), "args": ctx["args"]}
+        fn = ctx["routeEntry"].get("ref")
+        # Plan only — never call a side-effecting handler in dry-run, and keep the
+        # result JSON-serializable by stringifying a live callable ref to its name.
+        return {
+            "simulated": True,
+            "type": "function",
+            "ref": getattr(fn, "__name__", str(fn)) if callable(fn) else fn,
+            "args": ctx["args"],
+        }
     return runtime.run_local_function(ctx, policy)
 
 

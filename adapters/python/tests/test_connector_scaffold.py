@@ -22,10 +22,16 @@ def test_scaffold_creates_manifest_and_files(tmp_path, language):
     manifest_path = out / "urirun_connector_my_thing" / "connector.manifest.json" if language == "python" else out / "connector.manifest.json"
     manifest = json.loads(manifest_path.read_text())
     assert manifest["id"] == "my-thing"
-    assert manifest["uriSchemes"] == ["mything"]
-    assert manifest["routes"] == ["mything://host/example/query/ping"]
     assert manifest["install"]["mode"] == "urirun-extra"
     assert manifest["language"] == language
+    if language == "python":
+        # New shape: prose-only manifest — machine fields are derived from the @handler code.
+        assert "routes" not in manifest
+        assert "uriSchemes" not in manifest
+    else:
+        # Polyglot connectors stay argv-template with machine fields in the manifest.
+        assert manifest["uriSchemes"] == ["mything"]
+        assert manifest["routes"] == ["mything://host/example/query/ping"]
 
 
 def test_scaffold_scheme_override(tmp_path):
@@ -39,12 +45,17 @@ def test_scaffold_rejects_unknown_language(tmp_path):
         connector_scaffold.scaffold("thing", "ruby", out_dir=str(tmp_path / "x"))
 
 
-def test_python_scaffold_uses_connector_sdk(tmp_path):
+def test_python_scaffold_uses_handler_shape(tmp_path):
     out = tmp_path / "py"
+    pkg = out / "urirun_connector_demo"
     connector_scaffold.scaffold("demo", "python", out_dir=str(out))
-    cli = (out / "urirun_connector_demo" / "cli.py").read_text()
-    assert "urirun.connector_cli" in cli
-    core = (out / "urirun_connector_demo" / "core.py").read_text()
+    # New shape: a single core.py with a typed @handler and a derived cli/manifest —
+    # no hand-written cli.py register/dispatch boilerplate.
+    assert not (pkg / "cli.py").exists()
+    core = (pkg / "core.py").read_text()
+    assert "@conn.handler(" in core
+    assert "conn.cli(" in core
+    assert "urirun.connector_cli" not in core
     assert "urirun.load_manifest" in core
 
 

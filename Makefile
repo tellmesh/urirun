@@ -36,6 +36,10 @@ test-c: ## Compile and run C adapter tests.
 conformance: ## Verify every language SDK emits the same urirun.bindings.v2 contract.
 	$(PYTHON) adapters/conformance.py
 
+.PHONY: lint-connectors
+lint-connectors: ## Lint every sibling urirun-connector-* package; fail on code/manifest drift (--strict via STRICT=1).
+	$(PYTHON) scripts/lint_connectors.py $(if $(STRICT),--strict,)
+
 .PHONY: test-v1
 test-v1: ## Run urirun v1 parameter-binding smoke checks.
 	printf '%s\n' '{"bindings":{"media://local/video/transcode":{"kind":"cli","adapter":"spawn","command":["ffmpeg","-i","{input}","-vf","scale={width}:{height}","{output}"],"params":{"input":{"required":true},"output":{"required":true},"width":{"default":1280},"height":{"default":720}}}}}' >/tmp/urirun-v1.bindings.json

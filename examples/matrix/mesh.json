@@ -1,0 +1,7 @@
+{
+  "name": "matrix-host",
+  "nodes": [
+    { "name": "alpha", "url": "http://http-node:8765" },
+    { "name": "beta",  "url": "http://node-b:8765" }
+  ]
+}

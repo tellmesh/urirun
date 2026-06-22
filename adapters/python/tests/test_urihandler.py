@@ -164,6 +164,102 @@ class UriHandlerTests(unittest.TestCase):
         finally:
             v2.metadata.entry_points = original
 
+    def test_broken_entry_point_does_not_break_discovery(self):
+        """One faulty connector must not blank out the healthy ones (env-independent resilience)."""
+        def healthy_provider():
+            return {
+                "version": v2.VERSION,
+                "bindings": {
+                    "good://host/ping/query/now": {
+                        "kind": "command",
+                        "adapter": "argv-template",
+                        "argv": ["good", "ping"],
+                    }
+                },
+            }
+
+        class HealthyEP:
+            name = "good"
+            value = "good_pkg:urirun_bindings"
+
+            def load(self):
+                return healthy_provider
+
+        class BrokenEP:
+            name = "broken"
+            value = "missing_pkg:urirun_bindings"
+
+            def load(self):
+                raise ModuleNotFoundError("No module named 'missing_pkg'")
+
+        original = v2.metadata.entry_points
+        v2.metadata.entry_points = lambda: [BrokenEP(), HealthyEP()]
+        try:
+            # default "warn": the broken connector is skipped, the healthy one survives
+            bindings = v2.entry_point_bindings()
+            uris = [b["uri"] for b in bindings]
+            self.assertEqual(uris, ["good://host/ping/query/now"])
+
+            # "raise": strict callers can still surface the failure
+            with self.assertRaises(ModuleNotFoundError):
+                v2.entry_point_bindings(on_error="raise")
+
+            # a passed skipped list records the dropped connector for programmatic consumers
+            skipped: list = []
+            v2.entry_point_bindings(skipped=skipped)
+            self.assertEqual(len(skipped), 1)
+            self.assertEqual(skipped[0]["name"], "broken")
+            self.assertIn("ModuleNotFoundError", skipped[0]["error"])
+
+            # entry_point_binding_document surfaces the same drops under a "skipped" key
+            doc = urirun.entry_point_binding_document()
+            self.assertEqual(doc["bindingCount"], 1)
+            self.assertEqual([s["name"] for s in doc["skipped"]], ["broken"])
+
+            # connectors doctor health report: one row per connector, ok flag per connector
+            health = {row["name"]: row for row in v2.connector_health()}
+            self.assertTrue(health["good"]["ok"])
+            self.assertEqual(health["good"]["bindingCount"], 1)
+            self.assertFalse(health["broken"]["ok"])
+            self.assertIn("ModuleNotFoundError", health["broken"]["error"])
+        finally:
+            v2.metadata.entry_points = original
+
+    def test_connector_health_flags_stale_console_script(self):
+        """doctor must catch a console-script wrapper pointing at a vanished module."""
+        def provider():
+            return {"version": v2.VERSION, "bindings": {"ok://host/ping/query/now": {"kind": "command", "adapter": "argv-template", "argv": ["x"]}}}
+
+        class BrokenScript:
+            name = "urirun-foo"
+            value = "foo.cli:main"  # module removed after refactor to foo.core
+            group = "console_scripts"
+
+            def load(self):
+                raise ModuleNotFoundError("No module named 'foo.cli'")
+
+        class Dist:
+            entry_points = [BrokenScript()]
+
+        class ConnectorEP:
+            name = "foo"
+            value = "foo.core:urirun_bindings"
+            dist = Dist()
+
+            def load(self):
+                return provider
+
+        original = v2.metadata.entry_points
+        v2.metadata.entry_points = lambda: [ConnectorEP()]
+        try:
+            row = v2.connector_health()[0]
+            # bindings are fine, but the stale console script is surfaced separately
+            self.assertTrue(row["ok"])
+            self.assertEqual(row["scriptIssues"][0]["name"], "urirun-foo")
+            self.assertIn("ModuleNotFoundError", row["scriptIssues"][0]["error"])
+        finally:
+            v2.metadata.entry_points = original
+
 
 if __name__ == "__main__":
     unittest.main()

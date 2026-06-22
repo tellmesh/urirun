@@ -2,7 +2,7 @@
 
 app {
   name: urirun;
-  version: 0.3.18;
+  version: 0.1.0;
 }
 
 workflow[name="test"] {
@@ -19,6 +19,11 @@ workflow[name="test"] {
 workflow[name="version-check"] {
   trigger: manual;
   step-1: run cmd=$(PYTHON) -c 'import json, pathlib, sys, tomllib; root = pathlib.Path("."); versions = {"VERSION": (root / "VERSION").read_text().strip(), "package.json": json.loads((root / "package.json").read_text())["version"], "adapters/python/VERSION": (root / "adapters/python/VERSION").read_text().strip(), "adapters/python/pyproject.toml": tomllib.loads((root / "adapters/python/pyproject.toml").read_text())["project"]["version"], "adapters/js/package.json": json.loads((root / "adapters/js/package.json").read_text())["version"]}; print("urirun versions:", ", ".join(f"{k}={v}" for k, v in versions.items())); sys.exit(0 if len(set(versions.values())) == 1 else 1)';
+}
+
+workflow[name="release-bump"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/release-bump.sh $(V);
 }
 
 workflow[name="test-js"] {
@@ -40,6 +45,11 @@ workflow[name="test-c"] {
 workflow[name="conformance"] {
   trigger: manual;
   step-1: run cmd=$(PYTHON) adapters/conformance.py;
+}
+
+workflow[name="lint-connectors"] {
+  trigger: manual;
+  step-1: run cmd=$(PYTHON) scripts/lint_connectors.py $(if $(STRICT),--strict,);
 }
 
 workflow[name="test-v1"] {

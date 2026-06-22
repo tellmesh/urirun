@@ -1,0 +1,132 @@
+# urirun matrix — one route exposed across communication layers, one contract
+# emitted across runtimes. Run:  docker compose up --build --abort-on-container-exit
+#
+# The `matrix` service is the entry point: it waits for the servers + runtime
+# emitters, exercises every cell, prints a report and sets the exit code.
+name: urirun-matrix
+
+services:
+  # ── communication-layer servers (long-running) ──
+  http-node:
+    build:
+      context: ../..
+      dockerfile: examples/matrix/Dockerfile.urirun
+    image: urirun-matrix
+    command: ["python", "-m", "urirun.runtime.v2", "node", "serve",
+              "--registry", "/work/hash.bindings.v2.json",
+              "--host", "0.0.0.0", "--port", "8765", "--execute", "--allow", "hash://**"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8765/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  # second node, so the host can discover a node↔node mesh
+  node-b:
+    image: urirun-matrix
+    command: ["python", "-m", "urirun.runtime.v2", "node", "serve",
+              "--registry", "/work/hash.bindings.v2.json",
+              "--host", "0.0.0.0", "--port", "8765", "--execute", "--allow", "hash://**"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8765/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    depends_on:
+      http-node:
+        condition: service_started
+
+  grpc:
+    image: urirun-matrix
+    command: ["python", "-m", "urirun.runtime.v2_grpc", "serve",
+              "/work/hash.bindings.v2.json",
+              "--host", "0.0.0.0", "--port", "50051",
+              "--policy", "/work/policy.json", "--execute"]
+    depends_on:
+      http-node:
+        condition: service_started
+
+  # ── runtime emitters (one-shot → shared volume) ──
+  runtime-python:
+    image: urirun-matrix
+    volumes: ["shared:/shared"]
+    command: ["sh", "-c", "python /work/emit_python.py > /shared/python.json && echo 'python: emitted /shared/python.json'"]
+    depends_on:
+      http-node:
+        condition: service_started
+
+  runtime-go:
+    build:
+      context: ../..
+      dockerfile: examples/matrix/Dockerfile.go
+    volumes: ["shared:/shared"]
+
+  runtime-node:
+    build:
+      context: ../..
+      dockerfile: examples/matrix/Dockerfile.node
+    volumes: ["shared:/shared"]
+
+  runtime-php:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.php }
+    volumes: ["shared:/shared"]
+
+  runtime-ruby:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.ruby }
+    volumes: ["shared:/shared"]
+
+  runtime-bash:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.bash }
+    volumes: ["shared:/shared"]
+
+  runtime-rust:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.rust }
+    volumes: ["shared:/shared"]
+
+  runtime-perl:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.perl }
+    volumes: ["shared:/shared"]
+
+  runtime-java:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.java }
+    volumes: ["shared:/shared"]
+
+  runtime-csharp:
+    build: { context: ../.., dockerfile: examples/matrix/Dockerfile.csharp }
+    volumes: ["shared:/shared"]
+
+  # ── orchestrator: exercises every cell, prints the matrix ──
+  matrix:
+    image: urirun-matrix
+    volumes: ["shared:/shared"]
+    command: ["bash", "/work/run-matrix.sh"]
+    depends_on:
+      http-node:
+        condition: service_healthy
+      node-b:
+        condition: service_healthy
+      grpc:
+        condition: service_started
+      runtime-python:
+        condition: service_completed_successfully
+      runtime-go:
+        condition: service_completed_successfully
+      runtime-node:
+        condition: service_completed_successfully
+      runtime-php:
+        condition: service_completed_successfully
+      runtime-ruby:
+        condition: service_completed_successfully
+      runtime-bash:
+        condition: service_completed_successfully
+      runtime-rust:
+        condition: service_completed_successfully
+      runtime-perl:
+        condition: service_completed_successfully
+      runtime-java:
+        condition: service_completed_successfully
+      runtime-csharp:
+        condition: service_completed_successfully
+
+volumes:
+  shared:

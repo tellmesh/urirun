@@ -1,0 +1,79 @@
+# Fleet gate: lint every if-uri/urirun-connector-* against the in-tree urirun
+# (the build that carries the v2 authoring layer), failing on code<->manifest drift.
+#
+# The connectors are separate repos, so this job clones them as siblings of the
+# urirun checkout — exactly the layout scripts/lint_connectors.py expects locally —
+# and runs `make lint-connectors`. Per-connector CI should run its own
+# `urirun connectors lint .` (snippet in RELEASE_0.4.4.md); this is the org-wide net.
+name: connectors
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "adapters/python/urirun/connectors/**"
+      - "scripts/lint_connectors.py"
+      - "Makefile"
+      - ".github/workflows/connectors.yml"
+  pull_request:
+    paths:
+      - "adapters/python/urirun/connectors/**"
+      - "scripts/lint_connectors.py"
+  schedule:
+    - cron: "17 6 * * *"        # daily — catches drift introduced in connector repos
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: "Fail until the whole fleet is migrated (--strict / STRICT=1)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read                 # gh needs read to list+clone public org repos
+
+concurrency:
+  group: connectors-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fleet-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out urirun
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install urirun (in-tree — has the v2 authoring layer the lint relies on)
+        run: python -m pip install -e adapters/python
+
+      - name: Clone the connector fleet as siblings of this checkout
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mapfile -t repos < <(
+            gh repo list if-uri --no-archived --limit 300 --json name --jq '.[].name' \
+            | grep -E '^urirun-connector-' | sort
+          )
+          echo "discovered ${#repos[@]} connector repos"
+          for r in "${repos[@]}"; do
+            # "../$r" lands in the parent of the urirun checkout = the sibling layout
+            gh repo clone "if-uri/$r" "../$r" -- --depth 1 --quiet
+            echo "  cloned $r"
+          done
+
+      - name: Fleet lint (fail on code/manifest drift)
+        run: |
+          if [ "${{ inputs.strict || 'false' }}" = "true" ]; then
+            make lint-connectors STRICT=1     # also fails on any remaining OLD-STYLE connector
+          else
+            make lint-connectors              # fails only on genuine drift (half-migrated)
+          fi
+
+      # Once the fleet is fully migrated, make STRICT the default: flip the line above
+      # to `make lint-connectors STRICT=1` (or set the workflow_dispatch default to true)
+      # so the gate also blocks any regression back to the old argv/cli.py style.

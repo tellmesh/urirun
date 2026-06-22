@@ -126,6 +126,68 @@ def _simulate_planfile(ctx: dict, action: str, payload: dict, project: str) -> d
     }
 
 
+def _read_planfile_action(pa, action: str, project, payload: dict, args: list) -> dict | None:
+    """Handle the read-only planfile actions. Returns the envelope extras or None."""
+    if action == "list":
+        return {"tickets": pa.list_tickets(
+            project,
+            sprint=str(payload.get("sprint") or "current"),
+            status=payload.get("status"),
+            label=_list_param(payload.get("label") or payload.get("labels")),
+            queue=payload.get("queue"),
+        )}
+    if action == "next":
+        return {"ticket": pa.next_ticket(project, sprint=str(payload.get("sprint") or "current"), queue=payload.get("queue"))}
+    if action in {"show", "get"}:
+        return {"ticket": pa.get_ticket(project, _ticket_id(payload, args))}
+    return None
+
+
+def _planfile_update(pa, project, payload: dict, args: list) -> dict:
+    updates = payload.get("updates") if isinstance(payload.get("updates"), dict) else {}
+    if not updates:
+        updates = {key: value for key, value in payload.items() if key not in {"project", "ticket_id", "id"}}
+    return {"ticket": pa.update_ticket(project, _ticket_id(payload, args), updates)}
+
+
+def _planfile_dsl(pa, project, payload: dict, args: list) -> dict:
+    command = payload.get("command") or " ".join(args[1:])
+    if not command:
+        raise ValueError("command is required for planfile DSL")
+    return {"result": pa.run_dsl(project, str(command))}
+
+
+def _write_planfile_action(pa, action: str, project, payload: dict, args: list) -> dict | None:
+    """Handle the mutating planfile actions. Returns the envelope extras or None."""
+    handlers = {
+        "create": lambda: {"ticket": pa.create_ticket(project, payload)},
+        "claim": lambda: {"ticket": pa.claim_ticket(
+            project, _ticket_id(payload, args),
+            assigned_to=payload.get("assigned_to"), lease_seconds=payload.get("lease_seconds"),
+        )},
+        "start": lambda: {"ticket": pa.start_ticket(project, _ticket_id(payload, args), assigned_to=payload.get("assigned_to"))},
+        "complete": lambda: {"ticket": pa.complete_ticket(
+            project, _ticket_id(payload, args),
+            note=payload.get("note"), result=payload.get("result"),
+            artifacts=_list_param(payload.get("artifact") or payload.get("artifacts")),
+        )},
+        "fail": lambda: {"ticket": pa.fail_ticket(project, _ticket_id(payload, args), str(payload.get("error") or "failed"))},
+        "block": lambda: {"ticket": pa.update_ticket(
+            project, _ticket_id(payload, args),
+            {"status": "blocked", "description": str(payload.get("reason") or payload.get("description") or "BLOCKED")},
+        )},
+        "ready": lambda: {"ticket": pa.ready_ticket(project, _ticket_id(payload, args), note=payload.get("note"))},
+        "wait-for-input": lambda: {"ticket": pa.wait_for_input(
+            project, _ticket_id(payload, args), str(payload.get("prompt") or ""),
+            env_keys=_list_param(payload.get("env_key") or payload.get("env_keys")), note=payload.get("note"),
+        )},
+        "update": lambda: _planfile_update(pa, project, payload, args),
+        "dsl": lambda: _planfile_dsl(pa, project, payload, args),
+    }
+    handler = handlers.get(action)
+    return handler() if handler is not None else None
+
+
 def run_planfile_task(ctx: dict, policy: dict, execute: bool) -> dict:
     from urirun import planfile_adapter
 
@@ -134,103 +196,14 @@ def run_planfile_task(ctx: dict, policy: dict, execute: bool) -> dict:
     action = _planfile_action(ctx)
     project = _planfile_project(ctx, payload)
 
-    if action == "list":
-        tickets = planfile_adapter.list_tickets(
-            project,
-            sprint=str(payload.get("sprint") or "current"),
-            status=payload.get("status"),
-            label=_list_param(payload.get("label") or payload.get("labels")),
-            queue=payload.get("queue"),
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "tickets": tickets}
-
-    if action == "next":
-        ticket = planfile_adapter.next_ticket(
-            project,
-            sprint=str(payload.get("sprint") or "current"),
-            queue=payload.get("queue"),
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action in {"show", "get"}:
-        ticket = planfile_adapter.get_ticket(project, _ticket_id(payload, args))
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if not execute:
-        return _simulate_planfile(ctx, action, payload, project)
-
-    if action == "create":
-        ticket = planfile_adapter.create_ticket(project, payload)
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "claim":
-        ticket = planfile_adapter.claim_ticket(
-            project,
-            _ticket_id(payload, args),
-            assigned_to=payload.get("assigned_to"),
-            lease_seconds=payload.get("lease_seconds"),
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "start":
-        ticket = planfile_adapter.start_ticket(project, _ticket_id(payload, args), assigned_to=payload.get("assigned_to"))
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "complete":
-        ticket = planfile_adapter.complete_ticket(
-            project,
-            _ticket_id(payload, args),
-            note=payload.get("note"),
-            result=payload.get("result"),
-            artifacts=_list_param(payload.get("artifact") or payload.get("artifacts")),
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "fail":
-        ticket = planfile_adapter.fail_ticket(project, _ticket_id(payload, args), str(payload.get("error") or "failed"))
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "block":
-        ticket = planfile_adapter.update_ticket(
-            project,
-            _ticket_id(payload, args),
-            {"status": "blocked", "description": str(payload.get("reason") or payload.get("description") or "BLOCKED")},
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "ready":
-        ticket = planfile_adapter.ready_ticket(project, _ticket_id(payload, args), note=payload.get("note"))
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "wait-for-input":
-        ticket = planfile_adapter.wait_for_input(
-            project,
-            _ticket_id(payload, args),
-            str(payload.get("prompt") or ""),
-            env_keys=_list_param(payload.get("env_key") or payload.get("env_keys")),
-            note=payload.get("note"),
-        )
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "update":
-        updates = payload.get("updates") if isinstance(payload.get("updates"), dict) else {}
-        if not updates:
-            updates = {
-                key: value
-                for key, value in payload.items()
-                if key not in {"project", "ticket_id", "id"}
-            }
-        ticket = planfile_adapter.update_ticket(project, _ticket_id(payload, args), updates)
-        return {"type": "planfile-task", "action": action, "project": project, "ticket": ticket}
-
-    if action == "dsl":
-        command = payload.get("command") or " ".join(args[1:])
-        if not command:
-            raise ValueError("command is required for planfile DSL")
-        result = planfile_adapter.run_dsl(project, str(command))
-        return {"type": "planfile-task", "action": action, "project": project, "result": result}
-
-    raise ValueError(f"unsupported planfile task action: {action}")
+    extras = _read_planfile_action(planfile_adapter, action, project, payload, args)
+    if extras is None:
+        if not execute:
+            return _simulate_planfile(ctx, action, payload, project)
+        extras = _write_planfile_action(planfile_adapter, action, project, payload, args)
+    if extras is None:
+        raise ValueError(f"unsupported planfile task action: {action}")
+    return {"type": "planfile-task", "action": action, "project": project, **extras}
 
 
 HOST_DATA_SCHEMA = {

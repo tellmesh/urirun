@@ -1,0 +1,7 @@
+# Node/TypeScript runtime column: emit the shared hash bindings via the TS SDK.
+FROM node:20-slim
+RUN npm install -g typescript
+COPY adapters/ts /src/ts
+WORKDIR /src/ts
+# tsc compiles the SDK + example to dist/, then the example prints the contract.
+CMD ["sh", "-c", "tsc -p . && node dist/example/hash-connector.js > /shared/node.json && echo 'node: emitted /shared/node.json'"]

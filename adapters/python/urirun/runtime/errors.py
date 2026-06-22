@@ -137,6 +137,45 @@ def error_code(error_type: str, message: str, scheme: str = "") -> str:
     return "E-" + hashlib.sha1(basis.encode("utf-8")).hexdigest()[:8]
 
 
+# High-signal message patterns, checked before the exception-type map because a
+# specific phrase ("no such file") beats a generic type ("OSError"). Order matters:
+# the first category whose any() of substrings matches wins.
+_STRONG_MESSAGE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("UNIMPLEMENTED", ("executor not found", "no executor", "not implemented")),
+    ("NOT_FOUND", ("no such file", "not found")),
+    ("ALREADY_EXISTS", ("already exists", "unique constraint")),
+    ("PERMISSION_DENIED", ("default deny", "not allowed", "permission denied")),
+    ("UNAVAILABLE", ("database is locked", "connection refused", "unreachable", "unavailable")),
+    ("RESOURCE_EXHAUSTED", ("no space left", "disk full", "out of memory", "quota")),
+    ("DEADLINE_EXCEEDED", ("timed out", "timeout")),
+)
+
+# Weaker keyword fallbacks, applied only after the exception-type map has had its say.
+_WEAK_MESSAGE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("NOT_FOUND", ("not found",)),
+    ("PERMISSION_DENIED", ("permission", "denied")),
+    ("INVALID_ARGUMENT", ("invalid", "malformed", "schema")),
+)
+
+
+def _match_message_rules(low: str, rules: tuple[tuple[str, tuple[str, ...]], ...]) -> str | None:
+    """Return the category of the first rule with a substring present in ``low``."""
+    for category, needles in rules:
+        if any(needle in low for needle in needles):
+            return category
+    return None
+
+
+def _errno_category(message: str, errno_name: str | None) -> str | None:
+    """Resolve a category from an explicit errno name or one embedded in the message."""
+    if errno_name and errno_name in ERRNO_CATEGORY:
+        return ERRNO_CATEGORY[errno_name]
+    found = _ERRNO_IN_MSG.search(message or "")
+    if found and found.group(1) in ERRNO_CATEGORY:
+        return ERRNO_CATEGORY[found.group(1)]
+    return None
+
+
 def classify(error_type: str, message: str, errno_name: str | None = None) -> str:
     """Map a raw error type/message to a canonical gRPC category.
 
@@ -145,35 +184,16 @@ def classify(error_type: str, message: str, errno_name: str | None = None) -> st
     then weaker keywords.
     """
     low = (message or "").lower()
-    if errno_name and errno_name in ERRNO_CATEGORY:
-        return ERRNO_CATEGORY[errno_name]
-    found = _ERRNO_IN_MSG.search(message or "")
-    if found and found.group(1) in ERRNO_CATEGORY:
-        return ERRNO_CATEGORY[found.group(1)]
-    if "executor not found" in low or "no executor" in low or "not implemented" in low:
-        return "UNIMPLEMENTED"
-    if "no such file" in low or "not found" in low:
-        return "NOT_FOUND"
-    if "already exists" in low or "unique constraint" in low:
-        return "ALREADY_EXISTS"
-    if "default deny" in low or "not allowed" in low or "permission denied" in low:
-        return "PERMISSION_DENIED"
-    if "database is locked" in low or "connection refused" in low or "unreachable" in low or "unavailable" in low:
-        return "UNAVAILABLE"
-    if "no space left" in low or "disk full" in low or "out of memory" in low or "quota" in low:
-        return "RESOURCE_EXHAUSTED"
-    if "timed out" in low or "timeout" in low:
-        return "DEADLINE_EXCEEDED"
+    by_errno = _errno_category(message, errno_name)
+    if by_errno is not None:
+        return by_errno
+    strong = _match_message_rules(low, _STRONG_MESSAGE_RULES)
+    if strong is not None:
+        return strong
     mapped = TYPE_CATEGORY.get(error_type)
     if mapped and mapped != "INTERNAL":
         return mapped
-    if "not found" in low:
-        return "NOT_FOUND"
-    if "permission" in low or "denied" in low:
-        return "PERMISSION_DENIED"
-    if "invalid" in low or "malformed" in low or "schema" in low:
-        return "INVALID_ARGUMENT"
-    return mapped or DEFAULT_CATEGORY
+    return _match_message_rules(low, _WEAK_MESSAGE_RULES) or mapped or DEFAULT_CATEGORY
 
 
 def category_meta(category: str) -> tuple[int, str, str]:
@@ -471,40 +491,72 @@ def capture(scheme: str = "fn", *, reraise: bool = True, store: str | None = Non
     return decorator
 
 
+def _emit(obj) -> None:
+    print(json.dumps(obj, indent=2, ensure_ascii=False))
+
+
+def _require_arg(rest: list[str], usage: str) -> bool:
+    if not rest:
+        print(f"usage: {usage}", file=sys.stderr)
+        return False
+    return True
+
+
+def _cmd_recent(rest: list[str]) -> int:
+    _emit(recent(int(rest[0]) if rest else 20))
+    return 0
+
+
+def _cmd_info(rest: list[str]) -> int:
+    if not _require_arg(rest, "info <code>"):
+        return 2
+    _emit(info(rest[0]))
+    return 0
+
+
+def _cmd_search(rest: list[str]) -> int:
+    if not _require_arg(rest, "search <query>"):
+        return 2
+    _emit(search(" ".join(rest)))
+    return 0
+
+
+def _cmd_ticket(rest: list[str]) -> int:
+    if not _require_arg(rest, "ticket <code> [project]"):
+        return 2
+    _emit(to_ticket(rest[0], rest[1] if len(rest) > 1 else None))
+    return 0
+
+
+def _cmd_categories(rest: list[str]) -> int:
+    _emit({c: {"status": s, "severity": sev, "description": d} for c, (s, sev, d) in CATEGORIES.items()})
+    return 0
+
+
+def _cmd_bindings(rest: list[str]) -> int:
+    _emit(bindings(rest[0] if rest else "local"))
+    return 0
+
+
+_COMMANDS = {
+    "recent": _cmd_recent,
+    "info": _cmd_info,
+    "search": _cmd_search,
+    "ticket": _cmd_ticket,
+    "categories": _cmd_categories,
+    "bindings": _cmd_bindings,
+}
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     cmd = args[0] if args else "recent"
-    rest = args[1:]
-
-    def emit(obj):
-        print(json.dumps(obj, indent=2, ensure_ascii=False))
-
-    if cmd == "recent":
-        emit(recent(int(rest[0]) if rest else 20))
-    elif cmd == "info":
-        if not rest:
-            print("usage: info <code>", file=sys.stderr)
-            return 2
-        emit(info(rest[0]))
-    elif cmd == "search":
-        if not rest:
-            print("usage: search <query>", file=sys.stderr)
-            return 2
-        emit(search(" ".join(rest)))
-    elif cmd == "ticket":
-        if not rest:
-            print("usage: ticket <code> [project]", file=sys.stderr)
-            return 2
-        emit(to_ticket(rest[0], rest[1] if len(rest) > 1 else None))
-    elif cmd == "categories":
-        emit({c: {"status": s, "severity": sev, "description": d} for c, (s, sev, d) in CATEGORIES.items()})
-    elif cmd == "bindings":
-        emit(bindings(rest[0] if rest else "local"))
-    else:
+    handler = _COMMANDS.get(cmd)
+    if handler is None:
         print(f"unknown command: {cmd}", file=sys.stderr)
         print("commands: recent | info <code> | search <q> | ticket <code> | categories | bindings [target]", file=sys.stderr)
         return 2
-    return 0
+    return handler(args[1:])
 
 
 if __name__ == "__main__":

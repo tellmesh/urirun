@@ -150,12 +150,69 @@ def uri_shell(uri: str, **options):
     return uri_command(uri, adapter="shell-template", kind="shell", **options)
 
 
+def _handler_kwargs(fn: Callable, payload: dict | None) -> dict:
+    """Map a validated payload dict onto the handler function's keyword arguments."""
+    import inspect
+
+    params = inspect.signature(fn).parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        return dict(payload or {})
+    return {k: v for k, v in (payload or {}).items() if k in params}
+
+
+def uri_handler(uri: str, *, external: bool = False, policy: dict | None = None, meta: dict | None = None):
+    """Register a typed function as the **in-process** handler for a URI route.
+
+    Unlike :func:`uri_command` (whose body returns an argv/shell template that is
+    later spawned), the decorated function *is* the implementation: the runtime
+    validates the payload against the signature-derived schema and calls it in the
+    same process via the ``local-function`` adapter — no subprocess round-trip.
+
+        import urirun
+
+        @urirun.handler("llm://host/chat/command/complete")
+        def complete(prompt: str, model: str = "llama3") -> dict:
+            return urirun.ok(model=model, response=...)
+    """
+
+    def decorator(fn: Callable):
+        input_model = model_from_function(fn)
+
+        def _invoke(target, args, payload, descriptor):
+            return fn(**_handler_kwargs(fn, payload))
+
+        _invoke.__name__ = getattr(fn, "__name__", "handler")
+        binding = {
+            "uri": uri,
+            "kind": "local-function",
+            "adapter": "local-function",
+            "inputModel": input_model,
+            "inputSchema": input_model.model_json_schema(),
+            "ref": _invoke,
+            "python": {"type": "python", "module": getattr(fn, "__module__", None), "export": getattr(fn, "__name__", None)},
+            # In-process handlers are the connector's own code; allow execution by
+            # default (Phase 4 adds external=True → dry-run for side-effecting calls).
+            "policy": {"allowExecute": True, **(policy or {})},
+        }
+        binding_meta = dict(meta or {})
+        if external:
+            binding_meta["external"] = True
+        if binding_meta:
+            binding["meta"] = binding_meta
+        DECORATED_BINDINGS[uri] = binding
+        return fn
+
+    return decorator
+
+
 def decorated_bindings() -> dict:
     return {"version": VERSION, "bindings": {uri: binding for uri, binding in DECORATED_BINDINGS.items()}}
 
 
 def _document_binding_from_expanded(entry: dict) -> dict:
-    binding = {key: value for key, value in entry.items() if key != "config"}
+    # Serialization path (manifest/document): drop runtime-only keys — `config`
+    # is merged in, `ref`/`inputModel` are non-serializable in-process artifacts.
+    binding = {key: value for key, value in entry.items() if key not in ("config", "ref", "inputModel")}
     binding.update(entry.get("config") or {})
     return json.loads(json.dumps(binding))
 
@@ -200,32 +257,113 @@ def _select_entry_points(group: str):
     return [entry_point for entry_point in eps if getattr(entry_point, "group", group) == group]
 
 
-def entry_point_bindings(group: str = ENTRY_POINT_GROUP) -> list[dict]:
-    """Load v2 binding documents exposed by installed connector packages."""
+def _load_entry_point_bindings(entry_point, group: str) -> list[dict]:
+    """Load and tag one connector entry point's bindings (raises on a broken connector)."""
+    obj = entry_point.load()
+    document = obj() if callable(obj) else obj
+    loaded: list[dict] = []
+    for binding in expand_bindings(document)["bindings"]:
+        source = dict(binding.get("source") or {})
+        source.update(
+            {
+                "type": "python-entry-point",
+                "group": group,
+                "name": entry_point.name,
+                "value": getattr(entry_point, "value", ""),
+            }
+        )
+        binding["source"] = source
+        loaded.append(binding)
+    return loaded
+
+
+def entry_point_bindings(group: str = ENTRY_POINT_GROUP, *, on_error: str = "warn", skipped: list | None = None) -> list[dict]:
+    """Load v2 binding documents exposed by installed connector packages.
+
+    A single faulty connector (uninstalled source, import error, malformed
+    document) must not blank out every other connector's bindings, so each entry
+    point is isolated. ``on_error`` controls a failing one: ``"warn"`` (default)
+    skips it with a stderr note, ``"raise"`` re-raises, ``"ignore"`` skips silently.
+    When a ``skipped`` list is passed, each failure is also appended to it as a
+    ``{name, value, error}`` dict so callers can surface drops programmatically.
+    """
     bindings: list[dict] = []
     for entry_point in _select_entry_points(group):
-        obj = entry_point.load()
-        document = obj() if callable(obj) else obj
-        for binding in expand_bindings(document)["bindings"]:
-            source = dict(binding.get("source") or {})
-            source.update(
-                {
-                    "type": "python-entry-point",
-                    "group": group,
-                    "name": entry_point.name,
-                    "value": getattr(entry_point, "value", ""),
-                }
-            )
-            binding["source"] = source
-            bindings.append(binding)
+        try:
+            bindings.extend(_load_entry_point_bindings(entry_point, group))
+        except Exception as exc:  # noqa: BLE001 - a third-party connector can fail any number of ways.
+            if on_error == "raise":
+                raise
+            if skipped is not None:
+                skipped.append({"name": entry_point.name, "value": getattr(entry_point, "value", ""), "error": f"{type(exc).__name__}: {exc}"})
+            if on_error != "ignore":
+                print(
+                    f"urirun: skipping connector entry point {entry_point.name!r} "
+                    f"({getattr(entry_point, 'value', '')}): {type(exc).__name__}: {exc}",
+                    file=sys.stderr,
+                )
     return bindings
+
+
+def _entry_point_script_issues(entry_point) -> list[dict]:
+    """Check that the console scripts shipped by this entry point's distribution import.
+
+    Catches a stale console-script wrapper that points at a module the package no
+    longer has — e.g. a connector refactored from ``cli.py`` to ``core.py`` whose
+    installed ``urirun-foo`` script still imports ``…cli:main``. Loading the script
+    target imports its module without calling it, so a dangling target surfaces here.
+    """
+    dist = getattr(entry_point, "dist", None)
+    if dist is None:
+        return []
+    issues: list[dict] = []
+    for script in getattr(dist, "entry_points", []):
+        if getattr(script, "group", None) != "console_scripts":
+            continue
+        try:
+            script.load()
+        except Exception as exc:  # noqa: BLE001 - a broken script target can fail any number of ways.
+            issues.append({"name": script.name, "value": getattr(script, "value", ""), "error": f"{type(exc).__name__}: {exc}"})
+    return issues
+
+
+def connector_health(group: str = ENTRY_POINT_GROUP) -> list[dict]:
+    """Load + validate every connector entry point, one report row per connector.
+
+    Each row is ``{name, value, ok, bindingCount, error?, scriptIssues?}``. ``ok``
+    is the bindings load+validate health; ``scriptIssues`` separately flags a stale
+    console-script wrapper. Diagnoses broken connectors by name instead of letting
+    one failure surface as an opaque crash. Powers ``urirun connectors doctor``.
+    """
+    report: list[dict] = []
+    for entry_point in _select_entry_points(group):
+        row = {"name": entry_point.name, "value": getattr(entry_point, "value", ""), "ok": False, "bindingCount": 0}
+        try:
+            bindings = _load_entry_point_bindings(entry_point, group)
+            result = validate_binding_document(build_binding_document(bindings))
+            row["bindingCount"] = len(bindings)
+            row["ok"] = bool(result.get("ok"))
+            if not result.get("ok"):
+                row["error"] = f"invalid bindings: {result.get('errors')}"
+        except Exception as exc:  # noqa: BLE001 - report any connector failure as a row, never crash the sweep.
+            row["error"] = f"{type(exc).__name__}: {exc}"
+        issues = _entry_point_script_issues(entry_point)
+        if issues:
+            row["scriptIssues"] = issues
+        report.append(row)
+    return report
 
 
 def entry_point_binding_document(
     group: str = ENTRY_POINT_GROUP,
     generated_at: str | None = None,
 ) -> dict:
-    return build_binding_document(entry_point_bindings(group=group), generated_at=generated_at)
+    skipped: list[dict] = []
+    bindings = entry_point_bindings(group=group, skipped=skipped)
+    doc = build_binding_document(bindings, generated_at=generated_at)
+    if skipped:
+        doc["skipped"] = skipped
+    return doc
 
 
 def entry_point_registry(
@@ -359,48 +497,64 @@ def _first_payload_value(payload: dict, *names: str):
     return None
 
 
+def _resolve_error_action(translation: dict, payload: dict, args: list) -> tuple[str, Any]:
+    """Resolve the (action, code) pair from the URI translation and payload."""
+    resource = translation.get("resource")
+    operation = translation.get("operation")
+    if resource and str(resource).startswith("E-") and operation == "query":
+        return (args[0] if args else "info"), resource
+    action = args[0] if args else payload.get("action") or ("ticket" if operation == "command" else "recent")
+    code = _first_payload_value(payload, "code")
+    if code is None and len(args) > 1:
+        code = args[1]
+    return action, code
+
+
+def _error_recent(payload, args, code, store, execute) -> dict:
+    return {"type": "error-store", "action": "recent", "errors": uri_errors.recent(int(payload.get("limit") or 20), store=store)}
+
+
+def _error_search(payload, args, code, store, execute) -> dict:
+    query = _first_payload_value(payload, "query", "q")
+    if query is None and len(args) > 1:
+        query = args[1]
+    if query is None:
+        raise ValueError("error search requires payload.query or URI argument")
+    return {"type": "error-store", "action": "search", "errors": uri_errors.search(str(query), store=store)}
+
+
+def _error_info(payload, args, code, store, execute) -> dict:
+    if not code:
+        raise ValueError("error info requires payload.code or error://local/<code>/query/info")
+    return {"type": "error-store", "action": "info", "error": uri_errors.info(str(code), store=store)}
+
+
+def _error_ticket(payload, args, code, store, execute) -> dict:
+    if not code:
+        raise ValueError("error ticket requires payload.code")
+    project = _first_payload_value(payload, "project")
+    if not execute:
+        return {"simulated": True, "type": "error-store", "action": "ticket", "code": code, "project": project}
+    return {"type": "error-store", "action": "ticket", **uri_errors.to_ticket(str(code), project=project, store=store)}
+
+
+_ERROR_ACTIONS = {
+    "recent": _error_recent,
+    "search": _error_search,
+    "info": _error_info,
+    "ticket": _error_ticket,
+}
+
+
 def run_error_store(ctx: dict, policy: dict, execute: bool) -> dict:
     translation = ctx["translation"]
     payload = ctx["payload"] if isinstance(ctx.get("payload"), dict) else {}
     args = list(translation.get("args") or [])
-    resource = translation.get("resource")
-    operation = translation.get("operation")
-
-    if resource and str(resource).startswith("E-") and operation == "query":
-        action = args[0] if args else "info"
-        code = resource
-    else:
-        action = args[0] if args else payload.get("action") or ("ticket" if operation == "command" else "recent")
-        code = _first_payload_value(payload, "code")
-        if code is None and len(args) > 1:
-            code = args[1]
-
-    store = _first_payload_value(payload, "store")
-    if action == "recent":
-        return {
-            "type": "error-store",
-            "action": "recent",
-            "errors": uri_errors.recent(int(payload.get("limit") or 20), store=store),
-        }
-    if action == "search":
-        query = _first_payload_value(payload, "query", "q")
-        if query is None and len(args) > 1:
-            query = args[1]
-        if query is None:
-            raise ValueError("error search requires payload.query or URI argument")
-        return {"type": "error-store", "action": "search", "errors": uri_errors.search(str(query), store=store)}
-    if action == "info":
-        if not code:
-            raise ValueError("error info requires payload.code or error://local/<code>/query/info")
-        return {"type": "error-store", "action": "info", "error": uri_errors.info(str(code), store=store)}
-    if action == "ticket":
-        if not code:
-            raise ValueError("error ticket requires payload.code")
-        project = _first_payload_value(payload, "project")
-        if not execute:
-            return {"simulated": True, "type": "error-store", "action": "ticket", "code": code, "project": project}
-        return {"type": "error-store", "action": "ticket", **uri_errors.to_ticket(str(code), project=project, store=store)}
-    raise ValueError(f"unsupported error:// action: {action}")
+    action, code = _resolve_error_action(translation, payload, args)
+    handler = _ERROR_ACTIONS.get(action)
+    if handler is None:
+        raise ValueError(f"unsupported error:// action: {action}")
+    return handler(payload, args, code, _first_payload_value(payload, "store"), execute)
 
 
 def _host_integrations():
@@ -491,6 +645,94 @@ def _record_error(envelope: dict) -> dict:
     return uri_errors.record(envelope)
 
 
+class _RunAbort(Exception):
+    """Carries a finished (error) envelope to the single exit point in run()."""
+
+    def __init__(self, envelope: dict):
+        super().__init__()
+        self.envelope = envelope
+
+
+def _run_parse(uri: str, mode: str) -> tuple[dict, dict]:
+    try:
+        descriptor = reglib.parse_uri(uri)
+        return descriptor, reglib.translate(descriptor)
+    except Exception as err:  # noqa: BLE001 - expose invalid URI errors as resources.
+        raise _RunAbort({
+            "uri": str(uri), "mode": mode, "kind": None, "adapter": None,
+            "ok": False, "error": {"type": type(err).__name__, "message": str(err)},
+        }) from err
+
+
+def _run_resolve_route(translation: dict, descriptor: dict, registry: dict, mode: str) -> dict:
+    try:
+        return reglib.resolve_route(translation, registry)
+    except KeyError as err:
+        route_entry = _builtin_error_route_entry(translation) or _builtin_registry_route_entry(translation)
+        if route_entry is None:
+            raise _RunAbort({
+                "uri": descriptor["normalized"], "mode": mode, "kind": None, "adapter": None,
+                "ok": False, "error": {"type": "route", "message": str(err)},
+            }) from err
+        return route_entry
+
+
+def _run_validate(route_entry: dict, descriptor: dict, translation: dict, payload, envelope: dict) -> dict:
+    try:
+        return validate_input(route_entry, descriptor, translation, payload)
+    except (jsonschema_exceptions.ValidationError, jsonschema_exceptions.SchemaError) as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "schema", "message": err.message}
+        raise _RunAbort(envelope) from err
+
+
+def _run_executor(executor_registry: dict, route_entry: dict, envelope: dict):
+    executor = executor_registry.get(route_entry.get("adapter")) or executor_registry.get(route_entry.get("kind"))
+    if executor is None:
+        envelope["ok"] = False
+        envelope["error"] = {
+            "type": "NotImplementedError",
+            "message": f"Executor not found: {route_entry.get('adapter') or route_entry.get('kind')}",
+        }
+        raise _RunAbort(envelope)
+    return executor
+
+
+def _run_dry(executor, ctx: dict, policy: dict, envelope: dict) -> dict:
+    try:
+        envelope["result"] = executor(ctx, policy, False)
+        envelope["ok"] = True
+    except KeyError as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "schema", "message": f"unresolved placeholder: {err.args[0]}"}
+    except ValueError as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "error", "message": str(err)}
+    return envelope
+
+
+def _run_execute(executor, ctx: dict, policy: dict, envelope: dict, decision: dict, confirm: bool) -> dict:
+    if not decision["allowed"]:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "policy", "message": decision["reason"]}
+        return envelope
+    if decision.get("requireConfirm") and not confirm:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "confirm", "message": "route requires confirmation; pass confirm=True"}
+        return envelope
+    try:
+        result = executor(ctx, policy, True)
+        envelope["result"] = result
+        envelope["ok"] = result.get("exitCode", 0) == 0
+    except KeyError as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": "schema", "message": f"unresolved placeholder: {err.args[0]}"}
+    except (runtime.PolicyError, OSError, ValueError) as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": type(err).__name__, "message": str(err)}
+    return envelope
+
+
 def run(
     uri: str,
     registry: dict,
@@ -503,103 +745,33 @@ def run(
     policy = runtime.merge_policy(policy)
     executor_registry = EXECUTORS if executors is None else executors
     try:
-        descriptor = reglib.parse_uri(uri)
-        translation = reglib.translate(descriptor)
-    except Exception as err:  # noqa: BLE001 - expose invalid URI errors as resources.
+        descriptor, translation = _run_parse(uri, mode)
+        route_entry = _run_resolve_route(translation, descriptor, registry, mode)
         envelope = {
-            "uri": str(uri),
+            "uri": descriptor["normalized"],
             "mode": mode,
-            "kind": None,
-            "adapter": None,
-            "ok": False,
-            "error": {"type": type(err).__name__, "message": str(err)},
+            "kind": route_entry.get("kind"),
+            "adapter": route_entry.get("adapter"),
         }
-        return _record_error(envelope)
-
-    try:
-        route_entry = reglib.resolve_route(translation, registry)
-    except KeyError as err:
-        route_entry = _builtin_error_route_entry(translation) or _builtin_registry_route_entry(translation)
-        if route_entry is None:
-            envelope = {
-                "uri": descriptor["normalized"],
-                "mode": mode,
-                "kind": None,
-                "adapter": None,
-                "ok": False,
-                "error": {"type": "route", "message": str(err)},
-            }
-            return _record_error(envelope)
-    envelope = {
-        "uri": descriptor["normalized"],
-        "mode": mode,
-        "kind": route_entry.get("kind"),
-        "adapter": route_entry.get("adapter"),
-    }
-
-    try:
-        params = validate_input(route_entry, descriptor, translation, payload)
-    except jsonschema_exceptions.ValidationError as err:
-        envelope["ok"] = False
-        envelope["error"] = {"type": "schema", "message": err.message}
-        return _record_error(envelope)
-    except jsonschema_exceptions.SchemaError as err:
-        envelope["ok"] = False
-        envelope["error"] = {"type": "schema", "message": err.message}
-        return _record_error(envelope)
-
-    ctx = {
-        "routeEntry": route_entry,
-        "descriptor": descriptor,
-        "translation": translation,
-        "target": translation["target"],
-        "args": translation["args"],
-        "payload": payload,
-        "params": params,
-    }
-    decision = runtime.evaluate_policy(descriptor["normalized"], route_entry, ctx, policy)
-    envelope["decision"] = decision
-
-    executor = executor_registry.get(route_entry.get("adapter")) or executor_registry.get(route_entry.get("kind"))
-    if executor is None:
-        envelope["ok"] = False
-        envelope["error"] = {
-            "type": "NotImplementedError",
-            "message": f"Executor not found: {route_entry.get('adapter') or route_entry.get('kind')}",
+        params = _run_validate(route_entry, descriptor, translation, payload, envelope)
+        ctx = {
+            "routeEntry": route_entry,
+            "descriptor": descriptor,
+            "translation": translation,
+            "target": translation["target"],
+            "args": translation["args"],
+            "payload": payload,
+            "params": params,
         }
-        return _record_error(envelope)
-
-    if mode != "execute":
-        try:
-            envelope["result"] = executor(ctx, policy, False)
-            envelope["ok"] = True
-        except KeyError as err:
-            envelope["ok"] = False
-            envelope["error"] = {"type": "schema", "message": f"unresolved placeholder: {err.args[0]}"}
-        except ValueError as err:
-            envelope["ok"] = False
-            envelope["error"] = {"type": "error", "message": str(err)}
-        return _record_error(envelope)
-
-    if not decision["allowed"]:
-        envelope["ok"] = False
-        envelope["error"] = {"type": "policy", "message": decision["reason"]}
-        return _record_error(envelope)
-    if decision.get("requireConfirm") and not confirm:
-        envelope["ok"] = False
-        envelope["error"] = {"type": "confirm", "message": "route requires confirmation; pass confirm=True"}
-        return _record_error(envelope)
-
-    try:
-        result = executor(ctx, policy, True)
-        envelope["result"] = result
-        envelope["ok"] = result.get("exitCode", 0) == 0
-    except KeyError as err:
-        envelope["ok"] = False
-        envelope["error"] = {"type": "schema", "message": f"unresolved placeholder: {err.args[0]}"}
-    except (runtime.PolicyError, OSError, ValueError) as err:
-        envelope["ok"] = False
-        envelope["error"] = {"type": type(err).__name__, "message": str(err)}
+        decision = runtime.evaluate_policy(descriptor["normalized"], route_entry, ctx, policy)
+        envelope["decision"] = decision
+        executor = _run_executor(executor_registry, route_entry, envelope)
+        if mode != "execute":
+            envelope = _run_dry(executor, ctx, policy, envelope)
+        else:
+            envelope = _run_execute(executor, ctx, policy, envelope, decision, confirm)
+    except _RunAbort as abort:
+        envelope = abort.envelope
     return _record_error(envelope)
 
 
@@ -615,7 +787,27 @@ def list_routes(registry: dict, policy: dict | None = None) -> list[dict]:
 # Binding documents
 # --------------------------------------------------------------------------- #
 def _strip_runtime_only(binding: dict) -> dict:
+    # Keep `ref` here: this runs in the compile/expand path, where the live handler
+    # callable must survive into the registry for in-process execution. Only the
+    # JSON-document path (`_document_binding_from_expanded`) drops `ref`.
     return {key: value for key, value in binding.items() if key != "inputModel"}
+
+
+def _binding_config(expanded: dict) -> dict:
+    """Pull the config-only keys out of ``expanded`` into a config dict (mutates expanded)."""
+    config = dict(expanded.get("config") or {})
+    if "shell" in expanded and "template" not in expanded:
+        expanded["template"] = expanded["shell"]
+    for key in CONFIG_KEYS:
+        if key in expanded:
+            config[key] = expanded.pop(key)
+    return config
+
+
+def _binding_adapter_kind(expanded: dict, config: dict) -> tuple[str, str]:
+    adapter = expanded.get("adapter") or ("shell-template" if "template" in config or "shell" in config else "argv-template")
+    kind = expanded.get("kind") or ("shell" if adapter == "shell-template" else "command")
+    return adapter, kind
 
 
 def expand_binding(uri: str | None, binding) -> dict:
@@ -625,20 +817,8 @@ def expand_binding(uri: str | None, binding) -> dict:
     if uri and "uri" not in expanded:
         expanded["uri"] = uri
 
-    config = dict(expanded.get("config") or {})
-    if "shell" in expanded and "template" not in expanded:
-        expanded["template"] = expanded["shell"]
-    for key in CONFIG_KEYS:
-        if key in expanded:
-            config[key] = expanded.pop(key)
-
-    adapter = expanded.get("adapter")
-    if not adapter:
-        adapter = "shell-template" if "template" in config or "shell" in config else "argv-template"
-    kind = expanded.get("kind")
-    if not kind:
-        kind = "shell" if adapter == "shell-template" else "command"
-
+    config = _binding_config(expanded)
+    adapter, kind = _binding_adapter_kind(expanded, config)
     normalized = {
         "uri": expanded["uri"],
         "kind": kind,
@@ -812,6 +992,11 @@ def pypi_binding(name: str, version: str | None = None, uri: str | None = None) 
 
 
 def load_registry_arg(arg: str, openapi_base_url: str = "") -> dict:
+    if arg == "-":                       # read a bindings/registry document from stdin
+        data = _load_json_arg("-")
+        if isinstance(data, dict) and data.get("version") == reglib.REGISTRY_VERSION:
+            return data
+        return compile_registry(data)
     path = Path(arg)
     if path.is_dir():
         return compile_registry(build_binding_document(scan_artifacts(path)))
@@ -1097,12 +1282,35 @@ def _load_many(
     return bindings
 
 
-def main(argv: list[str] | None = None) -> int:
-    argv = list(sys.argv[1:] if argv is None else argv)
-    executable = Path(sys.argv[0]).name
-    prog = executable if executable in {"urirun", "urirun-v2", "urirun-v2"} else "urirun"
+def _package_version() -> str:
+    """The installed urirun package version, falling back to the source VERSION file."""
+    try:
+        return metadata.version("urirun")
+    except metadata.PackageNotFoundError:
+        version_file = Path(__file__).resolve().parents[2] / "VERSION"
+        try:
+            return version_file.read_text(encoding="utf-8").strip()
+        except OSError:
+            return "unknown"
+
+
+def _is_pipx_env() -> bool:
+    """True when this interpreter lives inside a pipx-managed venv.
+
+    pipx isolates installs, so ``pip install`` into its venv is the wrong tool —
+    ``pipx upgrade`` is. Detecting this is what makes install/upgrade survive the
+    common "stale urirun on PATH" version split.
+    """
+    return "/pipx/venvs/" in sys.executable or "/pipx/venvs/" in (sys.argv[0] or "")
+
+
+def _build_parser(prog: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog=prog)
+    parser.add_argument("--version", action="version", version=f"urirun {_package_version()}")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    doctor_parser = subparsers.add_parser("doctor", help="Diagnose this urirun install: resolved binary, version, interpreter, connectors")
+    doctor_parser.add_argument("--json", action="store_true")
 
     scan_parser = subparsers.add_parser("scan", help="Adopt project artifacts and optionally installed connector bindings")
     scan_parser.add_argument("path", nargs="?", default=".")
@@ -1150,6 +1358,14 @@ def main(argv: list[str] | None = None) -> int:
     add_openapi_parser.add_argument("--target", default="api", help="URI target / environment name (default: api)")
     add_openapi_parser.add_argument("--base-url", default=None, help="Override base URL (else taken from servers[0])")
 
+    gen_parser = subparsers.add_parser("gen", help="Generate proto/openapi/client from a registry (the binding spec)")
+    gen_parser.add_argument("target", choices=["proto", "openapi", "client"], help="artifact to generate")
+    gen_parser.add_argument("registry", help="a registry, bindings doc, or project dir")
+    gen_parser.add_argument("--out", default=None, help="write to a file (else stdout)")
+    gen_parser.add_argument("--package", default=None, help="proto package name")
+    gen_parser.add_argument("--title", default=None, help="openapi title")
+    gen_parser.add_argument("--nuances", default=None, help="write the proto nuance report to this file")
+
     adopt_pack_parser = subparsers.add_parser("adopt-pack", help="Adopt a capability-pack manifest (file, project dir, or installed package) as bindings")
     adopt_pack_parser.add_argument("target", help="manifest file, project dir ([tool.urirun]), or installed package name")
     adopt_pack_parser.add_argument("--out", default="-")
@@ -1175,6 +1391,31 @@ def main(argv: list[str] | None = None) -> int:
     connectors_install.add_argument("ids", nargs="+")
     connectors_install.add_argument("--execute", action="store_true", help="Actually run pip (default: dry-run)")
     connectors_install.add_argument("--json", action="store_true")
+
+    install_parser = subparsers.add_parser("install", help="Install a connector (alias for 'connectors install', runs pip by default)")
+    install_parser.add_argument("ids", nargs="+", help="connector ids or package names")
+    install_parser.add_argument("--catalog", default="https://connect.ifuri.com",
+                                help="catalog base URL (default connect.ifuri.com; point at a local/on-prem registry)")
+    install_parser.add_argument("--from", dest="source_from", choices=["catalog", "pypi", "github", "local"],
+                                default="catalog", help="where to install from (default: catalog)")
+    install_parser.add_argument("--org", default="if-uri", help="GitHub org for --from github")
+    install_parser.add_argument("--ref", help="git ref (tag/branch) for --from github")
+    install_parser.add_argument("--upgrade", "-U", action="store_true", help="upgrade if already installed")
+    install_parser.add_argument("--dry-run", action="store_true", help="print the pip command without running it")
+    install_parser.add_argument("--json", action="store_true")
+
+    upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade urirun itself (no ids) or installed connectors (install --upgrade)")
+    upgrade_parser.add_argument("ids", nargs="*", help="connector ids/packages; empty = the urirun core")
+    upgrade_parser.add_argument("--all", action="store_true", help="upgrade every installed connector")
+    upgrade_parser.add_argument("--check", action="store_true", help="report installed connectors without upgrading")
+    upgrade_parser.add_argument("--catalog", default="https://connect.ifuri.com",
+                                help="catalog base URL (on-prem registry override)")
+    upgrade_parser.add_argument("--from", dest="source_from", choices=["catalog", "pypi", "github", "local"],
+                                default="catalog", help="where to upgrade from (default: catalog)")
+    upgrade_parser.add_argument("--org", default="if-uri", help="GitHub org for --from github")
+    upgrade_parser.add_argument("--ref", help="git ref (tag/branch) for --from github")
+    upgrade_parser.add_argument("--dry-run", action="store_true", help="print the command without running it")
+    upgrade_parser.add_argument("--json", action="store_true")
     connectors_check = connectors_sub.add_parser("check", parents=[connectors_common], help="Check a local connector manifest against the hub catalog")
     connectors_check.add_argument("manifest", help="Path to a connector.manifest.json")
     connectors_check.add_argument("--json", action="store_true")
@@ -1195,6 +1436,9 @@ def main(argv: list[str] | None = None) -> int:
     connectors_smoke.add_argument("--name", default="connector", help="A2A card name")
     connectors_from_spec = connectors_sub.add_parser("from-spec", help="Emit bindings from a declarative connector spec (TOML/JSON)")
     connectors_from_spec.add_argument("spec", help="Path to a connector spec (.toml or .json)")
+    connectors_doctor = connectors_sub.add_parser("doctor", help="Load every installed connector and report per-connector load/validate health")
+    connectors_doctor.add_argument("--entry-point-group", default=ENTRY_POINT_GROUP)
+    connectors_doctor.add_argument("--json", action="store_true")
 
     agent_parser = subparsers.add_parser("agent", help="Drive a registry as an LLM/agent action space")
     agent_sub = agent_parser.add_subparsers(dest="agent_command", required=True)
@@ -1503,6 +1747,8 @@ def main(argv: list[str] | None = None) -> int:
                             help="permit served routes matching this glob to execute (repeatable; the node's security boundary)")
     node_serve.add_argument("--allow-secrets", action="store_true",
                             help="permit secret:// resolution on this node (off by default; a remote /run must not read the host's local secrets)")
+    node_serve.add_argument("--pool", action="store_true",
+                            help="keep warm worker processes per connector so argv-template routes skip the cold start on every /run")
 
     def add_source(p, with_uri=True):
         if with_uri:
@@ -1520,6 +1766,9 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("--payload", default="null")
     run_parser.add_argument("--execute", action="store_true")
     run_parser.add_argument("--confirm", action="store_true")
+    run_parser.add_argument("--entry-points", action="store_true",
+                            help="resolve the URI against installed connector bindings (auto when no source given)")
+    run_parser.add_argument("--entry-point-group", default=ENTRY_POINT_GROUP)
 
     list_parser = subparsers.add_parser("list", help="List available URIs")
     add_source(list_parser, with_uri=False)
@@ -1527,177 +1776,433 @@ def main(argv: list[str] | None = None) -> int:
     list_parser.add_argument("--entry-point-group", default=ENTRY_POINT_GROUP)
     list_parser.add_argument("--json", action="store_true")
 
-    args = parser.parse_args(argv)
+    return parser
 
-    if args.command == "scan":
-        bindings = scan_artifacts(args.path)
-        if args.entry_points:
-            bindings.extend(entry_point_bindings(group=args.entry_point_group))
-        doc = build_binding_document(bindings)
-        reglib._emit_json(doc, args.out)
-        if args.registry_out:
-            reglib.write_json(args.registry_out, compile_registry(doc))
-        return 0
 
-    if args.command == "compile":
-        if not args.sources and not args.entry_points:
-            parser.error("compile requires at least one source or --entry-points")
-        doc = build_binding_document(
-            _load_many(
-                args.sources,
-                include_entry_points=args.entry_points,
-                entry_point_group=args.entry_point_group,
-            ),
-            generated_at=args.generated_at,
-        )
-        reglib._emit_json(compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict), args.out)
-        return 0
+def _cmd_scan(args, parser) -> int:
+    bindings = scan_artifacts(args.path)
+    if args.entry_points:
+        bindings.extend(entry_point_bindings(group=args.entry_point_group))
+    doc = build_binding_document(bindings)
+    reglib._emit_json(doc, args.out)
+    if args.registry_out:
+        reglib.write_json(args.registry_out, compile_registry(doc))
+    return 0
 
-    if args.command == "discover":
-        doc = entry_point_binding_document(group=args.entry_point_group, generated_at=args.generated_at)
-        reglib._emit_json(doc, args.out)
-        if args.registry_out:
-            reglib.write_json(
-                args.registry_out,
-                compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict),
-            )
-        return 0
 
-    if args.command == "adopt-pack":
-        from urirun.runtime import adopt_pack as _adopt_pack
+def _cmd_compile(args, parser) -> int:
+    if not args.sources and not args.entry_points:
+        parser.error("compile requires at least one source or --entry-points")
+    doc = build_binding_document(
+        _load_many(args.sources, include_entry_points=args.entry_points, entry_point_group=args.entry_point_group),
+        generated_at=args.generated_at,
+    )
+    reglib._emit_json(compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict), args.out)
+    return 0
 
-        doc = _adopt_pack.adopt(args.target)
-        reglib._emit_json(doc, args.out)
-        if args.registry_out:
-            reglib.write_json(
-                args.registry_out,
-                compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict),
-            )
-        return 0
 
-    if args.command == "tree":
-        from urirun.runtime import tree as _tree
+def _cmd_discover(args, parser) -> int:
+    doc = entry_point_binding_document(group=args.entry_point_group, generated_at=args.generated_at)
+    reglib._emit_json(doc, args.out)
+    if args.registry_out:
+        reglib.write_json(args.registry_out, compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict))
+    return 0
 
-        document = _tree.build(reglib.load_json(args.source))
-        if args.format == "json":
-            reglib._emit_json(document, "-")
-        else:
-            import yaml
 
-            sys.stdout.write(yaml.safe_dump(document, sort_keys=False, allow_unicode=True, default_flow_style=False))
-        return 0
+def _cmd_adopt_pack(args, parser) -> int:
+    from urirun.runtime import adopt_pack as _adopt_pack
 
-    if args.command == "validate":
-        if args.source == "-":
-            doc = _load_json_arg("-")
-        else:
-            path = Path(args.source)
-            doc = build_binding_document(scan_artifacts(path)) if path.is_dir() else reglib.load_json(path)
-        result = validate_binding_document(doc)
-        if args.json:
-            reglib._emit_json(result, "-")
-        else:
-            print("OK" if result["ok"] else "FAILED")
-            for error in result["errors"]:
-                print(f"{error.get('uri')}: {error['error']}")
-        return 0 if result["ok"] else 1
+    doc = _adopt_pack.adopt(args.target)
+    reglib._emit_json(doc, args.out)
+    if args.registry_out:
+        reglib.write_json(args.registry_out, compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict))
+    return 0
 
-    if args.command == "add-command":
-        try:
-            binding = command_binding_from_cli(args.uri, argv=args.argv, shell=args.shell, params=args.param, label=args.label)
-        except ValueError as exc:
-            parser.error(str(exc))
-        write_or_emit_binding(args.out, binding)
-        return 0
 
-    if args.command == "add-pypi":
-        write_or_emit_binding(args.out, pypi_binding(args.name, version=args.version, uri=args.uri))
-        return 0
+def _cmd_tree(args, parser) -> int:
+    from urirun.runtime import tree as _tree
 
-    if args.command == "add-openapi":
-        from urirun.connectors import openapi_import
-
-        return openapi_import.add_openapi_command(args)
-
-    if args.command == "agent":
-        from urirun.runtime import agent as agent_mod
-
-        return agent_mod.agent_command(args)
-
-    if args.command == "connectors":
-        if getattr(args, "connectors_command", None) == "new":
-            from urirun import connector_scaffold
-
-            return connector_scaffold.new_command(args)
-        if getattr(args, "connectors_command", None) == "smoke":
-            from urirun import connector_smoke
-
-            return connector_smoke.smoke_command(args)
-        if getattr(args, "connectors_command", None) == "from-spec":
-            from urirun.connectors import declarative
-
-            return declarative.from_spec_command(args)
-        from urirun import connect_catalog
-
-        return connect_catalog.connectors_command(args)
-
-    if args.command == "errors":
-        return uri_errors.main(args.errors_args)
-
-    if args.command == "compat":
-        from urirun import compat
-
-        return compat.main(args.compat_args)
-
-    if args.command == "host":
-        from urirun import mesh
-
-        return mesh.host_command(args)
-
-    if args.command == "node":
-        from urirun import mesh
-
-        return mesh.node_command(args)
-
-    source = args.source or args.registry
-    if args.command == "list" and args.entry_points:
-        sources = []
-        if args.source:
-            sources.append(args.source)
-        elif args.registry and Path(args.registry).exists():
-            sources.append(args.registry)
-        bindings = _load_many(
-            sources,
-            include_entry_points=True,
-            entry_point_group=args.entry_point_group,
-        )
-        registry = compile_registry(build_binding_document(bindings))
+    document = _tree.build(reglib.load_json(args.source))
+    if args.format == "json":
+        reglib._emit_json(document, "-")
     else:
-        registry = load_registry_arg(source)
-    policy = runtime.build_policy(getattr(args, "policy", None), args.allow, args.deny,
-                                  getattr(args, "secret_allow", None))
+        import yaml
+
+        sys.stdout.write(yaml.safe_dump(document, sort_keys=False, allow_unicode=True, default_flow_style=False))
+    return 0
+
+
+def _cmd_validate(args, parser) -> int:
+    if args.source == "-":
+        doc = _load_json_arg("-")
+    else:
+        path = Path(args.source)
+        doc = build_binding_document(scan_artifacts(path)) if path.is_dir() else reglib.load_json(path)
+    result = validate_binding_document(doc)
+    if args.json:
+        reglib._emit_json(result, "-")
+    else:
+        print("OK" if result["ok"] else "FAILED")
+        for error in result["errors"]:
+            print(f"{error.get('uri')}: {error['error']}")
+    return 0 if result["ok"] else 1
+
+
+def _cmd_add_command(args, parser) -> int:
+    try:
+        binding = command_binding_from_cli(args.uri, argv=args.argv, shell=args.shell, params=args.param, label=args.label)
+    except ValueError as exc:
+        parser.error(str(exc))
+    write_or_emit_binding(args.out, binding)
+    return 0
+
+
+def _cmd_add_pypi(args, parser) -> int:
+    write_or_emit_binding(args.out, pypi_binding(args.name, version=args.version, uri=args.uri))
+    return 0
+
+
+def _cmd_add_openapi(args, parser) -> int:
+    from urirun.connectors import openapi_import
+
+    return openapi_import.add_openapi_command(args)
+
+
+def _cmd_gen(args, parser) -> int:
+    from urirun.runtime import codegen
+
+    return codegen.gen_command(args)
+
+
+def _cmd_doctor(args, parser) -> int:
+    """Report the resolved urirun binary, version and interpreter, plus connector
+    health — the fastest way to diagnose a version split (stale binary on PATH)."""
+    try:
+        connectors = connector_health(ENTRY_POINT_GROUP)
+    except Exception as exc:  # noqa: BLE001 - never let a broken connector crash diagnostics
+        connectors = []
+        connector_error = f"{type(exc).__name__}: {exc}"
+    else:
+        connector_error = None
+    unhealthy = [c for c in connectors if not c.get("ok")]
+    info = {
+        "ok": not unhealthy and connector_error is None,
+        "version": _package_version(),
+        "binary": sys.argv[0],
+        "interpreter": sys.executable,
+        "managedBy": "pipx" if _is_pipx_env() else "pip",
+        "entryPointGroup": ENTRY_POINT_GROUP,
+        "connectors": connectors,
+        "connectorError": connector_error,
+    }
+    if getattr(args, "json", False):
+        reglib._emit_json(info, "-")
+        return 0 if info["ok"] else 1
+    print(f"urirun {info['version']}")
+    print(f"  binary       {info['binary']}")
+    print(f"  interpreter  {info['interpreter']}")
+    print(f"  managed by   {info['managedBy']}")
+    if connector_error:
+        print(f"  connectors   ERROR: {connector_error}")
+    else:
+        print(f"  connectors   {len(connectors)} installed, {len(unhealthy)} unhealthy")
+        for c in unhealthy:
+            print(f"    [FAIL] {c.get('name', '?')}: {c.get('error', '')}")
+    return 0 if info["ok"] else 1
+
+
+def _pip_command(pip_args: list[str]) -> tuple[list[str], str]:
+    """Build a pip invocation, honoring pipx-managed installs.
+
+    Inside a pipx venv, ``pip`` is the wrong tool — ``pipx runpip`` runs pip in
+    urirun's own venv so the package lands where the ``urirun`` on PATH resolves.
+    Returns ``(command, manager)``.
+    """
+    if _is_pipx_env():
+        return (["pipx", "runpip", "urirun", *pip_args], "pipx")
+    return ([sys.executable, "-m", "pip", *pip_args], "pip")
+
+
+def _resolve_pip_targets(ids, source, catalog_url, *, org="if-uri", ref=None):
+    """Map connector ids to ``(targets, editable, detail)`` for the chosen source.
+
+    * ``catalog`` (default) — resolve ids through the hub (on-prem via catalog_url),
+      raw pip names/URLs/paths pass through.
+    * ``pypi`` — ids are PyPI package names.
+    * ``github`` — ids become ``name @ git+https://github.com/<org>/<id>.git[@ref]``.
+    * ``local`` — ids are paths, installed editable (``-e``).
+    """
+    if source == "pypi":
+        return list(ids), False, {"fromCatalog": [], "direct": list(ids)}
+    if source == "local":
+        return list(ids), True, {"fromCatalog": [], "direct": list(ids)}
+    if source == "github":
+        suffix = f"@{ref}" if ref else ""
+        targets = [f"{i} @ git+https://github.com/{org}/{i}.git{suffix}" for i in ids]
+        return targets, False, {"fromCatalog": [], "direct": targets}
+    from urirun.connectors import connect_catalog
+    try:
+        catalog = connect_catalog.fetch_catalog(catalog_url)
+        resolved = connect_catalog.resolve_install(catalog, ids)
+        specs = [s["pipSpec"] for s in (resolved.get("pipSpecs") or [])]
+        unknown = resolved.get("unknown") or []
+    except Exception:  # noqa: BLE001 - catalog offline / unreachable -> treat all as raw packages
+        specs, unknown = [], list(ids)
+    return list(specs) + unknown, False, {"fromCatalog": specs, "direct": unknown}
+
+
+def _pip_install_args(targets, *, upgrade, editable):
+    pip_args = ["install"]
+    if upgrade:
+        pip_args.append("--upgrade")
+    if editable:
+        for target in targets:
+            pip_args += ["-e", target]
+    else:
+        pip_args += list(targets)
+    return pip_args
+
+
+def _cmd_install(args, parser) -> int:
+    """Install (or, with ``--upgrade``, update) a connector.
+
+    Default source is the catalog (``--catalog`` for a local/on-prem registry);
+    ``--from pypi|github|local`` selects an explicit source. pipx-managed urirun
+    installs are detected and routed through ``pipx runpip``.
+    """
+    import subprocess
+
+    upgrade = getattr(args, "upgrade", False)
+    source = getattr(args, "source_from", "catalog")
+    targets, editable, detail = _resolve_pip_targets(
+        args.ids, source, args.catalog,
+        org=getattr(args, "org", "if-uri"), ref=getattr(args, "ref", None))
+    cmd, manager = _pip_command(_pip_install_args(targets, upgrade=upgrade, editable=editable))
+    if args.dry_run:
+        reglib._emit_json({"ok": True, "dryRun": True, "source": source, "upgrade": upgrade,
+                           "manager": manager, "catalog": args.catalog, **detail, "pip": cmd}, "-")
+        return 0
+    print(json.dumps({"installing": targets, "via": manager, "upgrade": upgrade}), flush=True)
+    return subprocess.run(cmd).returncode
+
+
+def _cmd_upgrade(args, parser) -> int:
+    """Upgrade urirun itself (no ids) or installed connectors (``install --upgrade``).
+
+    ``--all`` upgrades every installed connector; ``--check`` reports what is
+    installed without changing anything. Source selection mirrors ``install``.
+    """
+    import subprocess
+
+    source = getattr(args, "source_from", "catalog")
+    org = getattr(args, "org", "if-uri")
+    ref = getattr(args, "ref", None)
+
+    if getattr(args, "check", False):
+        connectors = connector_health(ENTRY_POINT_GROUP)
+        reglib._emit_json({"ok": True, "version": _package_version(),
+                           "installed": [{"name": c.get("name"), "bindings": c.get("bindingCount"),
+                                          "ok": c.get("ok")} for c in connectors]}, "-")
+        return 0
+
+    if not args.ids and not args.all:
+        # upgrade the urirun core itself
+        if _is_pipx_env():
+            cmd, manager = ["pipx", "upgrade", "urirun"], "pipx"
+        else:
+            if source == "github":
+                suffix = f"@{ref}" if ref else ""
+                target = f"urirun @ git+https://github.com/{org}/urirun.git{suffix}#subdirectory=adapters/python"
+            else:
+                target = "urirun"
+            cmd, manager = _pip_command(["install", "--upgrade", target])
+        if args.dry_run:
+            reglib._emit_json({"ok": True, "dryRun": True, "target": "urirun", "manager": manager, "cmd": cmd}, "-")
+            return 0
+        print(json.dumps({"upgrading": "urirun", "via": manager}), flush=True)
+        return subprocess.run(cmd).returncode
+
+    ids = args.ids
+    if args.all:
+        ids = [c.get("name") for c in connector_health(ENTRY_POINT_GROUP) if c.get("name")]
+        if not ids:
+            reglib._emit_json({"ok": True, "upgraded": [], "note": "no connectors installed"}, "-")
+            return 0
+    targets, editable, detail = _resolve_pip_targets(ids, source, args.catalog, org=org, ref=ref)
+    cmd, manager = _pip_command(_pip_install_args(targets, upgrade=True, editable=editable))
+    if args.dry_run:
+        reglib._emit_json({"ok": True, "dryRun": True, "source": source, "manager": manager, **detail, "cmd": cmd}, "-")
+        return 0
+    print(json.dumps({"upgrading": targets, "via": manager}), flush=True)
+    return subprocess.run(cmd).returncode
+
+
+def _cmd_agent(args, parser) -> int:
+    from urirun.runtime import agent as agent_mod
+
+    return agent_mod.agent_command(args)
+
+
+_CONNECTOR_SUBCOMMANDS = {
+    "lint": ("urirun.connectors.connector_lint", "lint_command"),
+    "new": ("urirun.connector_scaffold", "new_command"),
+    "smoke": ("urirun.connector_smoke", "smoke_command"),
+    "from-spec": ("urirun.connectors.declarative", "from_spec_command"),
+}
+
+
+def _cmd_connectors_doctor(args, parser) -> int:
+    report = connector_health(getattr(args, "entry_point_group", ENTRY_POINT_GROUP))
+    unhealthy = [r for r in report if not r["ok"] or r.get("scriptIssues")]
+    if getattr(args, "json", False):
+        reglib._emit_json({"ok": not unhealthy, "total": len(report), "unhealthy": len(unhealthy), "connectors": report}, "-")
+        return 1 if unhealthy else 0
+    for r in report:
+        if not r["ok"]:
+            print(f"  [FAIL] {r['name']:22s} {r.get('error', '')}")
+        elif r.get("scriptIssues"):
+            issue = r["scriptIssues"][0]
+            print(f"  [WARN] {r['name']:22s} {r['bindingCount']} bindings · console-script {issue['name']!r} broken: {issue['error']}")
+        else:
+            print(f"  [ok  ] {r['name']:22s} {r['bindingCount']} bindings")
+    print(f"\n{len(report) - len(unhealthy)}/{len(report)} connectors healthy")
+    return 1 if unhealthy else 0
+
+
+def _cmd_connectors(args, parser) -> int:
+    import importlib
+
+    sub = getattr(args, "connectors_command", None)
+    if sub == "doctor":
+        return _cmd_connectors_doctor(args, parser)
+    target = _CONNECTOR_SUBCOMMANDS.get(sub)
+    if target is not None:
+        module, func = target
+        return getattr(importlib.import_module(module), func)(args)
+    from urirun import connect_catalog
+
+    return connect_catalog.connectors_command(args)
+
+
+def _cmd_errors(args, parser) -> int:
+    return uri_errors.main(args.errors_args)
+
+
+def _cmd_compat(args, parser) -> int:
+    from urirun import compat
+
+    return compat.main(args.compat_args)
+
+
+def _cmd_host(args, parser) -> int:
+    from urirun import mesh
+
+    return mesh.host_command(args)
+
+
+def _cmd_node(args, parser) -> int:
+    from urirun import mesh
+
+    return mesh.node_command(args)
+
+
+def _builtin_binding_items(target: str = "local") -> list[dict]:
+    """Always-mounted introspection/observability routes — the runtime describing
+    itself with zero configuration: ``error://`` (runtime errors) and
+    ``registry://`` (routes/bindings). These already resolve at run-time via the
+    builtin fallback in ``_run_resolve_route``; surfacing them here keeps ``list``
+    in sync with ``run`` so they are discoverable, not just runnable.
+    """
+    from urirun import error_bindings
+    from urirun.runtime.introspect import registry_introspect_bindings
+
+    items: list[dict] = []
+    for document in (error_bindings(target), registry_introspect_bindings(target)):
+        items.extend(expand_bindings(document)["bindings"])
+    return items
+
+
+def _resolve_list_registry(args):
+    """Build the registry for list/run.
+
+    Installed connectors register under the ``urirun.bindings`` entry-point group,
+    so when no explicit source/registry file is given (or ``--entry-points`` is
+    set) we discover them automatically — ``urirun run '<uri>'`` Just Works after
+    ``urirun install``, no compile step or registry path needed. The zero-config
+    registry also carries the builtin ``error://``/``registry://`` routes so the
+    runtime is inspectable out of the box.
+    """
+    registry_file = args.registry if getattr(args, "registry", None) and Path(args.registry).exists() else None
+    discover = getattr(args, "entry_points", False) or (not args.source and not registry_file)
+    if discover:
+        group = getattr(args, "entry_point_group", ENTRY_POINT_GROUP)
+        # `run` resolves a single URI: import only the connector that owns its
+        # scheme (scheme-indexed cache), not every installed connector.
+        if getattr(args, "command", None) == "run" and getattr(args, "uri", None):
+            from urirun.runtime import discovery
+            return discovery.registry_for_uri(args.uri, group)
+        sources = [args.source] if args.source else ([registry_file] if registry_file else [])
+        if not sources:                  # pure entry-point discovery -> cached full registry
+            from urirun.runtime import discovery
+            return discovery.full_registry(group)
+        bindings = _load_many(sources, include_entry_points=True, entry_point_group=group)
+        bindings.extend(_builtin_binding_items())
+        return compile_registry(build_binding_document(bindings))
+    return load_registry_arg(args.source or args.registry)
+
+
+def _cmd_run_or_list(args, parser) -> int:
+    registry = _resolve_list_registry(args)
+    policy = runtime.build_policy(getattr(args, "policy", None), args.allow, args.deny, getattr(args, "secret_allow", None))
 
     if args.command == "run":
-        result = run(
-            args.uri,
-            registry,
-            json.loads(args.payload),
-            mode="execute" if args.execute else "dry-run",
-            policy=policy,
-            confirm=args.confirm,
-        )
+        result = run(args.uri, registry, json.loads(args.payload), mode="execute" if args.execute else "dry-run", policy=policy, confirm=args.confirm)
         reglib._emit_json(result, "-")
         return 0 if result.get("ok") else 1
 
-    if args.command == "list":
-        items = list_routes(registry, policy)
-        if args.json:
-            reglib._emit_json(items, "-")
-        else:
-            print(runtime.format_route_table(items, show_decision=policy is not None))
-        return 0
+    items = list_routes(registry, policy)
+    if args.json:
+        reglib._emit_json(items, "-")
+    else:
+        print(runtime.format_route_table(items, show_decision=policy is not None))
+    return 0
 
-    return 1
+
+_COMMANDS = {
+    "scan": _cmd_scan,
+    "compile": _cmd_compile,
+    "discover": _cmd_discover,
+    "adopt-pack": _cmd_adopt_pack,
+    "tree": _cmd_tree,
+    "validate": _cmd_validate,
+    "add-command": _cmd_add_command,
+    "add-pypi": _cmd_add_pypi,
+    "add-openapi": _cmd_add_openapi,
+    "gen": _cmd_gen,
+    "doctor": _cmd_doctor,
+    "install": _cmd_install,
+    "upgrade": _cmd_upgrade,
+    "agent": _cmd_agent,
+    "connectors": _cmd_connectors,
+    "errors": _cmd_errors,
+    "compat": _cmd_compat,
+    "host": _cmd_host,
+    "node": _cmd_node,
+    "run": _cmd_run_or_list,
+    "list": _cmd_run_or_list,
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    executable = Path(sys.argv[0]).name
+    prog = executable if executable in {"urirun", "urirun-v2"} else "urirun"
+    parser = _build_parser(prog)
+    args = parser.parse_args(argv)
+    handler = _COMMANDS.get(args.command)
+    if handler is None:
+        return 1
+    return handler(args, parser)
 
 
 if __name__ == "__main__":

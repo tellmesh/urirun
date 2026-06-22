@@ -16,6 +16,7 @@ import socket
 import time
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -185,8 +186,6 @@ def check_domain(
     screenshot_dir: str | None = None,
     create_repair_ticket: bool = True,
 ) -> dict:
-    from urirun import host_db
-
     target_url = url or default_url(domain)
     http = http_status(target_url, timeout=timeout)
     dns = dns_records(domain, sorted((expected or {"A": []}).keys()) if expected else None)
@@ -207,17 +206,28 @@ def check_domain(
     if not execute:
         return result
 
-    check = host_db.add_check(
-        db,
-        domain,
-        f"monitor://{domain}/domain/command/check",
-        "ok" if ok else "failed",
-        {"http": http, "dns": dns, "dnsMismatches": mismatches},
+    _persist_check_effects(
+        result,
+        db=db,
+        domain=domain,
+        target_url=target_url,
+        ok=ok,
+        http=http,
+        dns=dns,
+        mismatches=mismatches,
+        project=project,
+        expected=expected,
+        screenshot_when=screenshot_when,
+        screenshot_dir=screenshot_dir,
+        create_repair_ticket=create_repair_ticket,
     )
-    result["check"] = check
+    return result
 
+
+def _screenshot_artifacts(*, db, domain, target_url, ok, http, dns, mismatches, screenshot_when, screenshot_dir) -> list:
+    """Decide which screenshot artifacts to capture for a check outcome."""
     if not ok and screenshot_when in {"failure", "always"}:
-        result["artifacts"].append(
+        return [
             capture_screenshot_artifact(
                 db=db,
                 domain=domain,
@@ -226,20 +236,59 @@ def check_domain(
                 reason="failure",
                 meta={"http": http, "dns": dns, "dnsMismatches": mismatches},
             )
-        )
-    elif screenshot_when == "always":
-        result["artifacts"].append(capture_screenshot_artifact(db=db, domain=domain, url=target_url, out_dir=screenshot_dir, reason="manual"))
+        ]
+    if screenshot_when == "always":
+        return [capture_screenshot_artifact(db=db, domain=domain, url=target_url, out_dir=screenshot_dir, reason="manual")]
+    return []
 
+
+def _persist_check_effects(
+    result: dict,
+    *,
+    db,
+    domain,
+    target_url,
+    ok,
+    http,
+    dns,
+    mismatches,
+    project,
+    expected,
+    screenshot_when,
+    screenshot_dir,
+    create_repair_ticket,
+) -> None:
+    """Record the check, screenshots, repair tickets and log line (execute side)."""
+    from urirun import host_db
+
+    result["check"] = host_db.add_check(
+        db,
+        domain,
+        f"monitor://{domain}/domain/command/check",
+        "ok" if ok else "failed",
+        {"http": http, "dns": dns, "dnsMismatches": mismatches},
+    )
+    result["artifacts"].extend(
+        _screenshot_artifacts(
+            db=db,
+            domain=domain,
+            target_url=target_url,
+            ok=ok,
+            http=http,
+            dns=dns,
+            mismatches=mismatches,
+            screenshot_when=screenshot_when,
+            screenshot_dir=screenshot_dir,
+        )
+    )
     if mismatches and project and create_repair_ticket:
         result["tickets"].append(create_dns_repair_ticket(project=project, domain=domain, current=dns, expected=expected or {}, mismatches=mismatches))
-
     result["log"] = host_db.add_log(
         db,
         "daily",
         "daily_domain_check.finished",
         {"domain": domain, "ok": ok, "httpStatus": http.get("status"), "dnsMismatches": mismatches},
     )
-    return result
 
 
 def run_daily(
@@ -310,84 +359,127 @@ def _namecheap_moved(descriptor: dict) -> dict:
     }
 
 
-def run_uri_route(ctx: dict, execute: bool) -> dict:
-    from urirun import host_db
+def _route_monitor(rc: "_RouteCtx") -> dict | None:
+    if rc.key == ("monitor", "http", "query", "status"):
+        domain = _domain(rc.target, rc.payload)
+        return {"type": "domain-monitor", "http": http_status(rc.payload.get("url") or default_url(domain), timeout=float(rc.payload.get("timeout", 10.0)), expected_status=rc.payload.get("expected_status"))}
+    return None
 
-    payload = dict(ctx.get("payload") or {})
-    descriptor = ctx["descriptor"]
-    target = ctx["target"]
-    resource = ctx["translation"]["resource"]
-    operation = ctx["translation"]["operation"]
-    args = ctx["translation"]["args"]
-    action = args[0] if args else operation
-    package = descriptor["package"]
 
-    if package == "monitor" and resource == "http" and operation == "query" and action == "status":
-        domain = _domain(target, payload)
-        return {"type": "domain-monitor", "http": http_status(payload.get("url") or default_url(domain), timeout=float(payload.get("timeout", 10.0)), expected_status=payload.get("expected_status"))}
+def _route_dns(rc: "_RouteCtx") -> dict | None:
+    if rc.key == ("dns", "records", "query", "current"):
+        domain = _domain(rc.target, rc.payload)
+        if _provider(rc.ctx, rc.payload) == "namecheap":
+            return _namecheap_moved(rc.descriptor)
+        return {"type": "domain-monitor", "dns": dns_records(domain, _list(rc.payload.get("record_types")) or None)}
+    if rc.key == ("dns", "records", "query", "expected"):
+        return {"type": "domain-monitor", "expectedRecords": expected_records(rc.payload)}
+    if rc.package == "dns" and rc.resource == "records" and rc.operation == "command" and rc.action in {"plan", "backup", "apply"}:
+        return _namecheap_moved(rc.descriptor)
+    return None
 
-    if package == "dns" and resource == "records" and operation == "query" and action == "current":
-        domain = _domain(target, payload)
-        if _provider(ctx, payload) == "namecheap":
-            return _namecheap_moved(descriptor)
-        return {"type": "domain-monitor", "dns": dns_records(domain, _list(payload.get("record_types")) or None)}
 
-    if package == "dns" and resource == "records" and operation == "query" and action == "expected":
-        return {"type": "domain-monitor", "expectedRecords": expected_records(payload)}
-
-    if package == "dns" and resource == "records" and operation == "command" and action in {"plan", "backup", "apply"}:
-        return _namecheap_moved(descriptor)
-
-    if package == "browser" and resource == "page" and operation == "command" and action == "screenshot":
-        domain = _domain(target, payload)
-        url = payload.get("url") or default_url(domain)
-        if not execute:
+def _route_browser(rc: "_RouteCtx") -> dict | None:
+    if rc.key == ("browser", "page", "command", "screenshot"):
+        domain = _domain(rc.target, rc.payload)
+        url = rc.payload.get("url") or default_url(domain)
+        if not rc.execute:
             return {"type": "domain-monitor", "simulated": True, "artifactKind": "screenshot", "url": url}
         return {
             "type": "domain-monitor",
-            "artifact": capture_screenshot_artifact(db=_db(ctx, payload), domain=domain, url=url, out_dir=_screenshot_dir(ctx, payload), reason=payload.get("reason", "manual"), meta=payload.get("meta")),
+            "artifact": capture_screenshot_artifact(db=_db(rc.ctx, rc.payload), domain=domain, url=url, out_dir=_screenshot_dir(rc.ctx, rc.payload), reason=rc.payload.get("reason", "manual"), meta=rc.payload.get("meta")),
         }
+    return None
 
-    if package == "log" and operation == "command" and action == "write":
-        if not execute:
-            return {"type": "domain-monitor", "simulated": True, "stream": payload.get("stream") or resource, "event": payload.get("event")}
-        return {"type": "domain-monitor", "log": host_db.add_log(_db(ctx, payload), payload.get("stream") or resource, payload["event"], payload.get("detail"))}
 
-    if package == "log" and operation == "query":
-        return {"type": "domain-monitor", "logs": host_db.recent_logs(_db(ctx, payload), stream=payload.get("stream") or resource, limit=int(payload.get("limit", 20)))}
+def _route_log(rc: "_RouteCtx") -> dict | None:
+    from urirun import host_db
 
-    if package == "flow" and resource == "domain" and operation == "command" and action == "check":
-        domain = str(payload.get("domain") or target)
+    if rc.package == "log" and rc.operation == "command" and rc.action == "write":
+        if not rc.execute:
+            return {"type": "domain-monitor", "simulated": True, "stream": rc.payload.get("stream") or rc.resource, "event": rc.payload.get("event")}
+        return {"type": "domain-monitor", "log": host_db.add_log(_db(rc.ctx, rc.payload), rc.payload.get("stream") or rc.resource, rc.payload["event"], rc.payload.get("detail"))}
+    if rc.package == "log" and rc.operation == "query":
+        return {"type": "domain-monitor", "logs": host_db.recent_logs(_db(rc.ctx, rc.payload), stream=rc.payload.get("stream") or rc.resource, limit=int(rc.payload.get("limit", 20)))}
+    return None
+
+
+def _route_flow(rc: "_RouteCtx") -> dict | None:
+    if rc.key == ("flow", "domain", "command", "check"):
+        domain = str(rc.payload.get("domain") or rc.target)
         return {
             "type": "domain-monitor",
             "flow": "domain-check",
             **check_domain(
                 domain=domain,
-                url=payload.get("url"),
-                expected=expected_records(payload),
-                db=_db(ctx, payload),
-                project=_project(ctx, payload),
-                execute=execute,
-                timeout=float(payload.get("timeout", 10.0)),
-                screenshot_when=payload.get("screenshot_when", "failure"),
-                screenshot_dir=_screenshot_dir(ctx, payload),
-                create_repair_ticket=payload.get("create_repair_ticket", True) is not False,
+                url=rc.payload.get("url"),
+                expected=expected_records(rc.payload),
+                db=_db(rc.ctx, rc.payload),
+                project=_project(rc.ctx, rc.payload),
+                execute=rc.execute,
+                timeout=float(rc.payload.get("timeout", 10.0)),
+                screenshot_when=rc.payload.get("screenshot_when", "failure"),
+                screenshot_dir=_screenshot_dir(rc.ctx, rc.payload),
+                create_repair_ticket=rc.payload.get("create_repair_ticket", True) is not False,
             ),
         }
-
-    if package == "flow" and resource == "daily" and operation == "command" and action == "run":
+    if rc.key == ("flow", "daily", "command", "run"):
         return {
             "type": "domain-monitor",
             "flow": "daily-domain-run",
             **run_daily(
-                db=_db(ctx, payload),
-                project=_project(ctx, payload),
-                execute=execute,
-                dataset=payload.get("dataset", "domains"),
-                limit=int(payload.get("limit", 50)),
-                screenshot_when=payload.get("screenshot_when", "failure"),
-                screenshot_dir=_screenshot_dir(ctx, payload),
+                db=_db(rc.ctx, rc.payload),
+                project=_project(rc.ctx, rc.payload),
+                execute=rc.execute,
+                dataset=rc.payload.get("dataset", "domains"),
+                limit=int(rc.payload.get("limit", 50)),
+                screenshot_when=rc.payload.get("screenshot_when", "failure"),
+                screenshot_dir=_screenshot_dir(rc.ctx, rc.payload),
             ),
         }
+    return None
 
+
+@dataclass
+class _RouteCtx:
+    """Resolved routing context shared across the per-package route handlers."""
+
+    ctx: dict
+    payload: dict
+    descriptor: dict
+    target: Any
+    resource: str
+    operation: str
+    action: str
+    package: str
+    execute: bool
+
+    @property
+    def key(self) -> tuple[str, str, str, str]:
+        return (self.package, self.resource, self.operation, self.action)
+
+
+_ROUTE_HANDLERS = (_route_monitor, _route_dns, _route_browser, _route_log, _route_flow)
+
+
+def run_uri_route(ctx: dict, execute: bool) -> dict:
+    payload = dict(ctx.get("payload") or {})
+    descriptor = ctx["descriptor"]
+    args = ctx["translation"]["args"]
+    operation = ctx["translation"]["operation"]
+    rc = _RouteCtx(
+        ctx=ctx,
+        payload=payload,
+        descriptor=descriptor,
+        target=ctx["target"],
+        resource=ctx["translation"]["resource"],
+        operation=operation,
+        action=args[0] if args else operation,
+        package=descriptor["package"],
+        execute=execute,
+    )
+    for handler in _ROUTE_HANDLERS:
+        result = handler(rc)
+        if result is not None:
+            return result
     raise ValueError(f"unsupported domain monitor URI: {descriptor['normalized']}")
