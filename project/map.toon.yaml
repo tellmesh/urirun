@@ -1,5 +1,5 @@
-# urirun | 136f 22408L | python:114,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-22
-# stats: 932 func | 41 cls | 136 mod | CC̄=4.3 | critical:88 | cycles:0
+# urirun | 136f 22518L | python:114,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-22
+# stats: 934 func | 42 cls | 136 mod | CC̄=4.3 | critical:90 | cycles:0
 # alerts[5]: CC main=18; CC main=17; CC watch_command=17; CC _resolve_serve_opts=17; CC normalize_flow=15
 # hotspots[5]: serve fan=28; main fan=23; main fan=23; serve_node fan=19; main fan=19
 # evolution: baseline
@@ -42,7 +42,7 @@ M[136]:
   adapters/python/tests/test_openapi_import.py,49
   adapters/python/tests/test_param_routing.py,59
   adapters/python/tests/test_planfile_adapter.py,343
-  adapters/python/tests/test_public_api.py,113
+  adapters/python/tests/test_public_api.py,159
   adapters/python/tests/test_registry_portable.py,47
   adapters/python/tests/test_scheduler.py,62
   adapters/python/tests/test_secrets.py,168
@@ -51,7 +51,7 @@ M[136]:
   adapters/python/tests/test_v2_mcp.py,49
   adapters/python/tests/test_worker.py,66
   adapters/python/tests/test_worker_pool.py,84
-  adapters/python/urirun/__init__.py,619
+  adapters/python/urirun/__init__.py,675
   adapters/python/urirun/_registry.py,9
   adapters/python/urirun/_runtime.py,9
   adapters/python/urirun/_scan.py,9
@@ -86,7 +86,7 @@ M[136]:
   adapters/python/urirun/node/__init__.py,2
   adapters/python/urirun/node/keyauth.py,157
   adapters/python/urirun/node/manage.py,108
-  adapters/python/urirun/node/mesh.py,2250
+  adapters/python/urirun/node/mesh.py,2255
   adapters/python/urirun/planfile_adapter.py,6
   adapters/python/urirun/runtime/__init__.py,2
   adapters/python/urirun/runtime/_registry.py,719
@@ -104,7 +104,7 @@ M[136]:
   adapters/python/urirun/runtime/secrets.py,235
   adapters/python/urirun/runtime/tree.py,92
   adapters/python/urirun/runtime/v1.py,432
-  adapters/python/urirun/runtime/v2.py,2498
+  adapters/python/urirun/runtime/v2.py,2501
   adapters/python/urirun/runtime/v2_adopt.py,194
   adapters/python/urirun/runtime/v2_grpc.py,205
   adapters/python/urirun/runtime/v2_mcp.py,208
@@ -341,11 +341,12 @@ D:
     e: PlanfileAdapterTests
     PlanfileAdapterTests: test_create_next_and_complete_ticket(0),test_dsl_create_ticket(0),test_cli_host_task_create_and_list(0),test_host_task_run_updates_ticket(0),test_v2_task_uri_bindings_create_and_list_ticket(0),test_v2_task_uri_complete_and_fail_record_outputs(0),test_v2_task_uri_rejects_invalid_payload(0),test_host_task_run_dispatches_executor_handler(0),test_fail_or_retry_requeues_until_max_attempts(0),test_fail_or_retry_default_max_attempts_fails_terminally(0),test_host_task_loop_retries_failing_flow_until_exhausted(0),test_chat_plan_domain_prompt_creates_ticket(0),test_chat_plan_ambiguous_prompt_waits_for_input(0),test_chat_plan_destructive_prompt_requires_review(0)
   adapters/python/tests/test_public_api.py:
-    e: PolicyTests,ResultDataTests,ActionSpaceAndTestingTests,ProjectionParityTests
+    e: PolicyTests,ResultDataTests,ActionSpaceAndTestingTests,ProjectionParityTests,ToolBindingAndRunStepsTest
     PolicyTests: test_none_when_empty(0),test_builds_allow_deny_secret(0)
     ResultDataTests: test_local_function_value(0),test_argv_stdout_json(0),test_argv_stdout_non_json(0),test_dry_run_plan_passthrough(0),test_no_result_returns_env(0)
     ActionSpaceAndTestingTests: _connector(0),test_action_space_projection(0),test_testing_assert_routes_and_smoke(0),test_run_query_unwraps(0)
     ProjectionParityTests: _connector(0),test_mcp_tools_from_connector_object(0),test_a2a_card_from_connector_object(0)
+    ToolBindingAndRunStepsTest: _registry(0),test_tool_binding_shape_and_kind(0),test_run_steps_executes_and_auto_unwraps(0),test_run_steps_stops_on_error(0)  # urirun.tool_binding (the argv-template `_route` boilerplate)
   adapters/python/tests/test_registry_portable.py:
     e: test_argv_route_is_registry_portable,test_local_function_route_is_flagged,test_assert_registry_portable_raises_on_local_function,test_smoke_requires_portability_by_default,test_smoke_portable_allow_opts_in_for_inprocess_connectors
     test_argv_route_is_registry_portable()
@@ -397,7 +398,7 @@ D:
     test_python_m_route_dispatches(tmp_path)
     test_local_function_subprocess_route_is_pooled(tmp_path)
   adapters/python/urirun/__init__.py:
-    e: parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,policy,action_space,result_data,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command,Connector
+    e: parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,policy,action_space,result_data,run_steps,tool_binding,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command,Connector
     Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(3),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
     parse_uri(uri)
     build_invocation(descriptor)
@@ -412,6 +413,8 @@ D:
     policy(allow;deny;secret_allow;policy_file)
     action_space(registry)
     result_data(env)
+    run_steps(steps;registry)
+    tool_binding(uri;argv;properties)
     connector_bindings()
     entry_point_bindings(group)
     entry_point_binding_document(group;generated_at)

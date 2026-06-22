@@ -34,8 +34,10 @@ auth (`uri-copy-id`), `node://` self-management (`--manage`), `/events` SSE + `h
   falls back to JSON with a clear stderr hint; added a `yaml` extra (`pip install
   urirun[yaml]`). Inspecting a node's URIs: `GET /routes` (live surface = built-in +
   host-deployed), `/mcp/tools`, `/a2a/card`; `urirun host routes`; `urirun node list`;
-  `urirun tree <registry>`. Provenance gap: `/routes` does not label built-in vs
-  host-deployed (a /deploy hot-swaps the whole registry) — a `source` tag is a future add.
+  `urirun tree <registry>`.
+- **(done) Route provenance.** `routes_from_registry(..., source=)` stamps each route
+  `built-in` / `deploy` / `manage`; `/routes` and `urirun host routes` (new SOURCE column)
+  now show where every URI on a node came from.
 
 ## Proposed next (grounded in the same analysis, deferred as larger/riskier)
 

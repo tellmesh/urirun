@@ -434,15 +434,19 @@ def deploy_to_node(url: str, *, bindings: dict | None = None, registry: dict | N
                    allow: list[str] | None = None, code: dict | None = None,
                    env: dict | None = None, name: str | None = None,
                    token: str | None = None, identity: str | None = None,
-                   timeout: float = 30.0) -> dict:
+                   merge: bool = False, timeout: float = 30.0) -> dict:
     """Push a registry (+ optional handler code/env) onto a running node's POST /deploy.
     Authenticate with either a shared `token` or an SSH `identity` (ed25519 private key
-    enrolled on the node via copy_id). The node must have /deploy enabled."""
+    enrolled on the node via copy_id). The node must have /deploy enabled. With
+    `merge`, the deployed routes are added to the node's existing surface instead of
+    replacing it."""
     body: dict = {}
     if registry is not None:
         body["registry"] = registry
     if bindings is not None:
         body["bindings"] = bindings
+    if merge:
+        body["merge"] = True
     if allow is not None:
         body["allow"] = allow
     if code:
@@ -1608,7 +1612,8 @@ def deploy_command(args: argparse.Namespace) -> int:
 
     result = deploy_to_node(url, bindings=bindings, registry=registry,
                             allow=args.allow or None, code=code or None, env=env or None,
-                            name=args.name, token=token, identity=identity)
+                            name=args.name, token=token, identity=identity,
+                            merge=bool(getattr(args, "merge", False)))
     reglib._emit_json(result, "-")
     return 0 if result.get("ok") else 1
 
@@ -1766,16 +1771,41 @@ def _apply_deploy_env(env: dict, summary: dict) -> None:
         summary["env"].append(str(key))
 
 
-def _deploy_registry(body: dict) -> dict:
-    """Resolve the new served registry from a /deploy body (registry or bindings)."""
+def _registry_to_bindings(registry: dict) -> dict:
+    """Reconstruct a {uri: binding} map from a compiled registry's index so a deployed
+    surface can be merged with the node's existing one and recompiled. Compiled
+    registries don't round-trip through the bindings helpers (the schema lives under
+    ``routeEntry.config.inputSchema``), so rebuild each binding by hand."""
+    out: dict = {}
+    for entry in (registry.get("index") or {}).values():
+        route = dict(entry.get("routeEntry") or {})
+        schema = (route.get("config") or {}).get("inputSchema") or route.get("inputSchema") or {}
+        binding = {k: v for k, v in route.items() if k != "config"}
+        binding["inputSchema"] = schema
+        binding["uri"] = entry["uri"]
+        out[entry["uri"]] = binding
+    return out
+
+
+def _deploy_registry(body: dict, existing: dict | None = None) -> dict:
+    """Resolve the new served registry from a /deploy body (registry or bindings).
+
+    With ``body['merge']`` and an existing served registry, the deployed routes are
+    ADDED to the existing surface (same-URI routes overridden) instead of replacing
+    it — so a connector can be pushed without dropping the node's other routes."""
     if body.get("registry"):
-        return body["registry"]
-    if body.get("bindings"):
+        new = body["registry"]
+    elif body.get("bindings"):
         doc = body["bindings"]
         if "bindings" not in doc:
             doc = {"version": v2.VERSION, "bindings": doc}
-        return v2.compile_registry(doc)
-    raise ValueError("deploy needs 'bindings' or 'registry'")
+        new = v2.compile_registry(doc)
+    else:
+        raise ValueError("deploy needs 'bindings' or 'registry'")
+    if body.get("merge") and existing and (existing.get("index") or existing.get("routes")):
+        merged = {**_registry_to_bindings(existing), **_registry_to_bindings(new)}
+        return v2.compile_registry({"version": v2.VERSION, "bindings": merged}, on_conflict="last")
+    return new
 
 
 def apply_deploy(state: dict, body: dict) -> dict:
@@ -1794,7 +1824,7 @@ def apply_deploy(state: dict, body: dict) -> dict:
         except Exception as exc:  # noqa: BLE001
             summary.setdefault("codeWarnings", []).append(f"{mod}: {type(exc).__name__}: {exc}")
 
-    registry = _deploy_registry(body)
+    registry = _deploy_registry(body, state.get("registry"))
     state["registry"] = registry
     state["routes"] = routes_from_registry(registry, source="deploy")  # host-pushed surface
     if body.get("name"):

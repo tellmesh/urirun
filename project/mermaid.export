@@ -70,52 +70,6 @@ flowchart TD
     subgraph adapters__python
         adapters__python__urirun__exec___resolve["_resolve"]
         adapters__python__urirun__exec__main("main CC=10")
-        adapters__python__urirun__parse_uri["parse_uri"]
-        adapters__python__urirun__build_invocation["build_invocation"]
-        adapters__python__urirun__dispatch["dispatch"]
-        adapters__python__urirun__command["command"]
-        adapters__python__urirun__shell["shell"]
-        adapters__python__urirun__handler["handler"]
-        adapters__python__urirun___example_payload("_example_payload CC=9")
-        adapters__python__urirun__ok["ok"]
-        adapters__python__urirun__fail["fail"]
-        adapters__python__urirun__plan["plan"]
-        adapters__python__urirun__policy["policy"]
-        adapters__python__urirun__action_space("action_space CC=9")
-        adapters__python__urirun__result_data("result_data CC=8")
-        adapters__python__urirun__connector_bindings["connector_bindings"]
-        adapters__python__urirun__entry_point_bindings["entry_point_bindings"]
-        adapters__python__urirun__entry_point_binding_document["entry_point_binding_document"]
-        adapters__python__urirun__entry_point_registry["entry_point_registry"]
-        adapters__python__urirun__error_bindings["error_bindings"]
-        adapters__python__urirun__compat_report["compat_report"]
-        adapters__python__urirun__compile_registry["compile_registry"]
-        adapters__python__urirun__list_routes["list_routes"]
-        adapters__python__urirun__validate_binding_document["validate_binding_document"]
-        adapters__python__urirun__run["run"]
-        adapters__python__urirun__Connector____post_init__["__post_init__"]
-        adapters__python__urirun__Connector__uri["uri"]
-        adapters__python__urirun__Connector___meta["_meta"]
-        adapters__python__urirun__Connector__command["command"]
-        adapters__python__urirun__Connector__shell["shell"]
-        adapters__python__urirun__Connector__cli["cli"]
-        adapters__python__urirun__Connector___add_route_arguments("_add_route_arguments CC=8")
-        adapters__python__urirun__Connector___build_cli_parser("_build_cli_parser CC=12")
-        adapters__python__urirun__Connector___dispatch_cli("_dispatch_cli CC=11")
-        adapters__python__urirun__Connector__handler["handler"]
-        adapters__python__urirun__Connector__registry["registry"]
-        adapters__python__urirun__Connector__bindings["bindings"]
-        adapters__python__urirun__Connector___live_bindings["_live_bindings"]
-        adapters__python__urirun__Connector__manifest("manifest CC=11")
-        adapters__python__urirun__Connector__mcp_tools["mcp_tools"]
-        adapters__python__urirun__Connector__a2a_card["a2a_card"]
-        adapters__python__urirun__connector["connector"]
-        adapters__python__urirun__load_manifest["load_manifest"]
-        adapters__python__urirun__connector_emit["connector_emit"]
-        adapters__python__urirun__connector_cli["connector_cli"]
-        adapters__python__urirun__connector_main["connector_main"]
-        adapters__python__urirun___connector_cli_routes("_connector_cli_routes CC=12")
-        adapters__python__urirun___connector_run_command("_connector_run_command CC=9")
         adapters__python__urirun__testing__connector_installed["connector_installed"]
         adapters__python__urirun__testing___resolve_bindings["_resolve_bindings"]
         adapters__python__urirun__testing___nonportable_routes["_nonportable_routes"]
@@ -128,6 +82,52 @@ flowchart TD
         adapters__python__urirun__host__host_db__db_path["db_path"]
         adapters__python__urirun__host__host_db__now_iso["now_iso"]
         adapters__python__urirun__host__host_db__new_id["new_id"]
+        adapters__python__urirun__host__host_db__connect["connect"]
+        adapters__python__urirun__host__host_db__connection["connection"]
+        adapters__python__urirun__host__host_db__row_dict["row_dict"]
+        adapters__python__urirun__host__host_db__rows_dict["rows_dict"]
+        adapters__python__urirun__host__host_db__init_db["init_db"]
+        adapters__python__urirun__host__host_db___schema_json["_schema_json"]
+        adapters__python__urirun__host__host_db__create_dataset["create_dataset"]
+        adapters__python__urirun__host__host_db__list_datasets["list_datasets"]
+        adapters__python__urirun__host__host_db__get_dataset["get_dataset"]
+        adapters__python__urirun__host__host_db___validate_record["_validate_record"]
+        adapters__python__urirun__host__host_db__upsert_record["upsert_record"]
+        adapters__python__urirun__host__host_db___sync_record_fts["_sync_record_fts"]
+        adapters__python__urirun__host__host_db__search_records["search_records"]
+        adapters__python__urirun__host__host_db__register_artifact["register_artifact"]
+        adapters__python__urirun__host__host_db__list_artifacts["list_artifacts"]
+        adapters__python__urirun__host__host_db__add_check["add_check"]
+        adapters__python__urirun__host__host_db__recent_checks["recent_checks"]
+        adapters__python__urirun__host__host_db__add_log["add_log"]
+        adapters__python__urirun__host__host_db__recent_logs["recent_logs"]
+        adapters__python__urirun__host__host_db__create_llm_session["create_llm_session"]
+        adapters__python__urirun__host__host_db__add_llm_message["add_llm_message"]
+        adapters__python__urirun__host__host_db__read_only_sql["read_only_sql"]
+        adapters__python__urirun__host__host_db__route_db_path["route_db_path"]
+        adapters__python__urirun__host__host_db___run_query_route["_run_query_route"]
+        adapters__python__urirun__host__host_db___run_command_route("_run_command_route CC=11")
+        adapters__python__urirun__host__host_db__run_uri_route["run_uri_route"]
+        adapters__python__urirun__host__domain_monitor__now_id["now_id"]
+        adapters__python__urirun__host__domain_monitor___list["_list"]
+        adapters__python__urirun__host__domain_monitor___domain["_domain"]
+        adapters__python__urirun__host__domain_monitor__default_url["default_url"]
+        adapters__python__urirun__host__domain_monitor__http_status["http_status"]
+        adapters__python__urirun__host__domain_monitor__dns_records("dns_records CC=11")
+        adapters__python__urirun__host__domain_monitor__expected_records("expected_records CC=8")
+        adapters__python__urirun__host__domain_monitor__dns_mismatches["dns_mismatches"]
+        adapters__python__urirun__host__domain_monitor__capture_screenshot_artifact["capture_screenshot_artifact"]
+        adapters__python__urirun__host__domain_monitor__create_dns_repair_ticket["create_dns_repair_ticket"]
+        adapters__python__urirun__host__domain_monitor__check_domain("check_domain CC=8")
+        adapters__python__urirun__host__domain_monitor___screenshot_artifacts["_screenshot_artifacts"]
+        adapters__python__urirun__host__domain_monitor___persist_check_effects["_persist_check_effects"]
+        adapters__python__urirun__host__domain_monitor__run_daily["run_daily"]
+        adapters__python__urirun__host__domain_monitor___db["_db"]
+        adapters__python__urirun__host__domain_monitor___project["_project"]
+        adapters__python__urirun__host__domain_monitor___screenshot_dir["_screenshot_dir"]
+        adapters__python__urirun__host__domain_monitor___provider["_provider"]
+        adapters__python__urirun__host__domain_monitor___namecheap_moved["_namecheap_moved"]
+        adapters__python__urirun__host__domain_monitor___route_monitor["_route_monitor"]
     end
     subgraph adapters__ruby
         adapters__ruby__urirun__Connector__initialize["initialize"]
@@ -228,7 +228,7 @@ flowchart TD
         v1__js__urirun_v1__expandBindings["expandBindings"]
         v1__js__urirun_v1__compileRegistry["compileRegistry"]
     end
-    examples__matrix__verify__main --> adapters__python__urirun__validate_binding_document
+    examples__matrix__verify__main --> adapters__python__urirun__runtime__v2__validate_binding_document
     examples__matrix__verify__main --> examples__matrix__verify__essential
     scripts__lint_connectors__lint_fleet --> adapters__python__urirun__connectors__connector_lint__lint_connector
     scripts__lint_connectors__lint_fleet --> scripts__lint_connectors__classify
@@ -252,25 +252,6 @@ flowchart TD
     adapters__c__urirun__memcpy --> adapters__c__urirun__is_path_end
     adapters__python__urirun__exec__main --> adapters__python__urirun__exec___resolve
     adapters__python__urirun__exec__main --> adapters__js__fn
-    adapters__python__urirun__dispatch --> adapters__python__urirun__parse_uri
-    adapters__python__urirun__dispatch --> adapters__python__urirun__build_invocation
-    adapters__python__urirun__dispatch --> adapters__js__fn
-    adapters__python__urirun__command --> adapters__python__urirun__runtime__v2__uri_command
-    adapters__python__urirun__shell --> adapters__python__urirun__runtime__v2__uri_shell
-    adapters__python__urirun__handler --> adapters__python__urirun__runtime__v2__uri_handler
-    adapters__python__urirun__policy --> adapters__python__urirun__runtime___runtime__build_policy
-    adapters__python__urirun__Connector___dispatch_cli --> adapters__python__urirun__connector_emit
-    adapters__python__urirun__Connector__registry --> adapters__python__urirun__compile_registry
-    adapters__python__urirun__Connector__registry --> adapters__python__urirun__runtime__v2__decorated_bindings
-    adapters__python__urirun__Connector___live_bindings --> adapters__python__urirun__runtime__v2__decorated_bindings
-    adapters__python__urirun__Connector__manifest --> adapters__python__urirun___example_payload
-    adapters__python__urirun__connector --> adapters__java__Urirun__Urirun__Connector
-    adapters__python__urirun__load_manifest --> adapters__python__urirun__runtime__v2___load_manifest
-    adapters__python__urirun__connector_emit --> adapters__python__urirun__runtime__errors___emit
-    adapters__python__urirun__connector_main --> adapters__python__urirun___connector_cli_routes
-    adapters__python__urirun__connector_main --> adapters__python__urirun___connector_run_command
-    adapters__python__urirun__connector_main --> adapters__python__urirun__connector_emit
-    adapters__python__urirun___connector_run_command --> adapters__python__urirun__connector_emit
     adapters__python__urirun__testing__registry_portability --> adapters__python__urirun__testing___nonportable_routes
     adapters__python__urirun__testing__registry_portability --> adapters__python__urirun__testing___resolve_bindings
     adapters__python__urirun__testing__assert_registry_portable --> adapters__python__urirun__testing__registry_portability
@@ -774,7 +755,7 @@ flowchart TD
     adapters__python__urirun__runtime__v2_grpc__call --> adapters__python__urirun__runtime__v2_grpc__channel_target
     adapters__python__urirun__runtime__v2_grpc__call --> adapters__python__urirun__runtime__v2_grpc___validate
     adapters__python__urirun__runtime__v2_grpc__call --> adapters__python__urirun__runtime__v2_grpc___method
-    adapters__python__urirun__runtime__v2_grpc__call --> adapters__python__urirun__run
+    adapters__python__urirun__runtime__v2_grpc__call --> adapters__python__urirun__runtime__v1__run
     adapters__python__urirun__runtime__v2_grpc__stream --> adapters__python__urirun__runtime__v2_grpc__channel_target
     adapters__python__urirun__runtime__v2_grpc__stream --> adapters__python__urirun__runtime__v2_grpc___method
     adapters__python__urirun__runtime__v2_grpc__list_routes --> adapters__python__urirun__runtime__v2_grpc__channel_target
@@ -828,8 +809,27 @@ flowchart TD
     adapters__python__urirun__runtime___registry__route_from_uri --> adapters__python__urirun__runtime___registry__translate
     adapters__python__urirun__runtime___registry__route_from_uri --> adapters__python__urirun__runtime___registry__normalize_route_entry
     adapters__python__urirun__runtime___registry__route_from_parts --> adapters__python__urirun__runtime___registry__route_from_uri
+    adapters__python__urirun__runtime___registry__coerce_route_source --> adapters__python__urirun__runtime___registry__route_from_uri
+    adapters__python__urirun__runtime___registry__coerce_route_source --> adapters__python__urirun__runtime___registry__route_from_parts
+    adapters__python__urirun__runtime___registry__add_route --> adapters__python__urirun__runtime___registry___route_entry_equal
+    adapters__python__urirun__runtime___registry__flatten_registry_tree --> adapters__python__urirun__runtime___registry__route_from_parts
+    adapters__python__urirun__runtime___registry__flatten_registry_document --> adapters__python__urirun__runtime___registry__flatten_registry_tree
+    adapters__python__urirun__runtime___registry__flatten_registry_document --> adapters__python__urirun__runtime___registry___get_route_entry
+    adapters__python__urirun__runtime___registry__flatten_registry_document --> adapters__python__urirun__runtime___registry__route_from_parts
+    adapters__python__urirun__runtime___registry__discover_manifest --> adapters__python__urirun__runtime___registry__flatten_registry_tree
+    adapters__python__urirun__runtime___registry__discover_manifest --> adapters__python__urirun__runtime___registry__flatten_registry_document
+    adapters__python__urirun__runtime___registry__discover_manifest --> adapters__python__urirun__runtime___registry__coerce_route_source
+    adapters__python__urirun__runtime___registry__build_registry_document --> adapters__python__urirun__runtime___registry__coerce_route_source
+    adapters__python__urirun__runtime___registry__build_registry_document --> adapters__python__urirun__runtime___registry__add_route
+    adapters__python__urirun__runtime___registry__build_registry_document --> adapters__python__urirun__runtime___registry__hash_uri
+    adapters__python__urirun__runtime___registry__build_registry_document --> adapters__python__urirun__runtime___registry___route_entry_equal
+    adapters__python__urirun__runtime___registry__discover_docker_labels --> adapters__python__urirun__runtime___registry__default_adapter
+    adapters__python__urirun__runtime___registry__discover_docker_labels --> adapters__python__urirun__runtime___registry___parse_command
+    adapters__python__urirun__runtime___registry__discover_docker_labels --> adapters__python__urirun__runtime___registry__route_from_uri
+    adapters__python__urirun__runtime___registry__discover_docker_labels --> adapters__python__urirun__runtime___registry__route_from_parts
+    adapters__python__urirun__runtime___registry__discover_docker_inspect --> adapters__python__urirun__runtime___registry__discover_docker_labels
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class scripts__repin_connectors__main,adapters__conformance__main,adapters__python__urirun__runtime__codegen__assign_rpc_names,adapters__python__urirun__runtime__v2_mcp__serve_mcp,adapters__python__urirun__runtime___scan__scan_path,v1__js__urirun_v1__resolveParams,v1__js__urirun_v1__run,adapters__python__urirun__node__mesh__normalize_flow,adapters__python__urirun__node__mesh__data_command,adapters__python__urirun__node__mesh__watch_command,adapters__python__urirun__node__mesh__deploy_command,adapters__python__urirun__node__mesh__NodeHandler___stream_events,adapters__python__urirun__node__mesh___resolve_serve_opts highCC
-    class examples__matrix__verify__main,scripts__lint_connectors__main,adapters__js__parseUri,adapters__python__urirun__exec__main,adapters__python__urirun___example_payload,adapters__python__urirun__action_space,adapters__python__urirun__result_data,adapters__python__urirun__Connector___add_route_arguments,adapters__python__urirun__Connector___build_cli_parser,adapters__python__urirun__Connector___dispatch_cli,adapters__python__urirun__Connector__manifest,adapters__python__urirun___connector_cli_routes,adapters__python__urirun___connector_run_command,adapters__python__urirun__testing__smoke,adapters__python__urirun__host__host_db___run_command_route,adapters__python__urirun__host__domain_monitor__dns_records,adapters__python__urirun__host__domain_monitor__expected_records,adapters__python__urirun__host__domain_monitor__check_domain,adapters__python__urirun__host__domain_monitor___route_dns,adapters__python__urirun__host__domain_monitor___route_log,adapters__python__urirun__host__host_integrations___write_planfile_action,adapters__python__urirun__host__task_planner__heuristic_plan_chat_request,adapters__python__urirun__host__host_dashboard__task_action,adapters__python__urirun__host__host_dashboard___dashboard_api_response,adapters__python__urirun__host__host_dashboard__command,adapters__python__urirun__host__planfile_adapter__build_ticket_payload,adapters__python__urirun__host__planfile_adapter__list_tickets,adapters__python__urirun__runtime__v2_service__call,adapters__python__urirun__runtime__v1__resolve_params,adapters__python__urirun__runtime__v1__run medCC
+    class scripts__repin_connectors__main,adapters__conformance__main,adapters__python__urirun__runtime__codegen__assign_rpc_names,adapters__python__urirun__runtime__v2_mcp__serve_mcp,adapters__python__urirun__runtime___scan__scan_path,adapters__python__urirun__node__mesh__normalize_flow,adapters__python__urirun__node__mesh__data_command,adapters__python__urirun__node__mesh__watch_command,adapters__python__urirun__node__mesh__deploy_command,adapters__python__urirun__node__mesh__NodeHandler___stream_events,adapters__python__urirun__node__mesh___resolve_serve_opts,v1__js__urirun_v1__resolveParams,v1__js__urirun_v1__run highCC
+    class examples__matrix__verify__main,scripts__lint_connectors__main,adapters__js__parseUri,adapters__python__urirun__exec__main,adapters__python__urirun__testing__smoke,adapters__python__urirun__host__host_db___run_command_route,adapters__python__urirun__host__domain_monitor__dns_records,adapters__python__urirun__host__domain_monitor__expected_records,adapters__python__urirun__host__domain_monitor__check_domain,adapters__python__urirun__host__domain_monitor___route_dns,adapters__python__urirun__host__domain_monitor___route_log,adapters__python__urirun__host__host_integrations___write_planfile_action,adapters__python__urirun__host__task_planner__heuristic_plan_chat_request,adapters__python__urirun__host__host_dashboard__task_action,adapters__python__urirun__host__host_dashboard___dashboard_api_response,adapters__python__urirun__host__host_dashboard__command,adapters__python__urirun__host__planfile_adapter__build_ticket_payload,adapters__python__urirun__host__planfile_adapter__list_tickets,adapters__python__urirun__runtime__v2_service__call,adapters__python__urirun__runtime__v1__resolve_params,adapters__python__urirun__runtime__v1__run,adapters__python__urirun__runtime__v1___binding_pairs,adapters__python__urirun__runtime__v1__main,adapters__python__urirun__runtime__errors__classify,adapters__python__urirun__runtime__errors__problem,adapters__python__urirun__runtime__errors__info,adapters__python__urirun__runtime__daemon__serve,adapters__python__urirun__runtime__daemon___main,adapters__python__urirun__runtime__codegen___field_type,adapters__python__urirun__runtime__codegen___message_fields medCC

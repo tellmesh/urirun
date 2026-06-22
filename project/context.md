@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 75, json: 12, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 958
+- **Total Functions**: 960
 - **Total Classes**: 25
 - **Modules**: 133
-- **Entry Points**: 365
+- **Entry Points**: 367
 
 ## Architecture by Module
 
@@ -29,7 +29,7 @@
 - **File**: `urirun-v1.js`
 
 ### adapters.python.urirun
-- **Functions**: 46
+- **Functions**: 48
 - **Classes**: 1
 - **File**: `__init__.py`
 
@@ -134,10 +134,6 @@ Main execution flows into the system:
 ### scripts.lint_connectors.main
 - **Calls**: argparse.ArgumentParser, ap.add_argument, ap.add_argument, ap.add_argument, ap.parse_args, scripts.lint_connectors.lint_fleet, Path, print
 
-### adapters.python.urirun.Connector._build_cli_parser
-> Build the connector argparse parser (one subcommand per route).
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
-
 ### adapters.python.urirun.runtime.v2._cmd_upgrade
 > Upgrade urirun itself (no ids) or installed connectors (``install --upgrade``).
 
@@ -149,6 +145,10 @@ Main execution flows into the system:
 ``python -m urirun.exec``. Reads ``{"ref": "module:export", "payload": {...}}``
 line 
 - **Calls**: sys.stdout.write, sys.stdout.flush, cache.get, line.strip, json.loads, sys.stdout.flush, ref.partition, getattr
+
+### adapters.python.urirun.Connector._build_cli_parser
+> Build the connector argparse parser (one subcommand per route).
+- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
 
 ### adapters.python.urirun.runtime.v2_grpc.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, s.add_argument, s.add_argument, s.add_argument, s.add_argument, s.add_argument
@@ -169,7 +169,7 @@ refresh. The token bundle lives in the keyring under ``oauth:<provider>``
 - **Calls**: dict, adapters.python.urirun.runtime.errors.category_meta, err.get, adapters.python.urirun.runtime.errors.classify, err.get, adapters.python.urirun.runtime.errors.error_code, err.get, err.get
 
 ### examples.matrix.verify.main
-- **Calls**: contracts.get, sorted, None.removesuffix, adapters.python.urirun.validate_binding_document, examples.matrix.verify.essential, contracts.items, json.load, print
+- **Calls**: contracts.get, sorted, None.removesuffix, adapters.python.urirun.runtime.v2.validate_binding_document, examples.matrix.verify.essential, contracts.items, json.load, print
 
 ### adapters.python.urirun.host.domain_monitor._route_flow
 - **Calls**: str, adapters.python.urirun.host.domain_monitor.check_domain, adapters.python.urirun.host.domain_monitor.run_daily, rc.payload.get, rc.payload.get, adapters.python.urirun.host.domain_monitor.expected_records, adapters.python.urirun.host.domain_monitor._db, adapters.python.urirun.host.domain_monitor._project
@@ -197,14 +197,14 @@ health — the fastest way to diagnose a version split (stale binary on PATH)
 ### adapters.python.urirun.node.mesh.node_command
 - **Calls**: adapters.python.urirun.node.mesh.load_node_config, dict, v2.load_registry_arg, reglib._emit_json, adapters.python.urirun.node.mesh.node_list_command, adapters.python.urirun.node.mesh.node_stop_command, reglib._emit_json, node.get
 
-### adapters.python.urirun.Connector._dispatch_cli
-- **Calls**: bool, _run, adapters.python.urirun.connector_emit, adapters.python.urirun.connector_emit, adapters.python.urirun.connector_emit, binding.get, getattr, None.get
-
 ### adapters.python.urirun.runtime.agent.agent_command
 - **Calls**: v2.load_registry_arg, adapters.python.urirun.runtime.agent.action_space, planner, adapters.python.urirun.runtime.agent.run_plan, print, print, print, adapters.python.urirun.runtime.agent._load_planner
 
 ### adapters.python.urirun.runtime.v2_mcp.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, parser.parse_args, v2.load_registry_arg, sub.add_parser, p.add_argument, reglib._emit_json, reglib._emit_json
+
+### adapters.python.urirun.Connector._dispatch_cli
+- **Calls**: bool, _run, adapters.python.urirun.connector_emit, adapters.python.urirun.connector_emit, adapters.python.urirun.connector_emit, binding.get, getattr, None.get
 
 ### adapters.python.urirun.exec.main
 - **Calls**: list, adapters.python.urirun.exec._resolve, sys.stdin.read, adapters.js.fn, sys.stdout.write, sys.stdout.flush, print, raw.strip
@@ -224,20 +224,20 @@ _stream_events [adapters.python.urirun.node.mesh.NodeHandler]
   └─ →> send_json
 ```
 
-### Flow 3: _build_cli_parser
-```
-_build_cli_parser [adapters.python.urirun.Connector]
-```
-
-### Flow 4: _cmd_upgrade
+### Flow 3: _cmd_upgrade
 ```
 _cmd_upgrade [adapters.python.urirun.runtime.v2]
   └─> _resolve_pip_targets
 ```
 
-### Flow 5: _handler_worker_main
+### Flow 4: _handler_worker_main
 ```
 _handler_worker_main [adapters.python.urirun.runtime.worker]
+```
+
+### Flow 5: _build_cli_parser
+```
+_build_cli_parser [adapters.python.urirun.Connector]
 ```
 
 ### Flow 6: _worker_main
@@ -382,17 +382,6 @@ Key functions that process and transform data:
 
 ### adapters.c.urirun.urirun_parse
 
-### adapters.python.urirun.parse_uri
-- **Output to**: URI_RE.match, str, ValueError, m.group, unquote
-
-### adapters.python.urirun.validate_binding_document
-> Validate a v2 binding document through the stable top-level API.
-- **Output to**: _validate_binding_document
-
-### adapters.python.urirun.Connector._build_cli_parser
-> Build the connector argparse parser (one subcommand per route).
-- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser
-
 ### adapters.python.urirun.host.host_db._validate_record
 - **Output to**: None.validate, dataset.get, Draft202012Validator
 
@@ -464,22 +453,16 @@ Supported forms:
 ### adapters.python.urirun.runtime._scan.parse_compose_label_line
 - **Output to**: None.strip, value.startswith, value.split, key.strip, None.strip
 
+### adapters.python.urirun.runtime._scan.format_binding_table
+- **Output to**: output.extend, None.join, max, None.rstrip, line
+
+### adapters.python.urirun.runtime.secrets._parse_ref
+- **Output to**: ref.startswith, rest.partition, location.partition, ref.startswith, ValueError
+
+### adapters.python.urirun.connectors.connector_lint._format_report
+- **Output to**: lines.append, lines.append, lines.append, lines.append, None.join
+
 ## Behavioral Patterns
-
-### recursion_command
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.command
-
-### recursion_shell
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.shell
-
-### recursion_handler
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.Connector.handler
 
 ### recursion__field_type
 - **Type**: recursion
@@ -516,6 +499,21 @@ Supported forms:
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.runtime.secrets.redact
 
+### recursion_command
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.Connector.command
+
+### recursion_shell
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.Connector.shell
+
+### recursion_handler
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.Connector.handler
+
 ### state_machine_Urirun
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -531,15 +529,15 @@ Supported forms:
 - **Confidence**: 0.70
 - **Functions**: adapters.php.Urirun.Connector.__construct, adapters.php.Urirun.Connector.target, adapters.php.Urirun.Connector.command, adapters.php.Urirun.Connector.bindings, adapters.php.Urirun.Connector.bindingsJson
 
-### state_machine_Connector
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.python.urirun.Connector.__post_init__, adapters.python.urirun.Connector.uri, adapters.python.urirun.Connector._meta, adapters.python.urirun.Connector.command, adapters.python.urirun.Connector.shell
-
 ### state_machine_WorkerPool
 - **Type**: state_machine
 - **Confidence**: 0.70
 - **Functions**: adapters.python.urirun.runtime.worker.WorkerPool.__init__, adapters.python.urirun.runtime.worker.WorkerPool.run_argv, adapters.python.urirun.runtime.worker.WorkerPool.run_uri, adapters.python.urirun.runtime.worker.WorkerPool.close, adapters.python.urirun.runtime.worker.WorkerPool.__enter__
+
+### state_machine_HandlerPool
+- **Type**: state_machine
+- **Confidence**: 0.70
+- **Functions**: adapters.python.urirun.runtime.worker.HandlerPool.__init__, adapters.python.urirun.runtime.worker.HandlerPool.run_ref, adapters.python.urirun.runtime.worker.HandlerPool.close, adapters.python.urirun.runtime.worker.HandlerPool.__enter__, adapters.python.urirun.runtime.worker.HandlerPool.__exit__
 
 ## Public API Surface
 
@@ -609,9 +607,6 @@ graph TD
     _stream_events --> subscribe
     _stream_events --> send_json
     main --> parse_args
-    _build_cli_parser --> ArgumentParser
-    _build_cli_parser --> add_subparsers
-    _build_cli_parser --> add_parser
     _cmd_upgrade --> getattr
     _cmd_upgrade --> _resolve_pip_targets
     _handler_worker_main --> write
@@ -619,6 +614,9 @@ graph TD
     _handler_worker_main --> get
     _handler_worker_main --> strip
     _handler_worker_main --> loads
+    _build_cli_parser --> ArgumentParser
+    _build_cli_parser --> add_subparsers
+    _build_cli_parser --> add_parser
     _worker_main --> partition
     _worker_main --> getattr
     _worker_main --> write

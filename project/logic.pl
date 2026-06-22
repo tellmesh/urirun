@@ -39,7 +39,7 @@ project_file('adapters/python/tests/test_node_diagnostics.py', 46, 'python').
 project_file('adapters/python/tests/test_openapi_import.py', 49, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
-project_file('adapters/python/tests/test_public_api.py', 113, 'python').
+project_file('adapters/python/tests/test_public_api.py', 159, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
@@ -48,7 +48,7 @@ project_file('adapters/python/tests/test_urihandler.py', 350, 'python').
 project_file('adapters/python/tests/test_v2_mcp.py', 49, 'python').
 project_file('adapters/python/tests/test_worker.py', 66, 'python').
 project_file('adapters/python/tests/test_worker_pool.py', 84, 'python').
-project_file('adapters/python/urirun/__init__.py', 619, 'python').
+project_file('adapters/python/urirun/__init__.py', 675, 'python').
 project_file('adapters/python/urirun/_registry.py', 9, 'python').
 project_file('adapters/python/urirun/_runtime.py', 9, 'python').
 project_file('adapters/python/urirun/_scan.py', 9, 'python').
@@ -83,7 +83,7 @@ project_file('adapters/python/urirun/mesh.py', 6, 'python').
 project_file('adapters/python/urirun/node/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 157, 'python').
 project_file('adapters/python/urirun/node/manage.py', 108, 'python').
-project_file('adapters/python/urirun/node/mesh.py', 2250, 'python').
+project_file('adapters/python/urirun/node/mesh.py', 2255, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/runtime/_registry.py', 719, 'python').
@@ -101,7 +101,7 @@ project_file('adapters/python/urirun/runtime/introspect.py', 113, 'python').
 project_file('adapters/python/urirun/runtime/secrets.py', 235, 'python').
 project_file('adapters/python/urirun/runtime/tree.py', 92, 'python').
 project_file('adapters/python/urirun/runtime/v1.py', 432, 'python').
-project_file('adapters/python/urirun/runtime/v2.py', 2498, 'python').
+project_file('adapters/python/urirun/runtime/v2.py', 2501, 'python').
 project_file('adapters/python/urirun/runtime/v2_adopt.py', 194, 'python').
 project_file('adapters/python/urirun/runtime/v2_grpc.py', 205, 'python').
 project_file('adapters/python/urirun/runtime/v2_mcp.py', 208, 'python').
@@ -302,6 +302,8 @@ python_function('adapters/python/urirun/__init__.py', 'plan', 0, 1, 0).
 python_function('adapters/python/urirun/__init__.py', 'policy', 4, 1, 1).
 python_function('adapters/python/urirun/__init__.py', 'action_space', 1, 9, 6).
 python_function('adapters/python/urirun/__init__.py', 'result_data', 1, 8, 4).
+python_function('adapters/python/urirun/__init__.py', 'run_steps', 2, 14, 10).
+python_function('adapters/python/urirun/__init__.py', 'tool_binding', 3, 5, 1).
 python_function('adapters/python/urirun/__init__.py', 'connector_bindings', 0, 1, 1).
 python_function('adapters/python/urirun/__init__.py', 'entry_point_bindings', 1, 1, 1).
 python_function('adapters/python/urirun/__init__.py', 'entry_point_binding_document', 2, 1, 1).
@@ -560,7 +562,7 @@ python_function('adapters/python/urirun/node/mesh.py', '_pids_on_port', 1, 9, 12
 python_function('adapters/python/urirun/node/mesh.py', 'stop_node_port', 3, 9, 6).
 python_function('adapters/python/urirun/node/mesh.py', 'parse_ports', 1, 4, 7).
 python_function('adapters/python/urirun/node/mesh.py', 'node_url', 2, 8, 4).
-python_function('adapters/python/urirun/node/mesh.py', 'deploy_to_node', 1, 9, 5).
+python_function('adapters/python/urirun/node/mesh.py', 'deploy_to_node', 1, 10, 5).
 python_function('adapters/python/urirun/node/mesh.py', 'watch_node', 6, 14, 15).
 python_function('adapters/python/urirun/node/mesh.py', 'event_topic', 2, 5, 4).
 python_function('adapters/python/urirun/node/mesh.py', '_mqtt_publish_fn', 1, 2, 3).
@@ -624,7 +626,7 @@ python_function('adapters/python/urirun/node/mesh.py', 'watch_command', 1, 17, 1
 python_function('adapters/python/urirun/node/mesh.py', '_host_mesh_command', 3, 13, 9).
 python_function('adapters/python/urirun/node/mesh.py', 'copy_id_command', 1, 12, 12).
 python_function('adapters/python/urirun/node/mesh.py', 'copy_id_cli', 1, 7, 7).
-python_function('adapters/python/urirun/node/mesh.py', 'deploy_command', 1, 15, 13).
+python_function('adapters/python/urirun/node/mesh.py', 'deploy_command', 1, 15, 14).
 python_function('adapters/python/urirun/node/mesh.py', 'host_command', 1, 3, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'send_json', 3, 1, 8).
 python_function('adapters/python/urirun/node/mesh.py', 'read_raw', 1, 3, 4).
@@ -636,7 +638,8 @@ python_function('adapters/python/urirun/node/mesh.py', 'node_token_path', 0, 1, 
 python_function('adapters/python/urirun/node/mesh.py', 'resolve_admin_token', 3, 11, 11).
 python_function('adapters/python/urirun/node/mesh.py', '_write_pushed_code', 2, 9, 13).
 python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_env', 2, 4, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 1, 4, 3).
+python_function('adapters/python/urirun/node/mesh.py', '_registry_to_bindings', 1, 9, 4).
+python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 2, 8, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'apply_deploy', 2, 8, 16).
 python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 13, 12, 19).
 python_function('adapters/python/urirun/node/mesh.py', '_resolve_serve_opts', 2, 17, 10).
@@ -1239,6 +1242,11 @@ python_class('adapters/python/tests/test_public_api.py', 'ProjectionParityTests'
 python_method('ProjectionParityTests', '_connector', 0, 1, 3).
 python_method('ProjectionParityTests', 'test_mcp_tools_from_connector_object', 0, 1, 7).
 python_method('ProjectionParityTests', 'test_a2a_card_from_connector_object', 0, 1, 5).
+python_class('adapters/python/tests/test_public_api.py', 'ToolBindingAndRunStepsTest').
+python_method('ToolBindingAndRunStepsTest', '_registry', 0, 1, 3).
+python_method('ToolBindingAndRunStepsTest', 'test_tool_binding_shape_and_kind', 0, 1, 2).
+python_method('ToolBindingAndRunStepsTest', 'test_run_steps_executes_and_auto_unwraps', 0, 2, 3).
+python_method('ToolBindingAndRunStepsTest', 'test_run_steps_stops_on_error', 0, 1, 5).
 python_class('adapters/python/tests/test_scheduler.py', 'SchedulerTests').
 python_method('SchedulerTests', 'test_systemd_preview_and_install', 0, 1, 9).
 python_method('SchedulerTests', 'test_cli_schedule_cron_preview', 0, 1, 9).

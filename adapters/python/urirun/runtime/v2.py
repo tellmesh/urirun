@@ -1708,6 +1708,9 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
                              help="handler .py file to push so the node can import it (repeatable)")
     host_deploy.add_argument("--env", action="append", default=[], metavar="K=V",
                              help="env var the node's handlers should read (repeatable)")
+    host_deploy.add_argument("--merge", action="store_true",
+                             help="ADD the deployed routes to the node's existing surface instead of "
+                                  "replacing it (existing routes are kept; same-URI routes are overridden)")
     host_deploy.add_argument("--name", help="rename the node on deploy")
     host_deploy.add_argument("--token", help="admin token (else URIRUN_NODE_TOKEN)")
     host_deploy.add_argument("--identity", help="SSH private key to sign the deploy with (e.g. ~/.ssh/id_ed25519); "
