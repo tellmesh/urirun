@@ -303,13 +303,18 @@ def parse_ports(spec: str) -> list[int]:
 
 
 def node_url(config: dict, name_or_url: str) -> str:
-    """Resolve a node by mesh-config name, or accept a raw URL."""
+    """Resolve a node by mesh-config name, a full URL, or a bare host[:port] (which
+    defaults to the urirun port 8765)."""
     if "://" in name_or_url:
         return name_or_url.rstrip("/")
     for node in config.get("nodes", []):
         if node.get("name") == name_or_url:
             return str(node["url"]).rstrip("/")
-    raise SystemExit(f"unknown node {name_or_url!r}; pass a URL or a configured node name")
+    # a bare IP / hostname[:port] (has a dot or a colon) -> default urirun port
+    if "." in name_or_url or ":" in name_or_url or name_or_url == "localhost":
+        host = name_or_url if ":" in name_or_url else f"{name_or_url}:8765"
+        return f"http://{host}"
+    raise SystemExit(f"unknown node {name_or_url!r}; pass a URL, host[:port], or a configured node name")
 
 
 def deploy_to_node(url: str, *, bindings: dict | None = None, registry: dict | None = None,
