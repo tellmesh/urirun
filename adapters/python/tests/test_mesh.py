@@ -140,6 +140,15 @@ class MeshTests(unittest.TestCase):
                 if old_home is not None:
                     os.environ["HOME"] = old_home
 
+    def test_stop_node_port_when_nothing_listening(self):
+        import socket as _socket
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); free = s.getsockname()[1]; s.close()
+        self.assertEqual(mesh._pids_on_port(free), [])
+        res = mesh.stop_node_port(free, timeout=0.2)
+        self.assertFalse(res["stopped"])
+        self.assertEqual(res["pids"], [])
+        self.assertIn("error", res)
+
     def test_node_config_defaults(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = str(Path(tmp) / "node.json")
