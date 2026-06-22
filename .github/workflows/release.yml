@@ -18,9 +18,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Heal a partial `goal` bump: derive every version file from root VERSION so a
+      # drifted commit still builds/publishes the right version (root VERSION is the
+      # one file goal bumps reliably).
+      - name: Sync versions from root VERSION
+        run: make sync-versions
+
       - name: Resolve package version
         id: ver
-        run: echo "version=$(cat adapters/python/VERSION)" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
 
       # Idempotent gate: build/publish only when this version is not on PyPI yet, so
       # every main push doesn't republish — only the first push at a new version does.
