@@ -464,6 +464,29 @@ def scan_openapi(path: Path, root: Path, base_url: str = "") -> list[dict]:
     ]
 
 
+def _scan_one_file(file_path: Path, root: Path, include_shell: bool, openapi_base_url: str) -> list[dict]:
+    """Bindings discovered from a single project file, dispatched by name/suffix."""
+    name = file_path.name
+    suffix = file_path.suffix.lower()
+    if name == "package.json":
+        return scan_package_json(file_path, root)
+    if name == "pyproject.toml":
+        return scan_pyproject(file_path, root)
+    if name in {"Makefile", "makefile", "GNUmakefile"}:
+        return scan_makefile(file_path, root)
+    if include_shell and suffix == ".sh":
+        return [scan_shell_script(file_path, root)]
+    if suffix == ".py":
+        return scan_python_code(file_path, root)
+    if suffix in {".js", ".mjs", ".cjs"}:
+        return scan_js_code(file_path, root)
+    if name in {"docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"}:
+        return scan_docker_compose(file_path, root)
+    if suffix == ".json" and ("openapi" in name.lower() or "swagger" in name.lower()):
+        return scan_openapi(file_path, root, openapi_base_url)
+    return []
+
+
 def scan_path(path: str | Path, include_shell: bool = True, openapi_base_url: str = "") -> list[dict]:
     root = Path(path).resolve()
     if not root.exists():
@@ -471,29 +494,9 @@ def scan_path(path: str | Path, include_shell: bool = True, openapi_base_url: st
     if root.is_file():
         root = root.parent
 
-    bindings: list[dict] = []
-    bindings.extend(scan_manifest_files(root))
-
+    bindings: list[dict] = list(scan_manifest_files(root))
     for file_path in iter_project_files(root):
-        name = file_path.name
-        suffix = file_path.suffix.lower()
-        if name == "package.json":
-            bindings.extend(scan_package_json(file_path, root))
-        elif name == "pyproject.toml":
-            bindings.extend(scan_pyproject(file_path, root))
-        elif name in {"Makefile", "makefile", "GNUmakefile"}:
-            bindings.extend(scan_makefile(file_path, root))
-        elif include_shell and suffix == ".sh":
-            bindings.append(scan_shell_script(file_path, root))
-        elif suffix == ".py":
-            bindings.extend(scan_python_code(file_path, root))
-        elif suffix in {".js", ".mjs", ".cjs"}:
-            bindings.extend(scan_js_code(file_path, root))
-        elif name in {"docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"}:
-            bindings.extend(scan_docker_compose(file_path, root))
-        elif suffix == ".json" and ("openapi" in name.lower() or "swagger" in name.lower()):
-            bindings.extend(scan_openapi(file_path, root, openapi_base_url))
-
+        bindings.extend(_scan_one_file(file_path, root, include_shell, openapi_base_url))
     return bindings
 
 
