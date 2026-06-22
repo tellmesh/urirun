@@ -2381,6 +2381,30 @@ class NodeHandler(BaseHTTPRequestHandler):
             c.runs.pop(run_id, None)
         send_json(self, 200 if result.get("ok") else 400, result)
 
+    def _handle_adopt(self, raw: bytes, body: dict):
+        # node://<name>/registry/command/adopt {scheme?} — merge the node's INSTALLED
+        # connector bindings into the LIVE served registry (admin-gated). Full node-side
+        # self-management: install a connector, then adopt it without a host round-trip.
+        c = self.ctx
+        if not c.manage_registry:
+            send_json(self, 404, {"ok": False, "error": "node management disabled (start node with --manage)"})
+            return
+        if not self._admin_ok(raw):
+            send_json(self, 403, {"ok": False, "error": "unauthorized (registry/command/adopt needs admin token or enrolled key)"})
+            return
+        from urirun.node import manage
+        scheme = (body.get("payload") or {}).get("scheme")
+        doc = manage.registry_installed(**({"scheme": scheme} if scheme else {}))
+        if not doc.get("bindings"):
+            send_json(self, 200, {"ok": False, "error": "no installed bindings to adopt", "scheme": scheme})
+            return
+        allow = list(c.state.get("allow") or [])   # preserve existing allows; add the scheme
+        if scheme and f"{scheme}://**" not in allow:
+            allow.append(f"{scheme}://**")
+        summary = apply_deploy(c.state, {"bindings": {"version": doc["version"], "bindings": doc["bindings"]},
+                                         "merge": True, "allow": allow})
+        send_json(self, 200, {"ok": True, "adopted": summary.get("routeCount"), "schemes": summary.get("schemes"), "scheme": scheme})
+
     def _handle_run_control(self, uri: str):
         # run://<runId>/command/cancel  |  run://<runId>/query/status — gated like /run.
         parts = [p for p in uri[len("run://"):].split("/") if p]
