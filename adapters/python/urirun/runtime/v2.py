@@ -1439,7 +1439,7 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     add_openapi_parser.add_argument("--base-url", default=None, help="Override base URL (else taken from servers[0])")
 
     gen_parser = subparsers.add_parser("gen", help="Generate proto/openapi/client from a registry (the binding spec)")
-    gen_parser.add_argument("target", choices=["proto", "openapi", "client"], help="artifact to generate")
+    gen_parser.add_argument("target", choices=["proto", "openapi", "client", "handlers"], help="artifact to generate")
     gen_parser.add_argument("registry", help="a registry, bindings doc, or project dir")
     gen_parser.add_argument("--out", default=None, help="write to a file (else stdout)")
     gen_parser.add_argument("--package", default=None, help="proto package name")

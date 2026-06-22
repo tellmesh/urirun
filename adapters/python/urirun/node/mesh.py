@@ -346,15 +346,30 @@ def copy_id(url: str, identity: str, *, timeout: float = 10.0) -> dict:
     """ssh-copy-id for urirun: enroll an SSH public key as an admin on the node. On a
     fresh node (empty authorized_keys) this is trust-on-first-use — no secret needed;
     once keys exist, the enrollment is signed with the same identity so only an already
-    enrolled admin can add more. `identity` is the private key path (its .pub is sent)."""
+    enrolled admin can add more. `identity` is the private key path (its .pub is sent).
+
+    Pre-flights the node's /health so a stale or non-urirun node gives an actionable
+    error instead of a bare 404 "not found": old urirun lacks the /authorized-keys
+    route, so the enroll POST 404s with nothing explaining why."""
+    base = url.rstrip("/")
+    try:
+        health = http_json("GET", f"{base}/health", timeout=timeout)
+    except Exception:  # noqa: BLE001 - connection refused / DNS / timeout
+        return {"ok": False, "error": f"node not reachable at {base} — is `urirun node serve` running there?"}
+    if not isinstance(health, dict) or "keyAuth" not in health:
+        return {"ok": False, "error": f"{base} did not answer urirun /health with key-auth support "
+                                      f"— not a urirun node, or too old (upgrade urirun on the node)"}
+    if not health.get("keyAuth"):
+        return {"ok": False, "error": f"node '{health.get('name', base)}' has key-auth disabled "
+                                      f"— restart it with: urirun node serve … --key-auth"}
+
     pub = (Path(identity + ".pub").read_text(encoding="utf-8").strip()
            if Path(identity + ".pub").exists() else keyauth.public_openssh(identity))
     raw = json.dumps({"publicKey": pub}).encode("utf-8")
     headers: dict = {}
     if keyauth.available():  # sign so add-after-first works; ignored by a fresh node
         headers = keyauth.sign(identity, keyauth.PURPOSE_ENROLL, raw)
-    return http_json("POST", f"{url.rstrip('/')}/authorized-keys", raw=raw,
-                     timeout=timeout, headers=headers)
+    return http_json("POST", f"{base}/authorized-keys", raw=raw, timeout=timeout, headers=headers)
 
 
 def routes_from_registry(registry: dict) -> list[dict]:

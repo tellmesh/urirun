@@ -339,10 +339,63 @@ def to_client_python(registry: dict) -> str:
     return "\n".join(out)
 
 
+_PYTYPE = {"string": "str", "integer": "int", "number": "float", "boolean": "bool", "array": "list", "object": "dict"}
+
+
+def _handler_signature(props: dict, required: list) -> str:
+    """Python signature from a route's inputSchema: required params (no default) first,
+    then optional (typed, with the schema default or None)."""
+    req = set(required or [])
+    parts: list[tuple[int, str]] = []
+    for field, spec in props.items():
+        spec = spec or {}
+        ann = _PYTYPE.get(spec.get("type"), "str")
+        name = _field_snake(field)
+        if field in req and "default" not in spec:
+            parts.append((0, f"{name}: {ann}"))
+        else:
+            default = spec.get("default")
+            parts.append((1, f"{name}: {ann} = {default!r}"))
+    parts.sort(key=lambda p: p[0])
+    return ", ".join(text for _, text in parts)
+
+
+def to_handlers(registry: dict) -> str:
+    """Generate ``@handler`` implementation STUBS from a registry — the runtime side a
+    developer fills in, the complement of ``client`` (the caller side). One typed
+    function per route, grouped into one connector per (scheme, target)."""
+    by_conn: dict[tuple[str, str], list] = {}
+    for r in _routes(registry):
+        scheme, target, segs, _k = _uri_parts(r["uri"])
+        by_conn.setdefault((scheme, target), []).append((segs, r))
+    out = ["# Generated handler stubs from a urirun registry — fill in each body.",
+           "# Each signature is the route's inputSchema; return urirun.ok(...) / urirun.fail(...).",
+           "from __future__ import annotations", "", "from typing import Any", "", "import urirun"]
+    for (scheme, target), routes in sorted(by_conn.items()):
+        var = _field_snake(scheme) or "conn"
+        out += ["", "", f"{var} = urirun.connector({scheme!r}, scheme={scheme!r}, target={target!r})"]
+        used: set[str] = set()
+        for segs, r in routes:
+            path = "/".join(segs)
+            meaningful = [s for s in segs if s not in ("query", "command")]
+            fn = _field_snake(meaningful[-1] if meaningful else scheme) or "handle"
+            while fn in used:
+                fn += "_"
+            used.add(fn)
+            sig = _handler_signature(r["props"], r["required"])
+            out += ["", f"@{var}.handler({path!r})",
+                    f"def {fn}({sig}) -> dict[str, Any]:",
+                    f'    """{r["uri"]}"""',
+                    f"    raise NotImplementedError({fn!r})",
+                    "    # return urirun.ok(...)"]
+    return "\n".join(out) + "\n"
+
+
 GENERATORS = {
     "proto": lambda reg, args: to_proto(reg, package=getattr(args, "package", None) or "urirun"),
     "openapi": lambda reg, args: json.dumps(to_openapi(reg, title=getattr(args, "title", None) or "urirun routes"), indent=2) + "\n",
     "client": lambda reg, args: to_client_python(reg),
+    "handlers": lambda reg, args: to_handlers(reg),
 }
 
 

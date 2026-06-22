@@ -149,6 +149,34 @@ class MeshTests(unittest.TestCase):
         self.assertEqual(res["pids"], [])
         self.assertIn("error", res)
 
+    def test_copy_id_gives_actionable_error_not_bare_404(self):
+        import http.server
+        import socket as _socket
+        import threading
+
+        # unreachable node -> "not reachable", not a cryptic failure
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); free = s.getsockname()[1]; s.close()
+        res = mesh.copy_id(f"http://127.0.0.1:{free}", "/nonexistent/key", timeout=0.4)
+        self.assertFalse(res["ok"])
+        self.assertIn("not reachable", res["error"])
+
+        # an old / non-urirun node (no key-auth in /health) -> "too old / not a urirun node",
+        # not the bare {"error": "not found"} the stale node's /authorized-keys 404 returns
+        class Old(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(404); self.end_headers(); self.wfile.write(b'{"error":"not found"}')
+            def log_message(self, *a):
+                return
+
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Old)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        try:
+            res = mesh.copy_id(f"http://127.0.0.1:{srv.server_address[1]}", "/nonexistent/key", timeout=1.0)
+        finally:
+            srv.shutdown()
+        self.assertFalse(res["ok"])
+        self.assertIn("too old", res["error"])
+
     def test_node_config_defaults(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = str(Path(tmp) / "node.json")
