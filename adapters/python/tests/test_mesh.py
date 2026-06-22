@@ -539,3 +539,24 @@ def test_deploy_dir_adds_to_sys_path_and_pythonpath(tmp_path, monkeypatch):
         assert str(d) in os.environ.get("PYTHONPATH", "").split(os.pathsep)    # out-of-process exec subprocess
     finally:
         sys.path[:] = saved
+
+
+def test_deploy_registry_merge_adds_and_preserves_argv():
+    """--merge ADDS deployed routes to the existing surface (and argv-template argv
+    survives the index->bindings->recompile round-trip); without merge it replaces."""
+    import urirun
+    from urirun.node import mesh as nodemesh
+
+    existing = urirun.compile_registry({"version": "urirun.bindings.v2",
+        "bindings": urirun.tool_binding("alpha://host/x/query/a", ["echo", "a"], {})})
+    new_doc = {"version": "urirun.bindings.v2",
+               "bindings": urirun.tool_binding("beta://host/y/query/b", ["echo", "b"], {})}
+
+    merged = nodemesh._deploy_registry({"bindings": new_doc, "merge": True}, existing)
+    assert {r["uri"] for r in urirun.list_routes(merged)} == {"alpha://host/x/query/a", "beta://host/y/query/b"}
+    # argv preserved (config carried through, not dropped)
+    back = nodemesh._registry_to_bindings(merged)
+    assert back["alpha://host/x/query/a"]["argv"] == ["echo", "a"]
+
+    replaced = nodemesh._deploy_registry({"bindings": new_doc}, existing)   # no merge -> replace
+    assert {r["uri"] for r in urirun.list_routes(replaced)} == {"beta://host/y/query/b"}

@@ -1779,11 +1779,8 @@ def _registry_to_bindings(registry: dict) -> dict:
     out: dict = {}
     for entry in (registry.get("index") or {}).values():
         route = dict(entry.get("routeEntry") or {})
-        schema = (route.get("config") or {}).get("inputSchema") or route.get("inputSchema") or {}
-        binding = {k: v for k, v in route.items() if k != "config"}
-        binding["inputSchema"] = schema
-        binding["uri"] = entry["uri"]
-        out[entry["uri"]] = binding
+        config = route.pop("config", None) or {}   # carries argv / inputSchema / etc.
+        out[entry["uri"]] = {**route, **config, "uri": entry["uri"]}
     return out
 
 
