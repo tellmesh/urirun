@@ -1157,6 +1157,10 @@ def main(argv: list[str] | None = None) -> int:
     adopt_pack_parser.add_argument("--generated-at")
     adopt_pack_parser.add_argument("--on-conflict", choices=["error", "keep", "replace"], default="keep")
 
+    tree_parser = subparsers.add_parser("tree", help="Render a bindings/registry as a scheme->host->path->uri tree")
+    tree_parser.add_argument("source", help="a bindings.v2 doc or a compiled registry")
+    tree_parser.add_argument("--format", choices=["yaml", "json"], default="yaml")
+
     connectors_parser = subparsers.add_parser("connectors", help="Browse and install connectors from connect.ifuri.com")
     connectors_sub = connectors_parser.add_subparsers(dest="connectors_command", required=True)
     connectors_common = argparse.ArgumentParser(add_help=False)
@@ -1174,6 +1178,10 @@ def main(argv: list[str] | None = None) -> int:
     connectors_check = connectors_sub.add_parser("check", parents=[connectors_common], help="Check a local connector manifest against the hub catalog")
     connectors_check.add_argument("manifest", help="Path to a connector.manifest.json")
     connectors_check.add_argument("--json", action="store_true")
+    connectors_lint = connectors_sub.add_parser("lint", help="Lint a connector package for authoring duplication / manifest drift")
+    connectors_lint.add_argument("package", help="Path to a connector package directory")
+    connectors_lint.add_argument("--json", action="store_true")
+    connectors_lint.add_argument("--strict", action="store_true", help="Also fail when a route is spelled out in more than one place")
     connectors_new = connectors_sub.add_parser("new", help="Scaffold a new connector package")
     connectors_new.add_argument("id", help="Connector id, e.g. my-thing")
     connectors_new.add_argument("--lang", choices=["python", "js", "go", "php"], default="python")
@@ -1491,6 +1499,8 @@ def main(argv: list[str] | None = None) -> int:
     node_serve.add_argument("--port", type=int)
     node_serve.add_argument("--execute", action="store_true")
     node_serve.add_argument("--public-url")
+    node_serve.add_argument("--allow", action="append", default=[], metavar="GLOB",
+                            help="permit served routes matching this glob to execute (repeatable; the node's security boundary)")
     node_serve.add_argument("--allow-secrets", action="store_true",
                             help="permit secret:// resolution on this node (off by default; a remote /run must not read the host's local secrets)")
 
@@ -1563,6 +1573,18 @@ def main(argv: list[str] | None = None) -> int:
                 args.registry_out,
                 compile_registry(doc, generated_at=args.generated_at, on_conflict=args.on_conflict),
             )
+        return 0
+
+    if args.command == "tree":
+        from urirun.runtime import tree as _tree
+
+        document = _tree.build(reglib.load_json(args.source))
+        if args.format == "json":
+            reglib._emit_json(document, "-")
+        else:
+            import yaml
+
+            sys.stdout.write(yaml.safe_dump(document, sort_keys=False, allow_unicode=True, default_flow_style=False))
         return 0
 
     if args.command == "validate":
