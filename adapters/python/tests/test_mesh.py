@@ -873,12 +873,49 @@ class MeshTests(unittest.TestCase):
         self.assertFalse(mesh.fulfill_need(Client(), {"kind": "mystery", "what": "x"})["ok"])
         self.assertEqual(calls, [("ensure", "browser", "/src"), ("folder", "pack", "/src")])
 
+    def test_install_source_policy(self):
+        import os
+        calls, orig = [], manage._pip
+        manage._pip = lambda args, timeout=900: (calls.append(args) or {"ok": True})
+        saved = {k: os.environ.get(k) for k in
+                 ("URIRUN_INSTALL_ALLOW", "URIRUN_INSTALL_ROOTS", "URIRUN_CONNECTOR_ROOTS", "URIRUN_INSTALL_GIT_HOSTS")}
+        for k in saved:
+            os.environ.pop(k, None)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                os.environ["URIRUN_INSTALL_ROOTS"] = tmp  # only this root allowed for local
+                self.assertEqual(manage._install_policy()["kinds"], ["catalog", "local"])  # git OFF by default
+                self.assertFalse(manage.connector_install(source="git+https://github.com/x/y.git")["ok"])  # git denied
+                self.assertFalse(manage.connector_install(source="/etc/nope-dir")["ok"])  # local outside root
+                inside = str(Path(tmp) / "conn"); Path(inside).mkdir()
+                calls.clear()
+                self.assertTrue(manage.connector_install(source=inside)["ok"])  # local inside root ok
+                self.assertEqual(calls[-1], ["install", "--upgrade", inside])
+                self.assertTrue(manage.connector_install(source="browser-control")["ok"])  # catalog ok
+                os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local,git"  # opt in to git
+                calls.clear()
+                self.assertTrue(manage.connector_install(source="git+https://github.com/x/y.git")["ok"])
+                self.assertEqual(calls[-1], ["install", "--upgrade", "git+https://github.com/x/y.git"])
+                os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local"
+                self.assertFalse(manage.package_install(spec="git+https://github.com/x/y.git")["ok"])  # gated
+                self.assertTrue(manage.package_install(spec="playwright")["ok"])  # pypi/catalog ok
+        finally:
+            manage._pip = orig
+            for k, v in saved.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
     def test_connector_install_from_any_source(self):
         b = manage.bindings("lab")["bindings"]
         for path in ("connector/command/install", "connector/query/discover", "registry/query/installed"):
             assert f"node://lab/{path}" in b
+        import os
         calls, orig = [], manage._pip
         manage._pip = lambda args, timeout=900: (calls.append(args) or {"ok": True, "returncode": 0})
+        # permissive policy so all source kinds are exercised (policy itself is tested separately)
+        saved = {k: os.environ.get(k) for k in ("URIRUN_INSTALL_ALLOW", "URIRUN_INSTALL_ROOTS", "URIRUN_CONNECTOR_ROOTS")}
+        os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local,git"
+        os.environ["URIRUN_INSTALL_ROOTS"] = "/home/tom/github"
+        os.environ.pop("URIRUN_CONNECTOR_ROOTS", None)
         try:
             manage.connector_install(source="browser-control")          # catalog id
             self.assertEqual(calls[-1], ["install", "--upgrade", "urirun-connector-browser-control"])
@@ -888,6 +925,8 @@ class MeshTests(unittest.TestCase):
             self.assertEqual(calls[-1], ["install", "--upgrade", "-e", "/home/tom/github/foo"])
         finally:
             manage._pip = orig
+            for k, v in saved.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
 
     def test_connector_discover_scans_local_projects(self):
         import os

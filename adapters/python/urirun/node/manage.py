@@ -35,13 +35,57 @@ def _pip(args: list[str], timeout: float = 900) -> dict:
             "stdout": r.stdout[-4000:], "stderr": r.stderr[-2000:]}
 
 
+# --- install source policy (safe autonomous acquisition) -------------------------
+# What an autonomous agent may install, controlled by env (so a node operator sets the
+# trust boundary): kinds in URIRUN_INSTALL_ALLOW (default catalog,local — git OFF), local
+# paths confined to URIRUN_INSTALL_ROOTS/URIRUN_CONNECTOR_ROOTS (default ~/github), git
+# hosts to URIRUN_INSTALL_GIT_HOSTS. Refusals are reported, never silently installed.
+
+def _install_policy() -> dict:
+    kinds = {k.strip() for k in os.environ.get("URIRUN_INSTALL_ALLOW", "catalog,local").split(",") if k.strip()}
+    roots_env = os.environ.get("URIRUN_INSTALL_ROOTS") or os.environ.get("URIRUN_CONNECTOR_ROOTS") or "~/github"
+    roots = [os.path.realpath(os.path.expanduser(r)) for r in roots_env.split(os.pathsep) if r.strip()]
+    git_hosts = [h.strip() for h in os.environ.get("URIRUN_INSTALL_GIT_HOSTS", "").split(",") if h.strip()]
+    return {"kinds": sorted(kinds), "roots": roots, "gitHosts": git_hosts}
+
+
+def _classify_source(s: str) -> str:
+    if s.startswith(("git+", "git@", "ssh://")) or (s.startswith(("http://", "https://")) and s.endswith(".git")):
+        return "git"
+    if s.startswith(("~", "/", ".")) or os.sep in s or os.path.exists(os.path.expanduser(s)):
+        return "local"
+    return "catalog"
+
+
+def _policy_allows(kind: str, source: str, policy: dict) -> tuple[bool, str]:
+    if kind not in policy["kinds"]:
+        return False, f"source kind '{kind}' not allowed (URIRUN_INSTALL_ALLOW={','.join(policy['kinds'])})"
+    if kind == "local" and policy["roots"]:
+        rp = os.path.realpath(os.path.expanduser(source))
+        if not any(rp == r or rp.startswith(r + os.sep) for r in policy["roots"]):
+            return False, f"local path outside allowed roots {policy['roots']}"
+    if kind == "git" and policy["gitHosts"] and not any(h in source for h in policy["gitHosts"]):
+        return False, f"git host not in allow-list {policy['gitHosts']}"
+    return True, "ok"
+
+
+def install_policy(**payload: Any) -> dict:
+    """The node's install source policy (what an agent may install + from where)."""
+    return {"ok": True, **_install_policy()}
+
+
 def package_install(**payload: Any) -> dict:
-    """pip-install one or more specs into the node's venv. spec may be a PyPI name,
-    a version spec, or a `git+https://…` / local path — anything pip accepts."""
+    """pip-install one or more specs into the node's venv (PyPI name / version / git+url /
+    local path). Each spec is checked against the node's install policy."""
     spec = payload.get("spec") or payload.get("package")
     if not spec:
         return {"ok": False, "error": "spec required (PyPI name, version spec, or git+url)"}
     specs = spec if isinstance(spec, list) else [str(spec)]
+    policy = _install_policy()
+    for sp in specs:
+        ok, reason = _policy_allows(_classify_source(str(sp)), str(sp), policy)
+        if not ok:
+            return {"ok": False, "error": f"install blocked by policy: {reason}", "spec": sp, "policy": policy}
     args = ["install"]
     if payload.get("upgrade", True):
         args.append("--upgrade")
@@ -61,17 +105,23 @@ def connector_install(**payload: Any) -> dict:
     if not src:
         return {"ok": False, "error": "source/id required (catalog id, local path, or git url)"}
     s = str(src).strip()
-    if s.startswith(("git+", "git@", "ssh://")) or (s.startswith(("http://", "https://")) and s.endswith(".git")):
+    kind = _classify_source(s)
+    policy = _install_policy()
+    ok, reason = _policy_allows(kind, s, policy)
+    if not ok:
+        return {"ok": False, "error": f"install blocked by policy: {reason}", "source": s, "sourceKind": kind, "policy": policy}
+    if kind == "git":
         spec = s if s.startswith(("git+", "git@", "ssh://")) else "git+" + s
-        res, kind = _pip(["install", "--upgrade", spec]), "git"
-    elif s.startswith(("~", "/", ".")) or os.sep in s or os.path.exists(os.path.expanduser(s)):
+        res = _pip(["install", "--upgrade", spec])
+    elif kind == "local":
         path = os.path.expanduser(s)
-        args = ["install", "--upgrade", *(["-e"] if payload.get("editable") else []), path]
-        res, kind = _pip(args), "path"
+        res = _pip(["install", "--upgrade", *(["-e"] if payload.get("editable") else []), path])
     else:
-        res, kind = _pip(["install", "--upgrade", f"urirun-connector-{s}"]), "catalog"
-        if not res.get("ok"):
-            res = _pip(["install", "--upgrade", f"git+https://github.com/if-uri/urirun-connector-{s}.git"])
+        res = _pip(["install", "--upgrade", f"urirun-connector-{s}"])
+        if not res.get("ok"):  # if-uri GitHub fallback, only when git is permitted
+            gurl = f"git+https://github.com/if-uri/urirun-connector-{s}.git"
+            if _policy_allows("git", gurl, policy)[0]:
+                res = _pip(["install", "--upgrade", gurl])
     res["connector"], res["source"], res["sourceKind"] = s, s, kind
     res["hint"] = "make routes live: run node://<name>/registry/command/adopt or deploy the connector bindings with --merge"
     return res
@@ -187,6 +237,7 @@ _ROUTES = [
      {"match": {"type": "string"}, "scheme": {"type": "string"}, "roots": {"type": ["string", "array"]}}),
     ("registry/query/installed", "query", "registry_installed", {"match": {"type": "string"}, "scheme": {"type": "string"}}),
     ("registry/command/adopt", "command", "registry_adopt", {"scheme": {"type": "string"}}),
+    ("policy/query/show", "query", "install_policy", {}),
     ("package/query/list", "query", "package_list", {"match": {"type": "string"}}),
     ("runtime/query/info", "query", "runtime_info", {}),
 ]
