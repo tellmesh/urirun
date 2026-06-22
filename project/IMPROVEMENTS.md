@@ -30,11 +30,11 @@ auth (`uri-copy-id`), `node://` self-management (`--manage`), `/events` SSE + `h
 
 ## Proposed next (grounded in the same analysis, deferred as larger/riskier)
 
-1. **`serve_node` fan=65 (top hotspot).** The HTTP `Handler` is a ~250-line closure class
-   nested in `serve_node`, closing over ~10 locals (state, hub, auth flags, manage
-   registry…). Extract it to a **module-level `NodeHandler`** parameterized by a small
-   `NodeContext` dataclass (state, hub, policy, auth). Mechanical but touches every
-   endpoint — do it behind the 267-test suite. Biggest single readability win.
+1. **(done) `serve_node` fan=65 (top hotspot).** The ~250-line nested `Handler` closure is
+   now a module-level **`NodeHandler`** whose state/config live on `self.server.ctx` (a
+   **`NodeContext`**). `serve_node` CC 65-fan → C(12); the handler is decomposed into
+   focused methods (`_get`/`_get_errors`, `_post`/`_handle_run`/`_run_target`/`_publish_run`,
+   `_stream_events`, `_handle_deploy`/`_handle_enroll`, `_admin_ok`/`_run_ok`). 267 tests green.
 2. **Pre-existing CC>15 not touched here** (not example-driven): `connector_main=25`,
    `run=19`, `main=18/17`, `_cmd_connectors_doctor=18`, `connector_collisions=17`,
    `normalize_flow=15`, `resolveParams=15`. Each is an isolated extract-method.

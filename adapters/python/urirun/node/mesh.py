@@ -1854,6 +1854,13 @@ class NodeHandler(BaseHTTPRequestHandler):
             send_json(self, 200, v2_mcp.to_a2a_card(c.state["registry"], name=c.state["name"], url=c.public_url))
             return
         path, _, query = self.path.partition("?")
+        if path == "/errors" or path.startswith("/errors/"):
+            self._get_errors(path, query)
+            return
+        send_json(self, 404, {"ok": False, "error": "not found"})
+
+    def _get_errors(self, path: str, query: str):
+        c = self.ctx
         if path == "/errors":
             if c.admin_token and not hmac.compare_digest(self.headers.get("X-Urirun-Token") or "", c.admin_token):
                 send_json(self, 403, {"ok": False, "error": "unauthorized (/errors needs X-Urirun-Token when --admin-token is set)"})
@@ -1861,16 +1868,10 @@ class NodeHandler(BaseHTTPRequestHandler):
             send_json(self, 200, {"ok": True, "name": c.state["name"], "errors": uri_errors.recent()})
             return
         if path == "/errors/search":
-            q = ""
-            for part in query.split("&"):
-                if part.startswith("q="):
-                    q = unquote(part[2:].replace("+", " "))
+            q = next((unquote(p[2:].replace("+", " ")) for p in query.split("&") if p.startswith("q=")), "")
             send_json(self, 200, {"ok": True, "query": q, "errors": uri_errors.search(q)})
             return
-        if path.startswith("/errors/"):
-            send_json(self, 200, uri_errors.info(path[len("/errors/"):]))
-            return
-        send_json(self, 404, {"ok": False, "error": "not found"})
+        send_json(self, 200, uri_errors.info(path[len("/errors/"):]))
 
     def _post(self):
         if int(self.headers.get("Content-Length", "0") or "0") > MAX_BODY_BYTES:
