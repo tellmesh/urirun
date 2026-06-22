@@ -1610,9 +1610,25 @@ def _host_delegated_command(args: argparse.Namespace) -> int | None:
         return watch_command(args)
     if args.host_command == "run":
         return run_command(args)
+    if args.host_command == "ensure":
+        return ensure_command(args)
     if args.host_command == "probe":
         return probe_command(args)
     return None
+
+
+def ensure_command(args: argparse.Namespace) -> int:
+    """`urirun host ensure <node> <scheme>` — make a capability live, acquiring it if the
+    node lacks it (discover installed/local connector → merge-deploy). Self-management."""
+    from urirun.node.client import NodeClient
+    config = load_host_config(args.config)
+    url = node_url(config, args.node)
+    token = getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN")
+    client = NodeClient(url, token=token)
+    res = client.ensure_scheme(args.scheme, roots=getattr(args, "roots", None),
+                               install=not getattr(args, "no_install", False))
+    reglib._emit_json(res, "-")
+    return 0 if res.get("ok") else 1
 
 
 def run_command(args: argparse.Namespace) -> int:

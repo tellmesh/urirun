@@ -714,6 +714,40 @@ class MeshTests(unittest.TestCase):
         finally:
             manage._pip = orig
 
+    def test_ensure_scheme_acquires_capability_and_makes_it_live(self):
+        # the self-extending loop: a node missing `demo://` discovers installed bindings via
+        # node:// management, merge-deploys them, and the new route becomes runnable.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc  # node runs in-process → patch is seen
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**", "demo://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            self.assertNotIn("demo", c.schemes())
+            res = c.ensure_scheme("demo", install=False)        # acquire from installed bindings
+            self.assertTrue(res["ok"] and res.get("acquired"))
+            self.assertIn("demo", c.schemes())                  # route is now live
+            self.assertTrue(c.run("demo://self/thing/query/ping")["ok"])  # and runnable
+            self.assertEqual(c.ensure_scheme("demo")["already"], True)    # idempotent
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
     def test_connector_install_from_any_source(self):
         b = manage.bindings("lab")["bindings"]
         for path in ("connector/command/install", "connector/query/discover", "registry/query/installed"):

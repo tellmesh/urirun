@@ -1767,6 +1767,14 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_run.add_argument("--token", help="X-Urirun-Token for an auth-gated node")
     host_run.add_argument("--timeout", type=float, default=120.0, help="run timeout in seconds")
 
+    host_ensure = host_sub.add_parser("ensure", parents=[host_common],
+                                      help="Make a scheme live on a node, acquiring the connector if missing (self-management)")
+    host_ensure.add_argument("node", help="configured node name or a node URL")
+    host_ensure.add_argument("scheme", help="capability scheme to ensure (e.g. browser)")
+    host_ensure.add_argument("--roots", help="connector search roots (default ~/github / $URIRUN_CONNECTOR_ROOTS)")
+    host_ensure.add_argument("--no-install", action="store_true", help="only use already-installed bindings; don't install")
+    host_ensure.add_argument("--token", help="admin token for node:// management / deploy")
+
     host_ask = host_sub.add_parser("ask", parents=[host_common], help="Generate a URI flow from natural language and dispatch it")
     host_ask.add_argument("prompt", nargs="+")
     host_ask.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")

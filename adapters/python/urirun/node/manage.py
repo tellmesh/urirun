@@ -129,12 +129,18 @@ def _read_connector_manifest(mf: str, path: str) -> dict | None:
 
 
 def registry_installed(**payload: Any) -> dict:
-    """The bindings exposed by connectors INSTALLED in this node's venv (entry points) —
-    so a host can `deploy --merge` them to make the routes live, or just inspect them."""
+    """The bindings exposed by connectors INSTALLED in this node's venv — calls each
+    `urirun.bindings` entry point (a `urirun_bindings()` returning a {version,bindings}
+    doc) so a host can `deploy --merge` them to make the routes live."""
     from urirun.runtime import v2
     merged: dict = {}
-    for doc in v2.entry_point_bindings(on_error="ignore"):
-        merged.update(doc.get("bindings") or {})
+    for ep in v2._select_entry_points(v2.ENTRY_POINT_GROUP):
+        try:
+            obj = ep.load()
+            doc = obj() if callable(obj) else obj
+            merged.update((doc or {}).get("bindings") or {})
+        except Exception:  # noqa: BLE001 - one faulty connector must not blank the rest
+            continue
     match = str(payload.get("match") or payload.get("scheme") or "").lower()
     if match:
         merged = {u: e for u, e in merged.items() if match in u.lower()}
