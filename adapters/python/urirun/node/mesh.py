@@ -53,7 +53,18 @@ def json_write(path: str | Path, data: dict) -> None:
 
 
 def host_config_path(path: str | None = None) -> Path:
-    return Path(path or os.getenv("URIRUN_MESH_CONFIG", DEFAULT_CONFIG))
+    if path:
+        return Path(path)
+    env = os.getenv("URIRUN_MESH_CONFIG")
+    if env:
+        return Path(env)
+    local = Path(DEFAULT_CONFIG)
+    if local.exists():
+        return local
+    # fall back to the canonical `host.sh` install location so `urirun host nodes`
+    # works out of the box after `curl get.urirun.com/host.sh | bash` (no --config).
+    installed = Path.home() / ".urirun-host" / "mesh.json"
+    return installed if installed.exists() else local
 
 
 def node_config_path(path: str | None = None) -> Path:

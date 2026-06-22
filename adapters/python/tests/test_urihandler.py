@@ -314,6 +314,30 @@ class UriHandlerTests(unittest.TestCase):
         finally:
             v2.metadata.entry_points = original
 
+    def test_connector_installed_predicate(self):
+        """The env-independence guard: True for a discoverable scheme, False otherwise."""
+        from urirun import testing
+
+        def provider():
+            return {"version": v2.VERSION, "bindings": {
+                "widget://host/x/query/y": {"kind": "query", "adapter": "argv-template",
+                                            "argv": ["w"], "meta": {"connector": "widget"}}}}
+
+        class EP:
+            name = "widget"
+            value = "widget:urirun_bindings"
+
+            def load(self):
+                return provider
+
+        original = v2.metadata.entry_points
+        v2.metadata.entry_points = lambda: [EP()]
+        try:
+            self.assertTrue(testing.connector_installed("widget"))
+            self.assertFalse(testing.connector_installed("nope"))
+        finally:
+            v2.metadata.entry_points = original
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- `urirun host …` now finds the mesh config from a `host.sh` install automatically:
+  with no `--config` and no `URIRUN_MESH_CONFIG`, it uses `./.urirun/mesh.json` when
+  present, else falls back to `~/.urirun-host/mesh.json` (where `get.urirun.com/host.sh`
+  writes it). Fixes `urirun host nodes` printing `(none)` right after install. Explicit
+  `--config` and `URIRUN_MESH_CONFIG` still win; a local `.urirun/mesh.json` still wins
+  over the install path.
 - MCP tool names now include the route's operation. `v2_mcp.tool_name` builds the name
   from every URI path segment, so `…/session/command/start` →
   `…_session_command_start` (was `…_session_command`, dropping the operation) and
@@ -30,6 +36,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.11] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update CONTRIBUTING.md
+- Update README.md
+
+### Other
+- Update adapters/python/.urirun/discovered-registry.json
+- Update adapters/python/tests/test_urihandler.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/testing.py
 
 ## [0.4.10] - 2026-06-22
 

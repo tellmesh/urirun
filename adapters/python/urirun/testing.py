@@ -23,6 +23,33 @@ from typing import Any
 import urirun
 
 
+def connector_installed(scheme: str) -> bool:
+    """True if some installed connector exposes routes for ``scheme://``.
+
+    For environment-independent tests: urirun *core* tests should exercise builtin
+    routes (``error://`` / ``registry://`` / ``log://``), never a connector route. A
+    test that genuinely needs a connector must guard with this so it *skips* (not
+    fails) where the connector isn't installed — the clean runner (no connectors)
+    otherwise red-fails on "Route not found". Example::
+
+        import pytest
+        from urirun import testing
+
+        @pytest.mark.skipif(not testing.connector_installed("time"),
+                            reason="time-tools connector not installed")
+        def test_time_route(): ...
+
+    Uses a fault-isolated discovery load (no cache file written, broken connectors
+    skipped), so it is safe to call from any test.
+    """
+    from urirun.runtime import v2
+
+    return any(
+        str(binding.get("uri") or "").split("://", 1)[0] == scheme
+        for binding in v2.entry_point_bindings(on_error="ignore")
+    )
+
+
 def _resolve_bindings(bindings) -> dict:
     """Accept a v2 bindings dict, a JSON file path, or a ``module:callable`` spec
     (e.g. ``urirun_connector_time_tools:urirun_bindings``)."""
