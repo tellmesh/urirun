@@ -150,8 +150,20 @@ def connector_discover(**payload: Any) -> dict:
                 continue
             seen.add(path)
             entry = _read_connector_manifest(mf, path)
-            if entry and (not match or match in json.dumps(entry, ensure_ascii=False).lower()):
-                local.append(entry)
+            if entry:
+                entry["_mf"] = mf
+                if not match or match in json.dumps(entry, ensure_ascii=False).lower():
+                    local.append(entry)
+    # optionally derive each local connector's real route URIs from source (zero-install),
+    # so a planner can choose a not-yet-installed capability; capped to bound subprocess cost.
+    if payload.get("include_routes") or payload.get("routes"):
+        for entry in local[:int(payload.get("max_derive", 12))]:
+            routes = _derive_local_routes(entry.get("_mf", ""), entry["source"])
+            if routes:
+                entry["routes"] = routes
+                entry["schemes"] = sorted({u.split("://", 1)[0] for u in routes}) or entry.get("schemes")
+    for entry in local:
+        entry.pop("_mf", None)
     installed = []
     try:
         from urirun.runtime import v2
@@ -162,6 +174,27 @@ def connector_discover(**payload: Any) -> dict:
     except Exception:  # noqa: BLE001
         pass
     return {"ok": True, "roots": [os.path.expanduser(r) for r in roots], "local": local, "installed": installed}
+
+
+def _derive_local_routes(mf: str, path: str) -> list:
+    """Real route URIs of a local (uninstalled) connector: tellmesh from manifest.yaml
+    uri_patterns (no import); if-uri by importing its urirun_bindings() in an ISOLATED
+    subprocess (so a faulty/heavy connector can't affect the node)."""
+    if mf.endswith(".yaml"):
+        try:
+            return [ln.split("pattern:", 1)[1].strip()
+                    for ln in open(mf, encoding="utf-8").read().splitlines() if "pattern:" in ln]
+        except Exception:  # noqa: BLE001
+            return []
+    parent, pkg = os.path.dirname(path), os.path.basename(path)
+    code = ("import sys,json;sys.path.insert(0,%r);m=__import__(%r);"
+            "b=getattr(m,'urirun_bindings',None);"
+            "print(json.dumps(sorted((b() if callable(b) else {}).get('bindings',{}).keys())))" % (parent, pkg))
+    try:
+        r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=25)
+        return json.loads(r.stdout.strip() or "[]") if r.returncode == 0 else []
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def _read_connector_manifest(mf: str, path: str) -> dict | None:
