@@ -730,6 +730,18 @@ class MeshTests(unittest.TestCase):
         self.assertIn("proc://pc1/process/query/list", uris)
         self.assertIn("proc://pc2/process/query/list", uris)
 
+    def test_heuristic_flow_maps_config_node_name_to_route_target(self):
+        nodes = [{"name": "lenovo", "reachable": True}]
+        routes = [
+            {"uri": "env://laptop/runtime/query/health", "node": "lenovo", "safe": True},
+            {"uri": "proc://laptop/process/query/list", "node": "lenovo", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdz procesy na lenovo", routes, nodes, selected_nodes=["lenovo"])
+
+        uris = [step["uri"] for step in flow["steps"]]
+        self.assertEqual(uris, ["env://laptop/runtime/query/health", "proc://laptop/process/query/list"])
+
     def test_registry_from_remote_routes(self):
         registry = mesh.registry_from_routes([
             {

@@ -685,6 +685,37 @@ def target_nodes(prompt: str, nodes: list[dict], explicit: list[str] | None = No
     return reachable
 
 
+def route_targets_for_nodes(routes: list[dict], node_names: list[str]) -> list[str]:
+    """Map host-config node names to URI targets exposed by their routes.
+
+    A mesh entry may be named ``lenovo`` while the node serves URIs targeted at
+    ``laptop``. Heuristic NL flow generation must use the URI target, not the
+    host-config alias, or it produces an empty flow.
+    """
+    all_targets: list[str] = []
+    by_node: dict[str, list[str]] = {}
+    for route in routes:
+        try:
+            target = route_target(str(route.get("uri") or ""))
+        except Exception:
+            continue
+        if target not in all_targets:
+            all_targets.append(target)
+        node = str(route.get("node") or "")
+        if node:
+            by_node.setdefault(node, [])
+            if target not in by_node[node]:
+                by_node[node].append(target)
+
+    expanded: list[str] = []
+    for name in node_names:
+        candidates = by_node.get(name) or ([name] if name in all_targets else [])
+        for target in candidates or [name]:
+            if target not in expanded:
+                expanded.append(target)
+    return expanded
+
+
 def first_url(prompt: str) -> str | None:
     match = re.search(r"https?://[^\s\"']+", prompt)
     return match.group(0) if match else None
@@ -740,7 +771,7 @@ def _append_target_steps(steps: list[dict], route_uris: set, target: str, intent
 
 def heuristic_flow(prompt: str, routes: list[dict], nodes: list[dict], selected_nodes: list[str] | None = None) -> dict:
     route_uris = {route["uri"] for route in routes if safe_route(route)}
-    targets = target_nodes(prompt, nodes, selected_nodes)
+    targets = route_targets_for_nodes(routes, target_nodes(prompt, nodes, selected_nodes))
     intents = _flow_intents(prompt.lower())
     url = first_url(prompt) or "https://example.com/"
     steps: list[dict] = []
