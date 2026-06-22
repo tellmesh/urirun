@@ -1475,22 +1475,45 @@ def apply_deploy(state: dict, body: dict) -> dict:
     Returns a summary. Raises ValueError on a malformed payload."""
     summary: dict = {"code": [], "env": []}
 
-    # 1. handler code (e.g. a bridge module) -> deploy dir, force fresh import
+    # 1. handler code (e.g. a bridge module) -> deploy dir; drop any stale version
     code = body.get("code") or {}
+    ddir = deploy_dir()
+    pushed_mods: list[str] = []
+    import importlib.util
+
+    for fname, source in code.items():
+        safe = os.path.basename(str(fname))  # no path traversal
+        path = ddir / safe
+        path.write_text(str(source), encoding="utf-8")
+        summary["code"].append(safe)
+        if safe.endswith(".py"):
+            mod = safe[:-3]
+            # drop the module AND its submodules so the next import is the new code
+            for m in [m for m in list(sys.modules) if m == mod or m.startswith(mod + ".")]:
+                sys.modules.pop(m, None)
+            # bust stale bytecode: same-size code written in the same second would
+            # otherwise reuse the old .pyc and silently run the previous version.
+            try:
+                os.remove(importlib.util.cache_from_source(str(path)))
+            except OSError:
+                pass
+            pushed_mods.append(mod)
     if code:
-        ddir = deploy_dir()
-        for fname, source in code.items():
-            safe = os.path.basename(str(fname))  # no path traversal
-            (ddir / safe).write_text(str(source), encoding="utf-8")
-            mod = safe[:-3] if safe.endswith(".py") else safe
-            sys.modules.pop(mod, None)            # drop stale, re-import on next /run
-            summary["code"].append(safe)
         importlib.invalidate_caches()
 
-    # 2. env the handlers read (TELLMESH_DIR, URISYS_ALLOW_REAL, …)
+    # 2. env the handlers read (TELLMESH_DIR, URISYS_ALLOW_REAL, …) — set BEFORE the
+    # eager re-import below, since a module may read it at import time.
     for key, val in (body.get("env") or {}).items():
         os.environ[str(key)] = str(val)
         summary["env"].append(str(key))
+
+    # 3. eagerly (re)import pushed modules so the new code is live immediately (no node
+    # restart) and any load error is surfaced in the deploy response instead of later.
+    for mod in pushed_mods:
+        try:
+            importlib.import_module(mod)
+        except Exception as exc:  # noqa: BLE001
+            summary.setdefault("codeWarnings", []).append(f"{mod}: {type(exc).__name__}: {exc}")
 
     # 3. the new served surface
     if body.get("registry"):

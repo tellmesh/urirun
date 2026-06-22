@@ -55,6 +55,30 @@ class MeshTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             mesh.apply_deploy({"name": "n", "registry": {}, "routes": [], "allow": []}, {})
 
+    def test_apply_deploy_reloads_pushed_code_without_restart(self):
+        """Re-deploying changed code must run the NEW version even when the source is the
+        same length and written within the same second (stale-.pyc trap)."""
+        import os
+        import sys
+        with tempfile.TemporaryDirectory() as tmp:
+            old_home = os.environ.get("HOME")
+            os.environ["HOME"] = tmp
+            try:
+                def deploy(src):
+                    state = {"name": "n", "registry": {"version": "urirun.bindings.v2", "routes": {}},
+                             "routes": [], "allow": []}
+                    mesh.apply_deploy(state, {"code": {"reltest_mod.py": src}, "bindings": {
+                        "version": "urirun.bindings.v2", "bindings": {
+                            "demo://n/x/query/p": {"kind": "query", "adapter": "local-function",
+                                                   "ref": "reltest_mod:p", "inputSchema": {"type": "object"}}}}})
+                    return sys.modules["reltest_mod"].p()
+                self.assertEqual(deploy("def p(**k): return 'VERSION-1'\n"), "VERSION-1")
+                self.assertEqual(deploy("def p(**k): return 'VERSION-2'\n"), "VERSION-2")  # not stale
+            finally:
+                sys.modules.pop("reltest_mod", None)
+                if old_home is not None:
+                    os.environ["HOME"] = old_home
+
     def test_resolve_admin_token_generate_reuse_and_precedence(self):
         import os
         with tempfile.TemporaryDirectory() as tmp:
