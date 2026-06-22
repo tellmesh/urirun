@@ -18,7 +18,12 @@ workflow[name="test"] {
 
 workflow[name="version-check"] {
   trigger: manual;
-  step-1: run cmd=$(PYTHON) -c 'import json, pathlib, sys, tomllib; root = pathlib.Path("."); versions = {"VERSION": (root / "VERSION").read_text().strip(), "package.json": json.loads((root / "package.json").read_text())["version"], "adapters/python/VERSION": (root / "adapters/python/VERSION").read_text().strip(), "adapters/python/pyproject.toml": tomllib.loads((root / "adapters/python/pyproject.toml").read_text())["project"]["version"], "adapters/js/package.json": json.loads((root / "adapters/js/package.json").read_text())["version"]}; print("urirun versions:", ", ".join(f"{k}={v}" for k, v in versions.items())); sys.exit(0 if len(set(versions.values())) == 1 else 1)';
+  step-1: run cmd=$(PYTHON) -c 'import json, pathlib, sys, tomllib; root = pathlib.Path("."); versions = {"VERSION": (root / "VERSION").read_text().strip(), "package.json": json.loads((root / "package.json").read_text())["version"], "adapters/python/VERSION": (root / "adapters/python/VERSION").read_text().strip(), "adapters/python/pyproject.toml": tomllib.loads((root / "adapters/python/pyproject.toml").read_text())["project"]["version"]}; print("urirun versions:", ", ".join(f"{k}={v}" for k, v in versions.items())); sys.exit(0 if len(set(versions.values())) == 1 else 1)';
+}
+
+workflow[name="sync-versions"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/sync-versions.sh;
 }
 
 workflow[name="release-bump"] {
@@ -45,6 +50,11 @@ workflow[name="test-c"] {
 workflow[name="conformance"] {
   trigger: manual;
   step-1: run cmd=$(PYTHON) adapters/conformance.py;
+}
+
+workflow[name="lint"] {
+  trigger: manual;
+  step-1: run cmd=$(PYTHON) -m ruff check adapters/python/urirun;
 }
 
 workflow[name="lint-connectors"] {
@@ -81,16 +91,17 @@ workflow[name="build"] {
 
 workflow[name="publish"] {
   trigger: manual;
-  step-1: run cmd=cd adapters/python && $(PYTHON) -m twine upload dist/*;
+  step-1: run cmd=cd adapters/python && $(PYTHON) -m twine upload --skip-existing dist/*;
 }
 
 workflow[name="release"] {
   trigger: manual;
   step-1: run cmd=v=$$(cat adapters/python/VERSION); \;
   step-2: run cmd=if git rev-parse "v$$v" >/dev/null 2>&1; then echo "tag v$$v already exists"; exit 1; fi; \;
-  step-3: run cmd=git tag -a "v$$v" -m "urirun v$$v"; \;
-  step-4: run cmd=git push origin "v$$v"; \;
-  step-5: run cmd=echo "pushed tag v$$v -> release.yml builds + publishes to PyPI";
+  step-3: run cmd=remote=$$(git remote | grep -qx origin && echo origin || git remote | head -n1); \;
+  step-4: run cmd=git tag -a "v$$v" -m "urirun v$$v"; \;
+  step-5: run cmd=git push "$$remote" "v$$v"; \;
+  step-6: run cmd=echo "pushed tag v$$v to $$remote -> release.yml builds + publishes to PyPI";
 }
 
 workflow[name="clean"] {

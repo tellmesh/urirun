@@ -1,0 +1,222 @@
+# code2llm | 68f 15768L | python:68 | 2026-06-22
+# generated in 0.03s
+# CC̅=4.4 | critical:13/804 | dups:0 | cycles:0
+
+HEALTH[13]:
+  🟡 CC    assign_rpc_names CC=15 (limit:15)
+  🟡 CC    serve_mcp CC=15 (limit:15)
+  🟡 CC    run_route CC=16 (limit:15)
+  🟡 CC    scan_path CC=15 (limit:15)
+  🟡 CC    connector_main CC=25 (limit:15)
+  🟡 CC    connector_collisions CC=17 (limit:15)
+  🟡 CC    _cmd_outdated CC=16 (limit:15)
+  🟡 CC    _cmd_connectors_doctor CC=18 (limit:15)
+  🟡 CC    normalize_flow CC=15 (limit:15)
+  🟡 CC    data_command CC=15 (limit:15)
+  🟡 CC    watch_command CC=18 (limit:15)
+  🟡 CC    deploy_command CC=15 (limit:15)
+  🟡 CC    _resolve_serve_opts CC=17 (limit:15)
+
+REFACTOR[1]:
+  1. split 13 high-CC methods  (CC>15)
+
+PIPELINES[243]:
+  [1] Src [connector_installed]: connector_installed
+      PURITY: 100% pure
+  [2] Src [assert_registry_portable]: assert_registry_portable → registry_portability → compile_registry
+      PURITY: 100% pure
+  [3] Src [assert_smoke]: assert_smoke → smoke → _resolve_bindings
+      PURITY: 100% pure
+  [4] Src [assert_routes]: assert_routes → compile_registry
+      PURITY: 100% pure
+  [5] Src [run_query]: run_query → run
+      PURITY: 100% pure
+  [6] Src [main]: main → _resolve
+      PURITY: 100% pure
+  [7] Src [preview]: preview → build_loop_command
+      PURITY: 100% pure
+  [8] Src [install_systemd_user]: install_systemd_user
+      PURITY: 100% pure
+  [9] Src [call]: call → _post
+      PURITY: 100% pure
+  [10] Src [call]: call
+      PURITY: 100% pure
+  [11] Src [_main]: _main → serve → _pool_executors
+      PURITY: 100% pure
+  [12] Src [run_registry_introspect]: run_registry_introspect → _introspect_list
+      PURITY: 100% pure
+  [13] Src [create_ticket]: create_ticket → load_planfile → project_root
+      PURITY: 100% pure
+  [14] Src [list_tickets]: list_tickets → load_planfile → project_root
+      PURITY: 100% pure
+  [15] Src [next_ticket]: next_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [16] Src [get_ticket]: get_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [17] Src [claim_ticket]: claim_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [18] Src [start_ticket]: start_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [19] Src [complete_ticket]: complete_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [20] Src [fail_ticket]: fail_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [21] Src [fail_or_retry]: fail_or_retry → load_planfile → project_root
+      PURITY: 100% pure
+  [22] Src [update_ticket]: update_ticket → normalize_priority
+      PURITY: 100% pure
+  [23] Src [wait_for_input]: wait_for_input → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [24] Src [ready_ticket]: ready_ticket → ticket_to_dict → _model_dict
+      PURITY: 100% pure
+  [25] Src [run_dsl]: run_dsl → project_root
+      PURITY: 100% pure
+  [26] Src [loads_json]: loads_json
+      PURITY: 100% pure
+  [27] Src [planfile_task_bindings]: planfile_task_bindings
+      PURITY: 100% pure
+  [28] Src [run_planfile_task]: run_planfile_task → _planfile_action
+      PURITY: 100% pure
+  [29] Src [host_data_bindings]: host_data_bindings
+      PURITY: 100% pure
+  [30] Src [run_host_data]: run_host_data
+      PURITY: 100% pure
+  [31] Src [domain_monitor_bindings]: domain_monitor_bindings
+      PURITY: 100% pure
+  [32] Src [run_domain_monitor]: run_domain_monitor
+      PURITY: 100% pure
+  [33] Src [_dumps]: _dumps
+      PURITY: 100% pure
+  [34] Src [_loads]: _loads
+      PURITY: 100% pure
+  [35] Src [stream]: stream → channel_target
+      PURITY: 100% pure
+  [36] Src [list_routes]: list_routes → channel_target
+      PURITY: 100% pure
+  [37] Src [main]: main → serve → _route_list
+      PURITY: 100% pure
+  [38] Src [agent_command]: agent_command → action_space
+      PURITY: 100% pure
+  [39] Src [main]: main → merge_into
+      PURITY: 100% pure
+  [40] Src [reply_fields]: reply_fields → _parse_stdout
+      PURITY: 100% pure
+  [41] Src [validate_reply]: validate_reply
+      PURITY: 100% pure
+  [42] Src [dispatch_field_collisions]: dispatch_field_collisions → _field_snake
+      PURITY: 100% pure
+  [43] Src [to_proto]: to_proto → proto_from_registry → assign_rpc_names → _rpc_name → ...(1 more)
+      PURITY: 100% pure
+  [44] Src [to_openapi]: to_openapi → _routes → _pascal
+      PURITY: 100% pure
+  [45] Src [to_client_python]: to_client_python → _routes → _pascal
+      PURITY: 100% pure
+  [46] Src [to_handlers]: to_handlers → _routes → _pascal
+      PURITY: 100% pure
+  [47] Src [gen_command]: gen_command → proto_from_registry → assign_rpc_names → _rpc_name → ...(1 more)
+      PURITY: 100% pure
+  [48] Src [create_llm_session]: create_llm_session → init_db → connection → connect → ...(1 more)
+      PURITY: 100% pure
+  [49] Src [add_llm_message]: add_llm_message → init_db → connection → connect → ...(1 more)
+      PURITY: 100% pure
+  [50] Src [run_uri_route]: run_uri_route → route_db_path
+      PURITY: 100% pure
+
+LAYERS:
+  connectors/                     CC̄=4.8    ←in:0  →out:9  !! split
+  │ connector_scaffold         412L  0C   11m  CC=3      ←0
+  │ connector_lint             295L  0C   15m  CC=14     ←0
+  │ connect_catalog            254L  0C   17m  CC=13     ←0
+  │ declarative                 95L  0C    3m  CC=14     ←0
+  │ openapi_import              94L  0C    6m  CC=12     ←0
+  │ connector_sdk               87L  0C    3m  CC=5      ←0
+  │ connector_smoke             81L  0C    3m  CC=6      ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  node/                           CC̄=4.8    ←in:2  →out:1
+  │ !! mesh                      2187L  1C  119m  CC=18     ←1
+  │ keyauth                    156L  0C   14m  CC=6      ←0
+  │ manage                     107L  0C    6m  CC=7      ←1
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  runtime/                        CC̄=4.6    ←in:11  →out:6
+  │ !! v2                        2476L  1C  122m  CC=18     ←2
+  │ !! _registry                  718L  0C   43m  CC=14     ←1
+  │ !! _scan                      670L  0C   36m  CC=15     ←0
+  │ !! errors                     563L  0C   31m  CC=13     ←1
+  │ !! _runtime                   540L  1C   27m  CC=13     ←2
+  │ !! codegen                    432L  0C   18m  CC=15     ←0
+  │ v1                         431L  0C   24m  CC=14     ←2
+  │ !! worker                     260L  3C   18m  CC=16     ←0
+  │ adopt_pack                 245L  0C   12m  CC=13     ←0
+  │ secrets                    234L  1C   17m  CC=7      ←1
+  │ !! v2_mcp                     207L  0C   10m  CC=15     ←0
+  │ v2_grpc                    204L  0C   11m  CC=9      ←0
+  │ compat                     199L  0C    6m  CC=10     ←0
+  │ v2_adopt                   193L  0C    8m  CC=7      ←0
+  │ dispatch_protocol          183L  0C    8m  CC=10     ←1
+  │ discovery                  158L  0C    8m  CC=7      ←0
+  │ agent                      151L  0C    6m  CC=10     ←0
+  │ daemon                     116L  0C    3m  CC=14     ←0
+  │ introspect                 112L  0C    4m  CC=9      ←1
+  │ v2_service                 109L  0C    3m  CC=9      ←0
+  │ tree                        86L  0C    4m  CC=11     ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  host/                           CC̄=3.7    ←in:0  →out:4
+  │ !! host_dashboard             609L  0C   16m  CC=13     ←0
+  │ host_db                    499L  0C   29m  CC=11     ←0
+  │ domain_monitor             485L  1C   25m  CC=11     ←0
+  │ task_planner               358L  2C   16m  CC=12     ←0
+  │ host_integrations          355L  0C   15m  CC=8      ←0
+  │ planfile_adapter           279L  1C   26m  CC=9      ←0
+  │ scheduler                  133L  0C    6m  CC=4      ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
+  │
+  ./                              CC̄=3.6    ←in:0  →out:0
+  │ !! __init__                   600L  1C   44m  CC=25     ←11
+  │ testing                    189L  0C    9m  CC=9      ←0
+  │ exec                        54L  0C    2m  CC=10     ←0
+  │ v1                           8L  0C    0m  CC=0.0    ←0
+  │ v2_service                   8L  0C    0m  CC=0.0    ←0
+  │ v2_adopt                     8L  0C    0m  CC=0.0    ←0
+  │ v2_mcp                       8L  0C    0m  CC=0.0    ←0
+  │ _registry                    8L  0C    0m  CC=0.0    ←0
+  │ compat                       8L  0C    0m  CC=0.0    ←0
+  │ _scan                        8L  0C    0m  CC=0.0    ←0
+  │ errors                       8L  0C    0m  CC=0.0    ←0
+  │ v2_grpc                      8L  0C    0m  CC=0.0    ←0
+  │ _runtime                     8L  0C    0m  CC=0.0    ←0
+  │ v2                           8L  0C    0m  CC=0.0    ←0
+  │ mesh                         5L  0C    0m  CC=0.0    ←0
+  │ connector_sdk                5L  0C    0m  CC=0.0    ←0
+  │ host_integrations            5L  0C    0m  CC=0.0    ←0
+  │ host_dashboard               5L  0C    0m  CC=0.0    ←0
+  │ connector_smoke              5L  0C    0m  CC=0.0    ←0
+  │ host_db                      5L  0C    0m  CC=0.0    ←0
+  │ connect_catalog              5L  0C    0m  CC=0.0    ←0
+  │ task_planner                 5L  0C    0m  CC=0.0    ←0
+  │ connector_scaffold           5L  0C    0m  CC=0.0    ←0
+  │ planfile_adapter             5L  0C    0m  CC=0.0    ←0
+  │ scheduler                    5L  0C    0m  CC=0.0    ←0
+  │ domain_monitor               5L  0C    0m  CC=0.0    ←0
+  │
+
+COUPLING:
+                  urirun     runtime     testing  connectors        host        node
+      urirun          ──           9         ←13          ←6          ←4          ←1  hub
+     runtime           5          ──                      ←2                       1  hub
+     testing          13                      ──                                      !! fan-out
+  connectors           6           2                      ──                       1  !! fan-out
+        host           4                                              ──            
+        node           1          ←1                      ←1                      ──
+  CYCLES: none
+  HUB: runtime/ (fan-in=11)
+  HUB: urirun/ (fan-in=29)
+  SMELL: connectors/ fan-out=9 → split needed
+  SMELL: testing/ fan-out=13 → split needed
+  SMELL: urirun/ fan-out=9 → split needed
+
+EXTERNAL:
+  validation: run `vallm batch .` → validation.toon
+  duplication: run `redup scan .` → duplication.toon

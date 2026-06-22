@@ -1109,71 +1109,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-9db7d2e2
-    name: Fix smart-return-type issues
-    description: Resolve 5 smart-return-type issues in adapters/python/urirun/runtime/v2.py
-    task_type: prefactor
-    priority: medium
-    estimate: 2d
-    files:
-    - adapters/python/urirun/runtime/v2.py
-    rule_id: smart-return-type
-    count: 5
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f3c8551a
-    name: Fix string-concat issues
-    description: Resolve 2 string-concat issues in adapters/python/urirun/runtime/v2.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/runtime/v2.py
-    rule_id: string-concat
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-931bc1b1
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/runtime/v2.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/runtime/v2.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-148777ae
-    name: Fix magic-numbers issues
-    description: Resolve 11 magic-numbers issues in adapters/python/urirun/runtime/v2.py
-    task_type: prefactor
-    priority: high
-    estimate: 3d
-    files:
-    - adapters/python/urirun/runtime/v2.py
-    rule_id: magic-numbers
-    count: 11
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5cdebaa9
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in adapters/python/urirun/runtime/v2.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/runtime/v2.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-15fc71ff
     name: Fix ai-boilerplate issues
     description: Resolve 1 ai-boilerplate issues in adapters/python/urirun/v2_service.py
@@ -1314,6 +1249,71 @@ sprints:
     - adapters/python/urirun/connectors/openapi_import.py
     rule_id: magic-numbers
     count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-55686191
+    name: Fix llm-generated-code issues
+    description: Resolve 1 llm-generated-code issues in adapters/python/urirun/__init__.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/__init__.py
+    rule_id: llm-generated-code
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-711724ee
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/exec.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/exec.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-b9661411
+    name: Fix ai-boilerplate issues
+    description: Resolve 1 ai-boilerplate issues in adapters/python/urirun/exec.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/exec.py
+    rule_id: ai-boilerplate
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d34cb28c
+    name: Fix string-concat issues
+    description: Resolve 3 string-concat issues in adapters/python/urirun/node/keyauth.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/node/keyauth.py
+    rule_id: string-concat
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-cf0fc288
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/node/keyauth.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/node/keyauth.py
+    rule_id: unused-imports
+    count: 2
     model_hints:
       planning: balanced
       implementation: balanced

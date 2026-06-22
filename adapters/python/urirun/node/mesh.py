@@ -1433,6 +1433,16 @@ def _host_delegated_command(args: argparse.Namespace) -> int | None:
     return None
 
 
+def _print_event(ev: dict, as_json: bool) -> None:
+    if as_json:
+        print(json.dumps(ev, ensure_ascii=False), flush=True)
+        return
+    ok = ev.get("ok")
+    mark = "" if ok is None else ("ok" if ok else "FAIL")
+    tail = ev.get("category") or ev.get("message") or ""
+    print(f"{ev.get('event', '?'):6} {ev.get('uri', '')}  {mark} {tail}".rstrip(), flush=True)
+
+
 def watch_command(args: argparse.Namespace) -> int:
     """`urirun host watch <node>` — stream the node's live events (run/error) as URIs.
     Reconnects automatically, replaying missed events via Last-Event-ID."""
@@ -1440,12 +1450,12 @@ def watch_command(args: argparse.Namespace) -> int:
     url = node_url(config, args.node)
     scheme = [s for s in (getattr(args, "scheme", None) or "").split(",") if s] or None
     token = getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN")
-    identity = getattr(args, "identity", None)
-    if identity:
-        identity = os.path.expanduser(identity)
+    identity = os.path.expanduser(args.identity) if getattr(args, "identity", None) else None
     broker = getattr(args, "mqtt_broker", None)
     topic_prefix = getattr(args, "mqtt_topic", None) or "urirun/events"
     mqtt_pub = _mqtt_publish_fn(broker) if broker else None
+    follow = bool(getattr(args, "follow", False))
+    as_json = bool(getattr(args, "json", False))
     sys.stderr.write(f"watching {url}/events{' scheme=' + ','.join(scheme) if scheme else ''}"
                      f"{' -> mqtt ' + broker if broker else ''} — Ctrl-C to stop\n")
     sys.stderr.flush()
@@ -1456,20 +1466,14 @@ def watch_command(args: argparse.Namespace) -> int:
                 last_id = ev.get("_id", last_id)
                 if mqtt_pub:
                     mqtt_pub(event_topic(topic_prefix, ev), json.dumps(ev, ensure_ascii=False))
-                if getattr(args, "json", False):
-                    print(json.dumps(ev, ensure_ascii=False), flush=True)
-                else:
-                    ok = ev.get("ok")
-                    mark = "" if ok is None else ("ok" if ok else "FAIL")
-                    tail = ev.get("category") or ev.get("message") or ""
-                    print(f"{ev.get('event', '?'):6} {ev.get('uri', '')}  {mark} {tail}".rstrip(), flush=True)
+                _print_event(ev, as_json)
         except KeyboardInterrupt:
             return 0
         except Exception as exc:  # noqa: BLE001
-            if not getattr(args, "follow", False):
+            if not follow:
                 sys.stderr.write(f"watch ended: {exc}\n")
                 return 1
-        if not getattr(args, "follow", False):
+        if not follow:
             return 0
         time.sleep(2)  # reconnect after a drop, resuming from last_id
 
@@ -1702,66 +1706,74 @@ def resolve_admin_token(explicit: str | None, config_token: str | None, generate
     return token
 
 
-def apply_deploy(state: dict, body: dict) -> dict:
-    """Mutate a serving node's state from a /deploy payload: write any pushed handler
-    code, set handler env, then hot-swap the served registry / allow-policy / name.
-    Returns a summary. Raises ValueError on a malformed payload."""
-    summary: dict = {"code": [], "env": []}
+_ENV_DENY = {"PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "PYTHONSTARTUP", "BASH_ENV", "IFS"}
 
-    # 1. handler code (e.g. a bridge module) -> deploy dir; drop any stale version
-    code = body.get("code") or {}
-    ddir = deploy_dir()
-    pushed_mods: list[str] = []
+
+def _write_pushed_code(code: dict, summary: dict) -> list[str]:
+    """Write pushed handler files to the deploy dir, dropping any stale module + .pyc so
+    the next import is the new code. Returns the module names to (re)import."""
     import importlib.util
 
+    ddir = deploy_dir()
+    pushed: list[str] = []
     for fname, source in code.items():
         safe = os.path.basename(str(fname))  # no path traversal
         path = ddir / safe
         path.write_text(str(source), encoding="utf-8")
         summary["code"].append(safe)
-        if safe.endswith(".py"):
-            mod = safe[:-3]
-            # drop the module AND its submodules so the next import is the new code
-            for m in [m for m in list(sys.modules) if m == mod or m.startswith(mod + ".")]:
-                sys.modules.pop(m, None)
-            # bust stale bytecode: same-size code written in the same second would
-            # otherwise reuse the old .pyc and silently run the previous version.
-            try:
-                os.remove(importlib.util.cache_from_source(str(path)))
-            except OSError:
-                pass
-            pushed_mods.append(mod)
+        if not safe.endswith(".py"):
+            continue
+        mod = safe[:-3]
+        for m in [m for m in list(sys.modules) if m == mod or m.startswith(mod + ".")]:
+            sys.modules.pop(m, None)
+        try:  # bust stale bytecode (same-size/same-second writes reuse the old .pyc)
+            os.remove(importlib.util.cache_from_source(str(path)))
+        except OSError:
+            pass
+        pushed.append(mod)
     if code:
         importlib.invalidate_caches()
+    return pushed
 
-    # 2. env the handlers read (TELLMESH_DIR, URISYS_ALLOW_REAL, …) — set BEFORE the
-    # eager re-import below, since a module may read it at import time.
-    _env_deny = {"PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "PYTHONSTARTUP", "BASH_ENV", "IFS"}
-    for key, val in (body.get("env") or {}).items():
-        if str(key).upper() in _env_deny:
-            continue  # a pushed deploy must not hijack the loader / interpreter / PATH
+
+def _apply_deploy_env(env: dict, summary: dict) -> None:
+    """Set handler env from the payload, refusing keys that could hijack the loader/PATH."""
+    for key, val in (env or {}).items():
+        if str(key).upper() in _ENV_DENY:
+            continue
         os.environ[str(key)] = str(val)
         summary["env"].append(str(key))
 
-    # 3. eagerly (re)import pushed modules so the new code is live immediately (no node
-    # restart) and any load error is surfaced in the deploy response instead of later.
+
+def _deploy_registry(body: dict) -> dict:
+    """Resolve the new served registry from a /deploy body (registry or bindings)."""
+    if body.get("registry"):
+        return body["registry"]
+    if body.get("bindings"):
+        doc = body["bindings"]
+        if "bindings" not in doc:
+            doc = {"version": v2.VERSION, "bindings": doc}
+        return v2.compile_registry(doc)
+    raise ValueError("deploy needs 'bindings' or 'registry'")
+
+
+def apply_deploy(state: dict, body: dict) -> dict:
+    """Mutate a serving node's state from a /deploy payload: write any pushed handler
+    code, set handler env, then hot-swap the served registry / allow-policy / name.
+    Returns a summary. Raises ValueError on a malformed payload."""
+    import importlib
+
+    summary: dict = {"code": [], "env": []}
+    pushed_mods = _write_pushed_code(body.get("code") or {}, summary)
+    _apply_deploy_env(body.get("env") or {}, summary)  # before re-import: modules may read it
+    # eagerly (re)import so new code is live now and load errors surface in the response
     for mod in pushed_mods:
         try:
             importlib.import_module(mod)
         except Exception as exc:  # noqa: BLE001
             summary.setdefault("codeWarnings", []).append(f"{mod}: {type(exc).__name__}: {exc}")
 
-    # 3. the new served surface
-    if body.get("registry"):
-        registry = body["registry"]
-    elif body.get("bindings"):
-        doc = body["bindings"]
-        if "bindings" not in doc:
-            doc = {"version": v2.VERSION, "bindings": doc}
-        registry = v2.compile_registry(doc)
-    else:
-        raise ValueError("deploy needs 'bindings' or 'registry'")
-
+    registry = _deploy_registry(body)
     state["registry"] = registry
     state["routes"] = routes_from_registry(registry)
     if body.get("name"):
@@ -1932,10 +1944,15 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                     k, v = part.split("=", 1)
                     params[k] = unquote(v.replace("+", " "))
             schemes = {s for s in (params.get("scheme", "").split(",")) if s}
+            # Standard SSE: replay only when the client gives a cursor (Last-Event-ID /
+            # ?last_event_id). With no cursor, start from "now" (skip the ring history).
+            cursor = params.get("last_event_id")
+            if cursor is None:
+                cursor = self.headers.get("Last-Event-ID")
             try:
-                last_id = int(params.get("last_event_id") or self.headers.get("Last-Event-ID") or 0)
+                last_id = int(cursor) if cursor is not None else hub.current_id()
             except ValueError:
-                last_id = 0
+                last_id = hub.current_id()
 
             def matches(ev: dict) -> bool:
                 return not schemes or str(ev.get("uri", "")).split("://", 1)[0] in schemes
@@ -2063,30 +2080,35 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
     return server
 
 
-def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict) -> int:
-    # default to localhost: exposing the node beyond this host (and its unauthenticated
-    # /run) must be an explicit choice (--host 0.0.0.0), not the default.
-    host = args.host or node.get("host") or "127.0.0.1"
-    port = args.port or int(node.get("port") or 8765)
-    execute = bool(args.execute or node.get("execute"))
-    allow_secrets = bool(getattr(args, "allow_secrets", False) or node.get("allowSecrets"))
-    allow = list(getattr(args, "allow", None) or node.get("allow") or [])
-    pool = bool(getattr(args, "pool", False) or node.get("pool"))
+def _resolve_serve_opts(args: argparse.Namespace, node: dict) -> dict:
+    """Merge CLI args + node config into the serve_node options (CLI wins)."""
     admin_token = resolve_admin_token(getattr(args, "admin_token", None), node.get("adminToken"),
                                       bool(getattr(args, "generate_token", False)))
-    # key-auth: explicit flag, node config, or implied by an existing authorized_keys file
     key_auth = bool(getattr(args, "key_auth", False) or node.get("keyAuth")
                     or keyauth.authorized_keys_path().exists())
-    require_run_auth = bool(getattr(args, "require_run_auth", False) or node.get("requireRunAuth"))
     manage = bool(getattr(args, "manage", False) or node.get("manage"))
     if manage and not (admin_token or key_auth):
-        sys.stderr.write("[urirun] --manage requires admin auth (--admin-token / --key-auth / --generate-token); node:// would be ungated. Disabling management.\n")
+        sys.stderr.write("[urirun] --manage requires admin auth (--admin-token / --key-auth / "
+                         "--generate-token); node:// would be ungated. Disabling management.\n")
         sys.stderr.flush()
         manage = False
-    server = serve_node(name, registry, host, port, execute, public_url=args.public_url,
-                        allow_secrets=allow_secrets, allow=allow, pool=pool,
-                        admin_token=admin_token, key_auth=key_auth,
-                        require_run_auth=require_run_auth, manage=manage)
+    return {
+        # localhost default: exposing the node (its unauthenticated /run) is an explicit choice.
+        "host": args.host or node.get("host") or "127.0.0.1",
+        "port": args.port or int(node.get("port") or 8765),
+        "execute": bool(args.execute or node.get("execute")),
+        "allow_secrets": bool(getattr(args, "allow_secrets", False) or node.get("allowSecrets")),
+        "allow": list(getattr(args, "allow", None) or node.get("allow") or []),
+        "pool": bool(getattr(args, "pool", False) or node.get("pool")),
+        "admin_token": admin_token, "key_auth": key_auth, "manage": manage,
+        "require_run_auth": bool(getattr(args, "require_run_auth", False) or node.get("requireRunAuth")),
+    }
+
+
+def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict) -> int:
+    opts = _resolve_serve_opts(args, node)
+    server = serve_node(name, registry, opts.pop("host"), opts.pop("port"), opts.pop("execute"),
+                        public_url=args.public_url, **opts)
     server.serve_forever()
     return 0
 

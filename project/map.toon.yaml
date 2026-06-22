@@ -1,219 +1,1088 @@
-# urirun | 124f 18048L | yaml:4,txt:3,shell:9,json:11,yml:1,python:70,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-22
-# generated in 0.01s
-# stats: 839 func | 0 cls | 124 mod | CC̄=4.1 | critical:10 | cycles:0
-# alerts[5]: fan-out _build_parser=100; fan-out serve=30; fan-out main=29; fan-out serve_node=28; fan-out main=26
-# hotspots[5]: _build_parser fan=100; serve fan=30; main fan=29; serve_node fan=28; main fan=26
-# evolution: CC̄ 4.1→4.1 (flat 0.0)
+# urirun | 136f 22218L | python:114,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-22
+# stats: 921 func | 39 cls | 136 mod | CC̄=4.3 | critical:90 | cycles:0
+# alerts[5]: CC connector_main=25; CC watch_command=23; CC apply_deploy=21; CC _cmd_connectors_doctor=18; CC main=18
+# hotspots[5]: serve_node fan=65; serve fan=28; apply_deploy fan=26; main fan=23; main fan=23
+# evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[124]:
-  Makefile,81
-  adapters/bash/example/hash-connector.sh,9
-  adapters/bash/urirun.sh,17
-  adapters/c/urirun.h,13
-  adapters/c/urirun_test.c,18
-  adapters/conformance.py,148
-  adapters/csharp/Program.cs,7
-  adapters/csharp/Urirun.cs,32
-  adapters/csharp/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs,4
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs,22
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.csproj.FileListAbsolute.txt,15
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.sourcelink.json,1
-  adapters/csharp/obj/project.assets.json,71
-  adapters/csharp/obj/urirun-connector.csproj.nuget.dgspec.json,66
-  adapters/go/example/hash-connector/main.go,24
-  adapters/go/urirun.go,80
-  adapters/java/Urirun.java,38
-  adapters/java/example/HashConnector.java,11
-  adapters/js/index.js,33
-  adapters/js/index.test.js,52
-  adapters/js/package.json,10
-  adapters/new-connector.sh,168
-  adapters/perl/Urirun.pm,47
-  adapters/perl/example/hash_connector.pl,14
-  adapters/php/Urirun.php,73
-  adapters/php/composer.json,7
-  adapters/php/example/hash-connector.php,14
-  adapters/python/pyproject.toml,67
-  adapters/python/urirun/__init__.py,502
-  adapters/python/urirun/_registry.py,8
-  adapters/python/urirun/_runtime.py,8
-  adapters/python/urirun/_scan.py,8
-  adapters/python/urirun/compat.py,8
-  adapters/python/urirun/connect_catalog.py,5
-  adapters/python/urirun/connector_scaffold.py,5
-  adapters/python/urirun/connector_sdk.py,5
-  adapters/python/urirun/connector_smoke.py,5
-  adapters/python/urirun/connectors/__init__.py,1
-  adapters/python/urirun/connectors/connect_catalog.py,254
-  adapters/python/urirun/connectors/connector_lint.py,295
-  adapters/python/urirun/connectors/connector_scaffold.py,400
-  adapters/python/urirun/connectors/connector_sdk.py,87
-  adapters/python/urirun/connectors/connector_smoke.py,81
-  adapters/python/urirun/connectors/declarative.py,95
-  adapters/python/urirun/connectors/openapi_import.py,94
-  adapters/python/urirun/domain_monitor.py,5
-  adapters/python/urirun/errors.py,8
-  adapters/python/urirun/host/__init__.py,1
-  adapters/python/urirun/host/domain_monitor.py,485
-  adapters/python/urirun/host/host_dashboard.py,609
-  adapters/python/urirun/host/host_db.py,499
-  adapters/python/urirun/host/host_integrations.py,355
-  adapters/python/urirun/host/planfile_adapter.py,279
-  adapters/python/urirun/host/scheduler.py,133
-  adapters/python/urirun/host/task_planner.py,358
-  adapters/python/urirun/host_dashboard.py,5
-  adapters/python/urirun/host_db.py,5
-  adapters/python/urirun/host_integrations.py,5
-  adapters/python/urirun/mesh.py,5
-  adapters/python/urirun/node/__init__.py,1
-  adapters/python/urirun/node/mesh.py,1206
-  adapters/python/urirun/planfile_adapter.py,5
-  adapters/python/urirun/runtime/__init__.py,1
-  adapters/python/urirun/runtime/_registry.py,712
-  adapters/python/urirun/runtime/_runtime.py,533
-  adapters/python/urirun/runtime/_scan.py,670
-  adapters/python/urirun/runtime/adopt_pack.py,224
-  adapters/python/urirun/runtime/agent.py,107
-  adapters/python/urirun/runtime/codegen.py,379
-  adapters/python/urirun/runtime/compat.py,199
-  adapters/python/urirun/runtime/daemon.py,116
-  adapters/python/urirun/runtime/discovery.py,136
-  adapters/python/urirun/runtime/errors.py,563
-  adapters/python/urirun/runtime/introspect.py,112
-  adapters/python/urirun/runtime/secrets.py,234
-  adapters/python/urirun/runtime/tree.py,86
-  adapters/python/urirun/runtime/v1.py,431
-  adapters/python/urirun/runtime/v2.py,2273
-  adapters/python/urirun/runtime/v2_adopt.py,193
-  adapters/python/urirun/runtime/v2_grpc.py,204
-  adapters/python/urirun/runtime/v2_mcp.py,204
-  adapters/python/urirun/runtime/v2_service.py,103
-  adapters/python/urirun/runtime/worker.py,175
-  adapters/python/urirun/scheduler.py,5
-  adapters/python/urirun/task_planner.py,5
-  adapters/python/urirun/testing.py,102
-  adapters/python/urirun/v1.py,8
-  adapters/python/urirun/v2.py,8
-  adapters/python/urirun/v2_adopt.py,8
-  adapters/python/urirun/v2_grpc.py,8
-  adapters/python/urirun/v2_mcp.py,8
-  adapters/python/urirun/v2_service.py,8
-  adapters/ruby/example/hash_connector.rb,8
-  adapters/ruby/urirun.rb,39
-  adapters/rust/Cargo.toml,10
-  adapters/rust/examples/hash_connector.rs,12
-  adapters/rust/src/lib.rs,39
-  adapters/ts/example/hash-connector.ts,10
-  adapters/ts/package.json,8
-  adapters/ts/tsconfig.json,11
-  adapters/ts/urirun.ts,41
-  examples/matrix/Dockerfile.bash,6
-  examples/matrix/docker-compose.yml,132
-  examples/matrix/emit_python.py,19
-  examples/matrix/flow.py,30
-  examples/matrix/hash.bindings.v2.json,19
-  examples/matrix/mesh.json,7
-  examples/matrix/policy.json,1
-  examples/matrix/run.sh,15
-  examples/matrix/run-matrix.sh,92
-  examples/matrix/sample.txt,1
-  examples/matrix/verify.py,64
-  goal.yaml,533
-  package.json,27
-  planfile.yaml,1319
-  prefact.yaml,94
+M[136]:
+  adapters/bash/example/hash-connector.sh,10
+  adapters/bash/urirun.sh,18
+  adapters/conformance.py,149
+  adapters/go/example/hash-connector/main.go,25
+  adapters/go/urirun.go,81
+  adapters/js/index.js,34
+  adapters/js/index.test.js,53
+  adapters/new-connector.sh,169
+  adapters/python/tests/test_adopt_pack.py,103
+  adapters/python/tests/test_adopt_tree.py,39
+  adapters/python/tests/test_agent_command.py,78
+  adapters/python/tests/test_codegen.py,164
+  adapters/python/tests/test_compat.py,104
+  adapters/python/tests/test_connect_catalog.py,166
+  adapters/python/tests/test_connector_handler.py,161
+  adapters/python/tests/test_connector_lint.py,92
+  adapters/python/tests/test_connector_scaffold.py,71
+  adapters/python/tests/test_connector_sdk.py,63
+  adapters/python/tests/test_connector_smoke.py,83
+  adapters/python/tests/test_daemon.py,41
+  adapters/python/tests/test_declarative.py,103
+  adapters/python/tests/test_discovery.py,75
+  adapters/python/tests/test_dispatch_protocol.py,81
+  adapters/python/tests/test_domain_monitor.py,162
+  adapters/python/tests/test_errors.py,291
+  adapters/python/tests/test_exec.py,84
+  adapters/python/tests/test_gap5_authoring.py,105
+  adapters/python/tests/test_host_dashboard.py,97
+  adapters/python/tests/test_host_db.py,113
+  adapters/python/tests/test_install_upgrade.py,109
+  adapters/python/tests/test_introspect.py,76
+  adapters/python/tests/test_mesh.py,481
+  adapters/python/tests/test_minimal_imports.py,91
+  adapters/python/tests/test_node_diagnostics.py,46
+  adapters/python/tests/test_openapi_import.py,49
+  adapters/python/tests/test_param_routing.py,59
+  adapters/python/tests/test_planfile_adapter.py,343
+  adapters/python/tests/test_public_api.py,113
+  adapters/python/tests/test_registry_portable.py,47
+  adapters/python/tests/test_scheduler.py,62
+  adapters/python/tests/test_secrets.py,168
+  adapters/python/tests/test_tree.py,28
+  adapters/python/tests/test_urihandler.py,350
+  adapters/python/tests/test_v2_mcp.py,49
+  adapters/python/tests/test_worker.py,66
+  adapters/python/tests/test_worker_pool.py,84
+  adapters/python/urirun/__init__.py,601
+  adapters/python/urirun/_registry.py,9
+  adapters/python/urirun/_runtime.py,9
+  adapters/python/urirun/_scan.py,9
+  adapters/python/urirun/compat.py,9
+  adapters/python/urirun/connect_catalog.py,6
+  adapters/python/urirun/connector_scaffold.py,6
+  adapters/python/urirun/connector_sdk.py,6
+  adapters/python/urirun/connector_smoke.py,6
+  adapters/python/urirun/connectors/__init__.py,2
+  adapters/python/urirun/connectors/connect_catalog.py,255
+  adapters/python/urirun/connectors/connector_lint.py,296
+  adapters/python/urirun/connectors/connector_scaffold.py,413
+  adapters/python/urirun/connectors/connector_sdk.py,88
+  adapters/python/urirun/connectors/connector_smoke.py,82
+  adapters/python/urirun/connectors/declarative.py,96
+  adapters/python/urirun/connectors/openapi_import.py,95
+  adapters/python/urirun/domain_monitor.py,6
+  adapters/python/urirun/errors.py,9
+  adapters/python/urirun/exec.py,55
+  adapters/python/urirun/host/__init__.py,2
+  adapters/python/urirun/host/domain_monitor.py,486
+  adapters/python/urirun/host/host_dashboard.py,610
+  adapters/python/urirun/host/host_db.py,500
+  adapters/python/urirun/host/host_integrations.py,356
+  adapters/python/urirun/host/planfile_adapter.py,280
+  adapters/python/urirun/host/scheduler.py,134
+  adapters/python/urirun/host/task_planner.py,359
+  adapters/python/urirun/host_dashboard.py,6
+  adapters/python/urirun/host_db.py,6
+  adapters/python/urirun/host_integrations.py,6
+  adapters/python/urirun/mesh.py,6
+  adapters/python/urirun/node/__init__.py,2
+  adapters/python/urirun/node/keyauth.py,157
+  adapters/python/urirun/node/manage.py,108
+  adapters/python/urirun/node/mesh.py,2171
+  adapters/python/urirun/planfile_adapter.py,6
+  adapters/python/urirun/runtime/__init__.py,2
+  adapters/python/urirun/runtime/_registry.py,719
+  adapters/python/urirun/runtime/_runtime.py,541
+  adapters/python/urirun/runtime/_scan.py,671
+  adapters/python/urirun/runtime/adopt_pack.py,246
+  adapters/python/urirun/runtime/agent.py,152
+  adapters/python/urirun/runtime/codegen.py,433
+  adapters/python/urirun/runtime/compat.py,200
+  adapters/python/urirun/runtime/daemon.py,117
+  adapters/python/urirun/runtime/discovery.py,159
+  adapters/python/urirun/runtime/dispatch_protocol.py,184
+  adapters/python/urirun/runtime/errors.py,564
+  adapters/python/urirun/runtime/introspect.py,113
+  adapters/python/urirun/runtime/secrets.py,235
+  adapters/python/urirun/runtime/tree.py,87
+  adapters/python/urirun/runtime/v1.py,432
+  adapters/python/urirun/runtime/v2.py,2477
+  adapters/python/urirun/runtime/v2_adopt.py,194
+  adapters/python/urirun/runtime/v2_grpc.py,205
+  adapters/python/urirun/runtime/v2_mcp.py,208
+  adapters/python/urirun/runtime/v2_service.py,110
+  adapters/python/urirun/runtime/worker.py,261
+  adapters/python/urirun/scheduler.py,6
+  adapters/python/urirun/task_planner.py,6
+  adapters/python/urirun/testing.py,190
+  adapters/python/urirun/v1.py,9
+  adapters/python/urirun/v2.py,9
+  adapters/python/urirun/v2_adopt.py,9
+  adapters/python/urirun/v2_grpc.py,9
+  adapters/python/urirun/v2_mcp.py,9
+  adapters/python/urirun/v2_service.py,9
+  adapters/rust/examples/hash_connector.rs,13
+  adapters/rust/src/lib.rs,40
+  adapters/ts/example/hash-connector.ts,11
+  adapters/ts/urirun.ts,42
+  app.doql.less,132
+  examples/matrix/Dockerfile.bash,7
+  examples/matrix/Dockerfile.go,7
+  examples/matrix/emit_python.py,20
+  examples/matrix/flow.py,31
+  examples/matrix/run-matrix.sh,93
+  examples/matrix/run.sh,16
+  examples/matrix/verify.py,65
   project.sh,66
-  requirements.txt,2
-  scripts/lint_connectors.py,118
-  scripts/release-bump.sh,29
-  scripts/repin_connectors.py,166
-  testql-scenarios/generated-from-pytests.testql.toon.yaml,10
-  tree.sh,4
-  v1/js/urirun-v1.js,334
+  scripts/lint_connectors.py,119
+  scripts/release-bump.sh,30
+  scripts/repin_connectors.py,167
+  scripts/sync-versions.sh,26
+  security/mesh-probe/probe.py,115
+  test/urirun.test.js,11
+  tests/test_urirun.py,12
+  tree.sh,5
+  v1/js/urirun-v1.js,335
 D:
-  v1/js/urirun-v1.js:
-    i: node:child_process,node:path
-    e: DEFAULT_TIMEOUT,OUTPUT_LIMIT,parseUri,match,segments,query,translate,inferKind,defaultAdapter,registryTree,setRoute,translation,bucket,compileRegistryDocument,routeRows,globMatch,parts,mergePolicy,evaluatePolicy,merged,deny,allow,allowed,check,descriptor,translation,routeEntry,tokenize,resolveParams,spec,current,renderValue,renderCommand,hasPlaceholders,truncate,renderedEnv,runProcess,result,envFlags,config,base,command,config,rendered,tokens,config,inner,config,inner,method,response,run,merged,descriptor,translation,tree,routeEntry,decision,executor,result,listRoutes,merged,expandBinding,expandBindings,compileRegistry
-    DEFAULT_TIMEOUT()
-    OUTPUT_LIMIT()
-    parseUri()
-    match()
-    segments()
-    query()
-    translate()
-    inferKind()
-    defaultAdapter()
-    registryTree()
-    setRoute()
-    translation()
-    bucket()
-    compileRegistryDocument()
-    routeRows()
-    globMatch()
-    parts()
-    mergePolicy()
-    evaluatePolicy()
-    merged()
-    deny()
-    allow()
-    allowed()
-    check()
-    descriptor()
-    translation()
-    routeEntry()
-    tokenize()
-    resolveParams()
-    spec()
-    current()
-    renderValue()
-    renderCommand()
-    hasPlaceholders()
-    truncate()
-    renderedEnv()
-    runProcess()
-    result()
-    envFlags()
-    config()
-    base()
-    command()
-    config()
-    rendered()
-    tokens()
-    config()
-    inner()
-    config()
-    inner()
-    method()
-    response()
-    run()
-    merged()
-    descriptor()
-    translation()
-    tree()
-    routeEntry()
-    decision()
-    executor()
-    result()
-    listRoutes()
-    merged()
-    expandBinding()
-    expandBindings()
-    compileRegistry()
-  scripts/repin_connectors.py:
-    e: find_root,pypi_has,repin_text,classify,main
-    find_root(explicit)
-    pypi_has(version)
-    repin_text(text;min_version)
-    classify(text)
-    main(argv)
   adapters/conformance.py:
     e: essential,python_reference,main
     essential(doc)
     python_reference()
     main()
+  adapters/python/tests/test_adopt_pack.py:
+    e: AdoptPackTests
+    AdoptPackTests: test_manifest_maps_to_bindings(0),test_side_effects_and_approval_become_policy(0),test_document_validates_and_compiles(0),test_hydrated_route_executes(0),test_package_json_inline_manifest(0)
+  adapters/python/tests/test_adopt_tree.py:
+    e: _pack,test_directory_of_packs_merges,test_single_manifest_dir_unchanged
+    _pack(root;pid;scheme)
+    test_directory_of_packs_merges(tmp_path)
+    test_single_manifest_dir_unchanged(tmp_path)
+  adapters/python/tests/test_agent_command.py:
+    e: _registry,test_resolve_refs_threads_prior_step_output,test_resolve_refs_unknown_is_left_or_none,test_parse_stdout_unwraps_local_function_value,test_action_space_marks_query_and_command,test_run_plan_runs_query_and_gates_command,test_run_plan_allows_command_with_permission,test_load_planner_resolves_module_function
+    _registry()
+    test_resolve_refs_threads_prior_step_output()
+    test_resolve_refs_unknown_is_left_or_none()
+    test_parse_stdout_unwraps_local_function_value()
+    test_action_space_marks_query_and_command()
+    test_run_plan_runs_query_and_gates_command()
+    test_run_plan_allows_command_with_permission()
+    test_load_planner_resolves_module_function()
+  adapters/python/tests/test_codegen.py:
+    e: _registry,test_proto_has_carrier_and_one_typed_rpc_per_route,test_to_proto_wrapper_matches_projection,test_nuance_classes_are_surfaced,test_cqrs_collision_is_disambiguated_symmetrically,test_snake_case_rename_reaches_the_proto,test_dispatch_invariant_holds_for_compiled_registry,test_invariant_checker_catches_a_real_clash,test_route_named_run_does_not_collide_with_carrier,test_openapi_and_client_still_generate
+    _registry()
+    test_proto_has_carrier_and_one_typed_rpc_per_route()
+    test_to_proto_wrapper_matches_projection()
+    test_nuance_classes_are_surfaced()
+    test_cqrs_collision_is_disambiguated_symmetrically()
+    test_snake_case_rename_reaches_the_proto()
+    test_dispatch_invariant_holds_for_compiled_registry()
+    test_invariant_checker_catches_a_real_clash()
+    test_route_named_run_does_not_collide_with_carrier()
+    test_openapi_and_client_still_generate()
+  adapters/python/tests/test_compat.py:
+    e: _healthy_importable,CompatReportTests
+    CompatReportTests: test_backend_layer_is_kept(0),test_namecheap_is_extracted(0),test_top_level_api_exposes_compat_report(0),test_cli_list_json_reports_node_layer(0),test_cli_check_ok_when_layers_present_and_namecheap_extracted(0),test_cli_check_nonzero_when_namecheap_replacement_missing(0),test_cli_check_nonzero_when_backend_layer_missing(0)
+    _healthy_importable(name)
+  adapters/python/tests/test_connect_catalog.py:
+    e: _args,test_resolve_install_buckets,test_pip_install_command_uses_current_interpreter,test_install_dry_run_does_not_run_pip,test_install_execute_invokes_pip,test_install_unknown_only_returns_error,test_list_available_filter,test_show_json,test_diff_manifest_in_sync,test_diff_manifest_detects_route_and_pipspec_drift,test_check_in_sync,test_check_drift_returns_1,test_catalog_network_error_returns_1
+    _args()
+    test_resolve_install_buckets()
+    test_pip_install_command_uses_current_interpreter()
+    test_install_dry_run_does_not_run_pip(monkeypatch;capsys)
+    test_install_execute_invokes_pip(monkeypatch)
+    test_install_unknown_only_returns_error(monkeypatch)
+    test_list_available_filter(monkeypatch;capsys)
+    test_show_json(monkeypatch;capsys)
+    test_diff_manifest_in_sync()
+    test_diff_manifest_detects_route_and_pipspec_drift()
+    test_check_in_sync(monkeypatch;tmp_path;capsys)
+    test_check_drift_returns_1(monkeypatch;tmp_path;capsys)
+    test_catalog_network_error_returns_1(monkeypatch)
+  adapters/python/tests/test_connector_handler.py:
+    e: EnvelopeHelpersTests,ConnectorHandlerTests,ConnectorManifestTests,ConnectorCliTests,ExternalHandlerTests
+    EnvelopeHelpersTests: test_ok_fail_plan_shape(0)
+    ConnectorHandlerTests: test_handler_runs_in_process_no_subprocess(0),test_manifest_export_is_json_safe_and_typed(0),test_payload_is_filtered_to_signature(0)
+    ConnectorManifestTests: test_manifest_derives_machine_fields_from_code(0)
+    ConnectorCliTests: _run_cli(2),test_cli_dispatches_route_in_process(0),test_cli_bindings_subcommand(0)
+    ExternalHandlerTests: _run_cli(2),test_external_route_dry_runs_by_default_then_executes(0),test_dry_run_envelope_is_json_serializable(0)
+  adapters/python/tests/test_connector_lint.py:
+    e: ConnectorLintTests
+    ConnectorLintTests: _pkg(2),test_extracts_decorator_routes_and_kinds(0),test_counts_duplication_across_manifest_and_argv(0),test_decorator_route_missing_from_manifest_is_drift(0),test_adapterkinds_matching_code_is_not_drift(0),test_wrong_adapterkind_is_drift(0),test_missing_adapterkinds_skips_check(0),test_declarative_connector_is_not_flagged(0)
+  adapters/python/tests/test_connector_scaffold.py:
+    e: test_scaffold_creates_manifest_and_files,test_scaffold_scheme_override,test_scaffold_rejects_unknown_language,test_python_scaffold_uses_handler_shape,test_polyglot_bindings_shape_is_emitted
+    test_scaffold_creates_manifest_and_files(tmp_path;language)
+    test_scaffold_scheme_override(tmp_path)
+    test_scaffold_rejects_unknown_language(tmp_path)
+    test_python_scaffold_uses_handler_shape(tmp_path)
+    test_polyglot_bindings_shape_is_emitted(tmp_path;language)
+  adapters/python/tests/test_connector_sdk.py:
+    e: test_load_manifest_reads_package_data,test_emit_prints_sorted_json,_manifest,_bindings,test_connector_cli_manifest,test_connector_cli_bindings,test_connector_cli_dispatches_domain_command
+    test_load_manifest_reads_package_data()
+    test_emit_prints_sorted_json(capsys)
+    _manifest()
+    _bindings()
+    test_connector_cli_manifest(capsys)
+    test_connector_cli_bindings(capsys)
+    test_connector_cli_dispatches_domain_command(capsys)
+  adapters/python/tests/test_connector_smoke.py:
+    e: _doc,_write,test_smoke_validate_compile_mcp_a2a,test_smoke_invalid_bindings_fails_at_validate,test_smoke_run_executes_route,test_smoke_run_failure_marks_not_ok,test_smoke_command_returns_exit_code
+    _doc(argv)
+    _write(tmp_path;doc)
+    test_smoke_validate_compile_mcp_a2a(tmp_path)
+    test_smoke_invalid_bindings_fails_at_validate(tmp_path)
+    test_smoke_run_executes_route(tmp_path)
+    test_smoke_run_failure_marks_not_ok(tmp_path)
+    test_smoke_command_returns_exit_code(tmp_path;capsys)
+  adapters/python/tests/test_daemon.py:
+    e: test_daemon_serves_and_client_is_stdlib,test_call_module_is_stdlib_only
+    test_daemon_serves_and_client_is_stdlib(tmp_path)
+    test_call_module_is_stdlib_only()
+  adapters/python/tests/test_declarative.py:
+    e: test_bindings_from_spec_expands_envs_and_uses_fetch,test_bindings_from_spec_compiles_and_validates,test_run_fetch_resolves_env_and_templates,test_run_fetch_get_sends_no_body
+    test_bindings_from_spec_expands_envs_and_uses_fetch()
+    test_bindings_from_spec_compiles_and_validates()
+    test_run_fetch_resolves_env_and_templates(monkeypatch)
+    test_run_fetch_get_sends_no_body(monkeypatch)
+  adapters/python/tests/test_discovery.py:
+    e: test_build_index_maps_schemes,test_cache_reused_when_fingerprint_matches,test_fingerprint_includes_source_mtime,test_fingerprint_busts_on_connector_source_edit,test_registry_for_uri_resolves_only_matching
+    test_build_index_maps_schemes(tmp_path;monkeypatch)
+    test_cache_reused_when_fingerprint_matches(tmp_path;monkeypatch)
+    test_fingerprint_includes_source_mtime()
+    test_fingerprint_busts_on_connector_source_edit()
+    test_registry_for_uri_resolves_only_matching(tmp_path;monkeypatch)
+  adapters/python/tests/test_dispatch_protocol.py:
+    e: _registry,test_normalize_accepts_mode_and_execute_bool,test_validate_request_flags_problems,test_make_request_is_canonical,test_dispatch_executes_under_policy_and_data_flows,test_dispatch_dry_run_is_the_default,test_dispatch_rejects_invalid_request_with_structured_error,test_reply_fields_projects_each_adapter_shape,test_schemas_are_published
+    _registry()
+    test_normalize_accepts_mode_and_execute_bool()
+    test_validate_request_flags_problems()
+    test_make_request_is_canonical()
+    test_dispatch_executes_under_policy_and_data_flows()
+    test_dispatch_dry_run_is_the_default()
+    test_dispatch_rejects_invalid_request_with_structured_error()
+    test_reply_fields_projects_each_adapter_shape()
+    test_schemas_are_published()
+  adapters/python/tests/test_domain_monitor.py:
+    e: local_http,_StatusHandler,DomainMonitorTests
+    _StatusHandler: do_GET(0),log_message(1)
+    DomainMonitorTests: test_http_200_writes_success_check(0),test_http_failure_creates_screenshot_artifact(0),test_dns_mismatch_creates_review_ticket_only(0),test_v2_domain_monitor_bindings(0),test_v2_domain_monitor_mismatch_sets_failed_envelope_and_review_ticket(0),test_cli_monitor_domain_dry_run(0)
+    local_http(status)
+  adapters/python/tests/test_errors.py:
+    e: ErrorCodeTests,RecordAndQueryTests,RuntimeIntegrationTests,StandardizationTests,CaptureDecoratorTests
+    ErrorCodeTests: test_same_class_same_code_volatile_bits_ignored(0),test_different_type_or_scheme_differs(0),test_address_format(0)
+    RecordAndQueryTests: setUp(0),tearDown(0),_fail(3),test_record_stamps_code_and_address(0),test_record_noop_on_success(0),test_info_aggregates_occurrences(0),test_recent_and_search(0),test_errors_disabled_stamps_but_does_not_persist(0),test_info_unknown_code(0),test_bindings_export_query_and_command_routes(0),test_to_ticket_creates_ticket(0)
+    RuntimeIntegrationTests: test_run_policy_denied_stamps_error_address(0),test_v2_run_records_schema_errors(0),test_error_store_binding_runs_recent_search_info_and_address(0)
+    StandardizationTests: test_classify_by_type(0),test_classify_by_errno_in_message(0),test_classify_by_message_keywords(0),test_classify_not_found_message_beats_generic_type(0),test_classify_sqlite_and_resource_messages(0),test_classify_extended_type_map(0),test_every_category_has_meta(0),test_stamp_adds_standard_fields_and_docs_link(0),test_problem_is_rfc9457_shaped(0)
+    CaptureDecoratorTests: setUp(0),tearDown(0),test_capture_records_and_reraises(0),test_capture_no_reraise_returns_envelope(0),test_capture_passes_through_success(0)
+  adapters/python/tests/test_exec.py:
+    e: _fixture_env,test_runner_reads_stdin_calls_handler,_registry,test_executor_runs_in_subprocess,test_crash_is_contained,test_handler_isolated_flag_sets_subprocess_adapter
+    _fixture_env(tmp_path)
+    test_runner_reads_stdin_calls_handler(tmp_path)
+    _registry(tmp_path;fn)
+    test_executor_runs_in_subprocess(tmp_path;monkeypatch)
+    test_crash_is_contained(tmp_path;monkeypatch)
+    test_handler_isolated_flag_sets_subprocess_adapter()
+  adapters/python/tests/test_gap5_authoring.py:
+    e: test_gen_handlers_emits_valid_typed_stubs,test_run_module_dispatches_from_a_plain_file,test_run_module_errors_clearly_on_empty_file,test_connector_main_aggregates_routes_and_runs,test_connector_main_namespaces_clashing_route_names
+    test_gen_handlers_emits_valid_typed_stubs()
+    test_run_module_dispatches_from_a_plain_file(tmp_path)
+    test_run_module_errors_clearly_on_empty_file(tmp_path)
+    test_connector_main_aggregates_routes_and_runs(capsys)
+    test_connector_main_namespaces_clashing_route_names(capsys)
+  adapters/python/tests/test_host_dashboard.py:
+    e: get_json,post_json,HostDashboardTests
+    HostDashboardTests: test_dashboard_html_summary_and_task_action(0),test_v2_dashboard_url_command(0)
+    get_json(url)
+    post_json(url;payload)
+  adapters/python/tests/test_host_db.py:
+    e: HostDbTests
+    HostDbTests: test_dataset_schema_and_record_search(0),test_v2_data_uri_bindings(0),test_artifact_and_check_storage(0)
+  adapters/python/tests/test_install_upgrade.py:
+    e: _capture,_install,_upgrade,test_install_pypi_plain,test_install_upgrade_flag_adds_U,test_install_github_builds_git_url,test_install_local_is_editable,test_upgrade_core_self_pypi,test_upgrade_core_self_github_has_subdirectory,test_pip_command_routes_through_pipx,test_package_version_is_a_string,test_pipspec_version_parsing,test_outdated_flags_version_mismatch
+    _capture(fn;args)
+    _install()
+    _upgrade()
+    test_install_pypi_plain()
+    test_install_upgrade_flag_adds_U()
+    test_install_github_builds_git_url()
+    test_install_local_is_editable()
+    test_upgrade_core_self_pypi()
+    test_upgrade_core_self_github_has_subdirectory()
+    test_pip_command_routes_through_pipx(monkeypatch)
+    test_package_version_is_a_string()
+    test_pipspec_version_parsing()
+    test_outdated_flags_version_mismatch(monkeypatch)
+  adapters/python/tests/test_introspect.py:
+    e: _registry,test_routes_list_over_uri,test_routes_list_filtered,test_bindings_show_over_uri,test_no_registry_payload_introspects_live_runtime,test_zero_config_registry_carries_builtin_routes
+    _registry(tmp_path)
+    test_routes_list_over_uri(tmp_path)
+    test_routes_list_filtered(tmp_path)
+    test_bindings_show_over_uri(tmp_path)
+    test_no_registry_payload_introspects_live_runtime(tmp_path)
+    test_zero_config_registry_carries_builtin_routes()
+  adapters/python/tests/test_mesh.py:
+    e: MeshTests
+    MeshTests: test_host_config_add_node(0),test_apply_deploy_hot_swaps_registry_code_and_allow(0),test_apply_deploy_requires_a_surface(0),test_apply_deploy_reloads_pushed_code_without_restart(0),test_resolve_admin_token_generate_reuse_and_precedence(0),test_verify_request_rejects_replay(0),test_apply_deploy_ignores_dangerous_env(0),test_oversized_body_rejected_with_413(0),test_run_rejects_malformed_body_with_400(0),test_parse_ports(0),test_node_list_running_discovers_a_live_node(0),test_require_run_auth_gates_run(0),test_keyauth_sign_verify_and_enrollment(0),test_stop_node_port_when_nothing_listening(0),test_copy_id_gives_actionable_error_not_bare_404(0),test_node_config_defaults(0),test_manage_bindings_and_install(0),test_node_management_routes_admin_gated(0),test_event_topic_mapping(0),test_fanout_to_mqtt_publishes_each_event(0),test_event_hub_ids_and_replay(0),test_events_endpoint_auth_gating(0),test_heuristic_flow_uses_all_reachable_nodes(0),test_registry_from_remote_routes(0),test_resolve_step_payload_chains_prior_results(0),test_dig_path_indexes_lists(0),test_resolve_step_payload_passthrough_without_from(0)
+  adapters/python/tests/test_minimal_imports.py:
+    e: MinimalImportTests
+    MinimalImportTests: test_core_import_keeps_host_and_domain_modules_lazy(0),test_host_binding_generation_keeps_executors_lazy(0)
+  adapters/python/tests/test_node_diagnostics.py:
+    e: _template_registry,test_concrete_uri_resolves_against_host_template,test_template_route_denied_without_allow_still_resolves
+    _template_registry()
+    test_concrete_uri_resolves_against_host_template()
+    test_template_route_denied_without_allow_still_resolves()
+  adapters/python/tests/test_openapi_import.py:
+    e: test_import_maps_paths_and_methods,test_import_validates_and_compiles,test_base_url_override
+    test_import_maps_paths_and_methods()
+    test_import_validates_and_compiles()
+    test_base_url_override()
+  adapters/python/tests/test_param_routing.py:
+    e: ParamRoutingTests
+    ParamRoutingTests: setUp(0),_run(1),test_concrete_param_resolves_templated_route(0),test_bound_param_reaches_handler(0),test_exact_match_still_wins_over_param(0),test_unknown_route_still_raises(0)
+  adapters/python/tests/test_planfile_adapter.py:
+    e: PlanfileAdapterTests
+    PlanfileAdapterTests: test_create_next_and_complete_ticket(0),test_dsl_create_ticket(0),test_cli_host_task_create_and_list(0),test_host_task_run_updates_ticket(0),test_v2_task_uri_bindings_create_and_list_ticket(0),test_v2_task_uri_complete_and_fail_record_outputs(0),test_v2_task_uri_rejects_invalid_payload(0),test_host_task_run_dispatches_executor_handler(0),test_fail_or_retry_requeues_until_max_attempts(0),test_fail_or_retry_default_max_attempts_fails_terminally(0),test_host_task_loop_retries_failing_flow_until_exhausted(0),test_chat_plan_domain_prompt_creates_ticket(0),test_chat_plan_ambiguous_prompt_waits_for_input(0),test_chat_plan_destructive_prompt_requires_review(0)
+  adapters/python/tests/test_public_api.py:
+    e: PolicyTests,ResultDataTests,ActionSpaceAndTestingTests,ProjectionParityTests
+    PolicyTests: test_none_when_empty(0),test_builds_allow_deny_secret(0)
+    ResultDataTests: test_local_function_value(0),test_argv_stdout_json(0),test_argv_stdout_non_json(0),test_dry_run_plan_passthrough(0),test_no_result_returns_env(0)
+    ActionSpaceAndTestingTests: _connector(0),test_action_space_projection(0),test_testing_assert_routes_and_smoke(0),test_run_query_unwraps(0)
+    ProjectionParityTests: _connector(0),test_mcp_tools_from_connector_object(0),test_a2a_card_from_connector_object(0)
+  adapters/python/tests/test_registry_portable.py:
+    e: test_argv_route_is_registry_portable,test_local_function_route_is_flagged,test_assert_registry_portable_raises_on_local_function,test_smoke_requires_portability_by_default,test_smoke_portable_allow_opts_in_for_inprocess_connectors
+    test_argv_route_is_registry_portable()
+    test_local_function_route_is_flagged()
+    test_assert_registry_portable_raises_on_local_function()
+    test_smoke_requires_portability_by_default()
+    test_smoke_portable_allow_opts_in_for_inprocess_connectors()
+  adapters/python/tests/test_scheduler.py:
+    e: SchedulerTests
+    SchedulerTests: test_systemd_preview_and_install(0),test_cli_schedule_cron_preview(0)
+  adapters/python/tests/test_secrets.py:
+    e: test_secretstr_is_redacted,test_resolve_env,test_dry_run_never_resolves,test_deny_by_default,test_fill_secrets_dry_run_redacts,test_fill_secrets_execute_injects,test_run_fetch_injects_secret_into_header_only,test_node_guard_disables_secrets_even_when_allowed,_resp,test_vault_provider,test_oauth_provider_returns_cached_then_refreshes,test_browser_provider_refuses,test_run_fetch_secret_denied_without_allow
+    test_secretstr_is_redacted()
+    test_resolve_env(monkeypatch)
+    test_dry_run_never_resolves()
+    test_deny_by_default()
+    test_fill_secrets_dry_run_redacts(monkeypatch)
+    test_fill_secrets_execute_injects(monkeypatch)
+    test_run_fetch_injects_secret_into_header_only(monkeypatch)
+    test_node_guard_disables_secrets_even_when_allowed(monkeypatch)
+    _resp(payload)
+    test_vault_provider(monkeypatch)
+    test_oauth_provider_returns_cached_then_refreshes(monkeypatch)
+    test_browser_provider_refuses(monkeypatch)
+    test_run_fetch_secret_denied_without_allow(monkeypatch)
+  adapters/python/tests/test_tree.py:
+    e: test_tree_from_bindings_shape,test_tree_from_registry_equals_bindings,test_collect_uris_handles_list_and_dict,test_singular_and_plural_stay_distinct
+    test_tree_from_bindings_shape()
+    test_tree_from_registry_equals_bindings()
+    test_collect_uris_handles_list_and_dict()
+    test_singular_and_plural_stay_distinct()
+  adapters/python/tests/test_urihandler.py:
+    e: UriHandlerTests
+    UriHandlerTests: test_parse_uri(0),test_build_invocation(0),test_dispatch(0),test_missing_registry_entries(0),test_v2_connector_bindings_from_decorators(0),test_connector_helper_uses_human_defaults(0),test_entry_point_bindings_generate_registry(0),test_broken_entry_point_does_not_break_discovery(0),test_connector_health_flags_stale_console_script(0),test_local_function_hydrates_from_python_descriptor(0),test_connector_collisions_classify_duplicate_vs_shared_path(0),test_connector_installed_predicate(0)
+  adapters/python/tests/test_v2_mcp.py:
+    e: test_v2_mcp_tool_names_are_unique_for_cqrs_uri_args,test_v2_mcp_preserves_single_route_tool_name
+    test_v2_mcp_tool_names_are_unique_for_cqrs_uri_args()
+    test_v2_mcp_preserves_single_route_tool_name()
+  adapters/python/tests/test_worker.py:
+    e: test_render_argv_fills_and_drops_empty_flags,_pool,test_worker_roundtrip_and_reuse,test_warm_is_faster_than_cold
+    test_render_argv_fills_and_drops_empty_flags()
+    _pool(tmp_path)
+    test_worker_roundtrip_and_reuse(tmp_path)
+    test_warm_is_faster_than_cold(tmp_path)
+  adapters/python/tests/test_worker_pool.py:
+    e: test_non_argv_route_not_pooled,test_unknown_console_script_not_pooled,test_python_m_route_dispatches,test_local_function_subprocess_route_is_pooled
+    test_non_argv_route_not_pooled()
+    test_unknown_console_script_not_pooled()
+    test_python_m_route_dispatches(tmp_path)
+    test_local_function_subprocess_route_is_pooled(tmp_path)
+  adapters/python/urirun/__init__.py:
+    e: parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,policy,action_space,result_data,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,Connector
+    Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(3),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
+    parse_uri(uri)
+    build_invocation(descriptor)
+    dispatch(uri;registry;payload)
+    command(uri)
+    shell(uri)
+    handler(uri)
+    _example_payload(schema)
+    ok()
+    fail(error)
+    plan()
+    policy(allow;deny;secret_allow;policy_file)
+    action_space(registry)
+    result_data(env)
+    connector_bindings()
+    entry_point_bindings(group)
+    entry_point_binding_document(group;generated_at)
+    entry_point_registry(group;generated_at;on_conflict)
+    error_bindings(target)
+    compat_report()
+    compile_registry(doc;generated_at;on_conflict)
+    list_routes(registry;policy)
+    validate_binding_document(doc)
+    run(uri;registry;payload;mode;policy;confirm;executors)
+    connector(connector_id)
+    load_manifest(package;name)
+    connector_emit(payload)
+    connector_cli(prog)
+    connector_main()
+  adapters/python/urirun/_registry.py:
+  adapters/python/urirun/_runtime.py:
+  adapters/python/urirun/_scan.py:
+  adapters/python/urirun/compat.py:
+  adapters/python/urirun/connect_catalog.py:
+  adapters/python/urirun/connector_scaffold.py:
+  adapters/python/urirun/connector_sdk.py:
+  adapters/python/urirun/connector_smoke.py:
+  adapters/python/urirun/connectors/__init__.py:
+  adapters/python/urirun/connectors/connect_catalog.py:
+    e: _get_json,fetch_catalog,fetch_connector,_connectors,_find,resolve_install,pip_install_command,diff_manifest,_diff_scalar_fields,_diff_set_fields,_diff_install,_emit_json,_cmd_list,_cmd_show,_cmd_install,_cmd_check,connectors_command
+    _get_json(url;timeout)
+    fetch_catalog(base;timeout)
+    fetch_connector(connector_id;base;timeout)
+    _connectors(catalog)
+    _find(catalog;connector_id)
+    resolve_install(catalog;ids)
+    pip_install_command(pip_specs)
+    diff_manifest(local;hub)
+    _diff_scalar_fields(local;hub;fields)
+    _diff_set_fields(local;hub;fields)
+    _diff_install(local;hub)
+    _emit_json(payload)
+    _cmd_list(args)
+    _cmd_show(args)
+    _cmd_install(args)
+    _cmd_check(args)
+    connectors_command(args)
+  adapters/python/urirun/connectors/connector_lint.py:
+    e: _connector_call_target,_connector_assignment,_connector_objects,_route_uri,_decorator_routes,_cli_subcommands,_scan_code_routes,_load_manifest_routes,_route_placements,_compute_drift,_adapter_drift,_route_kind_counts,lint_connector,_format_report,lint_command
+    _connector_call_target(call)
+    _connector_assignment(node)
+    _connector_objects(tree)
+    _route_uri(scheme;target;path)
+    _decorator_routes(tree;objs)
+    _cli_subcommands(py_files)
+    _scan_code_routes(py_files)
+    _load_manifest_routes(manifests)
+    _route_placements(code_routes;manifest_uris;cli_subs)
+    _compute_drift(code_uris;manifest_uris;code_routes;manifest_declares_routes)
+    _adapter_drift(code_routes;manifest)
+    _route_kind_counts(code_routes)
+    lint_connector(pkg_dir)
+    _format_report(rep)
+    lint_command(args)
+  adapters/python/urirun/connectors/connector_scaffold.py:
+    e: _pkg_module,_scheme,_manifest,_python_manifest,_write,_python_files,_js_files,_go_files,_php_files,scaffold,new_command
+    _pkg_module(connector_id)
+    _scheme(connector_id;scheme)
+    _manifest(connector_id;scheme;language;route)
+    _python_manifest(connector_id;scheme)
+    _write(files;out_dir)
+    _python_files(cid;scheme;route)
+    _js_files(cid;scheme;route)
+    _go_files(cid;scheme;route)
+    _php_files(cid;scheme;route)
+    scaffold(connector_id;language;scheme;out_dir)
+    new_command(args)
+  adapters/python/urirun/connectors/connector_sdk.py:
+    e: load_manifest,emit,connector_cli
+    load_manifest(package;name)
+    emit(payload)
+    connector_cli(prog)
+  adapters/python/urirun/connectors/connector_smoke.py:
+    e: _load,smoke,smoke_command
+    _load(path)
+    smoke(bindings)
+    smoke_command(args)
+  adapters/python/urirun/connectors/declarative.py:
+    e: load_spec,bindings_from_spec,from_spec_command
+    load_spec(path)
+    bindings_from_spec(spec)
+    from_spec_command(args)
+  adapters/python/urirun/connectors/openapi_import.py:
+    e: _route_uri,_operation_schema,_operation_binding,import_openapi,load_spec,add_openapi_command
+    _route_uri(scheme;target;method;path)
+    _operation_schema(operation;path)
+    _operation_binding(scheme;target;method;path;operation;environments;base)
+    import_openapi(spec)
+    load_spec(source)
+    add_openapi_command(args)
+  adapters/python/urirun/domain_monitor.py:
+  adapters/python/urirun/errors.py:
+  adapters/python/urirun/exec.py:
+    e: _resolve,main
+    _resolve(ref)
+    main(argv)
+  adapters/python/urirun/host/__init__.py:
+  adapters/python/urirun/host/domain_monitor.py:
+    e: now_id,_list,_domain,default_url,http_status,dns_records,expected_records,dns_mismatches,capture_screenshot_artifact,create_dns_repair_ticket,check_domain,_screenshot_artifacts,_persist_check_effects,run_daily,_db,_project,_screenshot_dir,_provider,_namecheap_moved,_route_monitor,_route_dns,_route_browser,_route_log,_route_flow,run_uri_route,_RouteCtx
+    _RouteCtx: key(0)  # Resolved routing context shared across the per-package route
+    now_id()
+    _list(value)
+    _domain(target;payload)
+    default_url(domain)
+    http_status(url;timeout;expected_status)
+    dns_records(domain;record_types)
+    expected_records(payload)
+    dns_mismatches(current;expected)
+    capture_screenshot_artifact()
+    create_dns_repair_ticket()
+    check_domain()
+    _screenshot_artifacts()
+    _persist_check_effects(result)
+    run_daily()
+    _db(ctx;payload)
+    _project(ctx;payload)
+    _screenshot_dir(ctx;payload)
+    _provider(ctx;payload)
+    _namecheap_moved(descriptor)
+    _route_monitor(rc)
+    _route_dns(rc)
+    _route_browser(rc)
+    _route_log(rc)
+    _route_flow(rc)
+    run_uri_route(ctx;execute)
+  adapters/python/urirun/host/host_dashboard.py:
+    e: _json_response,_html_response,_read_json,_first,_host_db,_mesh,_planfile_adapter,_safe_tickets,_task_counts,summary,task_action,_dashboard_api_response,create_handler,serve,command,default_host
+    _json_response(handler;status;payload)
+    _html_response(handler;html)
+    _read_json(handler)
+    _first(query;name;default)
+    _host_db()
+    _mesh()
+    _planfile_adapter()
+    _safe_tickets(project;sprint;status;queue)
+    _task_counts(tickets)
+    summary(project;db;config)
+    task_action(project;ticket_id;action;payload)
+    _dashboard_api_response(path;project;db;config;query)
+    create_handler(project;db;config)
+    serve(project;db;config;host;port)
+    command(args)
+    default_host()
+  adapters/python/urirun/host/host_db.py:
+    e: db_path,now_iso,new_id,connect,connection,row_dict,rows_dict,init_db,_schema_json,create_dataset,list_datasets,get_dataset,_validate_record,upsert_record,_sync_record_fts,search_records,register_artifact,list_artifacts,add_check,recent_checks,add_log,recent_logs,create_llm_session,add_llm_message,read_only_sql,route_db_path,_run_query_route,_run_command_route,run_uri_route
+    db_path(path)
+    now_iso()
+    new_id(prefix)
+    connect(path)
+    connection(path)
+    row_dict(row)
+    rows_dict(rows)
+    init_db(path)
+    _schema_json(schema)
+    create_dataset(path;name;description;schema)
+    list_datasets(path)
+    get_dataset(path;name_or_id)
+    _validate_record(dataset;data)
+    upsert_record(path;dataset;key;data)
+    _sync_record_fts(conn;record;dataset_id)
+    search_records(path;query;dataset;limit)
+    register_artifact(path;kind;uri;artifact_path;meta)
+    list_artifacts(path;kind;limit)
+    add_check(path;subject;check_uri;status;result)
+    recent_checks(path;subject;limit)
+    add_log(path;stream;event;detail)
+    recent_logs(path;stream;limit)
+    create_llm_session(path;title)
+    add_llm_message(path;session_id;role;content;extracted)
+    read_only_sql(path;query;params;limit)
+    route_db_path(ctx;payload)
+    _run_query_route(payload;path;package;resource;operation)
+    _run_command_route(payload;path;package;resource;operation;action)
+    run_uri_route(ctx;execute)
+  adapters/python/urirun/host/host_integrations.py:
+    e: planfile_task_bindings,_list_param,_ticket_id,_planfile_action,_planfile_project,_simulate_planfile,_read_planfile_action,_planfile_update,_planfile_dsl,_write_planfile_action,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor
+    planfile_task_bindings(target;project)
+    _list_param(value)
+    _ticket_id(payload;args)
+    _planfile_action(ctx)
+    _planfile_project(ctx;payload)
+    _simulate_planfile(ctx;action;payload;project)
+    _read_planfile_action(pa;action;project;payload;args)
+    _planfile_update(pa;project;payload;args)
+    _planfile_dsl(pa;project;payload;args)
+    _write_planfile_action(pa;action;project;payload;args)
+    run_planfile_task(ctx;policy;execute)
+    host_data_bindings(target;db)
+    run_host_data(ctx;policy;execute)
+    domain_monitor_bindings(target;db;project;screenshot_dir)
+    run_domain_monitor(ctx;policy;execute)
+  adapters/python/urirun/host/planfile_adapter.py:
+    e: _imports,normalize_priority,project_root,_model_dict,load_planfile,ticket_to_dict,_normalize_labels,_build_executor,_build_execution,_build_inputs,_build_outputs,build_ticket_payload,create_ticket,list_tickets,next_ticket,get_ticket,claim_ticket,start_ticket,complete_ticket,fail_ticket,fail_or_retry,update_ticket,wait_for_input,ready_ticket,run_dsl,loads_json,PlanfileUnavailable
+    PlanfileUnavailable:  # Raised when the optional planfile package is not installed.
+    _imports()
+    normalize_priority(priority)
+    project_root(project)
+    _model_dict(obj)
+    load_planfile(project)
+    ticket_to_dict(ticket)
+    _normalize_labels(data)
+    _build_executor(data;imports)
+    _build_execution(data;imports)
+    _build_inputs(data;imports)
+    _build_outputs(data;imports)
+    build_ticket_payload(payload)
+    create_ticket(project;payload)
+    list_tickets(project;sprint;status;label;queue)
+    next_ticket(project;sprint;queue)
+    get_ticket(project;ticket_id)
+    claim_ticket(project;ticket_id;assigned_to;lease_seconds)
+    start_ticket(project;ticket_id;assigned_to)
+    complete_ticket(project;ticket_id;note;result;artifacts)
+    fail_ticket(project;ticket_id;error)
+    fail_or_retry(project;ticket_id;error)
+    update_ticket(project;ticket_id;updates)
+    wait_for_input(project;ticket_id;prompt;env_keys;note)
+    ready_ticket(project;ticket_id;note)
+    run_dsl(project;command)
+    loads_json(value;default)
+  adapters/python/urirun/host/scheduler.py:
+    e: build_loop_command,shell_join,systemd_units,cron_line,preview,install_systemd_user
+    build_loop_command()
+    shell_join(command)
+    systemd_units()
+    cron_line(command;time_of_day)
+    preview()
+    install_systemd_user(files;out_dir)
+  adapters/python/urirun/host/task_planner.py:
+    e: normalize_text,slug,_json_from_text,is_ambiguous,is_destructive,_has_any,_unique,_short_name,_ambiguous_plan,_derive_plan_labels,_derive_acceptance_criteria,heuristic_plan_chat_request,llm_plan_chat_request,plan_chat_request,ticket_payload,create_tickets_from_plan,PlannedTicket,TaskPlanningResult
+    PlannedTicket:
+    TaskPlanningResult:
+    normalize_text(value)
+    slug(value)
+    _json_from_text(text)
+    is_ambiguous(prompt)
+    is_destructive(prompt)
+    _has_any(prompt;words)
+    _unique(values)
+    _short_name(prompt;domains;daily)
+    _ambiguous_plan(prompt;default_sprint;labels)
+    _derive_plan_labels(labels;normalized;domains;daily;screenshot;destructive)
+    _derive_acceptance_criteria(domains;screenshot;daily;destructive)
+    heuristic_plan_chat_request(prompt)
+    llm_plan_chat_request(prompt)
+    plan_chat_request(prompt)
+    ticket_payload(ticket;plan)
+    create_tickets_from_plan(project;plan)
+  adapters/python/urirun/host_dashboard.py:
+  adapters/python/urirun/host_db.py:
+  adapters/python/urirun/host_integrations.py:
+  adapters/python/urirun/mesh.py:
+  adapters/python/urirun/node/__init__.py:
+  adapters/python/urirun/node/keyauth.py:
+    e: available,state_dir,authorized_keys_path,_normalize,fingerprint,load_authorized,is_authorized,add_authorized,_canonical,public_openssh,sign,verify,_replay_seen,verify_request
+    available()
+    state_dir()
+    authorized_keys_path()
+    _normalize(openssh)
+    fingerprint(openssh)
+    load_authorized()
+    is_authorized(openssh)
+    add_authorized(openssh)
+    _canonical(purpose;ts;body)
+    public_openssh(identity_priv_path)
+    sign(identity_priv_path;purpose;body;ts)
+    verify(openssh;sig_b64;purpose;ts;body)
+    _replay_seen(sig)
+    verify_request(headers;body;purpose)
+  adapters/python/urirun/node/manage.py:
+    e: _pip,package_install,connector_install,package_list,runtime_info,bindings
+    _pip(args;timeout)
+    package_install()
+    connector_install()
+    package_list()
+    runtime_info()
+    bindings(name)
+  adapters/python/urirun/node/mesh.py:
+    e: now_id,slug,json_load,json_write,host_config_path,node_config_path,default_host_config,load_host_config,save_host_config,init_host,add_node,default_node_config,load_node_config,save_node_config,init_node,current_version,_vtuple,latest_version,version_status,version_line,http_json,_probe_health,_listening_ports_local,node_list_running,_pids_on_port,stop_node_port,parse_ports,node_url,deploy_to_node,watch_node,event_topic,_mqtt_publish_fn,fanout_to_mqtt,copy_id,routes_from_registry,safe_route,route_target,discover_node,discover_mesh,binding_for_remote_route,registry_from_routes,target_nodes,first_url,append_if_available,_flow_intents,_append_target_steps,heuristic_flow,json_from_text,normalize_flow,llm_flow,make_flow,_dig_path,resolve_step_payload,execute_flow,format_nodes,format_routes,format_tickets,format_table,_parse_json_option,data_command,monitor_command,_task_prompt,_ticket_payload,_host_local_registry,_run_executor_handler,_resolves_locally,_run_task_flow,_emit_ticket_result,_task_plan,_task_bindings,_task_schedule,_task_list,_task_show,_task_next,_task_create,_task_claim,_task_start,_task_complete,_task_fail,_task_block,_task_ready,_task_wait,_task_dsl,_task_run,_task_loop,task_command,_host_delegated_command,watch_command,_host_mesh_command,copy_id_command,copy_id_cli,deploy_command,host_command,send_json,read_raw,read_json,_pool_executors,node_state_dir,deploy_dir,node_token_path,resolve_admin_token,apply_deploy,serve_node,_node_serve,node_list_command,node_stop_command,node_command,EventHub
+    EventHub: __init__(1),publish(1),subscribe(0),unsubscribe(1),replay_since(1),current_id(0),count(0)  # In-memory pub/sub for a node's live event stream (SSE). Each
+    now_id()
+    slug(value)
+    json_load(path)
+    json_write(path;data)
+    host_config_path(path)
+    node_config_path(path)
+    default_host_config(name)
+    load_host_config(path)
+    save_host_config(config;path)
+    init_host(path;name)
+    add_node(path;name;url;tags)
+    default_node_config(name;registry)
+    load_node_config(path)
+    save_node_config(config;path)
+    init_node(path;name;registry;host;port;execute)
+    current_version()
+    _vtuple(v)
+    latest_version(timeout;ttl)
+    version_status(check_latest)
+    version_line(check_latest)
+    http_json(method;url;body;timeout;headers;raw)
+    _probe_health(host;port;timeout)
+    _listening_ports_local()
+    node_list_running(host;ports)
+    _pids_on_port(port)
+    stop_node_port(port;host;timeout)
+    parse_ports(spec)
+    node_url(config;name_or_url)
+    deploy_to_node(url)
+    watch_node(url;scheme;last_event_id;token;identity;timeout)
+    event_topic(prefix;ev)
+    _mqtt_publish_fn(broker)
+    fanout_to_mqtt(events;broker;topic_prefix;publish_fn;on_publish)
+    copy_id(url;identity)
+    routes_from_registry(registry)
+    safe_route(route)
+    route_target(uri)
+    discover_node(node)
+    discover_mesh(config)
+    binding_for_remote_route(route)
+    registry_from_routes(routes)
+    target_nodes(prompt;nodes;explicit)
+    first_url(prompt)
+    append_if_available(steps;route_uris;uri;payload;previous)
+    _flow_intents(lowered)
+    _append_target_steps(steps;route_uris;target;intents;url;previous)
+    heuristic_flow(prompt;routes;nodes;selected_nodes)
+    json_from_text(text)
+    normalize_flow(flow;allowed_uris)
+    llm_flow(prompt;routes;nodes)
+    make_flow(prompt;mesh;selected_nodes;use_llm)
+    _dig_path(data;dotted)
+    resolve_step_payload(payload;results)
+    execute_flow(flow;mesh;registry;execute)
+    format_nodes(mesh)
+    format_routes(routes)
+    format_tickets(tickets)
+    format_table(rows;columns;headers)
+    _parse_json_option(value;default)
+    data_command(args)
+    monitor_command(args)
+    _task_prompt(ticket)
+    _ticket_payload(ticket)
+    _host_local_registry(args)
+    _run_executor_handler(args;ticket;handler)
+    _resolves_locally(args;handler)
+    _run_task_flow(args;ticket)
+    _emit_ticket_result(ticket)
+    _task_plan(args;pa)
+    _task_bindings(args;pa)
+    _task_schedule(args;pa)
+    _task_list(args;pa)
+    _task_show(args;pa)
+    _task_next(args;pa)
+    _task_create(args;pa)
+    _task_claim(args;pa)
+    _task_start(args;pa)
+    _task_complete(args;pa)
+    _task_fail(args;pa)
+    _task_block(args;pa)
+    _task_ready(args;pa)
+    _task_wait(args;pa)
+    _task_dsl(args;pa)
+    _task_run(args;pa)
+    _task_loop(args;pa)
+    task_command(args)
+    _host_delegated_command(args)
+    watch_command(args)
+    _host_mesh_command(args;config;mesh)
+    copy_id_command(args)
+    copy_id_cli(argv)
+    deploy_command(args)
+    host_command(args)
+    send_json(handler;status;payload)
+    read_raw(handler)
+    read_json(handler)
+    _pool_executors(pools)
+    node_state_dir()
+    deploy_dir()
+    node_token_path()
+    resolve_admin_token(explicit;config_token;generate)
+    apply_deploy(state;body)
+    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage)
+    _node_serve(args;node;name;registry)
+    node_list_command(args)
+    node_stop_command(args)
+    node_command(args)
+  adapters/python/urirun/planfile_adapter.py:
+  adapters/python/urirun/runtime/__init__.py:
+  adapters/python/urirun/runtime/_registry.py:
+    e: parse_uri,translate,hash_uri,default_adapter,normalize_route_entry,route_from_uri,route_from_parts,coerce_route_source,_route_entry_equal,add_route,flatten_registry_tree,_get_route_entry,flatten_registry_document,discover_manifest,build_registry_document,_parse_command,discover_docker_labels,discover_docker_inspect,_operation_from_method,_default_openapi_route,discover_openapi,uri_handler,_iter_module_exports,discover_python_modules,discover_entry_points,registry_tree,_resolve_from_index,_walk_route_tree,resolve_route,_walk_route_entries,hydrate_registry,exec_local_function,exec_fetch,exec_spawn,exec_shell_template,exec_mqtt_publish,dispatch_generated,load_json,write_json,_emit_json,_load_sources,_discover_python_module,main
+    parse_uri(uri)
+    translate(descriptor)
+    hash_uri(normalized)
+    default_adapter(kind)
+    normalize_route_entry(route_entry)
+    route_from_uri(uri;route_entry;source)
+    route_from_parts(package;resource;operation;route_entry;source;target)
+    coerce_route_source(item;default_source)
+    _route_entry_equal(left;right)
+    add_route(registry_tree;route;route_entry;on_conflict)
+    flatten_registry_tree(registry_tree;source)
+    _get_route_entry(registry_tree;route)
+    flatten_registry_document(document;source)
+    discover_manifest(manifest;source)
+    build_registry_document(route_sources;generated_at;on_conflict)
+    _parse_command(value)
+    discover_docker_labels(labels;source)
+    discover_docker_inspect(inspect_data)
+    _operation_from_method(method)
+    _default_openapi_route(method;path;operation;package;target)
+    discover_openapi(spec;base_url;package;target;source)
+    uri_handler(uri)
+    _iter_module_exports(modules)
+    discover_python_modules(modules)
+    discover_entry_points(group)
+    registry_tree(registry)
+    _resolve_from_index(normalized;registry)
+    _walk_route_tree(tree;route)
+    resolve_route(translation;registry)
+    _walk_route_entries(node)
+    hydrate_registry(registry;refs)
+    exec_local_function(ctx)
+    exec_fetch(ctx)
+    exec_spawn(ctx)
+    exec_shell_template(ctx)
+    exec_mqtt_publish(ctx)
+    dispatch_generated(uri;registry;payload;runtime_cache;executors)
+    load_json(path)
+    write_json(path;value)
+    _emit_json(value;out)
+    _load_sources(paths)
+    _discover_python_module(module_name)
+    main(argv)
+  adapters/python/urirun/runtime/_runtime.py:
+    e: _fetch_fill,_fetch_render,default_policy,merge_policy,_matches_any,_looks_destructive,evaluate_policy,_policy_denial,_policy_allow,_truncate,run_spawn,run_shell_template,_resolve_fetch_url,_make_secret_injector,_build_fetch_body,_send_fetch,run_fetch,_hydrate_local_function,run_local_function,run_mqtt_publish,run,check,load_registry_arg,build_policy,list_routes,format_route_table,main,PolicyError
+    PolicyError:  # Raised when a route is blocked by policy in execute mode.
+    _fetch_fill(text;payload)
+    _fetch_render(value;payload)
+    default_policy()
+    merge_policy(policy)
+    _matches_any(uri;patterns)
+    _looks_destructive(route_entry;ctx)
+    evaluate_policy(uri;route_entry;ctx;policy)
+    _policy_denial(uri;route_entry;ctx;policy;route_policy;execute)
+    _policy_allow(uri;route_policy;execute)
+    _truncate(text)
+    run_spawn(ctx;policy)
+    run_shell_template(ctx;policy)
+    _resolve_fetch_url(config;ctx;payload)
+    _make_secret_injector(policy)
+    _build_fetch_body(config;ctx;method;headers;inject;payload)
+    _send_fetch(url;method;headers;body;policy)
+    run_fetch(ctx;policy)
+    _hydrate_local_function(route_entry)
+    run_local_function(ctx;policy)
+    run_mqtt_publish(ctx;policy)
+    run(uri;registry;payload;mode;policy;confirm;executors)
+    check(uri;registry;policy)
+    load_registry_arg(arg;openapi_base_url)
+    build_policy(policy_file;allow;deny;secret_allow)
+    list_routes(registry;policy)
+    format_route_table(items;show_decision)
+    main(argv)
+  adapters/python/urirun/runtime/_scan.py:
+    e: slugify,relpath,now_iso,load_json,write_json,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
+    slugify(value;fallback)
+    relpath(path;root)
+    now_iso()
+    load_json(path)
+    write_json(path;value)
+    emit_json(value;out)
+    infer_kind(binding)
+    normalize_binding(binding;default_source)
+    binding_to_route_source(binding)
+    route_source_to_binding(route_source)
+    load_bindings_from_manifest(data;source)
+    build_binding_document(bindings;generated_at)
+    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
+    iter_project_files(root)
+    scan_manifest_files(root)
+    npm_command_for_script(script)
+    github_dependency_binding(name;spec;manager;command;source)
+    scan_package_json(path;root)
+    _read_toml(path)
+    scan_pyproject(path;root)
+    scan_makefile(path;root)
+    scan_shell_script(path;root)
+    module_ref_for_python(path;root;name)
+    scan_python_code(path;root)
+    scan_js_code(path;root)
+    parse_compose_label_line(line)
+    scan_docker_compose(path;root)
+    scan_openapi(path;root;base_url)
+    scan_path(path;include_shell;openapi_base_url)
+    scan_github(repo;include_shell;openapi_base_url)
+    load_binding_source(path;include_shell;openapi_base_url)
+    load_binding_sources(paths;include_shell;openapi_base_url)
+    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
+    list_bindings(paths;include_shell;openapi_base_url)
+    format_binding_table(bindings)
+    main(argv)
+  adapters/python/urirun/runtime/adopt_pack.py:
+    e: _load,_policy,_handlers,manifest_bindings,_document,adopt_document,_tool_urirun,installed_manifest_path,_package_json_manifest,_config_manifest,adopt,main
+    _load(path)
+    _policy(pattern)
+    _handlers(manifest)
+    manifest_bindings(manifest)
+    _document(manifest)
+    adopt_document(path)
+    _tool_urirun(pyproject)
+    installed_manifest_path(package)
+    _package_json_manifest(package_json)
+    _config_manifest(cfg;base;name)
+    adopt(target)
+    main(argv)
+  adapters/python/urirun/runtime/agent.py:
+    e: action_space,_parse_stdout,_resolve_refs,run_plan,_load_planner,agent_command
+    action_space(registry)
+    _parse_stdout(result)
+    _resolve_refs(value;trace)
+    run_plan(registry;steps)
+    _load_planner(spec)
+    agent_command(args)
+  adapters/python/urirun/runtime/codegen.py:
+    e: _pascal,_snake,_routes,_field_snake,_msg_pascal,_uri_parts,_rpc_name,assign_rpc_names,_field_type,_message_fields,dispatch_field_collisions,proto_from_registry,to_proto,to_openapi,to_client_python,_handler_signature,to_handlers,gen_command
+    _pascal(uri)
+    _snake(uri)
+    _routes(registry)
+    _field_snake(name)
+    _msg_pascal(name)
+    _uri_parts(uri)
+    _rpc_name(uri)
+    assign_rpc_names(uris;nuances)
+    _field_type(field;schema;ctx)
+    _message_fields(msg;schema)
+    dispatch_field_collisions(schema)
+    proto_from_registry(registry;package)
+    to_proto(registry;package)
+    to_openapi(registry;title)
+    to_client_python(registry)
+    _handler_signature(props;required)
+    to_handlers(registry)
+    gen_command(args)
+  adapters/python/urirun/runtime/compat.py:
+    e: _entry_point_names,_importable,module_status,report,_print_table,main
+    _entry_point_names(group)
+    _importable(name)
+    module_status(item)
+    report()
+    _print_table(modules)
+    main(argv)
+  adapters/python/urirun/runtime/daemon.py:
+    e: call,serve,_main
+    call(socket_path;request;timeout)
+    serve(socket_path)
+    _main(argv)
+  adapters/python/urirun/runtime/discovery.py:
+    e: _index_path,full_registry,_fingerprint,_scheme_of,build_index,load_index,registry_for_uri,_bindings_for_entry_point
+    _index_path()
+    full_registry(group)
+    _fingerprint(group)
+    _scheme_of(uri)
+    build_index(group)
+    load_index(group)
+    registry_for_uri(uri;group)
+    _bindings_for_entry_point(name;group)
+  adapters/python/urirun/runtime/dispatch_protocol.py:
+    e: make_request,_norm_mode,normalize_request,validate_request,_parse_stdout,reply_fields,validate_reply,dispatch
+    make_request(uri;payload;mode)
+    _norm_mode(value)
+    normalize_request(raw)
+    validate_request(req)
+    _parse_stdout(stdout)
+    reply_fields(envelope)
+    validate_reply(envelope)
+    dispatch(request;registry)
+  adapters/python/urirun/runtime/errors.py:
+    e: store_path,_normalize_message,error_code,_match_message_rules,_errno_category,classify,category_meta,address,help_url,stamp,record,problem,_append,_load,fix_hints,info,_aggregate,recent,search,to_ticket,bindings,capture,_emit,_require_arg,_cmd_recent,_cmd_info,_cmd_search,_cmd_ticket,_cmd_categories,_cmd_bindings,main
+    store_path(store)
+    _normalize_message(message)
+    error_code(error_type;message;scheme)
+    _match_message_rules(low;rules)
+    _errno_category(message;errno_name)
+    classify(error_type;message;errno_name)
+    category_meta(category)
+    address(code)
+    help_url(code;category)
+    stamp(error;scheme)
+    record(envelope)
+    problem(envelope)
+    _append(envelope;scheme)
+    _load(store)
+    fix_hints(rec)
+    info(code;store)
+    _aggregate(store)
+    recent(n;store)
+    search(query;store)
+    to_ticket(code;project;store)
+    bindings(target)
+    capture(scheme)
+    _emit(obj)
+    _require_arg(rest;usage)
+    _cmd_recent(rest)
+    _cmd_info(rest)
+    _cmd_search(rest)
+    _cmd_ticket(rest)
+    _cmd_categories(rest)
+    _cmd_bindings(rest)
+    main(argv)
+  adapters/python/urirun/runtime/introspect.py:
+    e: registry_introspect_bindings,run_registry_introspect,_introspect_binding,_introspect_list
+    registry_introspect_bindings(target)
+    run_registry_introspect(ctx;policy;execute)
+    _introspect_binding(flat;payload)
+    _introspect_list(flat;payload)
+  adapters/python/urirun/runtime/secrets.py:
+    e: redact,_provider_env,_provider_dotenv,_provider_keyring,_provider_vault,_provider_oauth,_provider_browser,_parse_ref,allowed,resolve,fill_secrets,has_secret,SecretStr
+    SecretStr: __init__(2),reveal(0),ref(0),__str__(0),__repr__(0),__bool__(0)  # An opaque secret value. ``str``/``repr``/JSON show ``****``;
+    redact(value)
+    _provider_env(location;field)
+    _provider_dotenv(location;field)
+    _provider_keyring(location;field)
+    _provider_vault(location;field)
+    _provider_oauth(location;field)
+    _provider_browser(location;field)
+    _parse_ref(ref)
+    allowed(ref;allow)
+    resolve(ref)
+    fill_secrets(text)
+    has_secret(text)
+  adapters/python/urirun/runtime/tree.py:
+    e: collect_uris,uri_tree,build,main
+    collect_uris(document)
+    uri_tree(uris)
+    build(document)
+    main(argv)
+  adapters/python/urirun/runtime/v1.py:
+    e: _params_spec,resolve_params,render_value,render_command,_has_placeholders,_proc_env,_run_process,_env_flags,run_spawn,run_shell_template,run_docker_exec,run_docker_run,run_fetch,run_local_function,run_mqtt_publish,run,check,list_routes,expand_binding,_binding_pairs,expand_bindings,compile_registry,load_registry_arg,main
+    _params_spec(route_entry)
+    resolve_params(route_entry;descriptor;translation;payload)
+    render_value(value;params)
+    render_command(command;params)
+    _has_placeholders(parts)
+    _proc_env(config;params)
+    _run_process(command;config;policy;params;shell)
+    _env_flags(config;params)
+    run_spawn(ctx;policy;execute)
+    run_shell_template(ctx;policy;execute)
+    run_docker_exec(ctx;policy;execute)
+    run_docker_run(ctx;policy;execute)
+    run_fetch(ctx;policy;execute)
+    run_local_function(ctx;policy;execute)
+    run_mqtt_publish(ctx;policy;execute)
+    run(uri;registry;payload;mode;policy;confirm;executors)
+    check(uri;registry;policy)
+    list_routes(registry;policy)
+    expand_binding(uri;binding)
+    _binding_pairs(doc)
+    expand_bindings(doc)
+    compile_registry(doc;generated_at;on_conflict)
+    load_registry_arg(arg;openapi_base_url)
+    main(argv)
   adapters/python/urirun/runtime/v2.py:
-    e: _RunAbort,model_from_function,_placeholder_kwargs,uri_command,uri_shell,_handler_kwargs,uri_handler,decorated_bindings,_document_binding_from_expanded,connector_bindings,_select_entry_points,_load_entry_point_bindings,entry_point_bindings,_entry_point_script_issues,connector_health,entry_point_binding_document,entry_point_registry,_schema_for,_apply_defaults,_input_values,validate_input,render_value,render_sequence,render_argv,run_argv_template,run_shell_template,_first_payload_value,_resolve_error_action,_error_recent,_error_search,_error_info,_error_ticket,run_error_store,_host_integrations,planfile_task_bindings,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor,_builtin_error_route_entry,_builtin_registry_route_entry,_record_error,_run_parse,_run_resolve_route,_run_validate,_run_executor,_run_dry,_run_execute,run,check,list_routes,_strip_runtime_only,_binding_config,_binding_adapter_kind,expand_binding,_binding_pairs,expand_bindings,compile_registry,build_binding_document,_bindings_as_map,merge_binding_document,write_or_emit_binding,_coerce_default,parse_param_declaration,input_schema_from_params,command_binding_from_cli,pypi_binding,load_registry_arg,_placeholders_in,validate_binding_document,_iter_files,_rel,_empty_input_schema,_load_manifest,_scan_package_json,_read_toml,_scan_pyproject,_scan_shell_script,_scan_makefile,_parse_dockerfile_labels,_manifest_candidates,_scan_dockerfile,scan_artifacts,_load_json_arg,_load_many,_package_version,_is_pipx_env,_build_parser,_cmd_scan,_cmd_compile,_cmd_discover,_cmd_adopt_pack,_cmd_tree,_cmd_validate,_cmd_add_command,_cmd_add_pypi,_cmd_add_openapi,_cmd_gen,_cmd_doctor,_pip_command,_resolve_pip_targets,_pip_install_args,_cmd_install,_cmd_upgrade,_pipspec_version,_cmd_outdated,_cmd_agent,_cmd_connectors_doctor,_cmd_connectors,_cmd_errors,_cmd_compat,_cmd_host,_cmd_node,_builtin_binding_items,_resolve_list_registry,_cmd_run_or_list,main
-    _RunAbort(Exception): __init__(1)  # Carries a finished (error) envelope to the single exit point...
+    e: model_from_function,_placeholder_kwargs,uri_command,uri_shell,_handler_kwargs,uri_handler,decorated_bindings,_document_binding_from_expanded,connector_bindings,_select_entry_points,_load_entry_point_bindings,entry_point_bindings,_entry_point_script_issues,connector_health,connector_collisions,entry_point_binding_document,entry_point_registry,_schema_for,_apply_defaults,_input_values,validate_input,render_value,render_sequence,render_argv,run_argv_template,run_shell_template,_first_payload_value,_resolve_error_action,_error_recent,_error_search,_error_info,_error_ticket,run_error_store,_host_integrations,planfile_task_bindings,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor,run_local_function_subprocess,_builtin_error_route_entry,_builtin_registry_route_entry,_record_error,_run_parse,_run_resolve_route,_run_validate,_run_executor,_run_dry,_run_execute,run,check,list_routes,_strip_runtime_only,_binding_config,_binding_adapter_kind,expand_binding,_binding_pairs,expand_bindings,compile_registry,build_binding_document,_bindings_as_map,merge_binding_document,write_or_emit_binding,_coerce_default,parse_param_declaration,input_schema_from_params,command_binding_from_cli,pypi_binding,load_registry_arg,_placeholders_in,validate_binding_document,_iter_files,_rel,_empty_input_schema,_load_manifest,_scan_package_json,_read_toml,_scan_pyproject,_scan_shell_script,_scan_makefile,_parse_dockerfile_labels,_manifest_candidates,_scan_dockerfile,scan_artifacts,_load_json_arg,_load_many,_package_version,_is_pipx_env,_build_parser,_cmd_scan,_cmd_compile,_cmd_discover,_cmd_adopt_pack,_cmd_tree,_cmd_validate,_cmd_add_command,_cmd_add_pypi,_cmd_add_openapi,_cmd_gen,_cmd_doctor,_pip_command,_resolve_pip_targets,_pip_install_args,_cmd_install,_cmd_upgrade,_pipspec_version,_cmd_outdated,_cmd_agent,_cmd_connectors_doctor,_cmd_connectors,_cmd_errors,_cmd_compat,_cmd_host,_cmd_node,_builtin_binding_items,_registry_from_module,_resolve_list_registry,_cmd_run_or_list,_cmd_version,main,_RunAbort
+    _RunAbort: __init__(1)  # Carries a finished (error) envelope to the single exit point
     model_from_function(fn)
     _placeholder_kwargs(fn)
     uri_command(uri)
@@ -228,6 +1097,7 @@ D:
     entry_point_bindings(group)
     _entry_point_script_issues(entry_point)
     connector_health(group)
+    connector_collisions(group)
     entry_point_binding_document(group;generated_at)
     entry_point_registry(group;generated_at;on_conflict)
     _schema_for(route_entry)
@@ -253,6 +1123,7 @@ D:
     run_host_data(ctx;policy;execute)
     domain_monitor_bindings(target;db;project;screenshot_dir)
     run_domain_monitor(ctx;policy;execute)
+    run_local_function_subprocess(ctx;policy;execute)
     _builtin_error_route_entry(translation)
     _builtin_registry_route_entry(translation)
     _record_error(envelope)
@@ -328,558 +1199,21 @@ D:
     _cmd_host(args;parser)
     _cmd_node(args;parser)
     _builtin_binding_items(target)
+    _registry_from_module(path)
     _resolve_list_registry(args)
     _cmd_run_or_list(args;parser)
+    _cmd_version(args;parser)
     main(argv)
-  adapters/python/urirun/runtime/codegen.py:
-    e: _pascal,_snake,_routes,_field_snake,_msg_pascal,_uri_parts,_rpc_name,assign_rpc_names,_field_type,_message_fields,dispatch_field_collisions,proto_from_registry,to_proto,to_openapi,to_client_python,gen_command
-    _pascal(uri)
-    _snake(uri)
-    _routes(registry)
-    _field_snake(name)
-    _msg_pascal(name)
-    _uri_parts(uri)
-    _rpc_name(uri)
-    assign_rpc_names(uris;nuances)
-    _field_type(field;schema;ctx)
-    _message_fields(msg;schema)
-    dispatch_field_collisions(schema)
-    proto_from_registry(registry;package)
-    to_proto(registry;package)
-    to_openapi(registry;title)
-    to_client_python(registry)
-    gen_command(args)
-  adapters/python/urirun/runtime/_scan.py:
-    e: slugify,relpath,now_iso,load_json,write_json,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
-    slugify(value;fallback)
-    relpath(path;root)
-    now_iso()
-    load_json(path)
-    write_json(path;value)
-    emit_json(value;out)
-    infer_kind(binding)
-    normalize_binding(binding;default_source)
-    binding_to_route_source(binding)
-    route_source_to_binding(route_source)
-    load_bindings_from_manifest(data;source)
-    build_binding_document(bindings;generated_at)
-    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
-    iter_project_files(root)
-    scan_manifest_files(root)
-    npm_command_for_script(script)
-    github_dependency_binding(name;spec;manager;command;source)
-    scan_package_json(path;root)
-    _read_toml(path)
-    scan_pyproject(path;root)
-    scan_makefile(path;root)
-    scan_shell_script(path;root)
-    module_ref_for_python(path;root;name)
-    scan_python_code(path;root)
-    scan_js_code(path;root)
-    parse_compose_label_line(line)
-    scan_docker_compose(path;root)
-    scan_openapi(path;root;base_url)
-    scan_path(path;include_shell;openapi_base_url)
-    scan_github(repo;include_shell;openapi_base_url)
-    load_binding_source(path;include_shell;openapi_base_url)
-    load_binding_sources(paths;include_shell;openapi_base_url)
-    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
-    list_bindings(paths;include_shell;openapi_base_url)
-    format_binding_table(bindings)
+  adapters/python/urirun/runtime/v2_adopt.py:
+    e: passthrough_schema,_command_binding,python_package_bindings,installed_python_bindings,npm_package_bindings,init_project,merge_into,main
+    passthrough_schema(extra)
+    _command_binding(uri;argv;label;source;schema)
+    python_package_bindings(name)
+    installed_python_bindings()
+    npm_package_bindings(name;project_dir)
+    init_project(path)
+    merge_into(out;bindings)
     main(argv)
-  adapters/python/urirun/runtime/v2_mcp.py:
-    e: tool_name,unique_tool_name,_input_schema,to_mcp_tools,to_mcp_manifest,to_a2a_card,build_tool_index,call_tool,serve_mcp,main
-    tool_name(uri)
-    unique_tool_name(uri;used)
-    _input_schema(entry)
-    to_mcp_tools(registry)
-    to_mcp_manifest(registry)
-    to_a2a_card(registry;name;url;version)
-    build_tool_index(registry)
-    call_tool(name;arguments;registry;mode;policy;confirm)
-    serve_mcp(registry;policy;mode;instream;outstream)
-    main(argv)
-  adapters/python/urirun/node/mesh.py:
-    e: now_id,slug,json_load,json_write,host_config_path,node_config_path,default_host_config,load_host_config,save_host_config,init_host,add_node,default_node_config,load_node_config,save_node_config,init_node,http_json,routes_from_registry,safe_route,route_target,discover_node,discover_mesh,binding_for_remote_route,registry_from_routes,target_nodes,first_url,append_if_available,_flow_intents,_append_target_steps,heuristic_flow,json_from_text,normalize_flow,llm_flow,make_flow,_dig_path,resolve_step_payload,execute_flow,format_nodes,format_routes,format_tickets,format_table,_parse_json_option,data_command,monitor_command,_task_prompt,_ticket_payload,_host_local_registry,_run_executor_handler,_resolves_locally,_run_task_flow,_emit_ticket_result,_task_plan,_task_bindings,_task_schedule,_task_list,_task_show,_task_next,_task_create,_task_claim,_task_start,_task_complete,_task_fail,_task_block,_task_ready,_task_wait,_task_dsl,_task_run,_task_loop,task_command,_host_delegated_command,_host_mesh_command,host_command,send_json,read_json,_pool_executors,serve_node,_node_serve,node_command
-    now_id()
-    slug(value)
-    json_load(path)
-    json_write(path;data)
-    host_config_path(path)
-    node_config_path(path)
-    default_host_config(name)
-    load_host_config(path)
-    save_host_config(config;path)
-    init_host(path;name)
-    add_node(path;name;url;tags)
-    default_node_config(name;registry)
-    load_node_config(path)
-    save_node_config(config;path)
-    init_node(path;name;registry;host;port;execute)
-    http_json(method;url;body;timeout)
-    routes_from_registry(registry)
-    safe_route(route)
-    route_target(uri)
-    discover_node(node)
-    discover_mesh(config)
-    binding_for_remote_route(route)
-    registry_from_routes(routes)
-    target_nodes(prompt;nodes;explicit)
-    first_url(prompt)
-    append_if_available(steps;route_uris;uri;payload;previous)
-    _flow_intents(lowered)
-    _append_target_steps(steps;route_uris;target;intents;url;previous)
-    heuristic_flow(prompt;routes;nodes;selected_nodes)
-    json_from_text(text)
-    normalize_flow(flow;allowed_uris)
-    llm_flow(prompt;routes;nodes)
-    make_flow(prompt;mesh;selected_nodes;use_llm)
-    _dig_path(data;dotted)
-    resolve_step_payload(payload;results)
-    execute_flow(flow;mesh;registry;execute)
-    format_nodes(mesh)
-    format_routes(routes)
-    format_tickets(tickets)
-    format_table(rows;columns;headers)
-    _parse_json_option(value;default)
-    data_command(args)
-    monitor_command(args)
-    _task_prompt(ticket)
-    _ticket_payload(ticket)
-    _host_local_registry(args)
-    _run_executor_handler(args;ticket;handler)
-    _resolves_locally(args;handler)
-    _run_task_flow(args;ticket)
-    _emit_ticket_result(ticket)
-    _task_plan(args;pa)
-    _task_bindings(args;pa)
-    _task_schedule(args;pa)
-    _task_list(args;pa)
-    _task_show(args;pa)
-    _task_next(args;pa)
-    _task_create(args;pa)
-    _task_claim(args;pa)
-    _task_start(args;pa)
-    _task_complete(args;pa)
-    _task_fail(args;pa)
-    _task_block(args;pa)
-    _task_ready(args;pa)
-    _task_wait(args;pa)
-    _task_dsl(args;pa)
-    _task_run(args;pa)
-    _task_loop(args;pa)
-    task_command(args)
-    _host_delegated_command(args)
-    _host_mesh_command(args;config;mesh)
-    host_command(args)
-    send_json(handler;status;payload)
-    read_json(handler)
-    _pool_executors(pools)
-    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool)
-    _node_serve(args;node;name;registry)
-    node_command(args)
-  scripts/lint_connectors.py:
-    e: classify,lint_fleet,_flags,main
-    classify(rep)
-    lint_fleet(root)
-    _flags(row)
-    main(argv)
-  adapters/python/urirun/runtime/v1.py:
-    e: _params_spec,resolve_params,render_value,render_command,_has_placeholders,_proc_env,_run_process,_env_flags,run_spawn,run_shell_template,run_docker_exec,run_docker_run,run_fetch,run_local_function,run_mqtt_publish,run,check,list_routes,expand_binding,_binding_pairs,expand_bindings,compile_registry,load_registry_arg,main
-    _params_spec(route_entry)
-    resolve_params(route_entry;descriptor;translation;payload)
-    render_value(value;params)
-    render_command(command;params)
-    _has_placeholders(parts)
-    _proc_env(config;params)
-    _run_process(command;config;policy;params;shell)
-    _env_flags(config;params)
-    run_spawn(ctx;policy;execute)
-    run_shell_template(ctx;policy;execute)
-    run_docker_exec(ctx;policy;execute)
-    run_docker_run(ctx;policy;execute)
-    run_fetch(ctx;policy;execute)
-    run_local_function(ctx;policy;execute)
-    run_mqtt_publish(ctx;policy;execute)
-    run(uri;registry;payload;mode;policy;confirm;executors)
-    check(uri;registry;policy)
-    list_routes(registry;policy)
-    expand_binding(uri;binding)
-    _binding_pairs(doc)
-    expand_bindings(doc)
-    compile_registry(doc;generated_at;on_conflict)
-    load_registry_arg(arg;openapi_base_url)
-    main(argv)
-  adapters/python/urirun/runtime/_registry.py:
-    e: parse_uri,translate,hash_uri,default_adapter,normalize_route_entry,route_from_uri,route_from_parts,coerce_route_source,_route_entry_equal,add_route,flatten_registry_tree,_get_route_entry,flatten_registry_document,discover_manifest,build_registry_document,_parse_command,discover_docker_labels,discover_docker_inspect,_operation_from_method,_default_openapi_route,discover_openapi,uri_handler,_iter_module_exports,discover_python_modules,discover_entry_points,registry_tree,_resolve_from_index,_walk_route_tree,resolve_route,_walk_route_entries,hydrate_registry,exec_local_function,exec_fetch,exec_spawn,exec_shell_template,exec_mqtt_publish,dispatch_generated,load_json,write_json,_emit_json,_load_sources,_discover_python_module,main
-    parse_uri(uri)
-    translate(descriptor)
-    hash_uri(normalized)
-    default_adapter(kind)
-    normalize_route_entry(route_entry)
-    route_from_uri(uri;route_entry;source)
-    route_from_parts(package;resource;operation;route_entry;source;target)
-    coerce_route_source(item;default_source)
-    _route_entry_equal(left;right)
-    add_route(registry_tree;route;route_entry;on_conflict)
-    flatten_registry_tree(registry_tree;source)
-    _get_route_entry(registry_tree;route)
-    flatten_registry_document(document;source)
-    discover_manifest(manifest;source)
-    build_registry_document(route_sources;generated_at;on_conflict)
-    _parse_command(value)
-    discover_docker_labels(labels;source)
-    discover_docker_inspect(inspect_data)
-    _operation_from_method(method)
-    _default_openapi_route(method;path;operation;package;target)
-    discover_openapi(spec;base_url;package;target;source)
-    uri_handler(uri)
-    _iter_module_exports(modules)
-    discover_python_modules(modules)
-    discover_entry_points(group)
-    registry_tree(registry)
-    _resolve_from_index(normalized;registry)
-    _walk_route_tree(tree;route)
-    resolve_route(translation;registry)
-    _walk_route_entries(node)
-    hydrate_registry(registry;refs)
-    exec_local_function(ctx)
-    exec_fetch(ctx)
-    exec_spawn(ctx)
-    exec_shell_template(ctx)
-    exec_mqtt_publish(ctx)
-    dispatch_generated(uri;registry;payload;runtime_cache;executors)
-    load_json(path)
-    write_json(path;value)
-    _emit_json(value;out)
-    _load_sources(paths)
-    _discover_python_module(module_name)
-    main(argv)
-  adapters/python/urirun/connectors/connector_lint.py:
-    e: _connector_call_target,_connector_assignment,_connector_objects,_route_uri,_decorator_routes,_cli_subcommands,_scan_code_routes,_load_manifest_routes,_route_placements,_compute_drift,_adapter_drift,_route_kind_counts,lint_connector,_format_report,lint_command
-    _connector_call_target(call)
-    _connector_assignment(node)
-    _connector_objects(tree)
-    _route_uri(scheme;target;path)
-    _decorator_routes(tree;objs)
-    _cli_subcommands(py_files)
-    _scan_code_routes(py_files)
-    _load_manifest_routes(manifests)
-    _route_placements(code_routes;manifest_uris;cli_subs)
-    _compute_drift(code_uris;manifest_uris;code_routes;manifest_declares_routes)
-    _adapter_drift(code_routes;manifest)
-    _route_kind_counts(code_routes)
-    lint_connector(pkg_dir)
-    _format_report(rep)
-    lint_command(args)
-  adapters/python/urirun/connectors/declarative.py:
-    e: load_spec,bindings_from_spec,from_spec_command
-    load_spec(path)
-    bindings_from_spec(spec)
-    from_spec_command(args)
-  adapters/python/urirun/runtime/daemon.py:
-    e: call,serve,_main
-    call(socket_path;request;timeout)
-    serve(socket_path)
-    _main(argv)
-  adapters/python/urirun/host/host_dashboard.py:
-    e: _json_response,_html_response,_read_json,_first,_host_db,_mesh,_planfile_adapter,_safe_tickets,_task_counts,summary,task_action,_dashboard_api_response,create_handler,serve,command,default_host
-    _json_response(handler;status;payload)
-    _html_response(handler;html)
-    _read_json(handler)
-    _first(query;name;default)
-    _host_db()
-    _mesh()
-    _planfile_adapter()
-    _safe_tickets(project;sprint;status;queue)
-    _task_counts(tickets)
-    summary(project;db;config)
-    task_action(project;ticket_id;action;payload)
-    _dashboard_api_response(path;project;db;config;query)
-    create_handler(project;db;config)
-    serve(project;db;config;host;port)
-    command(args)
-    default_host()
-  adapters/python/urirun/runtime/errors.py:
-    e: store_path,_normalize_message,error_code,_match_message_rules,_errno_category,classify,category_meta,address,help_url,stamp,record,problem,_append,_load,fix_hints,info,_aggregate,recent,search,to_ticket,bindings,capture,_emit,_require_arg,_cmd_recent,_cmd_info,_cmd_search,_cmd_ticket,_cmd_categories,_cmd_bindings,main
-    store_path(store)
-    _normalize_message(message)
-    error_code(error_type;message;scheme)
-    _match_message_rules(low;rules)
-    _errno_category(message;errno_name)
-    classify(error_type;message;errno_name)
-    category_meta(category)
-    address(code)
-    help_url(code;category)
-    stamp(error;scheme)
-    record(envelope)
-    problem(envelope)
-    _append(envelope;scheme)
-    _load(store)
-    fix_hints(rec)
-    info(code;store)
-    _aggregate(store)
-    recent(n;store)
-    search(query;store)
-    to_ticket(code;project;store)
-    bindings(target)
-    capture(scheme)
-    _emit(obj)
-    _require_arg(rest;usage)
-    _cmd_recent(rest)
-    _cmd_info(rest)
-    _cmd_search(rest)
-    _cmd_ticket(rest)
-    _cmd_categories(rest)
-    _cmd_bindings(rest)
-    main(argv)
-  adapters/python/urirun/runtime/adopt_pack.py:
-    e: _load,_policy,_handlers,manifest_bindings,_document,adopt_document,_tool_urirun,installed_manifest_path,_package_json_manifest,_config_manifest,adopt,main
-    _load(path)
-    _policy(pattern)
-    _handlers(manifest)
-    manifest_bindings(manifest)
-    _document(manifest)
-    adopt_document(path)
-    _tool_urirun(pyproject)
-    installed_manifest_path(package)
-    _package_json_manifest(package_json)
-    _config_manifest(cfg;base;name)
-    adopt(target)
-    main(argv)
-  adapters/python/urirun/connectors/connect_catalog.py:
-    e: _get_json,fetch_catalog,fetch_connector,_connectors,_find,resolve_install,pip_install_command,diff_manifest,_diff_scalar_fields,_diff_set_fields,_diff_install,_emit_json,_cmd_list,_cmd_show,_cmd_install,_cmd_check,connectors_command
-    _get_json(url;timeout)
-    fetch_catalog(base;timeout)
-    fetch_connector(connector_id;base;timeout)
-    _connectors(catalog)
-    _find(catalog;connector_id)
-    resolve_install(catalog;ids)
-    pip_install_command(pip_specs)
-    diff_manifest(local;hub)
-    _diff_scalar_fields(local;hub;fields)
-    _diff_set_fields(local;hub;fields)
-    _diff_install(local;hub)
-    _emit_json(payload)
-    _cmd_list(args)
-    _cmd_show(args)
-    _cmd_install(args)
-    _cmd_check(args)
-    connectors_command(args)
-  adapters/python/urirun/runtime/_runtime.py:
-    e: PolicyError,_fetch_fill,_fetch_render,default_policy,merge_policy,_matches_any,_looks_destructive,evaluate_policy,_policy_denial,_policy_allow,_truncate,run_spawn,run_shell_template,_resolve_fetch_url,_make_secret_injector,_build_fetch_body,_send_fetch,run_fetch,_hydrate_local_function,run_local_function,run_mqtt_publish,run,check,load_registry_arg,build_policy,list_routes,format_route_table,main
-    PolicyError(Exception):  # Raised when a route is blocked by policy in execute mode...
-    _fetch_fill(text;payload)
-    _fetch_render(value;payload)
-    default_policy()
-    merge_policy(policy)
-    _matches_any(uri;patterns)
-    _looks_destructive(route_entry;ctx)
-    evaluate_policy(uri;route_entry;ctx;policy)
-    _policy_denial(uri;route_entry;ctx;policy;route_policy;execute)
-    _policy_allow(uri;route_policy;execute)
-    _truncate(text)
-    run_spawn(ctx;policy)
-    run_shell_template(ctx;policy)
-    _resolve_fetch_url(config;ctx;payload)
-    _make_secret_injector(policy)
-    _build_fetch_body(config;ctx;method;headers;inject;payload)
-    _send_fetch(url;method;headers;body;policy)
-    run_fetch(ctx;policy)
-    _hydrate_local_function(route_entry)
-    run_local_function(ctx;policy)
-    run_mqtt_publish(ctx;policy)
-    run(uri;registry;payload;mode;policy;confirm;executors)
-    check(uri;registry;policy)
-    load_registry_arg(arg;openapi_base_url)
-    build_policy(policy_file;allow;deny;secret_allow)
-    list_routes(registry;policy)
-    format_route_table(items;show_decision)
-    main(argv)
-  adapters/python/urirun/runtime/worker.py:
-    e: WorkerPool,ConnectorPools,render_argv,_worker_main,_cli_ref_for_script
-    WorkerPool: __init__(1),run_argv(1),run_uri(3),close(0),__enter__(0),__exit__(0)  # A single long-lived connector worker. Reuse across many URI ...
-    ConnectorPools: __init__(0),run_route(2),close(0)  # A set of warm workers, one per connector, keyed by CLI ref. ...
-    render_argv(template;payload)
-    _worker_main(cli_ref)
-    _cli_ref_for_script(script_name)
-  adapters/python/urirun/host/task_planner.py:
-    e: PlannedTicket,TaskPlanningResult,normalize_text,slug,_json_from_text,is_ambiguous,is_destructive,_has_any,_unique,_short_name,_ambiguous_plan,_derive_plan_labels,_derive_acceptance_criteria,heuristic_plan_chat_request,llm_plan_chat_request,plan_chat_request,ticket_payload,create_tickets_from_plan
-    PlannedTicket(BaseModel):
-    TaskPlanningResult(BaseModel):
-    normalize_text(value)
-    slug(value)
-    _json_from_text(text)
-    is_ambiguous(prompt)
-    is_destructive(prompt)
-    _has_any(prompt;words)
-    _unique(values)
-    _short_name(prompt;domains;daily)
-    _ambiguous_plan(prompt;default_sprint;labels)
-    _derive_plan_labels(labels;normalized;domains;daily;screenshot;destructive)
-    _derive_acceptance_criteria(domains;screenshot;daily;destructive)
-    heuristic_plan_chat_request(prompt)
-    llm_plan_chat_request(prompt)
-    plan_chat_request(prompt)
-    ticket_payload(ticket;plan)
-    create_tickets_from_plan(project;plan)
-  adapters/python/urirun/connectors/openapi_import.py:
-    e: _route_uri,_operation_schema,_operation_binding,import_openapi,load_spec,add_openapi_command
-    _route_uri(scheme;target;method;path)
-    _operation_schema(operation;path)
-    _operation_binding(scheme;target;method;path;operation;environments;base)
-    import_openapi(spec)
-    load_spec(source)
-    add_openapi_command(args)
-  adapters/python/urirun/host/host_db.py:
-    e: db_path,now_iso,new_id,connect,connection,row_dict,rows_dict,init_db,_schema_json,create_dataset,list_datasets,get_dataset,_validate_record,upsert_record,_sync_record_fts,search_records,register_artifact,list_artifacts,add_check,recent_checks,add_log,recent_logs,create_llm_session,add_llm_message,read_only_sql,route_db_path,_run_query_route,_run_command_route,run_uri_route
-    db_path(path)
-    now_iso()
-    new_id(prefix)
-    connect(path)
-    connection(path)
-    row_dict(row)
-    rows_dict(rows)
-    init_db(path)
-    _schema_json(schema)
-    create_dataset(path;name;description;schema)
-    list_datasets(path)
-    get_dataset(path;name_or_id)
-    _validate_record(dataset;data)
-    upsert_record(path;dataset;key;data)
-    _sync_record_fts(conn;record;dataset_id)
-    search_records(path;query;dataset;limit)
-    register_artifact(path;kind;uri;artifact_path;meta)
-    list_artifacts(path;kind;limit)
-    add_check(path;subject;check_uri;status;result)
-    recent_checks(path;subject;limit)
-    add_log(path;stream;event;detail)
-    recent_logs(path;stream;limit)
-    create_llm_session(path;title)
-    add_llm_message(path;session_id;role;content;extracted)
-    read_only_sql(path;query;params;limit)
-    route_db_path(ctx;payload)
-    _run_query_route(payload;path;package;resource;operation)
-    _run_command_route(payload;path;package;resource;operation;action)
-    run_uri_route(ctx;execute)
-  adapters/python/urirun/host/domain_monitor.py:
-    e: _RouteCtx,now_id,_list,_domain,default_url,http_status,dns_records,expected_records,dns_mismatches,capture_screenshot_artifact,create_dns_repair_ticket,check_domain,_screenshot_artifacts,_persist_check_effects,run_daily,_db,_project,_screenshot_dir,_provider,_namecheap_moved,_route_monitor,_route_dns,_route_browser,_route_log,_route_flow,run_uri_route
-    _RouteCtx:  # Resolved routing context shared across the per-package route...
-    now_id()
-    _list(value)
-    _domain(target;payload)
-    default_url(domain)
-    http_status(url;timeout;expected_status)
-    dns_records(domain;record_types)
-    expected_records(payload)
-    dns_mismatches(current;expected)
-    capture_screenshot_artifact()
-    create_dns_repair_ticket()
-    check_domain()
-    _screenshot_artifacts()
-    _persist_check_effects(result)
-    run_daily()
-    _db(ctx;payload)
-    _project(ctx;payload)
-    _screenshot_dir(ctx;payload)
-    _provider(ctx;payload)
-    _namecheap_moved(descriptor)
-    _route_monitor(rc)
-    _route_dns(rc)
-    _route_browser(rc)
-    _route_log(rc)
-    _route_flow(rc)
-    run_uri_route(ctx;execute)
-  adapters/python/urirun/runtime/tree.py:
-    e: collect_uris,uri_tree,build,main
-    collect_uris(document)
-    uri_tree(uris)
-    build(document)
-    main(argv)
-  adapters/python/urirun/__init__.py:
-    e: Connector,parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,policy,action_space,result_data,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli
-    Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(2),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1)  # Small convention helper for connector packages.
-
-Connector a...
-    parse_uri(uri)
-    build_invocation(descriptor)
-    dispatch(uri;registry;payload)
-    command(uri)
-    shell(uri)
-    handler(uri)
-    _example_payload(schema)
-    ok()
-    fail(error)
-    plan()
-    policy(allow;deny;secret_allow;policy_file)
-    action_space(registry)
-    result_data(env)
-    connector_bindings()
-    entry_point_bindings(group)
-    entry_point_binding_document(group;generated_at)
-    entry_point_registry(group;generated_at;on_conflict)
-    error_bindings(target)
-    compat_report()
-    compile_registry(doc;generated_at;on_conflict)
-    list_routes(registry;policy)
-    validate_binding_document(doc)
-    run(uri;registry;payload;mode;policy;confirm;executors)
-    connector(connector_id)
-    load_manifest(package;name)
-    connector_emit(payload)
-    connector_cli(prog)
-  adapters/python/urirun/runtime/compat.py:
-    e: _entry_point_names,_importable,module_status,report,_print_table,main
-    _entry_point_names(group)
-    _importable(name)
-    module_status(item)
-    report()
-    _print_table(modules)
-    main(argv)
-  examples/matrix/verify.py:
-    e: essential,main
-    essential(doc)
-    main(paths)
-  adapters/python/urirun/host/planfile_adapter.py:
-    e: PlanfileUnavailable,_imports,normalize_priority,project_root,_model_dict,load_planfile,ticket_to_dict,_normalize_labels,_build_executor,_build_execution,_build_inputs,_build_outputs,build_ticket_payload,create_ticket,list_tickets,next_ticket,get_ticket,claim_ticket,start_ticket,complete_ticket,fail_ticket,fail_or_retry,update_ticket,wait_for_input,ready_ticket,run_dsl,loads_json
-    PlanfileUnavailable(RuntimeError):  # Raised when the optional planfile package is not installed...
-    _imports()
-    normalize_priority(priority)
-    project_root(project)
-    _model_dict(obj)
-    load_planfile(project)
-    ticket_to_dict(ticket)
-    _normalize_labels(data)
-    _build_executor(data;imports)
-    _build_execution(data;imports)
-    _build_inputs(data;imports)
-    _build_outputs(data;imports)
-    build_ticket_payload(payload)
-    create_ticket(project;payload)
-    list_tickets(project;sprint;status;label;queue)
-    next_ticket(project;sprint;queue)
-    get_ticket(project;ticket_id)
-    claim_ticket(project;ticket_id;assigned_to;lease_seconds)
-    start_ticket(project;ticket_id;assigned_to)
-    complete_ticket(project;ticket_id;note;result;artifacts)
-    fail_ticket(project;ticket_id;error)
-    fail_or_retry(project;ticket_id;error)
-    update_ticket(project;ticket_id;updates)
-    wait_for_input(project;ticket_id;prompt;env_keys;note)
-    ready_ticket(project;ticket_id;note)
-    run_dsl(project;command)
-    loads_json(value;default)
-  adapters/python/urirun/runtime/v2_service.py:
-    e: service_base,_post,call
-    service_base(target)
-    _post(url;body;timeout)
-    call(uri;payload;registry;mode;timeout;validate)
-  adapters/python/urirun/runtime/introspect.py:
-    e: registry_introspect_bindings,run_registry_introspect,_introspect_binding,_introspect_list
-    registry_introspect_bindings(target)
-    run_registry_introspect(ctx;policy;execute)
-    _introspect_binding(flat;payload)
-    _introspect_list(flat;payload)
   adapters/python/urirun/runtime/v2_grpc.py:
     e: _dumps,_loads,_route_list,serve,channel_target,_method,_validate,call,stream,list_routes,main
     _dumps(value)
@@ -893,264 +1227,78 @@ Connector a...
     stream(uri;payload;target;mode;timeout)
     list_routes(target;timeout)
     main(argv)
-  adapters/js/index.js:
-    e: parseUri,match,path,segments,buildInvocation,functionName,dispatch,descriptor,invocation,mod,fn
-    parseUri()
-    match()
-    path()
-    segments()
-    buildInvocation()
-    functionName()
-    dispatch()
-    descriptor()
-    invocation()
-    mod()
-    fn()
-  adapters/python/urirun/host/host_integrations.py:
-    e: planfile_task_bindings,_list_param,_ticket_id,_planfile_action,_planfile_project,_simulate_planfile,_read_planfile_action,_planfile_update,_planfile_dsl,_write_planfile_action,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor
-    planfile_task_bindings(target;project)
-    _list_param(value)
-    _ticket_id(payload;args)
-    _planfile_action(ctx)
-    _planfile_project(ctx;payload)
-    _simulate_planfile(ctx;action;payload;project)
-    _read_planfile_action(pa;action;project;payload;args)
-    _planfile_update(pa;project;payload;args)
-    _planfile_dsl(pa;project;payload;args)
-    _write_planfile_action(pa;action;project;payload;args)
-    run_planfile_task(ctx;policy;execute)
-    host_data_bindings(target;db)
-    run_host_data(ctx;policy;execute)
-    domain_monitor_bindings(target;db;project;screenshot_dir)
-    run_domain_monitor(ctx;policy;execute)
-  adapters/python/urirun/runtime/agent.py:
-    e: action_space,_parse_stdout,run_plan,_load_planner,agent_command
-    action_space(registry)
-    _parse_stdout(result)
-    run_plan(registry;steps)
-    _load_planner(spec)
-    agent_command(args)
-  adapters/python/urirun/runtime/secrets.py:
-    e: SecretStr,redact,_provider_env,_provider_dotenv,_provider_keyring,_provider_vault,_provider_oauth,_provider_browser,_parse_ref,allowed,resolve,fill_secrets,has_secret
-    SecretStr: __init__(2),reveal(0),__str__(0),__repr__(0),__bool__(0)  # An opaque secret value. ``str``/``repr``/JSON show ``****``;...
-    redact(value)
-    _provider_env(location;field)
-    _provider_dotenv(location;field)
-    _provider_keyring(location;field)
-    _provider_vault(location;field)
-    _provider_oauth(location;field)
-    _provider_browser(location;field)
-    _parse_ref(ref)
-    allowed(ref;allow)
-    resolve(ref)
-    fill_secrets(text)
-    has_secret(text)
+  adapters/python/urirun/runtime/v2_mcp.py:
+    e: tool_name,unique_tool_name,_input_schema,to_mcp_tools,to_mcp_manifest,to_a2a_card,build_tool_index,call_tool,serve_mcp,main
+    tool_name(uri)
+    unique_tool_name(uri;used)
+    _input_schema(entry)
+    to_mcp_tools(registry)
+    to_mcp_manifest(registry)
+    to_a2a_card(registry;name;url;version)
+    build_tool_index(registry)
+    call_tool(name;arguments;registry;mode;policy;confirm)
+    serve_mcp(registry;policy;mode;instream;outstream)
+    main(argv)
+  adapters/python/urirun/runtime/v2_service.py:
+    e: service_base,_post,call
+    service_base(target)
+    _post(url;body;timeout)
+    call(uri;payload;registry;mode;timeout;validate)
+  adapters/python/urirun/runtime/worker.py:
+    e: render_argv,_worker_main,_handler_worker_main,_cli_ref_for_script,WorkerPool,HandlerPool,ConnectorPools
+    WorkerPool: __init__(1),run_argv(1),run_uri(3),close(0),__enter__(0),__exit__(0)  # A single long-lived connector worker. Reuse across many URI 
+    HandlerPool: __init__(0),run_ref(2),close(0),__enter__(0),__exit__(0)  # A single long-lived worker that runs ``local-function`` hand
+    ConnectorPools: __init__(0),run_route(2),close(0)  # A set of warm workers, one per connector, keyed by CLI ref. 
+    render_argv(template;payload)
+    _worker_main(cli_ref)
+    _handler_worker_main()
+    _cli_ref_for_script(script_name)
+  adapters/python/urirun/scheduler.py:
+  adapters/python/urirun/task_planner.py:
   adapters/python/urirun/testing.py:
-    e: _resolve_bindings,smoke,assert_smoke,assert_routes,run_query
+    e: connector_installed,_resolve_bindings,_nonportable_routes,registry_portability,assert_registry_portable,smoke,assert_smoke,assert_routes,run_query
+    connector_installed(scheme)
     _resolve_bindings(bindings)
+    _nonportable_routes(registry;allow)
+    registry_portability(bindings)
+    assert_registry_portable(bindings)
     smoke(bindings)
     assert_smoke(bindings)
     assert_routes(registry_or_bindings)
     run_query(registry;uri;payload)
-  adapters/python/urirun/runtime/v2_adopt.py:
-    e: passthrough_schema,_command_binding,python_package_bindings,installed_python_bindings,npm_package_bindings,init_project,merge_into,main
-    passthrough_schema(extra)
-    _command_binding(uri;argv;label;source;schema)
-    python_package_bindings(name)
-    installed_python_bindings()
-    npm_package_bindings(name;project_dir)
-    init_project(path)
-    merge_into(out;bindings)
-    main(argv)
-  adapters/python/urirun/connectors/connector_smoke.py:
-    e: _load,smoke,smoke_command
-    _load(path)
-    smoke(bindings)
-    smoke_command(args)
-  adapters/python/urirun/runtime/discovery.py:
-    e: _index_path,full_registry,_fingerprint,_scheme_of,build_index,load_index,registry_for_uri,_bindings_for_entry_point
-    _index_path()
-    full_registry(group)
-    _fingerprint(group)
-    _scheme_of(uri)
-    build_index(group)
-    load_index(group)
-    registry_for_uri(uri;group)
-    _bindings_for_entry_point(name;group)
-  adapters/python/urirun/connectors/connector_sdk.py:
-    e: load_manifest,emit,connector_cli
-    load_manifest(package;name)
-    emit(payload)
-    connector_cli(prog)
-  adapters/ts/urirun.ts:
-    e: Schema,Connector
-    Schema:
-    Connector: command(-1),document(-1),toJSON(-1),connector(-1)
-  adapters/python/urirun/host/scheduler.py:
-    e: build_loop_command,shell_join,systemd_units,cron_line,preview,install_systemd_user
-    build_loop_command()
-    shell_join(command)
-    systemd_units()
-    cron_line(command;time_of_day)
-    preview()
-    install_systemd_user(files;out_dir)
-  adapters/ruby/urirun.rb:
-    i: json
-    e: Connector
-    Connector: initialize(-1),command(-1),bindings(-1),bindings_json(-1)
-  adapters/go/urirun.go:
-    i: encoding/json
-    e: Schema,binding,Connector,NewConnector,Target,Command,Bindings,BindingsJSON
-    Schema:
-    binding:
-    Connector:
-    NewConnector()
-    Target()
-    Command()
-    Bindings()
-    BindingsJSON()
-  adapters/php/Urirun.php:
-    e: Connector
-    Connector:
-  adapters/python/urirun/connectors/connector_scaffold.py:
-    e: _pkg_module,_scheme,_manifest,_python_manifest,_write,_python_files,_js_files,_go_files,_php_files,scaffold,new_command
-    _pkg_module(connector_id)
-    _scheme(connector_id;scheme)
-    _manifest(connector_id;scheme;language;route)
-    _python_manifest(connector_id;scheme)
-    _write(files;out_dir)
-    _python_files(cid;scheme;route)
-    _js_files(cid;scheme;route)
-    _go_files(cid;scheme;route)
-    _php_files(cid;scheme;route)
-    scaffold(connector_id;language;scheme;out_dir)
-    new_command(args)
-  adapters/c/urirun_test.c:
-    i: assert.h,string.h,urirun.h
-    e: main,assert,assert,assert,assert,assert,assert,assert,assert,assert,assert
-    main()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
-    assert()
+  adapters/python/urirun/v1.py:
+  adapters/python/urirun/v2.py:
+  adapters/python/urirun/v2_adopt.py:
+  adapters/python/urirun/v2_grpc.py:
+  adapters/python/urirun/v2_mcp.py:
+  adapters/python/urirun/v2_service.py:
   examples/matrix/emit_python.py:
     e: f
     f(path)
-  adapters/js/index.test.js:
-    i: ./index.js,node:assert/strict,node:test
-    e: result
-    result()
-  adapters/java/Urirun.java:
-    i: java.util.ArrayList,java.util.List
-    e: Urirun
-    Urirun: Connector(-1),Connector(-1),command(-1),bindingsJson(-1)
-  adapters/java/example/HashConnector.java:
-    e: HashConnector
-    HashConnector: main(-1)
-  adapters/go/example/hash-connector/main.go:
-    e: main
-    main()
-  adapters/ts/example/hash-connector.ts:
-    i: ../urirun
-    e: c
-    c()
-  adapters/rust/examples/hash_connector.rs:
-    i: urirun::Connector
-    e: main
-    main()
-  adapters/rust/src/lib.rs:
-    e: Connector
-    Connector:
-  adapters/c/urirun.h:
-    i: stddef.h
-    e: urirun_parse
-    urirun_parse()
-  adapters/csharp/Urirun.cs:
-    i: System.Collections.Generic
-    e: Connector
-    Connector: Connector(-1),Command(-1),BindingsJson(-1)
-  goal.yaml:
-  planfile.yaml:
-  Makefile:
-  requirements.txt:
-  tree.sh:
-  prefact.yaml:
-  project.sh:
-  examples/matrix/Dockerfile.bash:
-  examples/matrix/run.sh:
-  examples/matrix/hash.bindings.v2.json:
-  examples/matrix/mesh.json:
-  examples/matrix/sample.txt:
-  examples/matrix/docker-compose.yml:
-  examples/matrix/policy.json:
   examples/matrix/flow.py:
-  scripts/release-bump.sh:
-  testql-scenarios/generated-from-pytests.testql.toon.yaml:
-  adapters/new-connector.sh:
-    e: main,main
-    main()
-    main()
-  adapters/bash/urirun.sh:
-    e: urirun_command,urirun_document
-    urirun_command()
-    urirun_document()
-  adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
-  adapters/ts/tsconfig.json:
-  adapters/ts/package.json:
-  adapters/perl/Urirun.pm:
-    e: new,command,bindings,bindings_json
-    new()
-    command()
-    bindings()
-    bindings_json()
-  adapters/perl/example/hash_connector.pl:
-  adapters/rust/Cargo.toml:
-  adapters/php/composer.json:
-  adapters/php/example/hash-connector.php:
-  adapters/python/urirun/host_db.py:
-  adapters/python/urirun/v2_service.py:
-  adapters/python/urirun/domain_monitor.py:
-  adapters/python/urirun/v1.py:
-  adapters/python/urirun/errors.py:
-  adapters/python/urirun/connector_sdk.py:
-  adapters/python/urirun/host_integrations.py:
-  adapters/python/urirun/connect_catalog.py:
-  adapters/python/urirun/v2.py:
-  adapters/python/urirun/_runtime.py:
-  adapters/python/urirun/scheduler.py:
-  adapters/python/urirun/v2_grpc.py:
-  adapters/python/urirun/task_planner.py:
-  adapters/python/urirun/mesh.py:
-  adapters/python/urirun/v2_adopt.py:
-  adapters/python/urirun/host_dashboard.py:
-  adapters/python/urirun/connector_smoke.py:
-  adapters/python/urirun/v2_mcp.py:
-  adapters/python/urirun/_registry.py:
-  adapters/python/urirun/compat.py:
-  adapters/python/urirun/_scan.py:
-  adapters/python/urirun/planfile_adapter.py:
-  adapters/python/urirun/connector_scaffold.py:
-  adapters/python/urirun/host/__init__.py:
-  adapters/python/urirun/runtime/__init__.py:
-  adapters/python/urirun/connectors/__init__.py:
-  adapters/python/urirun/node/__init__.py:
-  adapters/csharp/Program.cs:
-  adapters/csharp/obj/project.assets.json:
-  adapters/csharp/obj/urirun-connector.csproj.nuget.dgspec.json:
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.csproj.FileListAbsolute.txt:
-  adapters/csharp/obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.cs:
-    i: System,System.Reflection
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.sourcelink.json:
-  adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
-    i: System,System.Reflection
-  adapters/ruby/example/hash_connector.rb:
-  package.json:
-  examples/matrix/run-matrix.sh:
-  adapters/python/pyproject.toml:
+  examples/matrix/verify.py:
+    e: essential,main
+    essential(doc)
+    main(paths)
+  scripts/lint_connectors.py:
+    e: classify,lint_fleet,_flags,main
+    classify(rep)
+    lint_fleet(root)
+    _flags(row)
+    main(argv)
+  scripts/repin_connectors.py:
+    e: find_root,pypi_has,repin_text,classify,main
+    find_root(explicit)
+    pypi_has(version)
+    repin_text(text;min_version)
+    classify(text)
+    main(argv)
+  security/mesh-probe/probe.py:
+    e: http,_attacker_key,record
+    http(method;path)
+    _attacker_key()
+    record(cat;fid;bad;note)
+  tests/test_urirun.py:
+    e: test_placeholder,test_import
+    test_placeholder()
+    test_import()

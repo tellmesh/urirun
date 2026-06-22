@@ -1,54 +1,58 @@
-# code2llm/evolution | 826 func | 57f | 2026-06-22
+# code2llm/evolution | 916 func | 62f | 2026-06-22
 # generated in 0.00s
 
-NEXT[9] (ranked by impact):
-  [1] !! SPLIT           adapters/python/urirun/runtime/v2.py
-      WHY: 2273L, 1 classes, max CC=16
-      EFFORT: ~4h  IMPACT: 36368
+NEXT[10] (ranked by impact):
+  [1] !! SPLIT           adapters/python/urirun/node/mesh.py
+      WHY: 2170L, 1 classes, max CC=23
+      EFFORT: ~4h  IMPACT: 49910
 
-  [2] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 1206L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 18090
+  [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
+      WHY: 2476L, 1 classes, max CC=18
+      EFFORT: ~4h  IMPACT: 44568
 
-  [3] !  SPLIT-FUNC      main  CC=17  fan=29
+  [3] !! SPLIT-FUNC      connector_main  CC=25  fan=24
+      WHY: CC=25 exceeds 15
+      EFFORT: ~1h  IMPACT: 600
+
+  [4] !  SPLIT-FUNC      apply_deploy  CC=21  fan=28
+      WHY: CC=21 exceeds 15
+      EFFORT: ~1h  IMPACT: 588
+
+  [5] !  SPLIT-FUNC      main  CC=17  fan=29
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 493
 
-  [4] !  SPLIT-FUNC      scan_path  CC=15  fan=19
+  [6] !  SPLIT-FUNC      watch_command  CC=23  fan=18
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 414
+
+  [7] !  SPLIT-FUNC      scan_path  CC=15  fan=19
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 285
 
-  [5] !  SPLIT-FUNC      _cmd_outdated  CC=16  fan=16
+  [8] !  SPLIT-FUNC      _cmd_outdated  CC=16  fan=16
       WHY: CC=16 exceeds 15
       EFFORT: ~1h  IMPACT: 256
 
-  [6] !  SPLIT-FUNC      data_command  CC=15  fan=15
+  [9] !  SPLIT-FUNC      connector_collisions  CC=17  fan=15
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 255
+
+  [10] !  SPLIT-FUNC      data_command  CC=15  fan=15
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 225
 
-  [7] !  SPLIT-FUNC      serve_mcp  CC=15  fan=14
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 210
-
-  [8] !  SPLIT-FUNC      run  CC=19  fan=9
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 171
-
-  [9] !! SPLIT           planfile.yaml
-      WHY: 1319L, 0 classes, max CC=0
-      EFFORT: ~4h  IMPACT: 0
-
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 118 import paths
+  ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 122 import paths
+  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 114 import paths
   ⚠ Splitting planfile.yaml may break 0 import paths
-  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 77 import paths
 
 METRICS-TARGET:
-  CC̄:          4.0 → ≤2.8
-  max-CC:      19 → ≤9
+  CC̄:          4.2 → ≤2.9
+  max-CC:      25 → ≤12
   god-modules: 10 → 0
-  high-CC(≥15): 9 → ≤4
+  high-CC(≥15): 17 → ≤8
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -76,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.1 → now CC̄=4.0
+  prev CC̄=4.0 → now CC̄=4.2

@@ -3,12 +3,12 @@ flowchart TD
     adapters__java["adapters.java<br/>4 funcs"]
     adapters__js["adapters.js<br/>12 funcs"]
     adapters__perl["adapters.perl<br/>4 funcs"]
-    adapters__python["adapters.python<br/>712 funcs"]
+    adapters__python["adapters.python<br/>799 funcs"]
     examples__matrix["examples.matrix<br/>3 funcs"]
     scripts__lint_connectors["scripts.lint_connectors<br/>4 funcs"]
     v1__js["v1.js<br/>54 funcs"]
+    adapters__python ==>|8| adapters__js
     adapters__python ==>|6| v1__js
-    adapters__python ==>|6| adapters__js
     examples__matrix -->|1| adapters__python
     scripts__lint_connectors -->|1| adapters__python
     adapters__python -->|1| adapters__perl
