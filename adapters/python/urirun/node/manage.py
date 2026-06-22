@@ -48,15 +48,95 @@ def package_install(**payload: Any) -> dict:
 
 
 def connector_install(**payload: Any) -> dict:
-    """Install a urirun connector by id: tries `urirun-connector-<id>` then its GitHub repo."""
-    cid = payload.get("id") or payload.get("connector")
-    if not cid:
-        return {"ok": False, "error": "id required"}
-    res = _pip(["install", "--upgrade", f"urirun-connector-{cid}"])
-    if not res.get("ok"):
-        res = _pip(["install", "--upgrade", f"git+https://github.com/if-uri/urirun-connector-{cid}.git"])
-    res["connector"] = cid
+    """Install a connector from ANY source into the node's venv:
+      - a catalog id ("browser-control") → urirun-connector-<id> (PyPI, then if-uri GitHub),
+      - a local path ("~/github/foo" or "/abs/path", `editable` for -e),
+      - a git url ("git+https://…", "https://…/x.git", "git@…").
+    """
+    src = payload.get("source") or payload.get("id") or payload.get("connector")
+    if not src:
+        return {"ok": False, "error": "source/id required (catalog id, local path, or git url)"}
+    s = str(src).strip()
+    if s.startswith(("git+", "git@", "ssh://")) or (s.startswith(("http://", "https://")) and s.endswith(".git")):
+        spec = s if s.startswith(("git+", "git@", "ssh://")) else "git+" + s
+        res, kind = _pip(["install", "--upgrade", spec]), "git"
+    elif s.startswith(("~", "/", ".")) or os.sep in s or os.path.exists(os.path.expanduser(s)):
+        path = os.path.expanduser(s)
+        args = ["install", "--upgrade", *(["-e"] if payload.get("editable") else []), path]
+        res, kind = _pip(args), "path"
+    else:
+        res, kind = _pip(["install", "--upgrade", f"urirun-connector-{s}"]), "catalog"
+        if not res.get("ok"):
+            res = _pip(["install", "--upgrade", f"git+https://github.com/if-uri/urirun-connector-{s}.git"])
+    res["connector"], res["source"], res["sourceKind"] = s, s, kind
+    res["hint"] = "make routes live: `urirun host deploy <node> --merge` the connector's bindings (see node://…/registry/query/installed)"
     return res
+
+
+def connector_discover(**payload: Any) -> dict:
+    """Find connectors to satisfy a capability, across local projects and what's installed.
+
+    Scans `roots` (default $URIRUN_CONNECTOR_ROOTS or ~/github) for connector projects —
+    if-uri `connector.manifest.json` and tellmesh `manifest.yaml` (scheme + uri_patterns) —
+    and lists installed connectors. `match`/`scheme` narrows results. Each local hit carries
+    a `source` path usable directly with connector/command/install."""
+    import glob
+    roots = payload.get("roots") or os.environ.get("URIRUN_CONNECTOR_ROOTS") or "~/github"
+    roots = roots if isinstance(roots, list) else str(roots).split(os.pathsep)
+    match = str(payload.get("match") or payload.get("scheme") or "").lower()
+    local, seen = [], set()
+    for root in roots:
+        base = os.path.expanduser(root)
+        patterns = [os.path.join(base, *(["*"] * d), name)
+                    for d in (1, 2, 3) for name in ("connector.manifest.json", "*/connector.manifest.json")]
+        patterns += [os.path.join(base, *(["*"] * d), "manifest.yaml") for d in (2, 3)]
+        for mf in sorted({p for pat in patterns for p in glob.glob(pat)})[:500]:
+            path = os.path.dirname(mf)
+            if path in seen:
+                continue
+            seen.add(path)
+            entry = _read_connector_manifest(mf, path)
+            if entry and (not match or match in json.dumps(entry, ensure_ascii=False).lower()):
+                local.append(entry)
+    installed = []
+    try:
+        from urirun.runtime import v2
+        for c in v2.connector_health():
+            e = {"id": c.get("name"), "bindingCount": c.get("bindingCount"), "ok": c.get("ok")}
+            if not match or match in json.dumps(e, ensure_ascii=False).lower():
+                installed.append(e)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "roots": [os.path.expanduser(r) for r in roots], "local": local, "installed": installed}
+
+
+def _read_connector_manifest(mf: str, path: str) -> dict | None:
+    try:
+        if mf.endswith(".json"):
+            m = json.loads(open(mf, encoding="utf-8").read())
+            return {"id": m.get("id"), "name": m.get("name"), "kind": "if-uri",
+                    "schemes": m.get("uriSchemes") or m.get("schemes") or [], "source": path}
+        text = open(mf, encoding="utf-8").read()
+        if "uri_patterns" not in text:
+            return None  # not a connector pack manifest
+        scheme = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("scheme:")), "")
+        cid = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("id:")), os.path.basename(path))
+        return {"id": cid, "name": cid, "kind": "tellmesh", "schemes": [scheme] if scheme else [], "source": path}
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def registry_installed(**payload: Any) -> dict:
+    """The bindings exposed by connectors INSTALLED in this node's venv (entry points) —
+    so a host can `deploy --merge` them to make the routes live, or just inspect them."""
+    from urirun.runtime import v2
+    merged: dict = {}
+    for doc in v2.entry_point_bindings(on_error="ignore"):
+        merged.update(doc.get("bindings") or {})
+    match = str(payload.get("match") or payload.get("scheme") or "").lower()
+    if match:
+        merged = {u: e for u, e in merged.items() if match in u.lower()}
+    return {"ok": True, "version": v2.VERSION, "bindings": merged, "count": len(merged)}
 
 
 def package_list(**payload: Any) -> dict:
