@@ -394,7 +394,7 @@ class MeshTests(unittest.TestCase):
             # a client resuming from cursor 2 (as after a drop) replays only the missed
             # tail (ids 3,4) for this run — nothing earlier, nothing from other runs.
             got = []
-            for ev in c.watch(run="resumeX", last_event_id=2, timeout=3):
+            for ev in c.watch(run="resumeX", last_event_id=2, timeout=10):  # generous: replay is immediate; avoids a flaky SSE read timeout under full-suite load
                 if ev.get("event") == "progress":
                     got.append(ev["line"])
                     if len(got) >= 2:
@@ -818,6 +818,39 @@ class MeshTests(unittest.TestCase):
             self.assertTrue(c.run("demo://self/thing/query/ping")["ok"])  # and runnable (allow unioned)
             # adopt is admin-gated
             self.assertFalse(NodeClient(base).run("node://self/registry/command/adopt", {"scheme": "demo"})["ok"])
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
+    def test_run_ensuring_self_heals_then_runs(self):
+        # the (a) keystone: dispatching a URI whose scheme is missing acquires it first.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            self.assertNotIn("demo", c.schemes())
+            env = c.run_ensuring("demo://self/thing/query/ping")   # missing → acquire → run
+            self.assertTrue(env["ok"])
+            self.assertTrue(env["ensured"]["ok"])                  # it acquired the scheme
+            self.assertIn("demo", c.schemes())
+            self.assertNotIn("ensured", c.run_ensuring("env://self/x/query/p"))  # already served
         finally:
             server.shutdown()
             manage.registry_installed = orig

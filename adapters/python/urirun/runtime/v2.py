@@ -1765,6 +1765,8 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_run.add_argument("--stream", action="store_true", help="start async and stream the node's live progress until done")
     host_run.add_argument("--run-id", dest="run_id", help="correlation id for the run (default: generated)")
     host_run.add_argument("--token", help="X-Urirun-Token for an auth-gated node")
+    host_run.add_argument("--ensure", action="store_true", help="acquire the URI's scheme first if the node lacks it (self-heal)")
+    host_run.add_argument("--roots", help="connector search roots for --ensure (default ~/github / $URIRUN_CONNECTOR_ROOTS)")
     host_run.add_argument("--timeout", type=float, default=120.0, help="run timeout in seconds")
 
     host_ensure = host_sub.add_parser("ensure", parents=[host_common],

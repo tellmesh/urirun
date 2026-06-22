@@ -158,6 +158,19 @@ class NodeClient:
         return {"ok": scheme in self.schemes(), "scheme": scheme,
                 "deployed": dep.get("routeCount"), "acquired": True}
 
+    def run_ensuring(self, uri: str, payload: dict | None = None, roots=None, **kw) -> dict:
+        """Self-healing dispatch: if the URI's scheme isn't served, acquire it
+        (ensure_scheme — discover/install/adopt within policy) and THEN run it. The basis
+        for an autonomous agent whose action space repairs itself mid-task."""
+        scheme = str(uri).split("://", 1)[0]
+        ensured = None
+        if scheme not in ("run",) and scheme not in self.schemes():
+            ensured = self.ensure_scheme(scheme, roots=roots)
+        env = self.run(uri, payload, **kw)
+        if ensured is not None:
+            env["ensured"] = ensured
+        return env
+
     # --- node asks the host (need->supply); host fulfills ---
     def request_capability(self, what: str, kind: str = "connector") -> dict:
         """Node-side: emit a `need` event asking a watching host to supply a connector

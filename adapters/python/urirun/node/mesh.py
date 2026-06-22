@@ -1682,6 +1682,12 @@ def run_command(args: argparse.Namespace) -> int:
     payload = json.loads(args.payload) if getattr(args, "payload", None) else {}
     uri = client.concretize(args.uri)
     timeout = float(getattr(args, "timeout", 120.0) or 120.0)
+    ensure = getattr(args, "ensure", False)
+    roots = getattr(args, "roots", None)
+    if ensure:  # self-heal: acquire the URI's scheme if the node lacks it
+        scheme = uri.split("://", 1)[0]
+        if scheme not in ("run",) and scheme not in client.schemes():
+            reglib._emit_json({"ensure": client.ensure_scheme(scheme, roots=roots)}, "-")
 
     if not getattr(args, "stream", False):
         env = client.run(uri, payload, timeout=timeout)
