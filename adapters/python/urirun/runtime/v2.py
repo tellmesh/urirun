@@ -358,6 +358,34 @@ def connector_health(group: str = ENTRY_POINT_GROUP) -> list[dict]:
     return report
 
 
+def connector_collisions(group: str = ENTRY_POINT_GROUP) -> list[dict]:
+    """Cross-connector route collisions across the installed fleet.
+
+    Routes are keyed in the registry tree by their resolved path
+    (``package.resource.operation``) — the URI *target* is bound at resolve time and
+    is NOT part of that key. So ``browser://host/page/command/screenshot`` (one
+    connector) and ``browser://chrome/page/command/screenshot`` (another) collide on
+    the same tree path, and an exact-URI duplicate collides outright: in a merged
+    registry only one wins (``on_conflict``), silently shadowing the others. Returns
+    ``[{route, owners: [{connector, uri}]}]`` for every path claimed by >1 connector.
+    """
+    from collections import defaultdict
+
+    by_path: dict[str, list[dict]] = defaultdict(list)
+    for binding in entry_point_bindings(group=group):  # fault-isolated load
+        uri = binding.get("uri")
+        try:
+            route = ".".join(reglib.translate(reglib.parse_uri(str(uri)))["route"])
+        except Exception:  # noqa: BLE001 - an unparseable uri can't collide; skip it.
+            continue
+        by_path[route].append({"connector": (binding.get("meta") or {}).get("connector") or "?", "uri": uri})
+    collisions = []
+    for route, owners in sorted(by_path.items()):
+        if len({owner["connector"] for owner in owners}) > 1:
+            collisions.append({"route": route, "owners": owners})
+    return collisions
+
+
 def entry_point_binding_document(
     group: str = ENTRY_POINT_GROUP,
     generated_at: str | None = None,
@@ -2146,11 +2174,14 @@ _CONNECTOR_SUBCOMMANDS = {
 
 
 def _cmd_connectors_doctor(args, parser) -> int:
-    report = connector_health(getattr(args, "entry_point_group", ENTRY_POINT_GROUP))
+    group = getattr(args, "entry_point_group", ENTRY_POINT_GROUP)
+    report = connector_health(group)
+    collisions = connector_collisions(group)
     unhealthy = [r for r in report if not r["ok"] or r.get("scriptIssues")]
     if getattr(args, "json", False):
-        reglib._emit_json({"ok": not unhealthy, "total": len(report), "unhealthy": len(unhealthy), "connectors": report}, "-")
-        return 1 if unhealthy else 0
+        reglib._emit_json({"ok": not unhealthy and not collisions, "total": len(report),
+                           "unhealthy": len(unhealthy), "connectors": report, "collisions": collisions}, "-")
+        return 1 if (unhealthy or collisions) else 0
     for r in report:
         if not r["ok"]:
             print(f"  [FAIL] {r['name']:22s} {r.get('error', '')}")
@@ -2160,7 +2191,12 @@ def _cmd_connectors_doctor(args, parser) -> int:
         else:
             print(f"  [ok  ] {r['name']:22s} {r['bindingCount']} bindings")
     print(f"\n{len(report) - len(unhealthy)}/{len(report)} connectors healthy")
-    return 1 if unhealthy else 0
+    if collisions:
+        print(f"\n{len(collisions)} cross-connector route collision(s) — merged registry shadows all but one:")
+        for c in collisions:
+            owners = ", ".join(f"{o['connector']}({o['uri']})" for o in c["owners"])
+            print(f"  [COLLISION] {c['route']}: {owners}")
+    return 1 if (unhealthy or collisions) else 0
 
 
 def _cmd_connectors(args, parser) -> int:

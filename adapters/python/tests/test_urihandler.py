@@ -278,6 +278,42 @@ class UriHandlerTests(unittest.TestCase):
         with self.assertRaises(_runtime.PolicyError):
             _runtime.run_local_function(ctx, policy={"denyRefImport": True})
 
+    def test_connector_collisions_flag_shared_route_paths(self):
+        """Two connectors claiming the same route-tree path (target differs) collide:
+        the merged registry shadows all but one. doctor must surface this."""
+        def provider_a():
+            return {"version": v2.VERSION, "bindings": {
+                "foo://host/x/command/do": {"kind": "command", "adapter": "argv-template",
+                                            "argv": ["a"], "meta": {"connector": "conn-a"}}}}
+
+        def provider_b():
+            # different target ("other") → different URI, but SAME route path foo.x.command
+            return {"version": v2.VERSION, "bindings": {
+                "foo://other/x/command/do": {"kind": "command", "adapter": "argv-template",
+                                             "argv": ["b"], "meta": {"connector": "conn-b"}}}}
+
+        class EP:
+            def __init__(self, name, fn):
+                self.name, self._fn = name, fn
+                self.value = f"{name}:urirun_bindings"
+
+            def load(self):
+                return self._fn
+
+        original = v2.metadata.entry_points
+        v2.metadata.entry_points = lambda: [EP("conn-a", provider_a), EP("conn-b", provider_b)]
+        try:
+            collisions = v2.connector_collisions()
+            self.assertEqual(len(collisions), 1)
+            self.assertEqual(collisions[0]["route"], "foo.x.command")
+            self.assertEqual({o["connector"] for o in collisions[0]["owners"]}, {"conn-a", "conn-b"})
+
+            # a single connector owning a path is NOT a collision
+            v2.metadata.entry_points = lambda: [EP("conn-a", provider_a)]
+            self.assertEqual(v2.connector_collisions(), [])
+        finally:
+            v2.metadata.entry_points = original
+
 
 if __name__ == "__main__":
     unittest.main()
