@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `urirun agent run` now threads data between plan steps: a step payload may carry
+  `$ref:<step>.<field>` (e.g. `{"image_id": "$ref:0.image_id"}`), resolved from the
+  earlier step's real output at execution time. An agent's static `(goal, space) -> steps`
+  plan therefore becomes a live data-flow chain; the action space, policy gate and
+  execution are unchanged. `run_plan` also unwraps a `local-function` route's
+  `result.value` so the agent (and `$ref`) see the handler's actual output. See
+  `examples/26-agent-uri-flow` (an agent composes `kvm → ocr → llm` from the action space).
 - `adopt-pack` now records a re-importable handler descriptor (`python: {module, export}`)
   for each `python://` manifest handler, so an adopted capability pack **executes from a
   plain file registry** (`urirun run <uri> <registry> --execute`), not only dry-runs. This
@@ -58,6 +65,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactored 20+ high-complexity functions (CC>15) across the package via
   extract-method (run/main dispatchers, route handlers, policy and fetch pipelines,
   error classification); behaviour unchanged, average CCN down to ~4.
+
+## [0.4.6] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+
+### Other
+- Update .urirun/discovered-registry.json
+- Update adapters/python/.urirun/discovered-registry.json
+- Update adapters/python/tests/test_agent_command.py
+- Update adapters/python/tests/test_daemon.py
+- Update adapters/python/tests/test_discovery.py
+- Update adapters/python/tests/test_registry_portable.py
+- Update adapters/python/urirun/runtime/agent.py
+- Update adapters/python/urirun/runtime/discovery.py
 
 ## [0.4.5] - 2026-06-22
 

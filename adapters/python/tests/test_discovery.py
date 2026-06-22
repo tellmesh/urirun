@@ -26,6 +26,41 @@ def test_cache_reused_when_fingerprint_matches(tmp_path, monkeypatch):
     assert idx["fingerprint"] == discovery._fingerprint(v2.ENTRY_POINT_GROUP)
 
 
+def test_fingerprint_includes_source_mtime():
+    fp = discovery._fingerprint(v2.ENTRY_POINT_GROUP)
+    if not fp:
+        return  # no connectors installed in this env
+    assert all(len(entry) == 3 for entry in fp)  # (name, value, mtime)
+
+
+def test_fingerprint_busts_on_connector_source_edit():
+    # Editing a connector in place (auto-sync flipping an adapter) must invalidate
+    # the discovery cache — otherwise the daemon / list / registry:// serve a stale
+    # registry. The fingerprint tracks the entry-point module's mtime.
+    import os
+    from importlib.metadata import entry_points
+    from importlib.util import find_spec
+
+    target = None
+    for ep in entry_points(group=v2.ENTRY_POINT_GROUP):
+        module = (getattr(ep, "value", "") or "").split(":", 1)[0]
+        spec = find_spec(module) if module else None
+        if spec and spec.origin and os.path.exists(spec.origin):
+            target = spec.origin
+            break
+    if target is None:
+        return  # no resolvable connector source in this env
+
+    before = discovery._fingerprint(v2.ENTRY_POINT_GROUP)
+    orig = os.path.getmtime(target)
+    try:
+        os.utime(target, (orig + 10, orig + 10))
+        after = discovery._fingerprint(v2.ENTRY_POINT_GROUP)
+    finally:
+        os.utime(target, (orig, orig))
+    assert before != after
+
+
 def test_registry_for_uri_resolves_only_matching(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     if "time" not in discovery.build_index(v2.ENTRY_POINT_GROUP)["schemes"]:

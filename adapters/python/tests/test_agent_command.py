@@ -28,6 +28,26 @@ def _registry():
     return urirun.compile_registry(doc)
 
 
+def test_resolve_refs_threads_prior_step_output():
+    trace = [{"data": {"image_id": "img-1", "nested": {"k": "v"}}}]
+    out = agent._resolve_refs(
+        {"id": "$ref:0.image_id", "deep": "$ref:0.nested.k", "lit": "x", "n": 1},
+        trace,
+    )
+    assert out == {"id": "img-1", "deep": "v", "lit": "x", "n": 1}
+
+
+def test_resolve_refs_unknown_is_left_or_none():
+    # out-of-range step: leave the placeholder; missing field: None
+    assert agent._resolve_refs("$ref:9.x", []) == "$ref:9.x"
+    assert agent._resolve_refs({"a": "$ref:0.nope"}, [{"data": {}}]) == {"a": None}
+
+
+def test_parse_stdout_unwraps_local_function_value():
+    result = {"ok": True, "result": {"type": "function", "ref": "f", "value": {"text": "hi"}}}
+    assert agent._parse_stdout(result) == {"text": "hi"}
+
+
 def test_action_space_marks_query_and_command():
     space = {r["uri"]: r for r in agent.action_space(_registry())}
     assert space["demo://host/thing/query/read"]["kind"] == "query"

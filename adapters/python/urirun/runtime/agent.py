@@ -45,6 +45,10 @@ def action_space(registry: dict) -> list[dict[str, Any]]:
 
 def _parse_stdout(result: dict) -> Any:
     exec_out = result.get("result") if isinstance(result.get("result"), dict) else {}
+    # local-function handlers return under result.value — unwrap so the agent (and
+    # $ref placeholders) see the handler's actual output, not the executor envelope.
+    if isinstance(exec_out, dict) and exec_out.get("type") == "function" and "value" in exec_out:
+        return exec_out["value"]
     stdout = exec_out.get("stdout") if isinstance(exec_out, dict) else None
     if not stdout:
         return exec_out or result
@@ -54,12 +58,38 @@ def _parse_stdout(result: dict) -> Any:
         return {"stdout": stdout}
 
 
+def _resolve_refs(value: Any, trace: list[dict]) -> Any:
+    """Resolve ``$ref:<step>.<dotted.path>`` placeholders against prior step outputs.
+
+    A planner emits the whole plan up front, but a step often needs a *runtime* value
+    from an earlier step (the image id a capture produced, the text an OCR read). A
+    payload value of ``"$ref:0.image_id"`` is replaced with ``trace[0].data["image_id"]``
+    at execution time, so an agent's static plan becomes a real data-flow chain."""
+    if isinstance(value, dict):
+        return {k: _resolve_refs(v, trace) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_refs(v, trace) for v in value]
+    if isinstance(value, str) and value.startswith("$ref:"):
+        index, _, path = value[len("$ref:"):].partition(".")
+        try:
+            node: Any = trace[int(index)].get("data")
+        except (ValueError, IndexError):
+            return value
+        for part in filter(None, path.split(".")):
+            node = node.get(part) if isinstance(node, dict) else None
+        return node
+    return value
+
+
 def run_plan(registry: dict, steps: list[dict], *, allow: list[str] | None = None, allow_commands: bool = False) -> list[dict]:
-    """Run planner steps under policy; query freely, command only when permitted."""
-    trace = []
+    """Run planner steps under policy; query freely, command only when permitted.
+
+    Step payloads may carry ``$ref:<step>.<path>`` placeholders that thread an earlier
+    step's output into this step's input (see :func:`_resolve_refs`)."""
+    trace: list[dict] = []
     for step in steps:
         uri = step.get("uri", "")
-        payload = step.get("payload", {})
+        payload = _resolve_refs(step.get("payload", {}), trace)
         is_query = "/query/" in uri
         scheme = uri.split("://", 1)[0]
         globs = list(allow or [f"{scheme}://*"])

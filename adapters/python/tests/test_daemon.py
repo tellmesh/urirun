@@ -9,7 +9,11 @@ from urirun.runtime import daemon
 
 def test_daemon_serves_and_client_is_stdlib(tmp_path):
     sock = str(tmp_path / "d.sock")
-    t = threading.Thread(target=daemon.serve, kwargs={"socket_path": sock, "allow": ["time://*", "log://*"]}, daemon=True)
+    # Use a CORE builtin route (the error:// engine is always mounted, no connector
+    # needed) so the daemon mechanics are tested independently of which connectors
+    # happen to be installed in this environment.
+    uri = "error://local/errors/query/recent"
+    t = threading.Thread(target=daemon.serve, kwargs={"socket_path": sock, "allow": ["error://*"]}, daemon=True)
     t.start()
     for _ in range(50):                       # wait for the socket
         if (tmp_path / "d.sock").exists():
@@ -17,9 +21,9 @@ def test_daemon_serves_and_client_is_stdlib(tmp_path):
         time.sleep(0.05)
 
     try:
-        r = daemon.call(sock, {"uri": "time://host/clock/query/now", "payload": {}})
+        r = daemon.call(sock, {"uri": uri, "payload": {}})
         assert r.get("ok") is True
-        r2 = daemon.call(sock, {"uri": "time://host/clock/query/now", "payload": {}})
+        r2 = daemon.call(sock, {"uri": uri, "payload": {}})
         assert r2.get("ok") is True            # second call, same warm process
     finally:
         try:

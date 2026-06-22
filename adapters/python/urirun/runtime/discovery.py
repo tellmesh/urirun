@@ -58,10 +58,32 @@ def full_registry(group: str) -> dict:
 
 
 def _fingerprint(group: str) -> list[list[str]]:
-    """Installed entry points (name, value) — cheap, no import."""
+    """Installed entry points (name, value, source-mtime).
+
+    The mtime of each entry point's source module is included so that **editing a
+    connector in place** (e.g. an editable install flipping a route from
+    ``argv-template`` to ``local-function-subprocess``) busts the cache — not only
+    install/uninstall. Without it, the daemon / ``list`` / ``registry://`` keep
+    serving a stale registry after a connector changes shape. Resolved via
+    ``find_spec`` (locate, no execute), best-effort: unresolved -> empty mtime.
+    """
+    import os
     from importlib.metadata import entry_points
-    eps = entry_points(group=group)
-    return sorted([ep.name, getattr(ep, "value", "")] for ep in eps)
+    from importlib.util import find_spec
+
+    fingerprint: list[list[str]] = []
+    for ep in entry_points(group=group):
+        value = getattr(ep, "value", "")
+        module = value.split(":", 1)[0].strip()
+        mtime = ""
+        try:
+            spec = find_spec(module) if module else None
+            if spec and spec.origin and os.path.exists(spec.origin):
+                mtime = str(int(os.path.getmtime(spec.origin)))
+        except Exception:  # noqa: BLE001 - a broken connector must not break discovery
+            mtime = ""
+        fingerprint.append([ep.name, value, mtime])
+    return sorted(fingerprint)
 
 
 def _scheme_of(uri: str) -> str:
