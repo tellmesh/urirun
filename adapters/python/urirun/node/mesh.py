@@ -1176,13 +1176,55 @@ def _pool_executors(pools):
             "local-function-subprocess": run_pooled}
 
 
+def node_state_dir() -> Path:
+    d = Path(os.path.expanduser("~/.urirun-node"))
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def deploy_dir() -> Path:
     """Where /deploy writes pushed handler code so the node can import it."""
-    d = Path(os.path.expanduser("~/.urirun-node/deploy"))
+    d = node_state_dir() / "deploy"
     d.mkdir(parents=True, exist_ok=True)
     if str(d) not in sys.path:
         sys.path.insert(0, str(d))
     return d
+
+
+def node_token_path() -> Path:
+    return node_state_dir() / "admin-token"
+
+
+def resolve_admin_token(explicit: str | None, config_token: str | None, generate: bool) -> str | None:
+    """Decide the node's /deploy admin token. Precedence: explicit flag > node config >
+    URIRUN_NODE_TOKEN env. If none and generation is requested (`--generate-token` or
+    `--admin-token auto`), reuse the persisted token at ~/.urirun-node/admin-token or
+    mint a fresh one and persist it (0600) so it survives restarts — the host's token
+    stays valid. Returns None when /deploy should stay disabled."""
+    token = explicit if (explicit and explicit != "auto") else None
+    token = token or config_token or os.environ.get("URIRUN_NODE_TOKEN")
+    if token:
+        return token
+    if not (generate or explicit == "auto"):
+        return None
+
+    path = node_token_path()
+    if path.exists():
+        existing = path.read_text(encoding="utf-8").strip()
+        if existing:
+            return existing
+    import secrets
+
+    token = secrets.token_hex(16)
+    path.write_text(token + "\n", encoding="utf-8")
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
+    print(json.dumps({"event": "urirun.node.token.generated", "path": str(path)}), flush=True)
+    print(f"[urirun] /deploy admin token: {token}\n[urirun] saved to: {path} "
+          f"(read it on the host to run `urirun host deploy --token …`)", file=sys.stderr, flush=True)
+    return token
 
 
 def apply_deploy(state: dict, body: dict) -> dict:
@@ -1340,7 +1382,8 @@ def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict)
     allow_secrets = bool(getattr(args, "allow_secrets", False) or node.get("allowSecrets"))
     allow = list(getattr(args, "allow", None) or node.get("allow") or [])
     pool = bool(getattr(args, "pool", False) or node.get("pool"))
-    admin_token = getattr(args, "admin_token", None) or node.get("adminToken") or os.environ.get("URIRUN_NODE_TOKEN")
+    admin_token = resolve_admin_token(getattr(args, "admin_token", None), node.get("adminToken"),
+                                      bool(getattr(args, "generate_token", False)))
     server = serve_node(name, registry, host, port, execute, public_url=args.public_url,
                         allow_secrets=allow_secrets, allow=allow, pool=pool, admin_token=admin_token)
     server.serve_forever()

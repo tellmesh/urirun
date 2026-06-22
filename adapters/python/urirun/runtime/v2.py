@@ -1848,7 +1848,11 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
                             help="keep warm worker processes per connector so argv-template routes skip the cold start on every /run")
     node_serve.add_argument("--admin-token", default=None, metavar="TOKEN",
                             help="enable POST /deploy (remote provisioning) gated by this token; "
-                                 "also read from URIRUN_NODE_TOKEN. Off by default — it can add executable routes.")
+                                 "also read from URIRUN_NODE_TOKEN. Pass 'auto' to generate+persist one. "
+                                 "Off by default — it can add executable routes.")
+    node_serve.add_argument("--generate-token", action="store_true",
+                            help="if no token is given, mint one and persist it to ~/.urirun-node/admin-token "
+                                 "(reused across restarts); enables POST /deploy")
 
     def add_source(p, with_uri=True):
         if with_uri:
