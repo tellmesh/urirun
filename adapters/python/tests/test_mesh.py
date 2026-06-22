@@ -303,6 +303,39 @@ class MeshTests(unittest.TestCase):
             self.assertEqual(config["node"]["port"], 9999)
             self.assertTrue(config["node"]["execute"])
 
+    def test_event_hub_ids_and_replay(self):
+        hub = mesh.EventHub(buffer=10)
+        self.assertEqual(hub.publish({"event": "run", "uri": "a://x"}), 1)
+        self.assertEqual(hub.publish({"event": "error", "uri": "error://y"}), 2)
+        self.assertEqual(hub.replay_since(0)[0]["_id"], 1)         # replays from the start
+        missed = hub.replay_since(1)                                # only after id 1
+        self.assertEqual([e["uri"] for e in missed], ["error://y"])
+
+    def test_events_endpoint_auth_gating(self):
+        import socket as _socket
+        import threading
+        import urllib.error
+        import urllib.request
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://probe/runtime/query/ping": {"kind": "query", "adapter": "argv-template",
+                                               "inputSchema": {"type": "object"}, "argv": ["true"]}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("probe", registry, "127.0.0.1", port, execute=True,
+                                 allow=["env://*"], admin_token="t", require_run_auth=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            with self.assertRaises(urllib.error.HTTPError) as cm:    # no credential -> 403
+                urllib.request.urlopen(base + "/events", timeout=3)
+            self.assertEqual(cm.exception.code, 403)
+            req = urllib.request.Request(base + "/events", headers={"X-Urirun-Token": "t"})
+            r = urllib.request.urlopen(req, timeout=3)               # token -> 200 stream
+            self.assertEqual(r.status, 200)
+            r.close()
+        finally:
+            server.shutdown()
+
     def test_heuristic_flow_uses_all_reachable_nodes(self):
         nodes = [
             {"name": "pc1", "reachable": True},
