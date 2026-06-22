@@ -299,6 +299,28 @@ class MeshTests(unittest.TestCase):
             server.shutdown()
             _sys.modules.pop("nc_mod", None)
 
+    def test_node_client_token_auth(self):
+        # NodeClient(url, token=...) sends X-Urirun-Token so it can drive an auth-gated node.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "demo://a/x/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                      "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("a", registry, "127.0.0.1", port, execute=True, allow=["demo://**"],
+                                 admin_token="T", require_run_auth=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            self.assertFalse(NodeClient(base).run("demo://a/x/query/ping")["ok"])         # no token -> 403
+            self.assertTrue(NodeClient(base, token="T").run("demo://a/x/query/ping")["ok"])  # token -> ok
+        finally:
+            server.shutdown()
+
     def test_route_source_provenance(self):
         reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
             "x://h/a/query/b": {"kind": "query", "adapter": "argv-template",
@@ -770,6 +792,55 @@ class MeshTests(unittest.TestCase):
 
     def test_resolve_step_payload_passthrough_without_from(self):
         self.assertEqual(mesh.resolve_step_payload({"a": 1, "b": "x"}, {}), {"a": 1, "b": "x"})
+
+    def test_flow_document_round_trips_yaml(self):
+        try:
+            import yaml  # noqa: F401
+        except ModuleNotFoundError:
+            self.skipTest("PyYAML not installed")
+        flow = {
+            "task": {"id": "demo", "title": "Demo"},
+            "steps": [{"id": "health", "uri": "env://laptop/runtime/query/health", "payload": {}, "depends_on": []}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "flow.yaml"
+            mesh.write_flow_document(path, mesh.flow_document(flow, prompt="sprawdz lenovo", generator={"provider": "heuristic"}))
+            loaded = mesh.load_flow_document(path)
+        self.assertEqual(loaded["version"], "urirun.flow.v1")
+        self.assertEqual(loaded["source"]["nl"], "sprawdz lenovo")
+        self.assertEqual(loaded["steps"][0]["uri"], "env://laptop/runtime/query/health")
+
+    def test_verify_flow_execution_checks_read_back_fragment(self):
+        doc = {"verification": {"read_back_step": "logs_after", "expected_log_fragment": "closed-loop ok"}}
+        execution = {"ok": True, "results": {"logs_after": {"result": {"stdout": "prefix closed-loop ok suffix"}}}}
+
+        verified = mesh.verify_flow_execution(doc, execution, executed=True)
+
+        self.assertTrue(verified["ok"])
+
+    def test_verify_flow_execution_can_fail_result(self):
+        doc = {"verification": {"read_back_step": "logs_after", "expected_log_fragment": "missing"}}
+        execution = {"ok": True, "results": {"logs_after": {"result": {"stdout": "different"}}}}
+
+        verified = mesh.verify_flow_execution(doc, execution, executed=True)
+
+        self.assertFalse(verified["ok"])
+
+    def test_run_flow_document_dry_run(self):
+        doc = {
+            "task": {"id": "demo", "title": "Demo"},
+            "steps": [{"id": "health", "uri": "env://laptop/runtime/query/health", "payload": {}, "depends_on": []}],
+        }
+        discovered = {
+            "nodes": [],
+            "routes": [{"uri": "env://laptop/runtime/query/health", "safe": True, "inputSchema": {"type": "object"}}],
+            "serviceMap": {"laptop": "http://127.0.0.1:1"},
+        }
+
+        result = mesh.run_flow_document(doc, discovered, execute=False)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["timeline"][0]["uri"], "env://laptop/runtime/query/health")
 
 
 if __name__ == "__main__":

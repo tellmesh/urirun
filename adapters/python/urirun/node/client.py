@@ -15,8 +15,9 @@ from typing import Any, Iterator
 from urllib.parse import unquote
 
 
-def _get(url: str, timeout: float = 6.0) -> dict:
-    with urllib.request.urlopen(url, timeout=timeout) as r:
+def _get(url: str, timeout: float = 6.0, headers: dict | None = None) -> dict:
+    req = urllib.request.Request(url, headers=headers or {}, method="GET")
+    with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode("utf-8") or "{}")
 
 
@@ -35,16 +36,25 @@ def _post(url: str, body: dict, headers: dict | None = None, timeout: float = 12
 class NodeClient:
     """Drive one urirun node: ``c = NodeClient("http://host:8765"); c.run(uri, payload)``."""
 
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, token: str | None = None) -> None:
         self.base = url.rstrip("/")
-        h = _get(self.base + "/health")
+        self.token = token  # sent as X-Urirun-Token on every request when set
+        h = _get(self.base + "/health", headers=self._auth())
         self.name = h.get("name", "node")
         self.version = h.get("version")
         self.has_events = "events" in h
 
+    def _auth(self, extra: dict | None = None) -> dict:
+        h = {"X-Urirun-Token": self.token} if self.token else {}
+        return {**h, **(extra or {})}
+
     # --- discovery ---
     def routes(self) -> list[dict]:
-        return _get(self.base + "/routes").get("routes", [])
+        return _get(self.base + "/routes", headers=self._auth()).get("routes", [])
+
+    def get(self, path: str) -> dict:
+        """Generic authenticated GET against the node (e.g. '/device', '/processes')."""
+        return _get(self.base + "/" + path.lstrip("/"), headers=self._auth())
 
     def concretize(self, uri: str, placeholders: dict | None = None) -> str:
         """Resolve a /routes URI for dispatch: undo percent-encoded braces and fill
@@ -60,7 +70,7 @@ class NodeClient:
         body: dict = {"uri": uri, "payload": payload or {}}
         if mode:
             body["mode"] = mode
-        headers = {}
+        headers = self._auth()
         if run_id:
             headers["X-Urirun-Run-Id"] = run_id
         if expect_etag:
@@ -70,7 +80,7 @@ class NodeClient:
     def run_async(self, uri: str, payload: dict | None = None, run_id: str | None = None) -> dict:
         """Start a run without blocking: returns 202 envelope with runId; stream via watch(run=)."""
         body: dict = {"uri": uri, "payload": payload or {}}
-        headers = {"Prefer": "respond-async"}
+        headers = self._auth({"Prefer": "respond-async"})
         if run_id:
             headers["X-Urirun-Run-Id"] = run_id
         return _post(self.base + "/run", body, headers=headers, timeout=10.0)
@@ -130,7 +140,7 @@ class NodeClient:
         if run:
             params.append("run=" + run)
         url = self.base + "/events" + ("?" + "&".join(params) if params else "")
-        req = urllib.request.Request(url, headers={"Accept": "text/event-stream"})
+        req = urllib.request.Request(url, headers=self._auth({"Accept": "text/event-stream"}))
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             for raw in resp:
                 if stop is not None and stop.is_set():
