@@ -1484,6 +1484,10 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     install_parser.add_argument("--dry-run", action="store_true", help="print the pip command without running it")
     install_parser.add_argument("--json", action="store_true")
 
+    version_parser = subparsers.add_parser("version", help="Show the urirun version and whether it is the latest on PyPI")
+    version_parser.add_argument("--json", action="store_true")
+    version_parser.add_argument("--no-check", action="store_true", help="skip the PyPI latest-version check")
+
     upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade urirun itself (no ids) or installed connectors (install --upgrade)")
     upgrade_parser.add_argument("ids", nargs="*", help="connector ids/packages; empty = the urirun core")
     upgrade_parser.add_argument("--all", action="store_true", help="upgrade every installed connector")
@@ -2399,7 +2403,18 @@ def _cmd_run_or_list(args, parser) -> int:
     return 0
 
 
+def _cmd_version(args, parser) -> int:
+    from urirun.node import mesh
+    info = mesh.version_status(check_latest=not getattr(args, "no_check", False))
+    if getattr(args, "json", False):
+        print(json.dumps(info))
+    else:
+        print(mesh.version_line(check_latest=not getattr(args, "no_check", False)))
+    return 0
+
+
 _COMMANDS = {
+    "version": _cmd_version,
     "scan": _cmd_scan,
     "compile": _cmd_compile,
     "discover": _cmd_discover,

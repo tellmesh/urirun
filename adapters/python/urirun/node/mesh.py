@@ -1602,10 +1602,22 @@ def apply_deploy(state: dict, body: dict) -> dict:
 
 def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, public_url: str | None = None,
                allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False,
-               admin_token: str | None = None, key_auth: bool = False) -> ThreadingHTTPServer:
+               admin_token: str | None = None, key_auth: bool = False,
+               require_run_auth: bool = False) -> ThreadingHTTPServer:
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
     # /deploy is reachable when a token OR SSH key-auth is configured.
     deploy_enabled = bool(admin_token) or key_auth
+    # require_run_auth needs a credential to check against; ignore it (with a warning
+    # below) if neither a token nor key-auth is configured.
+    run_auth_enforced = require_run_auth and deploy_enabled
+    _is_local = host in ("127.0.0.1", "localhost", "::1", "")
+    if execute and not _is_local and not run_auth_enforced:
+        sys.stderr.write(
+            f"[urirun] SECURITY: node '{name}' serves /run with NO authentication on {host}:{port} "
+            f"(reachable beyond localhost). Anyone who reaches this port can execute every --allow'ed "
+            f"route. Bind 127.0.0.1, or add --admin-token/--key-auth and --require-run-auth.\n"
+        )
+        sys.stderr.flush()
     # Mutable so POST /deploy can hot-swap what the node serves without a restart.
     state = {"name": name, "registry": registry,
              "routes": routes_from_registry(registry), "allow": list(allow or [])}
@@ -1663,7 +1675,15 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
             if self.path != "/run":
                 send_json(self, 404, {"ok": False, "error": "not found"})
                 return
-            body = read_json(self)
+            raw = read_raw(self)
+            if run_auth_enforced and not self._run_ok(raw):
+                send_json(self, 403, {"ok": False, "error": "unauthorized (/run requires X-Urirun-Token or an enrolled-key signature)"})
+                return
+            try:
+                body = json.loads(raw.decode("utf-8") or "{}")
+            except Exception:
+                send_json(self, 400, {"ok": False, "error": "invalid JSON body"})
+                return
             run_policy = v2.runtime.build_policy(None, list(state["allow"]), None) or {}
             run_policy["secretsDisabled"] = not allow_secrets
             result = v2.run(
@@ -1684,6 +1704,15 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
             if admin_token and self.headers.get("X-Urirun-Token") == admin_token:
                 return True
             if key_auth and keyauth.verify_request(self.headers, raw, keyauth.PURPOSE_DEPLOY):
+                return True
+            return False
+
+        def _run_ok(self, raw: bytes) -> bool:
+            # same credentials as deploy, but signed with PURPOSE_RUN so a captured
+            # deploy request can't be replayed as a run (and vice versa)
+            if admin_token and self.headers.get("X-Urirun-Token") == admin_token:
+                return True
+            if key_auth and keyauth.verify_request(self.headers, raw, keyauth.PURPOSE_RUN):
                 return True
             return False
 
