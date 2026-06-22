@@ -64,3 +64,35 @@ auth (`uri-copy-id`), `node://` self-management (`--manage`), `/events` SSE + `h
    longer a top fan-out hotspot. Remaining over-limit: the 3 cohesive mesh loops (radon
    over-counts) + a few exactly at 15. Top fan-out is now `_build_parser=106` (a flat
    argparse builder — high fan, trivial CC; not worth splitting).
+
+## Process streaming over URI (control long-running processes, not just request/response)
+
+Tested on lenovo: a `/run` of a process that emits 5 lines over 2s returned **nothing until
+the process exited** (time-to-first-byte == total == 2.02s). `/run` is purely
+request/response; the only node→host channel was discrete `run`/`error` events. So a URI
+could *start* a process but not *stream* it.
+
+**(done) Progress streaming hook.** `mesh.emit({...})` lets an in-process handler push
+incremental `progress` events to the EventHub, correlated to the run; `/run` returns a
+`runId`; `GET /events?run=<id>` streams that one run live. Verified: 5 lines arrived at the
+host at +0.4s..+2.0s *while* `/run` was still blocking. (branch `feat/uri-process-streaming`)
+
+**Further improvements (prioritized):**
+1. **Subprocess/argv handlers stream too.** `emit` only reaches in-process handlers; the
+   node should capture stdout of `local-function-subprocess` / `argv-template` handlers
+   line-by-line and auto-emit `progress` — so *any* process streams with zero handler code.
+2. **Non-blocking run.** `/run` still blocks until the handler returns even while streaming.
+   Add `Prefer: respond-async` (or `mode:async`) → 202 + `runId` immediately, final result
+   delivered as a terminal `result` event on `/events?run=`. Needed for tail-f / servers.
+3. **Process lifecycle URIs.** A node-side process registry keyed by `runId` →
+   `proc://<node>/<runId>/command/cancel` (SIGTERM/SIGKILL) + `…/query/status`. Cancellation
+   is the missing half of streaming control.
+4. **Ordering + replay per run.** Progress shares the global ring buffer; a chatty process
+   can evict others. Give each run a sequence number and (optionally) a per-run buffer so a
+   reconnecting client resumes mid-stream without loss.
+5. **Binary/high-rate streams.** `emit` is JSON/SSE — fine for logs/progress. For screen or
+   media streaming, bridge to a binary channel (the tellmesh `uriwebrtc`/`urikvmedge` packs)
+   rather than base64 over SSE.
+6. **Relay + host ergonomics.** Carry `progress` (with `run` filter) through the
+   `mesh-urirun-com` events lane for NAT'd nodes; add `urirun run --stream` / `host watch
+   --run <id>` to print a run's progress live.
