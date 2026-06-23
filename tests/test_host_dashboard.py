@@ -86,6 +86,17 @@ class FakeHostDb:
         return item
 
 
+def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
+    html = host_dashboard.INDEX_HTML
+
+    assert "chatFullscreenBtn" in html
+    assert "chat-fullscreen" in html
+    assert "writeUrlState" in html
+    assert "tab:" in html
+    assert "action:" in html
+    assert "window.addEventListener('popstate'" in html
+
+
 def test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch):
     fake_mesh = FakeMesh()
     fake_db = FakeHostDb()
@@ -147,7 +158,11 @@ def test_phone_scanner_prompt_intent_is_specific():
     assert host_dashboard._is_phone_scanner_prompt("stwórz usługę kamery online przez WebRTC")
     assert host_dashboard._is_phone_scanner_prompt("uruchom aplikację mobilną do skanowania paragonów")
     assert host_dashboard._is_phone_scanner_prompt("start mobile camera scanner")
+    assert host_dashboard._is_phone_scanner_prompt("włącz światło w kamerze telefonu")
+    assert host_dashboard._is_phone_scanner_prompt("wyłącz światło w kamerze")
     assert not host_dashboard._is_phone_scanner_prompt("pokaz liste faktur")
+    assert host_dashboard._torch_enabled_from_prompt("włącz latarkę w telefonie") is True
+    assert host_dashboard._torch_enabled_from_prompt("wyłącz światło w kamerze") is False
 
 
 def test_chat_ask_starts_phone_scanner_service_from_nl(monkeypatch):
@@ -272,6 +287,8 @@ def test_uri_invoke_lists_supported_host_actions():
     assert result["ok"] is True
     uris = {item["uri"] for item in result["actions"]}
     assert "scanner://page/ui/button/start-camera/command/click" in uris
+    assert "scanner://page/ui/button/torch/command/click" in uris
+    assert "scanner://page/camera/command/torch" in uris
     assert "scanner://page/camera/command/best-pdf" in uris
     assert "scanner://host/capture/command/run" in uris
     assert all("layer" in item for item in result["actions"])
@@ -374,6 +391,40 @@ def test_chat_camera_prompt_starts_service_and_queues_page_action(monkeypatch):
     assert result["timeline"][-1]["uri"] == "scanner://page/ui/button/start-camera/command/click"
     polled = host_dashboard.page_action_poll("scanner")
     assert polled["actions"][0]["uri"] == "scanner://page/ui/button/start-camera/command/click"
+
+
+def test_chat_torch_prompt_starts_camera_and_queues_light(monkeypatch):
+    fake_db = FakeHostDb()
+    host_dashboard._PAGE_ACTION_QUEUES.clear()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    def fake_ensure(*args, **kwargs):
+        return {
+            "ok": True,
+            "status": "started",
+            "url": "https://192.168.1.10:8196/scanner",
+            "message": {"attachments": [{"kind": "qr-code", "path": "/tmp/qr.png"}]},
+        }
+
+    monkeypatch.setattr(host_dashboard, "ensure_phone_scanner_service", fake_ensure)
+
+    result = host_dashboard.chat_ask(".", ":memory:", None, {
+        "prompt": "włącz światło w kamerze telefonu",
+        "execute": True,
+        "no_llm": True,
+    })
+
+    assert result["ok"] is True
+    assert result["results"]["camera-start"]["queued"] is True
+    assert result["results"]["camera-torch"]["queued"] is True
+    assert result["flow"]["steps"][-1]["uri"] == "scanner://page/ui/button/torch/command/click"
+    polled = host_dashboard.page_action_poll("scanner", limit=4)
+    assert [action["uri"] for action in polled["actions"]] == [
+        "scanner://page/ui/button/start-camera/command/click",
+        "scanner://page/ui/button/torch/command/click",
+    ]
+    assert polled["actions"][0]["payload"]["startBest"] is False
+    assert polled["actions"][1]["payload"]["enabled"] is True
 
 
 def test_scanner_capture_registers_artifact_and_chat_message(monkeypatch, tmp_path):

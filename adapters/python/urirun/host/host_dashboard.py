@@ -95,6 +95,7 @@ INDEX_HTML = r"""<!doctype html>
     }
     button.primary { background: var(--accent); border-color: var(--accent); color: white; }
     button.danger { color: var(--bad); }
+    button.active { border-color: var(--accent); box-shadow: inset 0 -2px 0 var(--accent); color: var(--accent); }
     button:disabled { opacity: .55; cursor: not-allowed; }
     select, input { min-height: 36px; padding: 0 10px; }
     textarea {
@@ -269,6 +270,39 @@ INDEX_HTML = r"""<!doctype html>
       border-right: 1px solid var(--line);
     }
     .hidden { display: none !important; }
+    body.chat-fullscreen { overflow: hidden; }
+    body.chat-fullscreen .topbar,
+    body.chat-fullscreen .metrics,
+    body.chat-fullscreen aside,
+    body.chat-fullscreen .bottom-nav { display: none; }
+    body.chat-fullscreen main {
+      width: 100%;
+      height: 100vh;
+      padding: 10px;
+    }
+    body.chat-fullscreen .grid {
+      height: 100%;
+      display: block;
+    }
+    body.chat-fullscreen .grid > .stack {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 10px;
+    }
+    body.chat-fullscreen .view-block[data-section="chat"] {
+      min-height: 0;
+    }
+    body.chat-fullscreen .view-block[data-section="chat"]:not(:nth-of-type(-n+2)) {
+      display: none !important;
+    }
+    body.chat-fullscreen .chat-result {
+      max-height: none;
+      height: calc(100vh - 286px);
+    }
+    body.chat-fullscreen textarea {
+      min-height: 86px;
+    }
     @media (max-width: 920px) {
       .topbar { align-items: flex-start; flex-direction: column; }
       main { padding: 14px 12px 76px; }
@@ -295,6 +329,7 @@ INDEX_HTML = r"""<!doctype html>
         <button data-view="activity">Activity</button>
       </div>
       <button id="scannerBtn" type="button">Phone Scanner</button>
+      <span class="pill" id="activeTabPill">overview</span>
       <button class="primary" id="refreshBtn">Refresh</button>
     </div>
   </header>
@@ -308,7 +343,10 @@ INDEX_HTML = r"""<!doctype html>
               <h2>Node Chat</h2>
               <p class="subtle">Natural language to URI flow across selected nodes.</p>
             </div>
-            <span class="pill" id="chatMode">dry-run</span>
+            <div class="actions">
+              <span class="pill" id="chatMode">dry-run</span>
+              <button id="chatFullscreenBtn" type="button">Full screen</button>
+            </div>
           </div>
           <div class="panel-body">
             <form class="chat-form" id="chatForm">
@@ -386,9 +424,11 @@ INDEX_HTML = r"""<!doctype html>
     <button data-view="activity">Activity</button>
   </nav>
   <script>
+    const VALID_VIEWS = new Set(['overview', 'chat', 'tasks', 'nodes', 'activity']);
     const params = new URLSearchParams(window.location.search);
-    const initialView = params.get('view') || 'overview';
-    const state = { summary: null, tasks: [], view: initialView, chatMessages: [] };
+    const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
+    const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
+    const state = { summary: null, tasks: [], view: initialView, chatMessages: [], chatFullscreen: initialChatFull };
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
@@ -417,6 +457,72 @@ INDEX_HTML = r"""<!doctype html>
 
     function empty(label) {
       return `<div class="item subtle">${label}</div>`;
+    }
+
+    function setParam(search, key, value) {
+      if (value === undefined || value === null || value === '') search.delete(key);
+      else search.set(key, String(value));
+    }
+
+    function currentControlState() {
+      return {
+        sprint: $('sprintFilter') ? $('sprintFilter').value : '',
+        queue: $('queueFilter') ? $('queueFilter').value : '',
+        execute: $('chatExecute') && $('chatExecute').checked ? '1' : '',
+        no_llm: $('chatNoLlm') && $('chatNoLlm').checked ? '1' : ''
+      };
+    }
+
+    function renderUrlState() {
+      $('activeTabPill').textContent = `tab:${state.view}${state.chatFullscreen ? ' · full' : ''}`;
+      document.querySelectorAll('[data-view]').forEach((button) => {
+        button.classList.toggle('active', button.dataset.view === state.view);
+      });
+    }
+
+    function writeUrlState(changes = {}, options = {}) {
+      const search = new URLSearchParams(window.location.search);
+      const controls = currentControlState();
+      setParam(search, 'view', state.view);
+      setParam(search, 'tab', state.view);
+      setParam(search, 'chat', state.view === 'chat' ? (state.chatFullscreen ? 'full' : 'panel') : '');
+      setParam(search, 'sprint', controls.sprint && controls.sprint !== 'current' ? controls.sprint : '');
+      setParam(search, 'queue', controls.queue || '');
+      setParam(search, 'execute', controls.execute);
+      setParam(search, 'no_llm', controls.no_llm);
+      Object.entries(changes).forEach(([key, value]) => setParam(search, key, value));
+      const query = search.toString();
+      const nextUrl = `${window.location.pathname}${query ? '?' + query : ''}${window.location.hash}`;
+      const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (nextUrl !== currentUrl) {
+        const method = options.replace ? 'replaceState' : 'pushState';
+        window.history[method]({ view: state.view, chatFullscreen: state.chatFullscreen }, '', nextUrl);
+      }
+      renderUrlState();
+    }
+
+    function applyControlsFromUrl() {
+      const search = new URLSearchParams(window.location.search);
+      if ($('sprintFilter') && search.get('sprint')) $('sprintFilter').value = search.get('sprint');
+      if ($('queueFilter') && search.has('queue')) $('queueFilter').value = search.get('queue') || '';
+      if ($('chatExecute')) {
+        $('chatExecute').checked = search.get('execute') === '1';
+        $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
+      }
+      if ($('chatNoLlm')) $('chatNoLlm').checked = search.get('no_llm') === '1';
+    }
+
+    function setChatFullscreen(enabled, options = {}) {
+      state.chatFullscreen = !!enabled;
+      document.body.classList.toggle('chat-fullscreen', state.chatFullscreen);
+      $('chatFullscreenBtn').textContent = state.chatFullscreen ? 'Exit full screen' : 'Full screen';
+      if (state.chatFullscreen && state.view !== 'chat') {
+        state.view = 'chat';
+      }
+      renderUrlState();
+      if (!options.silent) {
+        writeUrlState({ action: state.chatFullscreen ? 'chat:fullscreen' : 'chat:panel' });
+      }
     }
 
     function renderMetrics(summary) {
@@ -570,10 +676,12 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function applyView(view) {
+      if (!VALID_VIEWS.has(view)) view = 'overview';
       state.view = view;
       document.querySelectorAll('.view-block').forEach((block) => {
         block.classList.toggle('hidden', view !== 'overview' && block.dataset.section !== view);
       });
+      renderUrlState();
     }
 
     async function load() {
@@ -599,6 +707,7 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     async function taskAction(id, action) {
+      writeUrlState({ action: `task:${action}`, item: id });
       const body = action === 'complete'
         ? { note: 'Completed from urirun host dashboard' }
         : action === 'block'
@@ -614,6 +723,8 @@ INDEX_HTML = r"""<!doctype html>
       if (!prompt) return;
       const nodes = [...document.querySelectorAll('input[name="chatNode"]:checked')].map((item) => item.value);
       const execute = $('chatExecute').checked;
+      state.view = 'chat';
+      writeUrlState({ action: 'chat:run', prompt_len: prompt.length, nodes: nodes.join(',') });
       $('chatMode').textContent = execute ? 'execute' : 'dry-run';
       $('chatStatus').textContent = 'running...';
       $('chatAskBtn').disabled = true;
@@ -643,16 +754,51 @@ INDEX_HTML = r"""<!doctype html>
       const id = event.target.dataset.id;
       const view = event.target.dataset.view;
       if (action && id) taskAction(id, action).catch((error) => alert(error.message));
-      if (view) applyView(view);
+      if (view) {
+        applyView(view);
+        writeUrlState({ action: `tab:${view}` });
+      }
     });
-    $('refreshBtn').addEventListener('click', () => load().catch((error) => alert(error.message)));
-    $('scannerBtn').addEventListener('click', () => window.open('/scanner', '_blank'));
-    $('sprintFilter').addEventListener('change', () => load().catch((error) => alert(error.message)));
-    $('queueFilter').addEventListener('change', () => load().catch((error) => alert(error.message)));
+    $('refreshBtn').addEventListener('click', () => {
+      writeUrlState({ action: 'refresh' });
+      load().catch((error) => alert(error.message));
+    });
+    $('scannerBtn').addEventListener('click', () => {
+      writeUrlState({ action: 'open:scanner' });
+      window.open('/scanner', '_blank');
+    });
+    $('chatFullscreenBtn').addEventListener('click', () => setChatFullscreen(!state.chatFullscreen));
+    $('sprintFilter').addEventListener('change', () => {
+      writeUrlState({ action: 'filter:sprint' }, { replace: true });
+      load().catch((error) => alert(error.message));
+    });
+    $('queueFilter').addEventListener('change', () => {
+      writeUrlState({ action: 'filter:queue' }, { replace: true });
+      load().catch((error) => alert(error.message));
+    });
     $('chatForm').addEventListener('submit', askChat);
     $('chatExecute').addEventListener('change', () => {
       $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
+      state.view = 'chat';
+      writeUrlState({ action: 'chat:mode' }, { replace: true });
     });
+    $('chatNoLlm').addEventListener('change', () => {
+      state.view = 'chat';
+      writeUrlState({ action: 'chat:planner' }, { replace: true });
+    });
+    window.addEventListener('popstate', () => {
+      const search = new URLSearchParams(window.location.search);
+      const nextView = VALID_VIEWS.has(search.get('view')) ? search.get('view') : (VALID_VIEWS.has(search.get('tab')) ? search.get('tab') : 'overview');
+      state.view = nextView;
+      applyControlsFromUrl();
+      setChatFullscreen(search.get('chat') === 'full' || search.get('fullscreen') === 'chat', { silent: true });
+      applyView(state.view);
+      load().catch((error) => { $('contextLine').textContent = error.message; });
+    });
+    applyControlsFromUrl();
+    setChatFullscreen(state.chatFullscreen, { silent: true });
+    applyView(state.view);
+    writeUrlState({ action: params.get('action') || 'load' }, { replace: true });
     renderChatHistory();
     setInterval(() => loadChatHistory().catch(() => {}), 4000);
     load().catch((error) => {
@@ -697,6 +843,7 @@ SCANNER_HTML = r"""<!doctype html>
     <canvas id="canvas" hidden></canvas>
     <div class="controls">
       <button class="primary" id="start">Start camera</button>
+      <button id="torch" disabled>Light off</button>
       <button class="primary" id="capture" disabled>Scan now</button>
       <button class="primary" id="best" disabled>Best PDF</button>
       <select id="bestCount">
@@ -728,6 +875,7 @@ SCANNER_HTML = r"""<!doctype html>
     const canvas = document.getElementById('canvas');
     const state = document.getElementById('state');
     const startBtn = document.getElementById('start');
+    const torchBtn = document.getElementById('torch');
     const captureBtn = document.getElementById('capture');
     const bestBtn = document.getElementById('best');
     const startBest = document.getElementById('startBest');
@@ -735,8 +883,10 @@ SCANNER_HTML = r"""<!doctype html>
     let stream = null;
     let timer = null;
     let bestRunning = false;
+    let torchOn = false;
     let startCameraPromise = null;
     let startCameraClickPromise = null;
+    let torchClickPromise = null;
 
     function setState(text, error=false) {
       state.textContent = text;
@@ -771,6 +921,7 @@ SCANNER_HTML = r"""<!doctype html>
     async function startCamera(options={}) {
       if (stream && stream.getVideoTracks && stream.getVideoTracks().some((track) => track.readyState === 'live')) {
         await waitForVideoReady();
+        refreshTorchButton();
         return cameraStatus();
       }
       stream = await navigator.mediaDevices.getUserMedia({
@@ -786,6 +937,7 @@ SCANNER_HTML = r"""<!doctype html>
       await waitForVideoReady();
       captureBtn.disabled = false;
       bestBtn.disabled = false;
+      refreshTorchButton();
       setState('camera ready');
       await announce('camera-started', {tracks: stream.getVideoTracks().map((track) => track.label)});
       const shouldStartBest = Object.prototype.hasOwnProperty.call(options || {}, 'startBest') ? !!options.startBest : startBest.checked;
@@ -835,6 +987,74 @@ SCANNER_HTML = r"""<!doctype html>
       dispatchRemoteButtonClick(startBtn);
       const status = await (startCameraClickPromise || beginStartCamera(payload || {}));
       return {ok: true, clicked: true, button: 'Start camera', uri: 'scanner://page/ui/button/start-camera/command/click', status};
+    }
+
+    function cameraTrack() {
+      return stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+    }
+
+    function torchInfo() {
+      const track = cameraTrack();
+      let supported = false;
+      let settings = {};
+      if (track) {
+        try {
+          const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+          supported = !!(capabilities && Object.prototype.hasOwnProperty.call(capabilities, 'torch'));
+        } catch (_) {}
+        try {
+          settings = track.getSettings ? track.getSettings() : {};
+        } catch (_) {}
+      }
+      return {
+        supported,
+        enabled: torchOn,
+        ready: !!track,
+        label: track ? track.label : '',
+        settings: {torch: Object.prototype.hasOwnProperty.call(settings, 'torch') ? settings.torch : null}
+      };
+    }
+
+    function refreshTorchButton() {
+      const info = torchInfo();
+      torchBtn.disabled = !info.supported;
+      torchBtn.textContent = torchOn ? 'Light on' : 'Light off';
+      torchBtn.className = torchOn ? 'primary' : '';
+      return info;
+    }
+
+    async function setTorch(enabled=true) {
+      if (!stream) {
+        await runStartCamera({startBest: false});
+      }
+      const track = cameraTrack();
+      if (!track) throw new Error('camera stream not ready');
+      const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+      if (track.getCapabilities && !Object.prototype.hasOwnProperty.call(capabilities || {}, 'torch')) {
+        refreshTorchButton();
+        throw new Error('torch not supported by this browser/camera');
+      }
+      await track.applyConstraints({advanced: [{torch: !!enabled}]});
+      torchOn = !!enabled;
+      const info = refreshTorchButton();
+      setState(torchOn ? 'light on' : 'light off');
+      await announce('torch-changed', {enabled: torchOn, supported: info.supported});
+      return {ok: true, uri: 'scanner://page/camera/command/torch', enabled: torchOn, torch: info, status: cameraStatus()};
+    }
+
+    async function clickTorchButton(payload={}) {
+      if (!stream) {
+        await runStartCamera({startBest: false});
+      }
+      const info = refreshTorchButton();
+      if (!info.supported) throw new Error('torch not supported by this browser/camera');
+      if (Object.prototype.hasOwnProperty.call(payload || {}, 'enabled')) {
+        torchBtn.dataset.nextTorch = payload.enabled ? '1' : '0';
+      }
+      setState('URI click Light');
+      dispatchRemoteButtonClick(torchBtn);
+      const result = await (torchClickPromise || setTorch(Object.prototype.hasOwnProperty.call(payload || {}, 'enabled') ? !!payload.enabled : !torchOn));
+      return {ok: true, clicked: true, button: 'Light', uri: 'scanner://page/ui/button/torch/command/click', result, status: cameraStatus()};
     }
 
     function sleep(ms) {
@@ -925,7 +1145,7 @@ SCANNER_HTML = r"""<!doctype html>
     }
 
     function cameraStatus() {
-      const track = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+      const track = cameraTrack();
       return {
         ok: true,
         uri: 'scanner://page/camera/query/status',
@@ -933,6 +1153,7 @@ SCANNER_HTML = r"""<!doctype html>
         runningBest: bestRunning,
         width: video.videoWidth || 0,
         height: video.videoHeight || 0,
+        torch: torchInfo(),
         track: track ? {label: track.label, readyState: track.readyState, enabled: track.enabled} : null,
         localActions: window.urirun && window.urirun.listActions ? window.urirun.listActions() : []
       };
@@ -945,6 +1166,12 @@ SCANNER_HTML = r"""<!doctype html>
       });
       window.urirun.registerAction('scanner://page/camera/command/start', (payload) => runStartCamera(payload || {}), {
         label: 'Start camera', layer: 'page', kind: 'command', sideEffects: ['camera-permission', 'media-stream']
+      });
+      window.urirun.registerAction('scanner://page/ui/button/torch/command/click', (payload) => clickTorchButton(payload || {}), {
+        label: 'Click Light button', layer: 'page', kind: 'command', sideEffects: ['dom-click', 'camera-torch']
+      });
+      window.urirun.registerAction('scanner://page/camera/command/torch', (payload) => setTorch(!payload || !Object.prototype.hasOwnProperty.call(payload, 'enabled') ? true : !!payload.enabled), {
+        label: 'Set camera light/torch', layer: 'page', kind: 'command', sideEffects: ['camera-torch']
       });
       window.urirun.registerAction('scanner://page/camera/command/scan', (payload) => capture(payload || {}), {
         label: 'Scan current frame', layer: 'page', kind: 'command', sideEffects: ['network', 'document-write']
@@ -1005,6 +1232,15 @@ SCANNER_HTML = r"""<!doctype html>
     registerCameraActions();
     setInterval(() => pollPageActions().catch(() => {}), 1000);
     startBtn.addEventListener('click', () => beginStartCamera().catch((err) => setState(err.message, true)));
+    torchBtn.addEventListener('click', () => {
+      const requested = Object.prototype.hasOwnProperty.call(torchBtn.dataset, 'nextTorch') ? torchBtn.dataset.nextTorch === '1' : !torchOn;
+      delete torchBtn.dataset.nextTorch;
+      const promise = setTorch(requested).catch((err) => setState(err.message, true));
+      torchClickPromise = promise;
+      promise.finally(() => {
+        if (torchClickPromise === promise) torchClickPromise = null;
+      });
+    });
     captureBtn.addEventListener('click', () => capture().catch((err) => setState(err.message, true)));
     bestBtn.addEventListener('click', () => bestPdf().catch((err) => {
       bestRunning = false;
@@ -1787,24 +2023,25 @@ def _probe_scanner_url(url: str, timeout: float = 1.5) -> bool:
 
 def _nl_text(text: str) -> str:
     decomposed = unicodedata.normalize("NFKD", text.lower())
-    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return stripped.translate(str.maketrans({"ł": "l", "ß": "ss"}))
 
 
 def _is_phone_scanner_prompt(prompt: str) -> bool:
     text = _nl_text(prompt)
     scanner_terms = (
         "skaner", "scanner", "skan", "scan", "kamera", "camera", "telefon", "phone", "mobile", "mobil",
-        "webrtc", "qr", "qrcode", "paragon", "rachunek",
+        "webrtc", "qr", "qrcode", "paragon", "rachunek", "latark", "swiatl", "torch", "flash",
     )
     service_terms = ("aplikac", "uslug", "service", "stron", "narzedz", "interfejs")
     start_terms = (
         "uruchom", "wystart", "stworz", "utworz", "start", "create", "open", "wlacz", "odpal", "daj",
-        "pokaz", "link", "adres", "ip", "qr",
+        "pokaz", "link", "adres", "ip", "qr", "wylacz", "zgas", "disable", "off",
     )
     wants_scanner = any(word in text for word in scanner_terms)
     wants_service = any(word in text for word in service_terms)
     wants_start = any(word in text for word in start_terms)
-    mobile_context = any(word in text for word in ("telefon", "phone", "mobile", "mobil", "webrtc", "kamera", "camera", "qr", "skaner", "scanner"))
+    mobile_context = any(word in text for word in ("telefon", "phone", "mobile", "mobil", "webrtc", "kamera", "camera", "qr", "skaner", "scanner", "latark", "swiatl", "torch", "flash"))
     return wants_start and (wants_scanner or (wants_service and mobile_context))
 
 
@@ -1813,6 +2050,20 @@ def _is_camera_start_prompt(prompt: str) -> bool:
     camera_terms = ("kamer", "camera", "webcam", "aparat", "obiektyw")
     start_terms = ("wlacz", "uruchom", "start", "odpal", "otworz", "aktywow", "enable")
     return any(word in text for word in camera_terms) and any(word in text for word in start_terms)
+
+
+def _torch_enabled_from_prompt(prompt: str) -> bool | None:
+    text = _nl_text(prompt)
+    torch_terms = ("latark", "swiatl", "oswietl", "lampa", "led", "torch", "flash")
+    if not any(word in text for word in torch_terms):
+        return None
+    off_terms = ("wylacz", "zgas", "off", "disable", "stop")
+    on_terms = ("wlacz", "uruchom", "start", "odpal", "zaswiec", "on", "enable")
+    if any(word in text for word in off_terms):
+        return False
+    if any(word in text for word in on_terms):
+        return True
+    return True
 
 
 def ensure_phone_scanner_service(
@@ -2424,6 +2675,22 @@ def _uri_action_catalog() -> list[dict]:
             "where": "browser page via urirun.registerAction",
         },
         {
+            "uri": "scanner://page/ui/button/torch/command/click",
+            "layer": "page",
+            "kind": "command",
+            "label": "Click the camera light button in the scanner page",
+            "sideEffects": ["dom-click", "camera-torch"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://page/camera/command/torch",
+            "layer": "page",
+            "kind": "command",
+            "label": "Set browser camera light/torch",
+            "sideEffects": ["camera-torch"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
             "uri": "scanner://page/camera/command/scan",
             "layer": "page",
             "kind": "command",
@@ -2499,6 +2766,8 @@ def _uri_action_lookup(uri: str) -> dict | None:
         "scanner://host/best/finish": "scanner://host/best/command/finish",
         "scanner://host/session": "scanner://host/session/command/log",
         "scanner://page/start-button": "scanner://page/ui/button/start-camera/command/click",
+        "scanner://page/torch": "scanner://page/camera/command/torch",
+        "scanner://page/torch-button": "scanner://page/ui/button/torch/command/click",
         "dashboard://host/actions/query/list": "scanner://host/actions/query/list",
     }
     target = aliases.get(uri)
@@ -2708,13 +2977,16 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             identity=identity,
         )
         queued_camera = None
-        if _is_camera_start_prompt(prompt):
-            camera_click_uri = "scanner://page/ui/button/start-camera/command/click"
+        queued_torch = None
+        camera_click_uri = "scanner://page/ui/button/start-camera/command/click"
+        torch_click_uri = "scanner://page/ui/button/torch/command/click"
+        torch_enabled = _torch_enabled_from_prompt(prompt)
+        if _is_camera_start_prompt(prompt) or torch_enabled is not None:
             queued_camera = page_action_enqueue(
                 db,
                 target="scanner",
                 uri=camera_click_uri,
-                payload={"target": "scanner", "startBest": True},
+                payload={"target": "scanner", "startBest": torch_enabled is None},
                 mode="execute",
                 source="chat",
             )
@@ -2728,6 +3000,26 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 },
             )
             _add_chat_message(db, camera_message)
+        if torch_enabled is not None:
+            queued_torch = page_action_enqueue(
+                db,
+                target="scanner",
+                uri=torch_click_uri,
+                payload={"target": "scanner", "enabled": bool(torch_enabled)},
+                mode="execute",
+                source="chat",
+            )
+            torch_message = _chat_message(
+                "system",
+                f"Camera light {'on' if torch_enabled else 'off'} queued for the open scanner page.",
+                detail={
+                    "uri": torch_click_uri,
+                    "enabled": bool(torch_enabled),
+                    "queued": queued_torch,
+                    "scannerUrl": service.get("url"),
+                },
+            )
+            _add_chat_message(db, torch_message)
         result = {
             "ok": bool(service.get("ok")),
             "prompt": prompt,
@@ -2741,8 +3033,13 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                     *([{
                         "id": "queue-camera-start",
                         "uri": camera_click_uri,
-                        "payload": {"target": "scanner", "startBest": True},
+                        "payload": {"target": "scanner", "startBest": torch_enabled is None},
                     }] if queued_camera else []),
+                    *([{
+                        "id": "queue-camera-light",
+                        "uri": torch_click_uri,
+                        "payload": {"target": "scanner", "enabled": bool(torch_enabled)},
+                    }] if queued_torch else []),
                 ],
             },
             "timeline": [
@@ -2760,8 +3057,19 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                     "ok": bool(queued_camera.get("ok")),
                     "status": "queued",
                 }] if queued_camera else []),
+                *([{
+                    "id": "queue-camera-light",
+                    "uri": torch_click_uri,
+                    "target": "scanner-page",
+                    "ok": bool(queued_torch.get("ok")),
+                    "status": "queued",
+                }] if queued_torch else []),
             ],
-            "results": {"phone-scanner-service": service, **({"camera-start": queued_camera} if queued_camera else {})},
+            "results": {
+                "phone-scanner-service": service,
+                **({"camera-start": queued_camera} if queued_camera else {}),
+                **({"camera-torch": queued_torch} if queued_torch else {}),
+            },
             "attachments": ((service.get("message") or {}).get("attachments") or []),
         }
         try:
