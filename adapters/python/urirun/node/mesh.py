@@ -1805,6 +1805,19 @@ class NodeHandler(BaseHTTPRequestHandler):
                 summary["persisted"] = path
             except Exception as exc:  # noqa: BLE001 - deploy still succeeded in memory
                 summary["persistError"] = str(exc)
+            # also persist the allow policy (+ registry path) into the node config, so a bare
+            # `node serve --config …` restart re-applies them without the original --allow flags.
+            cfg_path = getattr(c, "config_path", None)
+            try:
+                cfg = load_node_config(cfg_path)
+                cfg.setdefault("node", {})
+                cfg["node"]["allow"] = list(c.state.get("allow") or [])
+                if summary.get("persisted"):
+                    cfg["node"]["registry"] = summary["persisted"]
+                save_node_config(cfg, cfg_path)
+                summary["persistedAllow"] = cfg["node"]["allow"]
+            except Exception as exc:  # noqa: BLE001
+                summary["persistAllowError"] = str(exc)
         print(json.dumps({"event": "urirun.node.deployed", "name": c.state["name"],
                           "routes": summary["routeCount"], "schemes": summary["schemes"],
                           "persisted": summary.get("persisted")}), flush=True)
@@ -1863,7 +1876,7 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False,
                admin_token: str | None = None, key_auth: bool = False,
                require_run_auth: bool = False, manage: bool = False,
-               registry_path: str | None = None) -> ThreadingHTTPServer:
+               registry_path: str | None = None, config_path: str | None = None) -> ThreadingHTTPServer:
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
     # /deploy is reachable when a token OR SSH key-auth is configured.
     deploy_enabled = bool(admin_token) or key_auth
@@ -1904,7 +1917,7 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                       deploy_enabled=deploy_enabled, key_auth=key_auth, admin_token=admin_token,
                       allow_secrets=allow_secrets, pool_executors=pool_executors,
                       run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
-                      registry_path=registry_path,
+                      registry_path=registry_path, config_path=config_path,
                       manage_registry=manage_registry, manage_policy=manage_policy,
                       runs={})  # run id -> progress.RunControl, for streaming/cancel/status
     server = ThreadingHTTPServer((host, port), NodeHandler)
@@ -1959,7 +1972,8 @@ def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict)
     # merged surface back here and the routes survive a restart (not just live in memory).
     registry_path = args.registry or node.get("registry") or ".urirun/registry.merged.json"
     server = serve_node(name, registry, opts.pop("host"), opts.pop("port"), opts.pop("execute"),
-                        public_url=args.public_url, registry_path=registry_path, **opts)
+                        public_url=args.public_url, registry_path=registry_path,
+                        config_path=getattr(args, "config", None), **opts)
     server.serve_forever()
     return 0
 

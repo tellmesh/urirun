@@ -1,10 +1,10 @@
-# code2llm/evolution | 1060 func | 74f | 2026-06-23
+# code2llm/evolution | 1062 func | 74f | 2026-06-23
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 2023L, 3 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 40460
+      WHY: 2052L, 3 classes, max CC=20
+      EFFORT: ~4h  IMPACT: 41040
 
   [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
       WHY: 1967L, 1 classes, max CC=14

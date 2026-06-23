@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 87, json: 12, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1073
+- **Total Functions**: 1075
 - **Total Classes**: 27
 - **Modules**: 145
 - **Entry Points**: 413
@@ -133,6 +133,9 @@ installed in the node venv, else discover a connector (catalog/loca
 ### adapters.python.urirun.runtime.v2_adopt.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, py.add_argument, py.add_argument, sub.add_parser, npm.add_argument, npm.add_argument
 
+### adapters.python.urirun.node.mesh.NodeHandler._handle_deploy
+- **Calls**: adapters.python.urirun.node.mesh.read_raw, body.get, print, adapters.python.urirun.node.mesh.send_json, adapters.python.urirun.node.mesh.send_json, self._admin_ok, adapters.python.urirun.node.mesh.send_json, json.loads
+
 ### scripts.repin_connectors.main
 - **Calls**: argparse.ArgumentParser, ap.add_argument, ap.add_argument, ap.add_argument, ap.add_argument, ap.parse_args, scripts.repin_connectors.find_root, sorted
 
@@ -215,10 +218,6 @@ filter server-side; `last_event_id` replays what was missed (resume after
 health — the fastest way to diagnose a version split (stale binary on PATH)
 - **Calls**: getattr, print, print, print, print, adapters.python.urirun.runtime.v2.connector_health, adapters.python.urirun.runtime.v2._package_version, reglib._emit_json
 
-### adapters.python.urirun.node.client.NodeClient.resolve_refs
-> Chain steps: replace "$ref:<i>.<field.path>" with an earlier step's output.
-- **Calls**: isinstance, isinstance, isinstance, payload.startswith, re.match, NodeClient.resolve_refs, NodeClient.resolve_refs, None.split
-
 ## Process Flows
 
 Key execution flows identified:
@@ -239,45 +238,45 @@ _stream_events [adapters.python.urirun.node.mesh.NodeHandler]
 ensure_scheme [adapters.python.urirun.node.client.NodeClient]
 ```
 
-### Flow 4: _handle_run
+### Flow 4: _handle_deploy
+```
+_handle_deploy [adapters.python.urirun.node.mesh.NodeHandler]
+  └─ →> read_raw
+  └─ →> send_json
+```
+
+### Flow 5: _handle_run
 ```
 _handle_run [adapters.python.urirun.node.mesh.NodeHandler]
   └─ →> read_raw
 ```
 
-### Flow 5: _build_cli_parser
+### Flow 6: _build_cli_parser
 ```
 _build_cli_parser [adapters.python.urirun.Connector]
 ```
 
-### Flow 6: _cmd_upgrade
+### Flow 7: _cmd_upgrade
 ```
 _cmd_upgrade [adapters.python.urirun.runtime.v2]
   └─> _resolve_pip_targets
 ```
 
-### Flow 7: _handler_worker_main
+### Flow 8: _handler_worker_main
 ```
 _handler_worker_main [adapters.python.urirun.runtime.worker]
 ```
 
-### Flow 8: _get
+### Flow 9: _get
 ```
 _get [adapters.python.urirun.node.mesh.NodeHandler]
   └─ →> send_json
   └─ →> send_json
 ```
 
-### Flow 9: _worker_main
+### Flow 10: _worker_main
 ```
 _worker_main [adapters.python.urirun.runtime.worker]
-```
-
-### Flow 10: _cmd_show
-```
-_cmd_show [adapters.python.urirun.connectors.connect_catalog]
-  └─> fetch_connector
-      └─> _get_json
 ```
 
 ## Key Classes
@@ -406,34 +405,6 @@ Key functions that process and transform data:
 ### adapters.python.urirun.host.host_db._validate_record
 - **Output to**: None.validate, dataset.get, Draft202012Validator
 
-### adapters.python.urirun.runtime.cli._add_connectors_subparser
-> The `connectors` command tree (list/show/install/index/resolve/check/lint/
-verify/new/smoke/from-spe
-- **Output to**: subparsers.add_parser, connectors_parser.add_subparsers, argparse.ArgumentParser, connectors_common.add_argument, connectors_sub.add_parser
-
-### adapters.python.urirun.runtime.cli._add_node_subparser
-> The `node` command tree (init/config/list/stop/routes/serve). Extracted from _build_parser to cut fa
-- **Output to**: subparsers.add_parser, node_parser.add_subparsers, argparse.ArgumentParser, node_common.add_argument, node_sub.add_parser
-
-### adapters.python.urirun.runtime.cli._add_host_task_subparser
-> The `host task` tree (planfile ticket lifecycle: plan/bindings/schedule/list/show/next/create/claim/
-- **Output to**: host_sub.add_parser, host_task.add_subparsers, argparse.ArgumentParser, task_common.add_argument, argparse.ArgumentParser
-
-### adapters.python.urirun.runtime.cli._add_host_data_subparser
-> `host data` tree (SQLite context: bindings/init/dataset-create/datasets/record-upsert/records).
-- **Output to**: host_sub.add_parser, host_data.add_subparsers, argparse.ArgumentParser, data_common.add_argument, data_sub.add_parser
-
-### adapters.python.urirun.runtime.cli._add_host_monitor_subparser
-> `host monitor` tree (HTTP/DNS/domain monitoring: bindings/http/dns/domain/daily).
-- **Output to**: host_sub.add_parser, host_monitor.add_subparsers, argparse.ArgumentParser, monitor_common.add_argument, monitor_common.add_argument
-
-### adapters.python.urirun.runtime.cli._add_host_subparser
-> The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboard/data/monitor/task/
-- **Output to**: subparsers.add_parser, host_parser.add_subparsers, argparse.ArgumentParser, host_common.add_argument, host_common.add_argument
-
-### adapters.python.urirun.runtime.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, subparsers.add_parser, doctor_parser.add_argument
-
 ### adapters.python.urirun.runtime.v1._run_process
 - **Output to**: config.get, config.get, subprocess.run, policy.get, progress.active
 
@@ -478,6 +449,29 @@ Supported forms:
 ### adapters.python.urirun.runtime.v2_grpc._validate
 > Return an error envelope if the URI/payload is invalid, else None.
 - **Output to**: reglib.parse_uri, reglib.translate, reglib.resolve_route, v2.validate_input
+
+### adapters.python.urirun.runtime.agent._parse_stdout
+- **Output to**: isinstance, result.get, isinstance, isinstance, exec_out.get
+
+### adapters.python.urirun.runtime.dispatch_protocol.validate_request
+> Return a list of problems with a (normalized or raw) request; empty == valid.
+- **Output to**: None.get, None.get, None.get, errors.append, errors.append
+
+### adapters.python.urirun.runtime.dispatch_protocol._parse_stdout
+> A route's stdout is JSON by convention; return the parsed object, else the text.
+- **Output to**: stdout.strip, isinstance, json.loads
+
+### adapters.python.urirun.runtime.dispatch_protocol.validate_reply
+- **Output to**: isinstance, errors.append, env.get, errors.append, errors.append
+
+### adapters.python.urirun.runtime._registry.parse_uri
+- **Output to**: URI_RE.match, unquote, str, ValueError, unquote
+
+### adapters.python.urirun.runtime._registry._parse_command
+- **Output to**: shlex.split, json.loads, isinstance, str
+
+### adapters.python.urirun.runtime._scan.parse_compose_label_line
+- **Output to**: None.strip, value.startswith, value.split, key.strip, None.strip
 
 ## Behavioral Patterns
 
@@ -628,15 +622,15 @@ graph TD
     ensure_scheme --> value
     ensure_scheme --> deploy
     ensure_scheme --> schemes
+    _handle_deploy --> read_raw
+    _handle_deploy --> get
+    _handle_deploy --> print
+    _handle_deploy --> send_json
     _handle_run --> read_raw
     _handle_run --> _validate_run_reques
     _handle_run --> str
     _handle_run --> _dispatch_control_ur
     _handle_run --> _run_target
-    main --> parse_args
-    _build_cli_parser --> ArgumentParser
-    _build_cli_parser --> add_subparsers
-    _build_cli_parser --> add_parser
 ```
 
 ## Reverse Engineering Guidelines

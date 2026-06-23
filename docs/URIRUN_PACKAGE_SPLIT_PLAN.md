@@ -19,6 +19,21 @@
 > (`urirun compat list` / `check`). Stara, 7-fazowa „kolejność migracji" poniżej
 > jest zachowana jako kontekst historyczny.
 
+> **STATUS DEKOMPOZYCJI (2026-06-23).** Dwa hotspoty wymienione niżej (`urirun.v2`
+> i `urirun.mesh`) zostały rozbite — bez zmiany API, z re-eksportem dla zgodności,
+> testy zielone (334 passed):
+> - **`node/mesh.py` 3099 → ~2050 L** → 8 modułów warstwowych: `_util`, `_artifacts`,
+>   `paths`, `_version`, `routing`, `config`, `transport`, `flow` (re-eksport z `mesh`).
+>   Pozostają w `mesh` (na razie): server (`NodeContext`/`NodeHandler`/`serve_node`/
+>   `apply_deploy`) i kontroler CLI (`*_command`).
+> - **`runtime/v2.py` 2593 → ~1970 L** → warstwa budowy parsera (`_build_parser` +
+>   pod-buildery per-komenda) wyniesiona do **`runtime/cli.py`**; `_build_parser`
+>   fan-out 116 → 25. Handlery `_cmd_*` + `main()` ZOSTAJĄ w v2 — są kontrolerem
+>   runtime'u (~30 zależności od wewnętrznych nazw v2); ich wyniesienie wymaga
+>   najpierw czystego publicznego API runtime, więc to osobny krok.
+> - Bezpieczeństwo: decyzja `safe` scentralizowana w `node/routing.route_is_safe`
+>   (jedno źródło prawdy) — fundament pod deny-by-default.
+
 Cel (historyczny): odchudzic `urirun` do malego runtime/contract core i wyniesc
 integracje oraz aplikacje hosta do osobnych paczek. Obecny stan miesza trzy
 warstwy:

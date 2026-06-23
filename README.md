@@ -3,11 +3,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.68-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.82-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-54.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.70-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.92-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-54.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $7.8160 (183 commits)
-- 👤 **Human dev:** ~$5416 (54.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $7.9153 (184 commits)
+- 👤 **Human dev:** ~$5424 (54.2h @ $100/h, 30min dedup)
 
 Generated on 2026-06-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -61,10 +61,15 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
 
 - `spec/urirun-spec.md` - portable specification
 - `adapters/js/` - JavaScript reference adapter
-- `adapters/python/` - Python reference adapter
+- `adapters/python/` - Python reference adapter and layered backend package:
+  `urirun/runtime/` (URI, registry, schema, policy, executors; CLI argument parser in
+  `runtime/cli.py`), `urirun/connectors/`, `urirun/host/`, and `urirun/node/` (the former
+  `mesh.py` god-module is decomposed into `routing`, `config`, `transport`, `flow`, `paths`,
+  `_version`, `_util`, `_artifacts` + the node server, all re-exported from `mesh`)
 - `adapters/c/` - C firmware-style reference adapter
 - `docs/URIRUN_PACKAGE_SPLIT_PLAN.md` - migration plan for splitting core,
-  connectors, runtime SDKs and the host app
+  connectors, runtime SDKs and the host app (see its STATUS block for what's done)
+- `docs/REFACTOR_ROADMAP.md` - remaining refactor/security backlog and what landed
 - `v1/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v2/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
 - external docs: `https://github.com/if-uri/docs`

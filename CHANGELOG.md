@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.69] - 2026-06-23
+
+### Security
+- **Closed an RCE classification hole.** `shell://…/command/exec` (a handler running
+  `subprocess.run(cmd, shell=True)`) was classified `safe` because the URI denylist only
+  listed `/terminal/command/run`. Added `/command/exec` to `UNSAFE_URI_PARTS`; arbitrary-command
+  verbs are never auto-classified safe (not offered to planners nor merged into a remote registry
+  as safe). `--allow` is still required to execute.
+- **Unified the route-safety decision** into one source of truth
+  `urirun.node.routing.route_is_safe(uri, declared)` / `uri_is_denied(uri)`, used by both
+  `safe_route()` and `routes_from_registry()` (each previously computed it separately, risking
+  divergence). An author can declare a route unsafe via `config`/`meta` `safe: false`, honored
+  through compilation (top-level binding `safe` is dropped by `compile_registry`). Foundation for a
+  future deny-by-default capability model.
+
+### Changed
+- **Decomposed the `node/mesh.py` god-module** (3099 → ~2050 lines) into focused modules —
+  `_util`, `_artifacts`, `paths`, `_version`, `routing`, `config`, `transport`, `flow` — each
+  re-exported from `mesh` so `mesh.X` / `from …mesh import X` keep working.
+- **Split the CLI parser layer out of `runtime/v2.py`** (2593 → ~1970 lines) into `runtime/cli.py`
+  (per-command sub-builders + `_build_parser`); `_build_parser` fan-out 116 → 25. Command routing
+  stays in `v2.main` via `args.command` (no `set_defaults`), so the split is purely structural.
+- **Reduced complexity hotspots**: `probe_command` (CC 33), `connector_discover` (CC 29) and
+  `NodeHandler._handle_run` (CC 26) split into helpers — no remaining hard `cc_exceeded` violations.
+
+### Fixed
+- **Deduplicated identical helpers**: `runtime/_scan.py` reuses `runtime/_registry.py`'s
+  `load_json`/`write_json`; `node/keyauth.py` reuses `node/paths.node_state_dir`.
+- **Fixed the duplication scan** (`project.sh`): `redup scan .` only covered 7 top-level files
+  (reporting 0 duplicates); now scans `adapters/python/urirun` (51 files) for a real signal.
+- Fixed a latent circular import from the CLI split (`v2` ↔ `cli`): `main()` imports
+  `_build_parser` lazily so `import urirun.runtime.cli` works on its own.
+
+### Added
+- Regression tests guarding the refactor: `tests/test_routing.py` (route-safety invariant),
+  `tests/test_cli_parser.py` (parser structure + no `cli`↔`v2` cycle), `tests/test_node_extracted.py`
+  (config / transport / paths). Suite: 334 passed.
+
 ## [0.1.10] - 2026-06-22
 
 ### Fixed
@@ -79,6 +117,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.70] - 2026-06-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update TODO.md
+- Update docs/REFACTOR_ROADMAP.md
+- Update docs/URIRUN_PACKAGE_SPLIT_PLAN.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update VERSION
+- Update adapters/js/package.json
+- Update adapters/python/VERSION
+- Update adapters/python/pyproject.toml
+- Update adapters/python/urirun/node/mesh.py
+- Update package-lock.json
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- ... and 10 more files
 
 ## [0.4.68] - 2026-06-23
 

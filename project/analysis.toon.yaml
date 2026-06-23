@@ -1,6 +1,6 @@
-# code2llm | 146f 22919L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# code2llm | 146f 22970L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
 # generated in 0.05s
-# CC̅=4.5 | critical:16/1073 | dups:0 | cycles:0
+# CC̅=4.4 | critical:16/1075 | dups:0 | cycles:0
 
 HEALTH[16]:
   🟡 CC    main CC=18 (limit:15)
@@ -133,12 +133,12 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.5    ←in:9  →out:0
-  │ !! mesh                      2023L  3C   94m  CC=20     ←1
+  │ !! mesh                      2052L  3C   94m  CC=20     ←1
   │ !! v2                        1967L  1C  124m  CC=14     ←4
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! __init__                   702L  1C   49m  CC=14     ←10
   │ !! _scan                      666L  0C   35m  CC=14     ←0
-  │ !! cli                        663L  0C    7m  CC=1      ←1
+  │ !! cli                        666L  0C    7m  CC=1      ←1
   │ !! host_dashboard             609L  0C   16m  CC=13     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! _runtime                   540L  1C   27m  CC=13     ←2
@@ -146,7 +146,7 @@ LAYERS:
   │ domain_monitor             485L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←0
   │ codegen                    438L  0C   19m  CC=14     ←0
-  │ transport                  432L  0C   20m  CC=13     ←2
+  │ transport                  435L  0C   20m  CC=14     ←2
   │ !! flow                       431L  0C   21m  CC=15     ←1
   │ connector_scaffold         412L  0C   11m  CC=3      ←0
   │ connector_lint             390L  0C   19m  CC=14     ←1
@@ -172,8 +172,8 @@ LAYERS:
   │ discovery                  158L  0C    8m  CC=7      ←0
   │ agent                      151L  0C    6m  CC=10     ←0
   │ !! conformance                148L  0C    3m  CC=17     ←0
+  │ routing                    143L  0C   10m  CC=14     ←3
   │ scheduler                  133L  0C    6m  CC=4      ←0
-  │ routing                    127L  0C    8m  CC=14     ←3
   │ daemon                     116L  0C    3m  CC=14     ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ v2_service                 111L  0C    3m  CC=9      ←1
@@ -206,9 +206,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0

@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 79f 18117L | 2026-06-23
+# redup/duplication | 15 groups | 79f 18154L | 2026-06-23
 
 SUMMARY:
   files_scanned: 79
-  total_lines:   18117
+  total_lines:   18154
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       634
+  scan_ms:       706
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.3%)
