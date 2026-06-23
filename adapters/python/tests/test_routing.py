@@ -35,6 +35,24 @@ def test_explicit_safe_false_overrides():
     assert routing.safe_route({"uri": "shell://laptop/command/uname", "safe": False}) is False
 
 
+def test_route_is_safe_single_source_of_truth():
+    # The shared classifier: deny-list, explicit declaration, and empty-URI handling.
+    assert routing.route_is_safe("shell://n/command/uname") is True
+    assert routing.route_is_safe("shell://n/command/uname", declared=False) is False
+    assert routing.route_is_safe("shell://n/command/exec") is False        # denied verb
+    assert routing.route_is_safe("shell://n/command/exec", declared=True) is False  # deny wins over declared
+    assert routing.route_is_safe("") is False
+    assert routing.uri_is_denied("x://t/command/exec") is True
+    assert routing.uri_is_denied("x://t/command/uname") is False
+
+
+def test_safe_route_and_route_is_safe_agree():
+    # safe_route() must be a thin wrapper over the shared classifier (no divergence).
+    for r in ({"uri": "shell://n/command/uname"}, {"uri": "shell://n/command/exec"},
+              {"uri": "shell://n/command/uname", "safe": False}, {"uri": ""}):
+        assert routing.safe_route(r) == routing.route_is_safe(str(r.get("uri", "")), r.get("safe"))
+
+
 def test_routes_from_registry_honors_author_declared_unsafe():
     # A route NOT caught by the denylist but declared unsafe by its author (config/meta
     # `safe: false`, which survives compile unlike top-level) must come out unsafe.

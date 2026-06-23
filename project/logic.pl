@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.66', 'javascript').
+project_metadata('urirun', '0.4.67', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -39,6 +39,7 @@ project_file('adapters/python/tests/test_mesh.py', 1608, 'python').
 project_file('adapters/python/tests/test_minimal_imports.py', 91, 'python').
 project_file('adapters/python/tests/test_node_client.py', 221, 'python').
 project_file('adapters/python/tests/test_node_diagnostics.py', 46, 'python').
+project_file('adapters/python/tests/test_node_extracted.py', 84, 'python').
 project_file('adapters/python/tests/test_openapi_import.py', 49, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
@@ -94,10 +95,10 @@ project_file('adapters/python/urirun/node/config.py', 186, 'python').
 project_file('adapters/python/urirun/node/flow.py', 432, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
 project_file('adapters/python/urirun/node/manage.py', 356, 'python').
-project_file('adapters/python/urirun/node/mesh.py', 2019, 'python').
+project_file('adapters/python/urirun/node/mesh.py', 2039, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
-project_file('adapters/python/urirun/node/routing.py', 128, 'python').
-project_file('adapters/python/urirun/node/transport.py', 433, 'python').
+project_file('adapters/python/urirun/node/routing.py', 145, 'python').
+project_file('adapters/python/urirun/node/transport.py', 436, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/runtime/_registry.py', 719, 'python').
@@ -105,7 +106,7 @@ project_file('adapters/python/urirun/runtime/_runtime.py', 541, 'python').
 project_file('adapters/python/urirun/runtime/_scan.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/adopt_pack.py', 246, 'python').
 project_file('adapters/python/urirun/runtime/agent.py', 152, 'python').
-project_file('adapters/python/urirun/runtime/cli.py', 664, 'python').
+project_file('adapters/python/urirun/runtime/cli.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/codegen.py', 439, 'python').
 project_file('adapters/python/urirun/runtime/compat.py', 200, 'python').
 project_file('adapters/python/urirun/runtime/daemon.py', 117, 'python').
@@ -298,6 +299,14 @@ python_function('adapters/python/tests/test_mesh.py', 'test_maybe_load_dotenv', 
 python_function('adapters/python/tests/test_node_diagnostics.py', '_template_registry', 0, 1, 1).
 python_function('adapters/python/tests/test_node_diagnostics.py', 'test_concrete_uri_resolves_against_host_template', 0, 3, 5).
 python_function('adapters/python/tests/test_node_diagnostics.py', 'test_template_route_denied_without_allow_still_resolves', 0, 3, 4).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_node_url_resolves_name_then_bare_then_url', 0, 5, 1).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_node_url_unknown_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_coerce_node_url', 0, 4, 2).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_config_with_transient_node_urls_adds_and_replaces', 0, 6, 1).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_default_configs_shape', 0, 3, 2).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_host_config_round_trip', 1, 6, 8).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_parse_ports_singles_and_ranges', 0, 4, 1).
+python_function('adapters/python/tests/test_node_extracted.py', 'test_paths_layout', 0, 4, 4).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_import_maps_paths_and_methods', 0, 9, 1).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_import_validates_and_compiles', 0, 4, 5).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_base_url_override', 0, 2, 4).
@@ -725,18 +734,20 @@ python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_env', 2, 4
 python_function('adapters/python/urirun/node/mesh.py', '_registry_to_bindings', 1, 5, 4).
 python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 2, 8, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'apply_deploy', 2, 20, 19).
-python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 13, 15, 21).
+python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 14, 15, 21).
 python_function('adapters/python/urirun/node/mesh.py', '_resolve_serve_opts', 2, 17, 10).
-python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 1, 4).
+python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 5).
 python_function('adapters/python/urirun/node/mesh.py', 'node_list_command', 1, 7, 7).
 python_function('adapters/python/urirun/node/mesh.py', 'node_stop_command', 1, 14, 9).
 python_function('adapters/python/urirun/node/mesh.py', 'node_command', 1, 13, 13).
 python_function('adapters/python/urirun/node/paths.py', 'node_state_dir', 0, 1, 3).
 python_function('adapters/python/urirun/node/paths.py', 'deploy_dir', 0, 5, 7).
 python_function('adapters/python/urirun/node/paths.py', 'node_token_path', 0, 1, 1).
-python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 10, 5).
+python_function('adapters/python/urirun/node/routing.py', 'uri_is_denied', 1, 2, 1).
+python_function('adapters/python/urirun/node/routing.py', 'route_is_safe', 2, 3, 2).
+python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 8, 5).
 python_function('adapters/python/urirun/node/routing.py', 'registry_fingerprint', 1, 2, 6).
-python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 4, 4).
+python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 1, 3).
 python_function('adapters/python/urirun/node/routing.py', 'route_target', 1, 1, 1).
 python_function('adapters/python/urirun/node/routing.py', 'binding_for_remote_route', 1, 3, 1).
 python_function('adapters/python/urirun/node/routing.py', 'registry_from_routes', 1, 3, 3).
@@ -751,7 +762,7 @@ python_function('adapters/python/urirun/node/transport.py', 'stop_node_port', 3,
 python_function('adapters/python/urirun/node/transport.py', 'parse_ports', 1, 4, 7).
 python_function('adapters/python/urirun/node/transport.py', '_deploy_allow_list', 1, 7, 3).
 python_function('adapters/python/urirun/node/transport.py', '_annotate_deploy_allow_compat', 1, 11, 7).
-python_function('adapters/python/urirun/node/transport.py', 'deploy_to_node', 1, 13, 7).
+python_function('adapters/python/urirun/node/transport.py', 'deploy_to_node', 1, 14, 7).
 python_function('adapters/python/urirun/node/transport.py', '_watch_node_url', 4, 6, 6).
 python_function('adapters/python/urirun/node/transport.py', '_watch_node_headers', 3, 4, 3).
 python_function('adapters/python/urirun/node/transport.py', '_parse_sse_line', 2, 6, 5).
@@ -1513,7 +1524,7 @@ python_method('NodeHandler', '_handle_run_control', 1, 8, 5).
 python_method('NodeHandler', '_stream_events', 0, 19, 23).
 python_method('NodeHandler', '_admin_ok', 1, 5, 4).
 python_method('NodeHandler', '_run_ok', 1, 5, 4).
-python_method('NodeHandler', '_handle_deploy', 0, 5, 9).
+python_method('NodeHandler', '_handle_deploy', 0, 8, 16).
 python_method('NodeHandler', '_handle_enroll', 0, 11, 14).
 python_method('NodeHandler', 'log_message', 1, 1, 0).
 python_class('adapters/python/urirun/runtime/_runtime.py', 'PolicyError').

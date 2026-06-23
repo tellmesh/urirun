@@ -1075,7 +1075,8 @@ def deploy_command(args: argparse.Namespace) -> int:
     result = deploy_to_node(url, bindings=bindings, registry=registry,
                             allow=args.allow or None, code=code or None, env=env or None,
                             name=args.name, token=token, identity=identity,
-                            merge=bool(getattr(args, "merge", False)))
+                            merge=bool(getattr(args, "merge", False)),
+                            persist=bool(getattr(args, "persist", False)))
     reglib._emit_json(result, "-")
     return 0 if result.get("ok") else 1
 

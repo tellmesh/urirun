@@ -215,12 +215,13 @@ def deploy_to_node(url: str, *, bindings: dict | None = None, registry: dict | N
                    allow: list[str] | None = None, code: dict | None = None,
                    env: dict | None = None, name: str | None = None,
                    token: str | None = None, identity: str | None = None,
-                   merge: bool = False, timeout: float = 30.0) -> dict:
+                   merge: bool = False, persist: bool = False, timeout: float = 30.0) -> dict:
     """Push a registry (+ optional handler code/env) onto a running node's POST /deploy.
     Authenticate with either a shared `token` or an SSH `identity` (ed25519 private key
     enrolled on the node via copy_id). The node must have /deploy enabled. With
     `merge`, the deployed routes are added to the node's existing surface instead of
-    replacing it."""
+    replacing it. With `persist`, the node writes the merged surface back to its startup
+    registry file so the routes survive a restart."""
     body: dict = {}
     if registry is not None:
         body["registry"] = registry
@@ -228,6 +229,8 @@ def deploy_to_node(url: str, *, bindings: dict | None = None, registry: dict | N
         body["bindings"] = bindings
     if merge:
         body["merge"] = True
+    if persist:
+        body["persist"] = True
     if allow is not None:
         body["allow"] = allow
     if code:

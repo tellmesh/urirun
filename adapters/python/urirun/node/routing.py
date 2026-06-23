@@ -17,6 +17,26 @@ from urirun import _registry as reglib, v2
 UNSAFE_URI_PARTS = ("/terminal/command/run", "/command/exec", "://sudo", "/command/install", "/command/upgrade")
 
 
+def uri_is_denied(uri: str) -> bool:
+    """True when a URI carries an arbitrary-exec / admin verb that must never be
+    auto-classified safe (the capability denylist). Centralized so the deny set has one
+    home; the eventual deny-by-default model will extend this, not the call sites."""
+    return any(part in uri for part in UNSAFE_URI_PARTS)
+
+
+def route_is_safe(uri: str, declared: bool | None = None) -> bool:
+    """THE single source of truth for route safety, shared by safe_route() and
+    routes_from_registry() so they cannot diverge.
+
+    Safe iff: the URI is non-empty AND the author did not declare it unsafe
+    (`declared is False`) AND the denylist does not flag it. Either signal can deny; neither
+    can override the other up to "safe" — deny wins. `declared=None` means "no opinion"
+    (default safe unless denied). This is where a future deny-by-default capability model
+    (classify by kind/verb, safe only when explicitly allowed) would live.
+    """
+    return bool(uri and declared is not False and not uri_is_denied(uri))
+
+
 def routes_from_registry(registry: dict, source: str = "built-in") -> list[dict]:
     """Flatten a compiled registry to route descriptors. `source` records each route's
     provenance — "built-in" (the node's own registry), "deploy" (host-pushed via /deploy),
@@ -27,18 +47,15 @@ def routes_from_registry(registry: dict, source: str = "built-in") -> list[dict]
         entry = item["routeEntry"]
         config = entry.get("config") or {}
         meta = entry.get("meta") or {}
-        # A route is safe only when the denylist does not flag it AND its author did not
-        # explicitly declare it unsafe (config/meta `safe: false`). Either signal can deny;
-        # neither can override the other to "safe" — deny wins. (Top-level binding `safe`
-        # is dropped by compile, so authors must put it under config/meta to survive.)
+        # Author's explicit flag (config/meta `safe: false`); top-level binding `safe` is
+        # dropped by compile, so it must live under config/meta to survive.
         declared = config.get("safe", meta.get("safe"))
-        denied = any(part in item["uri"] for part in UNSAFE_URI_PARTS)
         routes.append(
             {
                 "uri": item["uri"],
                 "kind": entry.get("kind"),
                 "adapter": entry.get("adapter"),
-                "safe": (declared is not False) and not denied,
+                "safe": route_is_safe(item["uri"], declared),
                 "title": meta.get("label") or meta.get("title") or item["uri"],
                 "source": source,
                 "inputSchema": config.get("inputSchema") or entry.get("inputSchema") or {"type": "object"},
@@ -58,8 +75,7 @@ def registry_fingerprint(routes: list[dict]) -> str:
 
 
 def safe_route(route: dict) -> bool:
-    uri = str(route.get("uri", ""))
-    return bool(uri and route.get("safe", True) is not False and not any(part in uri for part in UNSAFE_URI_PARTS))
+    return route_is_safe(str(route.get("uri", "")), route.get("safe"))
 
 
 def route_target(uri: str) -> str:

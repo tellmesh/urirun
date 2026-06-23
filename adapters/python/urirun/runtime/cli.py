@@ -496,6 +496,9 @@ def _add_host_subparser(subparsers) -> None:
     host_deploy.add_argument("--merge", action="store_true",
                              help="ADD the deployed routes to the node's existing surface instead of "
                                   "replacing it (existing routes are kept; same-URI routes are overridden)")
+    host_deploy.add_argument("--persist", action="store_true",
+                             help="write the merged surface back to the node's startup registry file so "
+                                  "the deployed routes survive a node restart (not just live in memory)")
     host_deploy.add_argument("--name", help="rename the node on deploy")
     host_deploy.add_argument("--token", help="admin token (else URIRUN_NODE_TOKEN)")
     host_deploy.add_argument("--identity", help="SSH private key to sign the deploy with (e.g. ~/.ssh/id_ed25519); "
