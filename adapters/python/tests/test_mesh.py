@@ -3,11 +3,61 @@
 
 import json
 import tempfile
+import time
 import unittest
+import base64
+import argparse
 from pathlib import Path
 
 from urirun import mesh
 from urirun.node import keyauth, manage
+
+
+def _wait_healthy(base, tries=120, delay=0.1):
+    """Poll /health until it actually answers 200 (not merely 'no exception'), with a
+    generous budget so a node coming up under heavy CI load is genuinely ready before
+    a test drives it."""
+    import urllib.request
+    for _ in range(tries):
+        try:
+            with urllib.request.urlopen(base + "/health", timeout=3) as resp:
+                if resp.status == 200:
+                    return json.loads(resp.read())
+        except Exception:
+            pass
+        time.sleep(delay)
+    raise AssertionError(f"node at {base} never became healthy")
+
+
+def _wait_subscribers(base, want=1, tries=80, delay=0.1):
+    """Wait until the node reports >= want /events subscribers, so a streaming test
+    posts /run only after its SSE watcher is actually attached — removes the
+    fixed-sleep race that flakes under load."""
+    import urllib.request
+    last = None
+    for _ in range(tries):
+        try:
+            with urllib.request.urlopen(base + "/health", timeout=3) as resp:
+                last = json.loads(resp.read())
+                if last.get("events", 0) >= want:
+                    return
+        except Exception as exc:
+            last = f"{type(exc).__name__}: {exc}"
+        time.sleep(delay)
+    raise AssertionError(f"node at {base} never reached {want} /events subscribers; last health={last!r}")
+
+
+def _post_run(base, body, headers, *, timeout=20):
+    """POST /run and return the parsed envelope; surface HTTP error bodies in failures."""
+    import urllib.error
+    import urllib.request
+    req = urllib.request.Request(base + "/run", data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        raw = exc.read().decode("utf-8", "replace") if exc.fp else ""
+        raise AssertionError(f"POST {base}/run failed with HTTP {exc.code}: {raw}") from exc
 
 
 class MeshTests(unittest.TestCase):
@@ -55,6 +105,329 @@ class MeshTests(unittest.TestCase):
     def test_apply_deploy_requires_a_surface(self):
         with self.assertRaises(ValueError):
             mesh.apply_deploy({"name": "n", "registry": {}, "routes": [], "allow": []}, {})
+
+    def test_apply_deploy_accepts_code_only_hot_swap(self):
+        state = {"name": "n",
+                 "registry": mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+                     "demo://n/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"]},
+                 }}),
+                 "routes": [{"uri": "demo://n/x/query/p"}], "allow": ["demo://**"], "generation": 1}
+
+        summary = mesh.apply_deploy(state, {"code": {"notes.txt": "hello"}})
+
+        self.assertTrue(summary["ok"])
+        self.assertEqual(summary["code"], ["notes.txt"])
+        self.assertEqual(summary["routeCount"], 1)
+        self.assertEqual(state["allow"], ["demo://**"])
+        self.assertEqual(state["generation"], 2)
+
+    def test_watch_node_url_encodes_filters_and_replay_cursor(self):
+        from urllib.parse import parse_qs, urlparse
+
+        url = mesh._watch_node_url("http://node.local/", scheme=["shell", "log"], run="run 1", last_event_id=7)
+        parsed = urlparse(url)
+        self.assertEqual(parsed.scheme, "http")
+        self.assertEqual(parsed.netloc, "node.local")
+        self.assertEqual(parsed.path, "/events")
+        self.assertEqual(parse_qs(parsed.query), {"scheme": ["shell,log"], "run": ["run 1"], "last_event_id": ["7"]})
+        self.assertEqual(parse_qs(urlparse(mesh._watch_node_url("http://node.local", last_event_id=0)).query),
+                         {"last_event_id": ["0"]})
+
+    def test_parse_sse_line_tracks_event_id_and_ignores_bad_payloads(self):
+        cur_id, ev = mesh._parse_sse_line("id: 42", 0)
+        self.assertEqual(cur_id, 42)
+        self.assertIsNone(ev)
+
+        cur_id, ev = mesh._parse_sse_line('data: {"event":"progress"}', cur_id)
+        self.assertEqual(cur_id, 42)
+        self.assertEqual(ev, {"event": "progress", "_id": 42})
+
+        cur_id, ev = mesh._parse_sse_line("data: {bad-json", cur_id)
+        self.assertEqual(cur_id, 42)
+        self.assertIsNone(ev)
+
+    def test_emit_streams_progress_to_events_by_run_id(self):
+        # an in-process handler calls mesh.emit(...) while it runs; a /events?run=<id>
+        # subscriber receives the progress live, correlated by run id.
+        import socket as _socket
+        import sys as _sys
+        import threading
+        import urllib.request
+
+        def streamer(**payload):
+            for i in range(3):
+                mesh.emit({"line": f"line-{i}"})
+            return {"ok": True, "n": 3}
+
+        mod = type(_sys)("streamer_mod")
+        mod.go = streamer
+        _sys.modules["streamer_mod"] = mod
+        try:
+            registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+                "proc://p/demo/command/go": {"kind": "command", "adapter": "local-function", "ref": "streamer_mod:go",
+                                             "python": {"type": "python", "module": "streamer_mod", "export": "go"},
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("p", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            _wait_healthy(base)
+            got, stop = [], threading.Event()
+
+            def watch():
+                r = urllib.request.urlopen(base + "/events?run=runX", timeout=10)
+                for raw in r:
+                    if stop.is_set():
+                        break
+                    line = raw.decode().strip()
+                    if line.startswith("data:"):
+                        got.append(json.loads(line[5:].strip()))
+                        if len([g for g in got if g.get("event") == "progress"]) >= 3:
+                            break
+            tw = threading.Thread(target=watch, daemon=True); tw.start()
+            _wait_subscribers(base, 1)
+            env = _post_run(base, json.dumps({"uri": "proc://p/demo/command/go", "payload": {}}).encode(),
+                            {"Content-Type": "application/json", "X-Urirun-Run-Id": "runX"})
+            self.assertEqual(env["runId"], "runX")
+            tw.join(timeout=3); stop.set()
+            progress = [g for g in got if g.get("event") == "progress"]
+            self.assertEqual([g["line"] for g in progress], ["line-0", "line-1", "line-2"])
+            self.assertTrue(all(g["run"] == "runX" for g in progress))
+        finally:
+            server.shutdown()
+            _sys.modules.pop("streamer_mod", None)
+
+    def test_argv_template_streams_stdout_to_events_by_run_id(self):
+        # argv-template routes stream stdout lines automatically through the same
+        # /events?run=<id> channel, without handler code calling mesh.emit().
+        import socket as _socket
+        import sys as _sys
+        import threading
+        import urllib.request
+
+        script = (
+            "import time\n"
+            "for i in range(3):\n"
+            "    print('argv-%d' % i, flush=True)\n"
+            "    time.sleep(0.05)\n"
+        )
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "proc://p/demo/command/lines": {
+                "kind": "command",
+                "adapter": "argv-template",
+                "argv": [_sys.executable, "-u", "-c", script],
+                "inputSchema": {"type": "object"},
+                "policy": {"allowExecute": True},
+            }}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("p", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            got, stop = [], threading.Event()
+
+            def watch():
+                r = urllib.request.urlopen(base + "/events?run=runY", timeout=10)
+                for raw in r:
+                    if stop.is_set():
+                        break
+                    line = raw.decode().strip()
+                    if line.startswith("data:"):
+                        got.append(json.loads(line[5:].strip()))
+                        if len([g for g in got if g.get("event") == "progress"]) >= 3:
+                            break
+            tw = threading.Thread(target=watch, daemon=True); tw.start()
+            _wait_subscribers(base, 1)
+            env = _post_run(base, json.dumps({"uri": "proc://p/demo/command/lines", "payload": {}}).encode(),
+                            {"Content-Type": "application/json", "X-Urirun-Run-Id": "runY"})
+            self.assertTrue(env["ok"])
+            self.assertTrue(env["result"]["streamed"])
+            self.assertEqual(env["result"]["stdout"].splitlines(), ["argv-0", "argv-1", "argv-2"])
+            tw.join(timeout=3); stop.set()
+            progress = [g for g in got if g.get("event") == "progress"]
+            self.assertEqual([g["line"] for g in progress], ["argv-0", "argv-1", "argv-2"])
+            self.assertTrue(all(g["run"] == "runY" and g["stream"] == "stdout" for g in progress))
+        finally:
+            server.shutdown()
+
+    def test_async_run_202_and_cancel_stops_a_streaming_process(self):
+        # async /run returns 202 + runId immediately; a run:// cancel kills a long argv
+        # process early; a terminal `result` event lands on /events?run=<id>.
+        import socket as _socket
+        import sys as _sys
+        import threading
+        import urllib.request
+
+        # ~6s argv process; we cancel it after ~0.5s
+        script = "import time\nfor i in range(30):\n    print(i, flush=True)\n    time.sleep(0.2)\n"
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "proc://p/job/command/run": {"kind": "command", "adapter": "argv-template",
+                                         "argv": [_sys.executable, "-u", "-c", script],
+                                         "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("p", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            results, stop = [], threading.Event()
+
+            def watch():
+                r = urllib.request.urlopen(base + "/events?run=jobA", timeout=10)
+                for raw in r:
+                    if stop.is_set():
+                        break
+                    line = raw.decode().strip()
+                    if line.startswith("data:"):
+                        ev = json.loads(line[5:].strip())
+                        results.append(ev)
+                        if ev.get("event") == "result":
+                            break
+            tw = threading.Thread(target=watch, daemon=True); tw.start()
+            time.sleep(0.3)
+            # async start → 202 immediately
+            t0 = time.time()
+            req = urllib.request.Request(base + "/run", data=json.dumps({"uri": "proc://p/job/command/run"}).encode(),
+                                         headers={"Content-Type": "application/json", "X-Urirun-Run-Id": "jobA", "Prefer": "respond-async"}, method="POST")
+            resp = urllib.request.urlopen(req, timeout=5)
+            started = json.loads(resp.read())
+            self.assertEqual(resp.status, 202)
+            self.assertTrue(started["async"] and started["runId"] == "jobA")
+            self.assertLess(time.time() - t0, 1.0)  # returned immediately, not after 6s
+            # cancel it
+            time.sleep(0.5)
+            creq = urllib.request.Request(base + "/run", data=json.dumps({"uri": "run://jobA/command/cancel"}).encode(),
+                                          headers={"Content-Type": "application/json"}, method="POST")
+            cancelled = json.loads(urllib.request.urlopen(creq, timeout=5).read())
+            self.assertTrue(cancelled["cancelled"])
+            tw.join(timeout=5); stop.set()
+            term = [e for e in results if e.get("event") == "result"]
+            self.assertTrue(term and term[0]["run"] == "jobA")        # terminal result arrived
+            self.assertLess(time.time() - t0, 5.0)                    # well before the 6s natural end
+        finally:
+            server.shutdown()
+
+    def test_node_client_drives_a_live_node(self):
+        # the reusable host client: health/name, routes, concretize, run + value unwrap.
+        import socket as _socket
+        import sys as _sys
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        mod = type(_sys)("nc_mod")
+        mod.echo = lambda **p: {"ok": True, "got": p.get("x")}
+        _sys.modules["nc_mod"] = mod
+        try:
+            registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+                "demo://nc/thing/query/echo": {"kind": "query", "adapter": "local-function", "ref": "nc_mod:echo",
+                                               "python": {"type": "python", "module": "nc_mod", "export": "echo"},
+                                               "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("nc", registry, "127.0.0.1", port, execute=True, allow=["demo://**"])
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            _wait_healthy(base)
+            c = NodeClient(base)
+            self.assertEqual(c.name, "nc")
+            self.assertEqual(c.concretize("demo://%7Btarget%7D/thing/query/echo", {"{target}": None}),
+                             "demo://nc/thing/query/echo")
+            self.assertIn("demo://nc/thing/query/echo", [r["uri"] for r in c.routes()])
+            env = c.run("demo://nc/thing/query/echo", {"x": 42})
+            self.assertTrue(env["ok"])
+            self.assertEqual(c.value(env), {"ok": True, "got": 42})
+        finally:
+            server.shutdown()
+            _sys.modules.pop("nc_mod", None)
+
+    def test_node_client_token_auth(self):
+        # NodeClient(url, token=...) sends X-Urirun-Token so it can drive an auth-gated node.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "demo://a/x/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                      "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("a", registry, "127.0.0.1", port, execute=True, allow=["demo://**"],
+                                 admin_token="T", require_run_auth=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            self.assertFalse(NodeClient(base).run("demo://a/x/query/ping")["ok"])         # no token -> 403
+            self.assertTrue(NodeClient(base, token="T").run("demo://a/x/query/ping")["ok"])  # token -> ok
+        finally:
+            server.shutdown()
+
+    def test_watch_resume_replays_missed_progress_by_event_id(self):
+        # a client that connects with last_event_id replays the run's earlier progress it
+        # missed — the basis for resilient stream_run resume after a drop.
+        import socket as _socket
+        import sys as _sys
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        def streamer(**payload):
+            for i in range(4):
+                mesh.emit({"line": f"r{i}"})
+            return {"ok": True}
+
+        mod = type(_sys)("res_mod"); mod.go = streamer
+        _sys.modules["res_mod"] = mod
+        try:
+            registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+                "proc://r/d/command/go": {"kind": "command", "adapter": "local-function", "ref": "res_mod:go",
+                                          "python": {"type": "python", "module": "res_mod", "export": "go"},
+                                          "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("r", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            _wait_healthy(base)
+            c = NodeClient(base)
+            # run synchronously first so all 4 progress events (ids 1..4) land in the ring
+            env = c.run("proc://r/d/command/go", run_id="resumeX")
+            self.assertTrue(env["ok"])
+            # a client resuming from cursor 2 (as after a drop) replays only the missed
+            # tail (ids 3,4) for this run — nothing earlier, nothing from other runs.
+            got = []
+            for ev in c.watch(run="resumeX", last_event_id=2, timeout=10):  # generous: replay is immediate; avoids a flaky SSE read timeout under full-suite load
+                if ev.get("event") == "progress":
+                    got.append(ev["line"])
+                    if len(got) >= 2:
+                        break
+            self.assertEqual(got, ["r2", "r3"])
+        finally:
+            server.shutdown()
+            _sys.modules.pop("res_mod", None)
+
+    def test_host_run_stream_command(self):
+        # `urirun host run <url> <uri> --stream` drives an async run and returns 0 on success.
+        import argparse
+        import socket as _socket
+        import sys as _sys
+        import threading
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "proc://h/job/command/go": {"kind": "command", "adapter": "argv-template",
+                                        "argv": [_sys.executable, "-u", "-c", "print('step-1', flush=True)"],
+                                        "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("h", registry, "127.0.0.1", port, execute=True, allow=["proc://**"])
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            args = argparse.Namespace(config=None, node=base, uri="proc://h/job/command/go",
+                                      payload=None, stream=True, run_id="cliT", token=None, timeout=15.0)
+            self.assertEqual(mesh.run_command(args), 0)
+        finally:
+            server.shutdown()
 
     def test_route_source_provenance(self):
         reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
@@ -111,6 +484,47 @@ class MeshTests(unittest.TestCase):
                     os.environ["HOME"] = old_home
                 if old_env is not None:
                     os.environ["URIRUN_NODE_TOKEN"] = old_env
+
+    def test_enroll_token_shape_and_match(self):
+        token = keyauth.new_enroll_token()
+        self.assertEqual(len(token), 6)
+        self.assertTrue(all(ch in keyauth.ENROLL_TOKEN_ALPHABET for ch in token))
+        self.assertTrue(keyauth.token_matches(token, f" {token.lower()} "))
+        self.assertFalse(keyauth.token_matches(token, "BADBAD"))
+        self.assertFalse(keyauth.token_matches(token, None))
+
+    @unittest.skipUnless(keyauth.available(), "cryptography not installed")
+    def test_copy_id_requires_console_enroll_token_for_first_key(self):
+        import os
+        import socket as _socket
+        import subprocess
+        import threading
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {}})
+        with tempfile.TemporaryDirectory() as tmp:
+            old_home = os.environ.get("HOME")
+            os.environ["HOME"] = tmp
+            identity = str(Path(tmp) / "id_ed25519")
+            subprocess.run(["ssh-keygen", "-t", "ed25519", "-f", identity, "-N", "", "-q"], check=True)
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("pin", registry, "127.0.0.1", port, execute=True, key_auth=True)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            try:
+                _wait_healthy(base)
+                token = server.ctx.enroll_token
+                self.assertTrue(token)
+                self.assertFalse(mesh.copy_id(base, identity).get("ok"))                    # no PIN -> blocked
+                self.assertFalse(mesh.copy_id(base, identity, token="WRONG").get("ok"))     # wrong PIN -> blocked
+                enrolled = mesh.copy_id(base, identity, token=token.lower())                # case-insensitive
+                self.assertTrue(enrolled.get("ok"), enrolled)
+                self.assertEqual(enrolled.get("count"), 1)
+            finally:
+                server.shutdown()
+                if old_home is None:
+                    os.environ.pop("HOME", None)
+                else:
+                    os.environ["HOME"] = old_home
 
     @unittest.skipUnless(keyauth.available(), "cryptography not installed")
     def test_verify_request_rejects_replay(self):
@@ -238,20 +652,19 @@ class MeshTests(unittest.TestCase):
         server = mesh.serve_node("probe", registry, "127.0.0.1", port, execute=True,
                                  allow=["env://*"], admin_token="t", require_run_auth=True)
         threading.Thread(target=server.serve_forever, daemon=True).start()
-        url = f"http://127.0.0.1:{port}/run"
+        base = f"http://127.0.0.1:{port}"
+        url = f"{base}/run"
         body = json.dumps({"uri": "env://probe/runtime/query/ping", "payload": {}}).encode()
         try:
+            _wait_healthy(base)
             # no credential -> 403 (the open-execution endpoint is closed)
             req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"}, method="POST")
             with self.assertRaises(urllib.error.HTTPError) as ctx:
                 urllib.request.urlopen(req, timeout=5)
             self.assertEqual(ctx.exception.code, 403)
             # correct token -> runs
-            req = urllib.request.Request(url, data=body,
-                                         headers={"Content-Type": "application/json", "X-Urirun-Token": "t"},
-                                         method="POST")
-            resp = urllib.request.urlopen(req, timeout=5)
-            self.assertEqual(resp.status, 200)
+            env = _post_run(base, body, {"Content-Type": "application/json", "X-Urirun-Token": "t"})
+            self.assertIsInstance(env, dict)
         finally:
             server.shutdown()
 
@@ -344,6 +757,7 @@ class MeshTests(unittest.TestCase):
         b = manage.bindings("lab")["bindings"]
         assert "node://lab/package/command/install" in b
         assert "node://lab/runtime/query/info" in b
+        assert "node://lab/registry/command/adopt" in b
         self.assertEqual(b["node://lab/package/command/install"]["python"]["module"], "urirun.node.manage")
         # install shells out to pip with the right args (mock the pip call)
         calls = []
@@ -358,6 +772,270 @@ class MeshTests(unittest.TestCase):
             self.assertFalse(manage.package_install()["ok"])  # spec required
         finally:
             manage._pip = orig
+
+    def test_node_requests_and_host_supplies_connector_and_folder(self):
+        # node asks the host (need event); host fulfills: connector → ensure scheme live;
+        # folder → push its files to the node.
+        import socket as _socket
+        import threading
+
+        from urirun.node import mesh as _mesh
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            # 1) node requests a connector -> a need event is emitted to the host stream
+            needs, stop = [], threading.Event()
+
+            def watch():
+                for ev in c.watch(scheme="need", stop=stop):
+                    needs.append(ev)
+                    if ev.get("event") == "need":
+                        return
+            tw = threading.Thread(target=watch, daemon=True); tw.start()
+            _wait_subscribers(base, 1)
+            req = c.request_capability("demo", kind="connector")
+            self.assertTrue(req["ok"])
+            tw.join(timeout=3); stop.set()
+            need = next(e for e in needs if e.get("event") == "need")
+            self.assertEqual((need["kind"], need["what"]), ("connector", "demo"))
+            # 2) host fulfills the need -> scheme becomes live + runnable
+            res = _mesh.fulfill_need(c, need)
+            self.assertTrue(res["ok"])
+            self.assertIn("demo", c.schemes())
+            self.assertTrue(c.run("demo://self/thing/query/ping")["ok"])
+            # 3) folder need: host pushes a local folder's files to the node
+            with tempfile.TemporaryDirectory() as tmp:
+                (Path(tmp) / "notes.txt").write_text("hello", encoding="utf-8")
+                (Path(tmp) / "helper.py").write_text("X = 1\n", encoding="utf-8")
+                fr = _mesh.fulfill_need(c, {"kind": "folder", "what": tmp})
+                self.assertTrue(fr["ok"])
+                self.assertTrue((mesh.deploy_dir() / "notes.txt").exists())
+                self.assertTrue((mesh.deploy_dir() / "helper.py").exists())
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
+    def test_node_side_adopt_makes_installed_routes_live(self):
+        # node://<name>/registry/command/adopt — the node merges its installed connector
+        # bindings into the LIVE registry itself (no host deploy), admin-gated.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            self.assertNotIn("demo", c.schemes())
+            adopt = c.run("node://self/registry/command/adopt", {"scheme": "demo"})
+            self.assertTrue(adopt["ok"])
+            self.assertIn("demo", c.schemes())                      # live without a host deploy
+            self.assertTrue(c.run("demo://self/thing/query/ping")["ok"])  # and runnable (allow unioned)
+            # adopt is admin-gated
+            self.assertFalse(NodeClient(base).run("node://self/registry/command/adopt", {"scheme": "demo"})["ok"])
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
+    def test_run_ensuring_self_heals_then_runs(self):
+        # the (a) keystone: dispatching a URI whose scheme is missing acquires it first.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            self.assertNotIn("demo", c.schemes())
+            env = c.run_ensuring("demo://self/thing/query/ping")   # missing → acquire → run
+            self.assertTrue(env["ok"])
+            self.assertTrue(env["ensured"]["ok"])                  # it acquired the scheme
+            self.assertIn("demo", c.schemes())
+            self.assertNotIn("ensured", c.run_ensuring("env://self/x/query/p"))  # already served
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
+    def test_ensure_scheme_acquires_capability_and_makes_it_live(self):
+        # the self-extending loop: a node missing `demo://` discovers installed bindings via
+        # node:// management, merge-deploys them, and the new route becomes runnable.
+        import socket as _socket
+        import threading
+
+        from urirun.node.client import NodeClient
+
+        demo_doc = {"ok": True, "version": mesh.v2.VERSION, "count": 1, "bindings": {
+            "demo://self/thing/query/ping": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                             "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}}
+        orig = manage.registry_installed
+        manage.registry_installed = lambda **p: demo_doc  # node runs in-process → patch is seen
+        reg = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {
+            "env://self/x/query/p": {"kind": "query", "adapter": "argv-template", "argv": ["true"],
+                                     "inputSchema": {"type": "object"}, "policy": {"allowExecute": True}}}})
+        s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        server = mesh.serve_node("self", reg, "127.0.0.1", port, execute=True,
+                                 allow=["env://**", "demo://**"], admin_token="T", manage=True)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        base = f"http://127.0.0.1:{port}"
+        try:
+            _wait_healthy(base)
+            c = NodeClient(base, token="T")
+            self.assertNotIn("demo", c.schemes())
+            res = c.ensure_scheme("demo", install=False)        # acquire from installed bindings
+            self.assertTrue(res["ok"] and res.get("acquired"))
+            self.assertIn("demo", c.schemes())                  # route is now live
+            self.assertTrue(c.run("demo://self/thing/query/ping")["ok"])  # and runnable
+            self.assertEqual(c.ensure_scheme("demo")["already"], True)    # idempotent
+        finally:
+            server.shutdown()
+            manage.registry_installed = orig
+
+    def test_fulfill_need_dispatches_scheme_and_folder_requests(self):
+        calls = []
+
+        class Client:
+            def ensure_scheme(self, scheme, roots=None):
+                calls.append(("ensure", scheme, roots))
+                return {"ok": True, "scheme": scheme}
+
+            def push_folder(self, folder, roots=None):
+                calls.append(("folder", folder, roots))
+                return {"ok": True, "folder": folder}
+
+        self.assertTrue(mesh.fulfill_need(Client(), {"kind": "scheme", "what": "browser"}, roots="/src")["ok"])
+        self.assertTrue(mesh.fulfill_need(Client(), {"kind": "folder", "what": "pack"}, roots="/src")["ok"])
+        self.assertFalse(mesh.fulfill_need(Client(), {"kind": "mystery", "what": "x"})["ok"])
+        self.assertEqual(calls, [("ensure", "browser", "/src"), ("folder", "pack", "/src")])
+
+    def test_install_source_policy(self):
+        import os
+        calls, orig = [], manage._pip
+        manage._pip = lambda args, timeout=900: (calls.append(args) or {"ok": True})
+        saved = {k: os.environ.get(k) for k in
+                 ("URIRUN_INSTALL_ALLOW", "URIRUN_INSTALL_ROOTS", "URIRUN_CONNECTOR_ROOTS", "URIRUN_INSTALL_GIT_HOSTS")}
+        for k in saved:
+            os.environ.pop(k, None)
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                os.environ["URIRUN_INSTALL_ROOTS"] = tmp  # only this root allowed for local
+                self.assertEqual(manage._install_policy()["kinds"], ["catalog", "local"])  # git OFF by default
+                self.assertFalse(manage.connector_install(source="git+https://github.com/x/y.git")["ok"])  # git denied
+                self.assertFalse(manage.connector_install(source="/etc/nope-dir")["ok"])  # local outside root
+                inside = str(Path(tmp) / "conn"); Path(inside).mkdir()
+                calls.clear()
+                self.assertTrue(manage.connector_install(source=inside)["ok"])  # local inside root ok
+                self.assertEqual(calls[-1], ["install", "--upgrade", inside])
+                self.assertTrue(manage.connector_install(source="browser-control")["ok"])  # catalog ok
+                os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local,git"  # opt in to git
+                calls.clear()
+                self.assertTrue(manage.connector_install(source="git+https://github.com/x/y.git")["ok"])
+                self.assertEqual(calls[-1], ["install", "--upgrade", "git+https://github.com/x/y.git"])
+                os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local"
+                self.assertFalse(manage.package_install(spec="git+https://github.com/x/y.git")["ok"])  # gated
+                self.assertTrue(manage.package_install(spec="playwright")["ok"])  # pypi/catalog ok
+        finally:
+            manage._pip = orig
+            for k, v in saved.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
+    def test_connector_install_from_any_source(self):
+        b = manage.bindings("lab")["bindings"]
+        for path in ("connector/command/install", "connector/query/discover", "registry/query/installed"):
+            assert f"node://lab/{path}" in b
+        import os
+        calls, orig = [], manage._pip
+        manage._pip = lambda args, timeout=900: (calls.append(args) or {"ok": True, "returncode": 0})
+        # permissive policy so all source kinds are exercised (policy itself is tested separately)
+        saved = {k: os.environ.get(k) for k in ("URIRUN_INSTALL_ALLOW", "URIRUN_INSTALL_ROOTS", "URIRUN_CONNECTOR_ROOTS")}
+        os.environ["URIRUN_INSTALL_ALLOW"] = "catalog,local,git"
+        os.environ["URIRUN_INSTALL_ROOTS"] = "/home/tom/github"
+        os.environ.pop("URIRUN_CONNECTOR_ROOTS", None)
+        try:
+            manage.connector_install(source="browser-control")          # catalog id
+            self.assertEqual(calls[-1], ["install", "--upgrade", "urirun-connector-browser-control"])
+            manage.connector_install(source="git+https://github.com/x/y.git")  # git url
+            self.assertEqual(calls[-1], ["install", "--upgrade", "git+https://github.com/x/y.git"])
+            manage.connector_install(source="/home/tom/github/foo", editable=True)  # local path -e
+            self.assertEqual(calls[-1], ["install", "--upgrade", "-e", "/home/tom/github/foo"])
+        finally:
+            manage._pip = orig
+            for k, v in saved.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
+    def test_connector_discover_scans_local_projects(self):
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp) / "urirun-connector-demo" / "demo"
+            d.mkdir(parents=True)
+            (d / "connector.manifest.json").write_text(json.dumps(
+                {"id": "demo", "name": "Demo", "uriSchemes": ["demo"]}), encoding="utf-8")
+            out = manage.connector_discover(roots=tmp, scheme="demo")
+            ids = [c["id"] for c in out["local"]]
+            self.assertIn("demo", ids)
+            hit = next(c for c in out["local"] if c["id"] == "demo")
+            self.assertEqual(hit["schemes"], ["demo"])
+            self.assertTrue(os.path.isdir(hit["source"]))      # source path usable for install
+            # a non-matching scheme filters it out
+            self.assertEqual(manage.connector_discover(roots=tmp, scheme="nope")["local"], [])
+
+    def test_discover_derives_routes_from_uninstalled_local_connector(self):
+        # zero-install introspection: derive a local connector's real route URIs from source
+        # (if-uri via isolated import; tellmesh via manifest uri_patterns).
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = Path(tmp) / "urirun_connector_demo"
+            pkg.mkdir(parents=True)
+            (pkg / "__init__.py").write_text(
+                'def urirun_bindings():\n'
+                '    return {"version": "urirun.bindings.v2", "bindings": {\n'
+                '        "demo://h/thing/query/ping": {"kind": "query", "adapter": "argv-template"}}}\n',
+                encoding="utf-8")
+            (pkg / "connector.manifest.json").write_text(json.dumps({"id": "demo", "name": "Demo"}), encoding="utf-8")
+            out = manage.connector_discover(roots=tmp, include_routes=True)
+            hit = next(c for c in out["local"] if c["id"] == "demo")
+            self.assertIn("demo://h/thing/query/ping", hit.get("routes", []))
+            self.assertEqual(hit["schemes"], ["demo"])           # derived from the routes
 
     def test_node_management_routes_admin_gated(self):
         import socket as _socket
@@ -488,6 +1166,60 @@ class MeshTests(unittest.TestCase):
         self.assertIn("proc://pc1/process/query/list", uris)
         self.assertIn("proc://pc2/process/query/list", uris)
 
+    def test_heuristic_flow_maps_config_node_name_to_route_target(self):
+        nodes = [{"name": "lenovo", "reachable": True}]
+        routes = [
+            {"uri": "env://laptop/runtime/query/health", "node": "lenovo", "safe": True},
+            {"uri": "proc://laptop/process/query/list", "node": "lenovo", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdz procesy na lenovo", routes, nodes, selected_nodes=["lenovo"])
+
+        uris = [step["uri"] for step in flow["steps"]]
+        self.assertEqual(uris, ["env://laptop/runtime/query/health", "proc://laptop/process/query/list"])
+
+    def test_heuristic_flow_maps_linkedin_screen_prompt_to_capture(self):
+        nodes = [{"name": "laptop", "reachable": True}]
+        routes = [
+            {"uri": "screen://laptop/portal/query/capture", "node": "laptop", "safe": True},
+            {"uri": "browser://laptop/cdp/page/command/navigate", "node": "laptop", "safe": True},
+            {"uri": "browser://laptop/cdp/page/query/eval", "node": "laptop", "safe": True},
+            {"uri": "browser://laptop/cdp/page/query/tabs", "node": "laptop", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdź czy na ekranie jest LinkedIn", routes, nodes, selected_nodes=["laptop"])
+
+        self.assertEqual(flow["steps"][0]["uri"], "screen://laptop/portal/query/capture")
+
+    def test_heuristic_flow_filters_selected_node_when_route_targets_overlap(self):
+        nodes = [{"name": "officepc", "reachable": True}, {"name": "laptop", "reachable": True}]
+        routes = [
+            {"uri": "env://laptop/runtime/query/health", "node": "officepc", "safe": True},
+            {"uri": "screen://laptop/portal/query/capture", "node": "laptop", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdź ekran laptop", routes, nodes, selected_nodes=["laptop"])
+
+        self.assertEqual([step["uri"] for step in flow["steps"]], ["screen://laptop/portal/query/capture"])
+
+    def test_heuristic_flow_maps_browser_linkedin_prompt_to_cdp(self):
+        nodes = [{"name": "laptop", "reachable": True}]
+        routes = [
+            {"uri": "browser://laptop/cdp/page/command/navigate", "node": "laptop", "safe": True},
+            {"uri": "browser://laptop/cdp/page/query/eval", "node": "laptop", "safe": True},
+            {"uri": "browser://laptop/cdp/page/query/tabs", "node": "laptop", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdź linkedin w przeglądarce", routes, nodes, selected_nodes=["laptop"])
+
+        uris = [step["uri"] for step in flow["steps"]]
+        self.assertEqual(uris, [
+            "browser://laptop/cdp/page/command/navigate",
+            "browser://laptop/cdp/page/query/eval",
+            "browser://laptop/cdp/page/query/tabs",
+        ])
+        self.assertEqual(flow["steps"][0]["payload"]["url"], "https://www.linkedin.com/feed/")
+
     def test_registry_from_remote_routes(self):
         registry = mesh.registry_from_routes([
             {
@@ -501,6 +1233,26 @@ class MeshTests(unittest.TestCase):
         flattened = mesh.routes_from_registry(registry)
         self.assertEqual(flattened[0]["uri"], "proc://pc1/process/query/list")
         self.assertEqual(flattened[0]["adapter"], "http-service")
+
+    def test_service_map_prefers_exact_uri_over_shared_target(self):
+        from urirun import v2_service
+        import os
+
+        old = os.environ.get("URI_SERVICE_MAP")
+        os.environ["URI_SERVICE_MAP"] = json.dumps({
+            "laptop": "http://wrong-node:8765",
+            "screen://laptop/portal/query/capture": "http://right-node:8766",
+        })
+        try:
+            self.assertEqual(
+                v2_service.service_base("laptop", "screen://laptop/portal/query/capture"),
+                "http://right-node:8766",
+            )
+        finally:
+            if old is None:
+                os.environ.pop("URI_SERVICE_MAP", None)
+            else:
+                os.environ["URI_SERVICE_MAP"] = old
 
     def test_resolve_step_payload_chains_prior_results(self):
         results = {"slugify": {"ok": True, "result": {"slug": "june-report"}}}
@@ -516,6 +1268,55 @@ class MeshTests(unittest.TestCase):
 
     def test_resolve_step_payload_passthrough_without_from(self):
         self.assertEqual(mesh.resolve_step_payload({"a": 1, "b": "x"}, {}), {"a": 1, "b": "x"})
+
+    def test_flow_document_round_trips_yaml(self):
+        try:
+            import yaml  # noqa: F401
+        except ModuleNotFoundError:
+            self.skipTest("PyYAML not installed")
+        flow = {
+            "task": {"id": "demo", "title": "Demo"},
+            "steps": [{"id": "health", "uri": "env://laptop/runtime/query/health", "payload": {}, "depends_on": []}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "flow.yaml"
+            mesh.write_flow_document(path, mesh.flow_document(flow, prompt="sprawdz lenovo", generator={"provider": "heuristic"}))
+            loaded = mesh.load_flow_document(path)
+        self.assertEqual(loaded["version"], "urirun.flow.v1")
+        self.assertEqual(loaded["source"]["nl"], "sprawdz lenovo")
+        self.assertEqual(loaded["steps"][0]["uri"], "env://laptop/runtime/query/health")
+
+    def test_verify_flow_execution_checks_read_back_fragment(self):
+        doc = {"verification": {"read_back_step": "logs_after", "expected_log_fragment": "closed-loop ok"}}
+        execution = {"ok": True, "results": {"logs_after": {"result": {"stdout": "prefix closed-loop ok suffix"}}}}
+
+        verified = mesh.verify_flow_execution(doc, execution, executed=True)
+
+        self.assertTrue(verified["ok"])
+
+    def test_verify_flow_execution_can_fail_result(self):
+        doc = {"verification": {"read_back_step": "logs_after", "expected_log_fragment": "missing"}}
+        execution = {"ok": True, "results": {"logs_after": {"result": {"stdout": "different"}}}}
+
+        verified = mesh.verify_flow_execution(doc, execution, executed=True)
+
+        self.assertFalse(verified["ok"])
+
+    def test_run_flow_document_dry_run(self):
+        doc = {
+            "task": {"id": "demo", "title": "Demo"},
+            "steps": [{"id": "health", "uri": "env://laptop/runtime/query/health", "payload": {}, "depends_on": []}],
+        }
+        discovered = {
+            "nodes": [],
+            "routes": [{"uri": "env://laptop/runtime/query/health", "safe": True, "inputSchema": {"type": "object"}}],
+            "serviceMap": {"laptop": "http://127.0.0.1:1"},
+        }
+
+        result = mesh.run_flow_document(doc, discovered, execute=False)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["timeline"][0]["uri"], "env://laptop/runtime/query/health")
 
 
 if __name__ == "__main__":
@@ -623,3 +1424,184 @@ def test_apply_deploy_bumps_generation_and_reports_etag():
     assert state["generation"] == 2                                  # surface change bumps generation
     assert summary["registryGeneration"] == 2
     assert summary["registryEtag"] == nodemesh.registry_fingerprint(state["routes"])
+
+
+def test_config_with_transient_node_urls():
+    from urirun.node import mesh as nodemesh
+
+    config = {"version": nodemesh.CONFIG_VERSION, "host": {"name": "h"}, "nodes": []}
+    out = nodemesh.config_with_transient_node_urls(
+        config,
+        ["laptop=http://192.168.188.201:8766", "example.org:7777"],
+    )
+
+    assert {"name": "laptop", "url": "http://192.168.188.201:8766", "transient": True} in out["nodes"]
+    assert any(node["name"] == "example_org_7777" and node["url"] == "http://example.org:7777"
+               for node in out["nodes"])
+    assert config["nodes"] == []
+
+
+def test_deploy_command_uses_transient_node_url(tmp_path, monkeypatch, capsys):
+    from urirun.node import mesh as nodemesh
+
+    config_path = tmp_path / "mesh.json"
+    bindings_path = tmp_path / "bindings.json"
+    nodemesh.save_host_config({"version": nodemesh.CONFIG_VERSION, "host": {"name": "h"},
+                               "nodes": [{"name": "laptop", "url": "http://127.0.0.1:8765"}]},
+                              str(config_path))
+    bindings_path.write_text(json.dumps({"version": "urirun.bindings.v2", "bindings": {}}), encoding="utf-8")
+    seen = {}
+
+    def fake_deploy(url, **kwargs):
+        seen["url"] = url
+        seen["merge"] = kwargs.get("merge")
+        return {"ok": True, "url": url}
+
+    monkeypatch.setattr(nodemesh, "deploy_to_node", fake_deploy)
+    args = argparse.Namespace(config=str(config_path), node="laptop",
+                              node_url=["laptop=http://192.168.188.201:8766"],
+                              bindings=str(bindings_path), code=[], allow=[], env=[],
+                              name=None, token=None, identity=None, merge=True)
+
+    assert nodemesh.deploy_command(args) == 0
+    capsys.readouterr()
+    assert seen == {"url": "http://192.168.188.201:8766", "merge": True}
+
+
+def test_deploy_allow_compat_warning_when_merge_narrows_policy():
+    from urirun.node import mesh as nodemesh
+
+    result = nodemesh._annotate_deploy_allow_compat(
+        {"ok": True, "allow": ["browser://**"]},
+        merge=True,
+        before={"policy": {"allow": ["app://**", "kvm://**"]}},
+        requested_allow=["browser://**"],
+    )
+
+    warning = result["warnings"][0]
+    assert warning["code"] == "DEPLOY_ALLOW_MERGE_MISMATCH"
+    assert warning["missingAllow"] == ["app://**", "kvm://**"]
+    assert warning["expectedAllow"] == ["app://**", "kvm://**", "browser://**"]
+    assert warning["actualAllow"] == ["browser://**"]
+
+
+def test_deploy_allow_compat_warning_when_merge_clears_policy():
+    from urirun.node import mesh as nodemesh
+
+    result = nodemesh._annotate_deploy_allow_compat(
+        {"ok": True, "allow": []},
+        merge=True,
+        before={"policy": {"allow": ["app://**"]}},
+        requested_allow=["browser://**"],
+    )
+
+    warning = result["warnings"][0]
+    assert warning["missingAllow"] == ["app://**", "browser://**"]
+    assert warning["actualAllow"] == []
+
+
+def test_deploy_to_node_warns_on_remote_allow_merge_mismatch(monkeypatch):
+    from urirun.node import transport
+    from urirun.node import mesh as nodemesh
+
+    calls = []
+
+    def fake_http(method, url, **kwargs):
+        calls.append((method, url, kwargs))
+        if method == "GET":
+            return {"ok": True, "policy": {"allow": ["app://**", "screen://**"]}}
+        return {"ok": True, "allow": ["browser://**"], "routeCount": 3}
+
+    monkeypatch.setattr(transport, "http_json", fake_http)
+
+    result = nodemesh.deploy_to_node(
+        "http://node",
+        bindings={"version": "urirun.bindings.v2", "bindings": {}},
+        allow=["browser://**"],
+        merge=True,
+        token="secret",
+    )
+
+    assert [call[:2] for call in calls] == [
+        ("GET", "http://node/health"),
+        ("POST", "http://node/deploy"),
+    ]
+    assert result["warnings"][0]["missingAllow"] == ["app://**", "screen://**"]
+
+
+def test_apply_deploy_merge_preserves_existing_allowlist():
+    import urirun
+    from urirun.node import mesh as nodemesh
+
+    state = {
+        "name": "n",
+        "allow": ["browser://**"],
+        "generation": 1,
+        "registry": urirun.compile_registry({"version": "urirun.bindings.v2", "bindings": {}}),
+        "routes": [],
+    }
+    doc = {"version": "urirun.bindings.v2", "bindings": urirun.tool_binding("screen://n/portal/query/capture", ["echo"], {})}
+
+    summary = nodemesh.apply_deploy(state, {"bindings": doc, "merge": True, "allow": ["screen://**"]})
+
+    assert summary["allowMerged"] is True
+    assert state["allow"] == ["browser://**", "screen://**"]
+
+
+def test_materialize_base64_artifacts(tmp_path):
+    from urirun.node import mesh as nodemesh
+
+    png = b"\x89PNG\r\n\x1a\n" + (b"x" * 4096)
+    result, artifacts = nodemesh.materialize_base64_artifacts(
+        {"result": {"value": {"base64": base64.b64encode(png).decode()}}},
+        artifact_dir=str(tmp_path),
+        hint="test",
+    )
+
+    assert len(artifacts) == 1
+    assert Path(artifacts[0]["path"]).read_bytes() == png
+    ref = result["result"]["value"]["base64"]
+    assert ref["artifactPath"] == artifacts[0]["path"]
+    assert ref["bytes"] == len(png)
+    assert ref["mime"] == "image/png"
+
+
+def test_make_flow_empty_has_actionable_error():
+    from urirun.node import mesh as nodemesh
+
+    mesh_doc = {
+        "nodes": [{"name": "laptop", "reachable": True}],
+        "routes": [],
+        "serviceMap": {},
+    }
+
+    try:
+        nodemesh.make_flow("sprawdź ekran", mesh_doc, selected_nodes=["laptop"], use_llm=False)
+    except ValueError as exc:
+        message = str(exc)
+    else:
+        raise AssertionError("expected actionable empty-flow error")
+
+    assert "Discovered 0 safe route" in message
+    assert "--node-url" in message
+
+
+def test_maybe_load_dotenv(tmp_path, monkeypatch):
+    """host ask --env-file / URIRUN_DOTENV loads LLM_MODEL etc. without clobbering the
+    real environment."""
+    from urirun.node import mesh as nodemesh
+    envf = tmp_path / ".env"
+    envf.write_text('LLM_MODEL=openrouter/x\nOPENROUTER_API_KEY="sk-or-1"\n# c\nBAD\n', encoding="utf-8")
+    monkeypatch.delenv("LLM_MODEL", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    loaded = nodemesh._maybe_load_dotenv(str(envf))
+    assert set(loaded) == {"LLM_MODEL", "OPENROUTER_API_KEY"}
+    import os
+    assert os.environ["LLM_MODEL"] == "openrouter/x"
+    assert os.environ["OPENROUTER_API_KEY"] == "sk-or-1"          # quotes stripped
+    monkeypatch.setenv("LLM_MODEL", "real")
+    nodemesh._maybe_load_dotenv(str(envf))
+    assert os.environ["LLM_MODEL"] == "real"                       # already-set wins
+    # no file / not enabled -> no-op
+    monkeypatch.delenv("URIRUN_DOTENV", raising=False)
+    assert nodemesh._maybe_load_dotenv(None) == []

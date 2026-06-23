@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.10] - 2026-06-22
 
 ### Fixed
+- Fix string-concat issues (ticket-47a2ceb6)
+- Fix magic-numbers issues (ticket-daef9f77)
+- Fix magic-numbers issues (ticket-dbaa1034)
+- Fix unused-imports issues (ticket-42cc2189)
+- Fix magic-numbers issues (ticket-975f2cdd)
+
+## [0.1.10] - 2026-06-22
+
+### Fixed
 - Fix llm-generated-code issues (ticket-55686191)
 - Fix unused-imports issues (ticket-711724ee)
 - Fix ai-boilerplate issues (ticket-b9661411)
@@ -70,6 +79,360 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.63] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_routing.py
+- Update adapters/python/urirun/node/routing.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/flow.mmd
+- ... and 7 more files
+
+## [0.4.62] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/HOST_NODE_COMMUNICATION.md
+- Update project/IMPROVEMENTS.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/urirun/node/flow.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/_scan.py
+- Update adapters/python/urirun/runtime/v2.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/duplication.toon.yaml
+- ... and 8 more files
+
+## [0.4.61] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update docs/HOST_NODE_COMMUNICATION.md
+- Update project/IMPROVEMENTS.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/tests/test_node_client.py
+- Update adapters/python/urirun/node/client.py
+- Update adapters/python/urirun/node/config.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/node/transport.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- ... and 8 more files
+
+## [0.4.60] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/HOST_NODE_COMMUNICATION.md
+- Update project/IMPROVEMENTS.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/_artifacts.py
+- Update adapters/python/urirun/node/_util.py
+- Update adapters/python/urirun/node/_version.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/node/paths.py
+- Update adapters/python/urirun/node/routing.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- ... and 14 more files
+
+## [0.4.59] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/manage.py
+- Update adapters/python/urirun/node/mesh.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- ... and 8 more files
+
+## [0.4.58] - 2026-06-23
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .gitignore
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/client.py
+- Update adapters/python/urirun/node/keyauth.py
+- Update adapters/python/urirun/node/manage.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+- Update adapters/python/urirun/runtime/v2_service.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- ... and 16 more files
+
+## [0.4.57] - 2026-06-23
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+
+## [0.4.56] - 2026-06-23
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/tests/test_node_client.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+
+## [0.4.55] - 2026-06-23
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/urirun/node/client.py
+- Update adapters/python/urirun/node/mesh.py
+
+## [0.4.54] - 2026-06-23
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/mesh.py
+
+## [0.4.53] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/urirun/node/mesh.py
+
+## [0.4.52] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/tests/test_node_client.py
+- Update adapters/python/urirun/node/manage.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+
+## [0.4.51] - 2026-06-22
+
+### Docs
+- Update README.md
+- Update SUMR.md
+
+### Other
+- Update adapters/python/tests/test_connector_resolver.py
+- Update adapters/python/urirun/connectors/resolver.py
+- Update adapters/python/urirun/node/client.py
+- Update adapters/python/urirun/runtime/v2.py
+- Update project/logic.pl
+
+## [0.4.50] - 2026-06-22
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/manage.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 9 more files
+
+## [0.4.49] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/urirun/node/manage.py
+
+## [0.4.48] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/urirun/node/mesh.py
+
+## [0.4.47] - 2026-06-22
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/mesh.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- ... and 8 more files
+
+## [0.4.46] - 2026-06-22
+
+### Docs
+- Update README.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update .urirun/reports/lenovo-closed-loop-20260622-230017.json
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+- Update adapters/python/urirun/runtime/v2_mcp.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- ... and 11 more files
+
+## [0.4.45] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update .urirun/flows/lenovo-ai-closed-loop.yaml
+- Update adapters/python/tests/test_node_client.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/v2.py
+
+## [0.4.44] - 2026-06-22
+
+### Docs
+- Update README.md
+
+### Other
+- Update adapters/python/tests/test_mesh.py
+- Update adapters/python/urirun/node/client.py
+
+## [0.4.43] - 2026-06-22
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/runtime/progress.py
+- Update adapters/python/urirun/runtime/v1.py
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/duplication.toon.yaml
+- ... and 8 more files
+
+## [0.4.42] - 2026-06-22
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Other
+- Update adapters/python/urirun/runtime/progress.py
+- Update adapters/python/urirun/runtime/v1.py
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/compact_flow.mmd
+- Update project/compact_flow.png
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- ... and 9 more files
 
 ## [0.4.41] - 2026-06-22
 

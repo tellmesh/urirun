@@ -1,0 +1,54 @@
+version: urirun.flow.v1
+source:
+  nl: "sprawdz zdrowie, system, date, procesy i logi na lenovo"
+  generator: codex-ai
+  generated_at: "2026-06-22T22:45:18+02:00"
+  host_node_name: lenovo
+  uri_target: laptop
+task:
+  id: lenovo-ai-closed-loop
+  title: "Lenovo NL to YAML closed-loop check"
+  source: ai-nl-yaml
+steps:
+  - id: health
+    uri: env://laptop/runtime/query/health
+    payload: {}
+    depends_on: []
+  - id: date
+    uri: shell://laptop/command/date
+    payload: {}
+    depends_on:
+      - health
+  - id: uname
+    uri: shell://laptop/command/uname
+    payload: {}
+    depends_on:
+      - date
+  - id: processes
+    uri: proc://laptop/process/query/list
+    payload:
+      limit: 12
+    depends_on:
+      - uname
+  - id: logs_before
+    uri: log://laptop/session/query/recent
+    payload:
+      limit: 10
+    depends_on:
+      - processes
+  - id: log_write
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs."
+    depends_on:
+      - logs_before
+  - id: logs_after
+    uri: log://laptop/session/query/recent
+    payload:
+      limit: 10
+    depends_on:
+      - log_write
+verification:
+  require_ok: true
+  read_back_step: logs_after
+  expected_log_fragment: "AI closed-loop NL->YAML flow executed on lenovo/laptop"

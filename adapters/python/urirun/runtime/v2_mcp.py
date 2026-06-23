@@ -132,6 +132,27 @@ def call_tool(name: str, arguments: dict, registry: dict, mode: str = "dry-run",
     return v2.run(uri, registry, payload=arguments or {}, mode=mode, policy=policy, confirm=confirm)
 
 
+def _handle_mcp_request(request, registry, index, public_tools, respond, mode, policy) -> None:
+    """Dispatch one JSON-RPC request to its MCP method (initialize / tools.list /
+    tools.call / notifications), calling ``respond`` with the result or error."""
+    method = request.get("method")
+    rid = request.get("id")
+    if method == "initialize":
+        respond(rid, {"protocolVersion": PROTOCOL_VERSION, "serverInfo": SERVER_INFO, "capabilities": {"tools": {}}})
+    elif method == "tools/list":
+        respond(rid, {"tools": public_tools})
+    elif method == "tools/call":
+        params = request.get("params", {})
+        uri = index.get(params.get("name"))
+        if not uri:
+            respond(rid, error={"code": -32602, "message": f"unknown tool: {params.get('name')}"})
+            return
+        envelope = v2.run(uri, registry, payload=params.get("arguments", {}), mode=mode, policy=policy)
+        respond(rid, {"content": [{"type": "text", "text": json.dumps(envelope)}], "isError": not envelope.get("ok", False)})
+    elif not (method and method.startswith("notifications/")):
+        respond(rid, error={"code": -32601, "message": f"unknown method: {method}"})
+
+
 def serve_mcp(registry: dict, policy: dict | None = None, mode: str = "dry-run", instream=None, outstream=None) -> None:
     """Minimal MCP server over line-delimited JSON-RPC (stdin/stdout)."""
     instream = instream or sys.stdin
@@ -150,27 +171,8 @@ def serve_mcp(registry: dict, policy: dict | None = None, mode: str = "dry-run",
 
     for line in instream:
         line = line.strip()
-        if not line:
-            continue
-        request = json.loads(line)
-        method = request.get("method")
-        rid = request.get("id")
-        if method == "initialize":
-            respond(rid, {"protocolVersion": PROTOCOL_VERSION, "serverInfo": SERVER_INFO, "capabilities": {"tools": {}}})
-        elif method == "tools/list":
-            respond(rid, {"tools": public_tools})
-        elif method == "tools/call":
-            params = request.get("params", {})
-            uri = index.get(params.get("name"))
-            if not uri:
-                respond(rid, error={"code": -32602, "message": f"unknown tool: {params.get('name')}"})
-                continue
-            envelope = v2.run(uri, registry, payload=params.get("arguments", {}), mode=mode, policy=policy)
-            respond(rid, {"content": [{"type": "text", "text": json.dumps(envelope)}], "isError": not envelope.get("ok", False)})
-        elif method and method.startswith("notifications/"):
-            continue
-        else:
-            respond(rid, error={"code": -32601, "message": f"unknown method: {method}"})
+        if line:
+            _handle_mcp_request(json.loads(line), registry, index, public_tools, respond, mode, policy)
 
 
 def main(argv: list[str] | None = None) -> int:

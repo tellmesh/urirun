@@ -107,21 +107,7 @@ def assign_rpc_names(uris: list[str], nuances: list[str]) -> dict[str, str]:
         if counts[base] == 1 and base not in RESERVED_RPC_NAMES:
             name = base
         else:
-            _s, _t, _segs, kind = _uri_parts(uri)
-            name = f"{base}{_msg_pascal(kind)}" if kind else base
-            if counts[base] > 1 and base not in seen_groups:
-                seen_groups.add(base)
-                group = [u for u in uris if naive[u] == base]
-                resolved = ", ".join(f"`{base}{_msg_pascal(_uri_parts(u)[3])}`" for u in group)
-                nuances.append(
-                    f"rpc-name collision on `{base}`: " + " vs ".join(group)
-                    + f" -> CQRS-disambiguated to {resolved}"
-                )
-            elif base in RESERVED_RPC_NAMES:
-                nuances.append(
-                    f"rpc name `{base}` collides with the generic carrier `rpc Run` "
-                    f"-> renamed `{name}`"
-                )
+            name = _disambiguate_rpc_name(uri, base, uris, naive, counts, seen_groups, nuances)
         if name in used_final:  # last-ditch uniqueness if even CQRS verbs collide
             used_final[name] += 1
             name = f"{name}{used_final[name]}"
@@ -129,6 +115,26 @@ def assign_rpc_names(uris: list[str], nuances: list[str]) -> dict[str, str]:
             used_final[name] = 1
         final[uri] = name
     return final
+
+
+def _disambiguate_rpc_name(uri, base, uris, naive, counts, seen_groups, nuances) -> str:
+    """CQRS-verb-disambiguated rpc name for a colliding or reserved ``base``, recording
+    the collision/carrier nuance once per group."""
+    kind = _uri_parts(uri)[3]
+    name = f"{base}{_msg_pascal(kind)}" if kind else base
+    if counts[base] > 1 and base not in seen_groups:
+        seen_groups.add(base)
+        group = [u for u in uris if naive[u] == base]
+        resolved = ", ".join(f"`{base}{_msg_pascal(_uri_parts(u)[3])}`" for u in group)
+        nuances.append(
+            f"rpc-name collision on `{base}`: " + " vs ".join(group)
+            + f" -> CQRS-disambiguated to {resolved}"
+        )
+    elif base in RESERVED_RPC_NAMES:
+        nuances.append(
+            f"rpc name `{base}` collides with the generic carrier `rpc Run` -> renamed `{name}`"
+        )
+    return name
 
 
 # --------------------------------------------------------------------------- #

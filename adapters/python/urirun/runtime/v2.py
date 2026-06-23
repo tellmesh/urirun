@@ -58,7 +58,7 @@ MANIFEST_NAMES = {
     ".urirun/manifest.json",
     ".urirun/bindings.v2.json",
 }
-IGNORED_DIRS = {".git", ".hg", ".svn", ".venv", "__pycache__", "build", "dist", "node_modules", ".pytest_cache"}
+IGNORED_DIRS = {".git", ".hg", ".svn", ".venv", "__pycache__", "build", "dist", "node_modules", ".pytest_cache", ".state", ".urirun", "venv", "env"}
 
 
 DECORATED_BINDINGS: dict[str, dict] = {}
@@ -1490,6 +1490,18 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     connectors_install.add_argument("ids", nargs="+")
     connectors_install.add_argument("--execute", action="store_true", help="Actually run pip (default: dry-run)")
     connectors_install.add_argument("--json", action="store_true")
+    connectors_index = connectors_sub.add_parser("index", help="Index local urirun-connector-* projects")
+    connectors_index.add_argument("--root", action="append", default=None,
+                                  help="Root to scan; repeatable. Default: ~/github")
+    connectors_index.add_argument("--org", default="if-uri", help="GitHub org for fallback git install specs")
+    connectors_index.add_argument("--json", action="store_true")
+    connectors_resolve = connectors_sub.add_parser("resolve", help="Resolve a needed capability to connector install candidates")
+    connectors_resolve.add_argument("capability", help="scheme, URI, or short phrase, e.g. browser, browser://..., 'send email'")
+    connectors_resolve.add_argument("--root", action="append", default=None,
+                                    help="Root to scan; repeatable. Default: ~/github")
+    connectors_resolve.add_argument("--org", default="if-uri", help="GitHub org for fallback git install specs")
+    connectors_resolve.add_argument("--limit", type=int, default=5)
+    connectors_resolve.add_argument("--json", action="store_true")
 
     install_parser = subparsers.add_parser("install", help="Install a connector (alias for 'connectors install', runs pip by default)")
     install_parser.add_argument("ids", nargs="+", help="connector ids or package names")
@@ -1530,6 +1542,10 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     connectors_lint.add_argument("package", help="Path to a connector package directory")
     connectors_lint.add_argument("--json", action="store_true")
     connectors_lint.add_argument("--strict", action="store_true", help="Also fail when a route is spelled out in more than one place")
+    connectors_verify = connectors_sub.add_parser("verify",
+        help="Pre-deploy gate: lint + import + validate bindings + resolve every handler (catches advertised-but-dead routes)")
+    connectors_verify.add_argument("package", help="Path to a connector package directory")
+    connectors_verify.add_argument("--json", action="store_true")
     connectors_new = connectors_sub.add_parser("new", help="Scaffold a new connector package")
     connectors_new.add_argument("id", help="Connector id, e.g. my-thing")
     connectors_new.add_argument("--lang", choices=["python", "js", "go", "php"], default="python")
@@ -1572,6 +1588,11 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_sub = host_parser.add_subparsers(dest="host_command", required=True)
     host_common = argparse.ArgumentParser(add_help=False)
     host_common.add_argument("--config", default=None, help="host mesh config path; default .urirun/mesh.json")
+    host_common.add_argument("--env-file", default=None, metavar="PATH",
+                             help="load KEY=VALUE from a .env (LLM_MODEL / OPENROUTER_API_KEY etc.) before running; "
+                                  "./.env is auto-loaded when URIRUN_DOTENV=1. Already-set vars win.")
+    host_common.add_argument("--node-url", action="append", default=[], metavar="[NAME=]URL",
+                             help="temporarily add a node URL for this command without editing the mesh config; repeatable")
 
     host_init = host_sub.add_parser("init", parents=[host_common], help="Create host mesh config")
     host_init.add_argument("--name")
@@ -1595,6 +1616,7 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
                                      help="Stream a node's live events (run/error) as URIs over SSE")
     host_watch.add_argument("node", help="configured node name or a node URL")
     host_watch.add_argument("--scheme", help="only events whose URI scheme is in this comma list (e.g. kvm,him,error)")
+    host_watch.add_argument("--run", help="only the progress/result events of this run id")
     host_watch.add_argument("--follow", action="store_true", help="reconnect on drop, replaying missed events")
     host_watch.add_argument("--token", help="admin token if the node gates /events (--require-run-auth)")
     host_watch.add_argument("--identity", help="SSH key to sign with if the node gates /events")
@@ -1732,6 +1754,8 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_copyid.add_argument("node", nargs="?", help="configured node name or a node URL")
     host_copyid.add_argument("--all", action="store_true", help="enroll on every node in the mesh config")
     host_copyid.add_argument("--identity", help="SSH private key (default ~/.ssh/id_ed25519)")
+    host_copyid.add_argument("--enroll-token", default=None,
+                             help="the node's console TOKEN (shown in red at its startup) authorizing this enrollment")
 
     host_probe = host_sub.add_parser("probe", parents=[host_common],
                                      help="Snapshot a node's surface and test every route pinned to it; detects a churning/hot-swapped registry")
@@ -1741,11 +1765,49 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_probe.add_argument("--json", action="store_true", help="emit the probe report as JSON")
     host_probe.add_argument("--timeout", type=float, default=15.0, help="per-route timeout in seconds")
 
+    host_run = host_sub.add_parser("run", parents=[host_common], help="Dispatch a URI to a node; --stream prints live progress")
+    host_run.add_argument("node", help="configured node name or a node URL")
+    host_run.add_argument("uri", help="the URI to run on the node")
+    host_run.add_argument("--payload", help="JSON payload for the URI")
+    host_run.add_argument("--stream", action="store_true", help="start async and stream the node's live progress until done")
+    host_run.add_argument("--run-id", dest="run_id", help="correlation id for the run (default: generated)")
+    host_run.add_argument("--token", help="X-Urirun-Token for an auth-gated node")
+    host_run.add_argument("--ensure", action="store_true", help="acquire the URI's scheme first if the node lacks it (self-heal)")
+    host_run.add_argument("--roots", help="connector search roots for --ensure (default ~/github / $URIRUN_CONNECTOR_ROOTS)")
+    host_run.add_argument("--timeout", type=float, default=120.0, help="run timeout in seconds")
+
+    host_ensure = host_sub.add_parser("ensure", parents=[host_common],
+                                      help="Make a scheme live on a node, acquiring the connector if missing (self-management)")
+    host_ensure.add_argument("node", help="configured node name or a node URL")
+    host_ensure.add_argument("scheme", help="capability scheme to ensure (e.g. browser)")
+    host_ensure.add_argument("--roots", help="connector search roots (default ~/github / $URIRUN_CONNECTOR_ROOTS)")
+    host_ensure.add_argument("--no-install", action="store_true", help="only use already-installed bindings; don't install")
+    host_ensure.add_argument("--token", help="admin token for node:// management / deploy")
+
+    host_supply = host_sub.add_parser("supply", parents=[host_common],
+                                      help="Watch a node's need:// events and supply the connectors/folders it asks for")
+    host_supply.add_argument("node", help="configured node name or a node URL")
+    host_supply.add_argument("--roots", help="connector/folder search roots (default ~/github / $URIRUN_CONNECTOR_ROOTS)")
+    host_supply.add_argument("--once", action="store_true", help="fulfill one need and exit")
+    host_supply.add_argument("--token", help="admin token for node:// management / deploy")
+
     host_ask = host_sub.add_parser("ask", parents=[host_common], help="Generate a URI flow from natural language and dispatch it")
     host_ask.add_argument("prompt", nargs="+")
     host_ask.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")
     host_ask.add_argument("--execute", action="store_true", help="execute on nodes; default is dry-run")
     host_ask.add_argument("--no-llm", action="store_true", help="use heuristic flow generation only")
+    host_ask.add_argument("--flow-out", help="write the generated URI flow to a YAML/JSON file")
+    host_ask.add_argument("--flow-format", choices=["yaml", "json"], help="format for --flow-out; default follows file extension")
+    host_ask.add_argument("--artifact-dir", help="directory for large base64/binary result artifacts; default ~/.urirun/artifacts/host")
+    host_ask.add_argument("--inline-artifacts", action="store_true", help="keep large base64 values inline in stdout")
+
+    host_flow = host_sub.add_parser("flow", help="Run saved URI flow documents")
+    flow_sub = host_flow.add_subparsers(dest="flow_command", required=True)
+    flow_run = flow_sub.add_parser("run", parents=[host_common], help="Run a saved YAML/JSON URI flow")
+    flow_run.add_argument("flow", help="flow YAML/JSON file")
+    flow_run.add_argument("--execute", action="store_true", help="execute on nodes; default is dry-run")
+    flow_run.add_argument("--artifact-dir", help="directory for large base64/binary result artifacts; default ~/.urirun/artifacts/host")
+    flow_run.add_argument("--inline-artifacts", action="store_true", help="keep large base64 values inline in stdout")
 
     host_task = host_sub.add_parser("task", help="Manage planfile-backed host tasks")
     task_sub = host_task.add_subparsers(dest="task_command", required=True)
@@ -2298,9 +2360,12 @@ def _cmd_agent(args, parser) -> int:
 
 _CONNECTOR_SUBCOMMANDS = {
     "lint": ("urirun.connectors.connector_lint", "lint_command"),
+    "verify": ("urirun.connectors.connector_lint", "verify_command"),
     "new": ("urirun.connector_scaffold", "new_command"),
     "smoke": ("urirun.connector_smoke", "smoke_command"),
     "from-spec": ("urirun.connectors.declarative", "from_spec_command"),
+    "index": ("urirun.connectors.resolver", "index_command"),
+    "resolve": ("urirun.connectors.resolver", "resolve_command"),
 }
 
 

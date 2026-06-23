@@ -156,3 +156,19 @@ class ToolBindingAndRunStepsTest(unittest.TestCase):
         ], self._registry(), execute=True)
         self.assertEqual(len(out), 1)
         self.assertFalse(out[0]["ok"])
+
+
+class ResultDegradedTest(unittest.TestCase):
+    """urirun.result_degraded — surfaces a connector running in mock/simulated mode
+    even when ok=True, so tools (host probe) don't read a placeholder as real work."""
+
+    def test_flags_mock_driver_and_modes(self):
+        self.assertEqual(urirun.result_degraded({"result": {"value": {"ok": True, "driver": "mock"}}}), "driver=mock")
+        self.assertEqual(urirun.result_degraded({"result": {"value": {"ok": True, "mode": "simulated"}}}), "mode=simulated")
+        self.assertEqual(urirun.result_degraded({"result": {"value": {"ok": True, "degraded": True}}}), "degraded")
+        self.assertEqual(urirun.result_degraded({"result": {"value": {"ok": True, "simulated": True}}}), "simulated")
+
+    def test_real_results_are_not_degraded(self):
+        self.assertIsNone(urirun.result_degraded({"result": {"value": {"ok": True, "driver": "playwright"}}}))
+        self.assertIsNone(urirun.result_degraded({"result": {"value": {"ok": True, "title": "real"}}}))
+        self.assertIsNone(urirun.result_degraded({"result": {"stdout": '{"ok": true}'}}))

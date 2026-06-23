@@ -1,0 +1,478 @@
+{
+  "flow": {
+    "steps": [
+      {
+        "depends_on": [],
+        "id": "health",
+        "payload": {},
+        "uri": "env://laptop/runtime/query/health"
+      },
+      {
+        "depends_on": [
+          "health"
+        ],
+        "id": "date",
+        "payload": {},
+        "uri": "shell://laptop/command/date"
+      },
+      {
+        "depends_on": [
+          "date"
+        ],
+        "id": "uname",
+        "payload": {},
+        "uri": "shell://laptop/command/uname"
+      },
+      {
+        "depends_on": [
+          "uname"
+        ],
+        "id": "processes",
+        "payload": {
+          "limit": 12
+        },
+        "uri": "proc://laptop/process/query/list"
+      },
+      {
+        "depends_on": [
+          "processes"
+        ],
+        "id": "logs_before",
+        "payload": {
+          "limit": 10
+        },
+        "uri": "log://laptop/session/query/recent"
+      },
+      {
+        "depends_on": [
+          "logs_before"
+        ],
+        "id": "log_write",
+        "payload": {
+          "text": "AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "log_write"
+        ],
+        "id": "logs_after",
+        "payload": {
+          "limit": 10
+        },
+        "uri": "log://laptop/session/query/recent"
+      }
+    ],
+    "task": {
+      "id": "lenovo_ai_closed_loop",
+      "source": "ai-nl-yaml",
+      "title": "Lenovo NL to YAML closed-loop check"
+    }
+  },
+  "ok": true,
+  "results": {
+    "date": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "2026-06-22T22:59:51.012992+02:00\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-3",
+        "service": "laptop",
+        "uri": "shell://laptop/command/date"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "2026-06-22T22:59:51.012992+02:00\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "health": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,platform,socket; print(json.dumps({'hostname':socket.gethostname(),'platform':platform.platform(),'python':platform.python_version()}))"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"hostname\": \"lenovo\", \"platform\": \"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\", \"python\": \"3.14.5\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-1",
+        "service": "laptop",
+        "uri": "env://laptop/runtime/query/health"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,platform,socket; print(json.dumps({'hostname':socket.gethostname(),'platform':platform.platform(),'python':platform.python_version()}))"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"hostname\": \"lenovo\", \"platform\": \"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\", \"python\": \"3.14.5\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "env://laptop/runtime/query/health",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "log_write": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782161991.1496305, \"text\": \"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-11",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782161991.1496305, \"text\": \"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "logs_after": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+            "10"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161004.9941711, \\\"text\\\": \\\"closed-loop test\\\"}\", \"{\\\"at\\\": 1782161121.6576576, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161248.2813816, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161251.0991292, \\\"text\\\": \\\"${find_python3_path.output}\\\"}\", \"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-13",
+        "service": "laptop",
+        "uri": "log://laptop/session/query/recent"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+          "10"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161004.9941711, \\\"text\\\": \\\"closed-loop test\\\"}\", \"{\\\"at\\\": 1782161121.6576576, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161248.2813816, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161251.0991292, \\\"text\\\": \\\"${find_python3_path.output}\\\"}\", \"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "logs_before": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+            "10"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"logs\": [\"{\\\"at\\\": 1782160920.3387337, \\\"text\\\": \\\"Audit summary: OS/Kernel read, top 5 processes listed.\\\"}\", \"{\\\"at\\\": 1782161004.9941711, \\\"text\\\": \\\"closed-loop test\\\"}\", \"{\\\"at\\\": 1782161121.6576576, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161248.2813816, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161251.0991292, \\\"text\\\": \\\"${find_python3_path.output}\\\"}\", \"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-9",
+        "service": "laptop",
+        "uri": "log://laptop/session/query/recent"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+          "10"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"logs\": [\"{\\\"at\\\": 1782160920.3387337, \\\"text\\\": \\\"Audit summary: OS/Kernel read, top 5 processes listed.\\\"}\", \"{\\\"at\\\": 1782161004.9941711, \\\"text\\\": \\\"closed-loop test\\\"}\", \"{\\\"at\\\": 1782161121.6576576, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161248.2813816, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161251.0991292, \\\"text\\\": \\\"${find_python3_path.output}\\\"}\", \"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "processes": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+            "12"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"processes\": [\" 150103 python3         50.0  0.0\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.1\", \"  40949 Discord          0.4  2.7\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  0.9\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \" 149936 urirun           0.2  0.2\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.9\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-7",
+        "service": "laptop",
+        "uri": "proc://laptop/process/query/list"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+          "12"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"processes\": [\" 150103 python3         50.0  0.0\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.1\", \"  40949 Discord          0.4  2.7\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  0.9\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \" 149936 urirun           0.2  0.2\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.9\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "uname": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import platform; print(platform.platform())"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-5",
+        "service": "laptop",
+        "uri": "shell://laptop/command/uname"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import platform; print(platform.platform())"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/uname",
+      "url": "http://192.168.188.201:8765/run"
+    }
+  },
+  "source": {
+    "generated_at": "2026-06-22T22:45:18+02:00",
+    "generator": "codex-ai",
+    "host_node_name": "lenovo",
+    "nl": "sprawdz zdrowie, system, date, procesy i logi na lenovo",
+    "uri_target": "laptop"
+  },
+  "timeline": [
+    {
+      "id": "health",
+      "ok": true,
+      "target": "laptop",
+      "uri": "env://laptop/runtime/query/health"
+    },
+    {
+      "id": "date",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date"
+    },
+    {
+      "id": "uname",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/uname"
+    },
+    {
+      "id": "processes",
+      "ok": true,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list"
+    },
+    {
+      "id": "logs_before",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent"
+    },
+    {
+      "id": "log_write",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "logs_after",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent"
+    }
+  ],
+  "verification": {
+    "checks": [
+      {
+        "check": "require_ok",
+        "ok": true
+      },
+      {
+        "check": "expected_log_fragment",
+        "ok": true,
+        "step": "logs_after"
+      }
+    ],
+    "ok": true
+  }
+}

@@ -1,0 +1,107 @@
+version: urirun.flow.v1
+source:
+  nl: "autonomous daily work simulation on lenovo"
+  generator: codex-ai
+  generated_at: "2026-06-22T23:20:00+02:00"
+  host_node_name: lenovo
+  uri_target: laptop
+task:
+  id: lenovo-autonomous-daily-work
+  title: "Lenovo autonomous daily work simulation"
+  source: ai-yaml-flow
+steps:
+  - id: logs_before
+    uri: log://laptop/session/query/recent
+    payload:
+      limit: 12
+    depends_on: []
+  - id: start_day
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close."
+    depends_on:
+      - logs_before
+  - id: health
+    uri: env://laptop/runtime/query/health
+    payload: {}
+    depends_on:
+      - start_day
+  - id: date_morning
+    uri: shell://laptop/command/date
+    payload: {}
+    depends_on:
+      - health
+  - id: uname
+    uri: shell://laptop/command/uname
+    payload: {}
+    depends_on:
+      - date_morning
+  - id: which_python3
+    uri: shell://laptop/command/which
+    payload:
+      binary: python3
+    depends_on:
+      - uname
+  - id: which_git
+    uri: shell://laptop/command/which
+    payload:
+      binary: git
+    depends_on:
+      - which_python3
+  - id: processes_morning
+    uri: proc://laptop/process/query/list
+    payload:
+      limit: 12
+    depends_on:
+      - which_git
+  - id: focus_block
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input."
+    depends_on:
+      - processes_morning
+  - id: processes_focus
+    uri: proc://laptop/process/query/list
+    payload:
+      limit: 12
+    depends_on:
+      - focus_block
+  - id: break_marker
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action."
+    depends_on:
+      - processes_focus
+  - id: resume_marker
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday."
+    depends_on:
+      - break_marker
+  - id: processes_afternoon
+    uri: proc://laptop/process/query/list
+    payload:
+      limit: 12
+    depends_on:
+      - resume_marker
+  - id: date_close
+    uri: shell://laptop/command/date
+    payload: {}
+    depends_on:
+      - processes_afternoon
+  - id: close_day
+    uri: log://laptop/session/command/write
+    payload:
+      text: "AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required."
+    depends_on:
+      - date_close
+  - id: logs_after
+    uri: log://laptop/session/query/recent
+    payload:
+      limit: 20
+    depends_on:
+      - close_day
+verification:
+  require_ok: true
+  read_back_step: logs_after
+  expected_log_fragment: "AUTONOMOUS_DAILY_WORK_SIM completed"

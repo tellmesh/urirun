@@ -1,0 +1,1059 @@
+{
+  "flow": {
+    "steps": [
+      {
+        "depends_on": [],
+        "id": "logs_before",
+        "payload": {
+          "limit": 12
+        },
+        "uri": "log://laptop/session/query/recent"
+      },
+      {
+        "depends_on": [
+          "logs_before"
+        ],
+        "id": "start_day",
+        "payload": {
+          "text": "AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "start_day"
+        ],
+        "id": "health",
+        "payload": {},
+        "uri": "env://laptop/runtime/query/health"
+      },
+      {
+        "depends_on": [
+          "health"
+        ],
+        "id": "date_morning",
+        "payload": {},
+        "uri": "shell://laptop/command/date"
+      },
+      {
+        "depends_on": [
+          "date_morning"
+        ],
+        "id": "uname",
+        "payload": {},
+        "uri": "shell://laptop/command/uname"
+      },
+      {
+        "depends_on": [
+          "uname"
+        ],
+        "id": "which_python3",
+        "payload": {
+          "binary": "python3"
+        },
+        "uri": "shell://laptop/command/which"
+      },
+      {
+        "depends_on": [
+          "which_python3"
+        ],
+        "id": "which_git",
+        "payload": {
+          "binary": "git"
+        },
+        "uri": "shell://laptop/command/which"
+      },
+      {
+        "depends_on": [
+          "which_git"
+        ],
+        "id": "processes_morning",
+        "payload": {
+          "limit": 12
+        },
+        "uri": "proc://laptop/process/query/list"
+      },
+      {
+        "depends_on": [
+          "processes_morning"
+        ],
+        "id": "focus_block",
+        "payload": {
+          "text": "AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "focus_block"
+        ],
+        "id": "processes_focus",
+        "payload": {
+          "limit": 12
+        },
+        "uri": "proc://laptop/process/query/list"
+      },
+      {
+        "depends_on": [
+          "processes_focus"
+        ],
+        "id": "break_marker",
+        "payload": {
+          "text": "AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "break_marker"
+        ],
+        "id": "resume_marker",
+        "payload": {
+          "text": "AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "resume_marker"
+        ],
+        "id": "processes_afternoon",
+        "payload": {
+          "limit": 12
+        },
+        "uri": "proc://laptop/process/query/list"
+      },
+      {
+        "depends_on": [
+          "processes_afternoon"
+        ],
+        "id": "date_close",
+        "payload": {},
+        "uri": "shell://laptop/command/date"
+      },
+      {
+        "depends_on": [
+          "date_close"
+        ],
+        "id": "close_day",
+        "payload": {
+          "text": "AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required."
+        },
+        "uri": "log://laptop/session/command/write"
+      },
+      {
+        "depends_on": [
+          "close_day"
+        ],
+        "id": "logs_after",
+        "payload": {
+          "limit": 20
+        },
+        "uri": "log://laptop/session/query/recent"
+      }
+    ],
+    "task": {
+      "id": "lenovo_autonomous_daily_work",
+      "source": "ai-yaml-flow",
+      "title": "Lenovo autonomous daily work simulation"
+    }
+  },
+  "ok": true,
+  "results": {
+    "break_marker": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782163005.5658407, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-65",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782163005.5658407, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "close_day": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782163005.6767993, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-73",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782163005.6767993, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "date_close": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "2026-06-22T23:16:45.653428+02:00\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-71",
+        "service": "laptop",
+        "uri": "shell://laptop/command/date"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "2026-06-22T23:16:45.653428+02:00\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "date_morning": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "2026-06-22T23:16:45.348874+02:00\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-51",
+        "service": "laptop",
+        "uri": "shell://laptop/command/date"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import datetime; print(datetime.datetime.now().astimezone().isoformat())"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "2026-06-22T23:16:45.348874+02:00\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "focus_block": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782163005.492702, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-61",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782163005.492702, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "health": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,platform,socket; print(json.dumps({'hostname':socket.gethostname(),'platform':platform.platform(),'python':platform.python_version()}))"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"hostname\": \"lenovo\", \"platform\": \"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\", \"python\": \"3.14.5\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-49",
+        "service": "laptop",
+        "uri": "env://laptop/runtime/query/health"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,platform,socket; print(json.dumps({'hostname':socket.gethostname(),'platform':platform.platform(),'python':platform.python_version()}))"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"hostname\": \"lenovo\", \"platform\": \"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\", \"python\": \"3.14.5\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "env://laptop/runtime/query/health",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "logs_after": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+            "20"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162163.4259539, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162165.475923, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162165.5005577, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162165.5245414, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782162840.1119637, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162912.728823, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162914.3183727, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162914.342189, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162914.3658981, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782163005.3049881, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close.\\\"}\", \"{\\\"at\\\": 1782163005.492702, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input.\\\"}\", \"{\\\"at\\\": 1782163005.5658407, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action.\\\"}\", \"{\\\"at\\\": 1782163005.590173, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday.\\\"}\", \"{\\\"at\\\": 1782163005.6767993, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required.\\\"}\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-75",
+        "service": "laptop",
+        "uri": "log://laptop/session/query/recent"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+          "20"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161371.452104, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161378.4029639, \\\"text\\\": \\\"${find_python_path.output}\\\"}\", \"{\\\"at\\\": 1782161573.9180968, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162163.4259539, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162165.475923, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162165.5005577, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162165.5245414, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782162840.1119637, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162912.728823, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162914.3183727, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162914.342189, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162914.3658981, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782163005.3049881, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close.\\\"}\", \"{\\\"at\\\": 1782163005.492702, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM focus: review open workload, keep browser/editor/system processes observable, continue without human input.\\\"}\", \"{\\\"at\\\": 1782163005.5658407, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM break: pause work, preserve context, no destructive action.\\\"}\", \"{\\\"at\\\": 1782163005.590173, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday.\\\"}\", \"{\\\"at\\\": 1782163005.6767993, \\\"text\\\": \\\"AUTONOMOUS_DAILY_WORK_SIM completed: environment checked, tools checked, process snapshots captured, log readback required.\\\"}\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "logs_before": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+            "12"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162163.4259539, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162165.475923, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162165.5005577, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162165.5245414, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782162840.1119637, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162912.728823, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162914.3183727, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162914.342189, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162914.3658981, \\\"text\\\": \\\"Note 3\\\"}\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-45",
+        "service": "laptop",
+        "uri": "log://laptop/session/query/recent"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; limit=int(sys.argv[1]); print(json.dumps({'logs': p.read_text(encoding='utf-8').splitlines()[-limit:] if p.exists() else []}))",
+          "12"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"logs\": [\"{\\\"at\\\": 1782161629.0697007, \\\"text\\\": \\\"automated by closed loop\\\"}\", \"{\\\"at\\\": 1782161631.6153762, \\\"text\\\": \\\"/usr/bin/python3\\\\n\\\"}\", \"{\\\"at\\\": 1782161991.1496305, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162163.4259539, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162165.475923, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162165.5005577, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162165.5245414, \\\"text\\\": \\\"Note 3\\\"}\", \"{\\\"at\\\": 1782162840.1119637, \\\"text\\\": \\\"AI closed-loop NL->YAML flow executed on lenovo/laptop: health,date,uname,processes,logs.\\\"}\", \"{\\\"at\\\": 1782162912.728823, \\\"text\\\": \\\"Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\\\\n\\\"}\", \"{\\\"at\\\": 1782162914.3183727, \\\"text\\\": \\\"Note 1\\\"}\", \"{\\\"at\\\": 1782162914.342189, \\\"text\\\": \\\"Note 2\\\"}\", \"{\\\"at\\\": 1782162914.3658981, \\\"text\\\": \\\"Note 3\\\"}\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "processes_afternoon": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+            "12"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"processes\": [\" 151612 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-69",
+        "service": "laptop",
+        "uri": "proc://laptop/process/query/list"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+          "12"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"processes\": [\" 151612 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "processes_focus": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+            "12"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"processes\": [\" 151602 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-63",
+        "service": "laptop",
+        "uri": "proc://laptop/process/query/list"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+          "12"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"processes\": [\" 151602 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "processes_morning": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+            "12"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"processes\": [\" 151595 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-59",
+        "service": "laptop",
+        "uri": "proc://laptop/process/query/list"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,subprocess,sys; limit=int(sys.argv[1]); cmd=['ps','-eo','pid=,comm=,pcpu=,pmem=','--sort=-pcpu']; out=subprocess.check_output(cmd, text=True).splitlines()[:limit]; print(json.dumps({'processes':out}))",
+          "12"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"processes\": [\" 151595 python3         50.0  0.0\", \" 150484 chrome           5.8  5.6\", \" 114219 chrome           2.0  2.0\", \"  16345 firefox-bin      0.8  6.0\", \"  40949 Discord          0.4  2.6\", \"   1827 gnome-shell      0.3  2.0\", \"  26383 chrome           0.3  1.0\", \"  27260 chrome           0.2  1.3\", \"  27622 chrome           0.2  1.4\", \"  27140 chrome           0.2  1.3\", \"  27450 chrome           0.2  1.3\", \"  16629 WebExtensions    0.2  2.7\"]}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "resume_marker": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782163005.590173, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-67",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782163005.590173, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM resume: re-check active processes and continue the simulated workday.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "start_day": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+            "AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close."
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "{\"at\": 1782163005.3049881, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close.\"}\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-47",
+        "service": "laptop",
+        "uri": "log://laptop/session/command/write"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import json,pathlib,sys,time; p=pathlib.Path.home()/'.urirun-node'/'notes.jsonl'; p.parent.mkdir(parents=True, exist_ok=True); rec={'at':time.time(),'text':sys.argv[1]}; p.open('a', encoding='utf-8').write(json.dumps(rec)+'\\n'); print(json.dumps(rec))",
+          "AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close."
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "{\"at\": 1782163005.3049881, \"text\": \"AUTONOMOUS_DAILY_WORK_SIM start: morning setup, environment check, tools check, focus block, break, resume, close.\"}\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "uname": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import platform; print(platform.platform())"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-53",
+        "service": "laptop",
+        "uri": "shell://laptop/command/uname"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import platform; print(platform.platform())"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "Linux-7.0.12-201.fc44.x86_64-x86_64-with-glibc2.43\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/uname",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "which_git": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import shutil,sys; print(shutil.which(sys.argv[1]) or '')",
+            "git"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "/usr/bin/git\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-57",
+        "service": "laptop",
+        "uri": "shell://laptop/command/which"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import shutil,sys; print(shutil.which(sys.argv[1]) or '')",
+          "git"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "/usr/bin/git\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/which",
+      "url": "http://192.168.188.201:8765/run"
+    },
+    "which_python3": {
+      "mode": "execute",
+      "ok": true,
+      "response": {
+        "adapter": "argv-template",
+        "decision": {
+          "allowed": true,
+          "reason": "route policy allows execution"
+        },
+        "kind": "command",
+        "mode": "execute",
+        "ok": true,
+        "result": {
+          "cancelled": false,
+          "command": [
+            "/usr/bin/python3",
+            "-c",
+            "import shutil,sys; print(shutil.which(sys.argv[1]) or '')",
+            "python3"
+          ],
+          "exitCode": 0,
+          "stderr": "",
+          "stdout": "/usr/bin/python3\n",
+          "streamed": true,
+          "type": "command"
+        },
+        "runId": "run-55",
+        "service": "laptop",
+        "uri": "shell://laptop/command/which"
+      },
+      "result": {
+        "cancelled": false,
+        "command": [
+          "/usr/bin/python3",
+          "-c",
+          "import shutil,sys; print(shutil.which(sys.argv[1]) or '')",
+          "python3"
+        ],
+        "exitCode": 0,
+        "stderr": "",
+        "stdout": "/usr/bin/python3\n",
+        "streamed": true,
+        "type": "command"
+      },
+      "status": 200,
+      "target": "laptop",
+      "uri": "shell://laptop/command/which",
+      "url": "http://192.168.188.201:8765/run"
+    }
+  },
+  "source": {
+    "generated_at": "2026-06-22T23:20:00+02:00",
+    "generator": "codex-ai",
+    "host_node_name": "lenovo",
+    "nl": "autonomous daily work simulation on lenovo",
+    "uri_target": "laptop"
+  },
+  "timeline": [
+    {
+      "id": "logs_before",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent"
+    },
+    {
+      "id": "start_day",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "health",
+      "ok": true,
+      "target": "laptop",
+      "uri": "env://laptop/runtime/query/health"
+    },
+    {
+      "id": "date_morning",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date"
+    },
+    {
+      "id": "uname",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/uname"
+    },
+    {
+      "id": "which_python3",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/which"
+    },
+    {
+      "id": "which_git",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/which"
+    },
+    {
+      "id": "processes_morning",
+      "ok": true,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list"
+    },
+    {
+      "id": "focus_block",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "processes_focus",
+      "ok": true,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list"
+    },
+    {
+      "id": "break_marker",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "resume_marker",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "processes_afternoon",
+      "ok": true,
+      "target": "laptop",
+      "uri": "proc://laptop/process/query/list"
+    },
+    {
+      "id": "date_close",
+      "ok": true,
+      "target": "laptop",
+      "uri": "shell://laptop/command/date"
+    },
+    {
+      "id": "close_day",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/command/write"
+    },
+    {
+      "id": "logs_after",
+      "ok": true,
+      "target": "laptop",
+      "uri": "log://laptop/session/query/recent"
+    }
+  ],
+  "verification": {
+    "checks": [
+      {
+        "check": "require_ok",
+        "ok": true
+      },
+      {
+        "check": "expected_log_fragment",
+        "ok": true,
+        "step": "logs_after"
+      }
+    ],
+    "ok": true
+  }
+}

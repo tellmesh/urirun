@@ -183,6 +183,34 @@ def result_data(env: dict):
     return result  # fetch / dry-run / other
 
 
+_DEGRADED_MODES = {"mock", "simulated", "degraded", "stub", "placeholder", "fake", "sample"}
+
+
+def result_degraded(env: dict):
+    """Return a short reason string if a connector result signals it ran in a
+    degraded / simulated mode — a mock driver, a stub, a placeholder — instead of
+    doing the real thing; else ``None``.
+
+    The convention a connector sets so tools (and ``host probe``) don't mistake a
+    plausible placeholder for real work: any of ``degraded: true``,
+    ``simulated: true``, or a ``mode``/``driver`` field whose value is a known
+    placeholder (``mock``/``stub``/``placeholder``/...). E.g. a browser connector
+    that couldn't reach a real engine returning ``{"ok": true, "driver": "mock"}``
+    is reported degraded even though ``ok`` is true."""
+    data = result_data(env) if isinstance(env, dict) and "result" in env else env
+    if not isinstance(data, dict):
+        return None
+    if data.get("degraded"):
+        return "degraded"
+    if data.get("simulated"):
+        return "simulated"
+    for field in ("mode", "driver"):
+        value = data.get(field)
+        if isinstance(value, str) and value.lower() in _DEGRADED_MODES:
+            return f"{field}={value}"
+    return None
+
+
 def run_steps(steps, registry: dict, *, execute: bool = True, allow=None, stop_on_error: bool = True):
     """Run a list of ``{uri, payload}`` steps against a registry and return one
     ``{uri, ok, data}`` (plus ``id`` when given) per step — the loop every agent /

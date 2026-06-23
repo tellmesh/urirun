@@ -3,13 +3,13 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$3.34-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-40.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.63-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$5.65-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-52.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $3.3427 (129 commits)
-- 👤 **Human dev:** ~$4040 (40.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $5.6459 (177 commits)
+- 👤 **Human dev:** ~$5201 (52.0h @ $100/h, 30min dedup)
 
-Generated on 2026-06-22 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
+Generated on 2026-06-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
 ---
 
@@ -219,6 +219,13 @@ pip install "urirun[host] @ git+https://github.com/if-uri/urirun.git@v0.3.14#sub
 URI routes, MCP tools and A2A cards, and can turn a natural-language request
 into a URI flow.
 
+The host-node protocol and operator rules are documented in
+[docs/HOST_NODE_COMMUNICATION.md](docs/HOST_NODE_COMMUNICATION.md). In short:
+the node HTTP surface is
+`/health`, `/routes`, `/mcp/tools`, `/a2a/card`, `/run`, `/events`, `/deploy`
+and `/enroll`; URI routes are the source of truth, while MCP/A2A are projections.
+Use dry-run first, then execute explicitly.
+
 ```bash
 # on the host machine
 urirun host init --name operator
@@ -235,10 +242,21 @@ urirun host ask "pokaż procesy i logi na wszystkich komputerach"
 # execute after review
 URIRUN_LLM_MODEL=openrouter/qwen/qwen3-coder-next \
 urirun host ask "otwórz https://example.com na wszystkich komputerach" --execute
+
+# save the generated URI flow, then run it later
+urirun host ask "sprawdz procesy na lenovo" \
+  --config ~/.urirun/mesh.json \
+  --no-llm \
+  --flow-out .urirun/flows/lenovo-process-check.yaml
+
+urirun host flow run .urirun/flows/lenovo-process-check.yaml \
+  --config ~/.urirun/mesh.json \
+  --execute
 ```
 
 `urirun node` is the machine side. A node serves a local registry over HTTP:
-`/routes`, `/mcp/tools`, `/a2a/card`, `/run` and `/health`.
+`/routes`, `/mcp/tools`, `/a2a/card`, `/run`, `/events`, `/deploy`, `/enroll`
+and `/health`.
 
 ```bash
 # on each node machine
@@ -250,6 +268,31 @@ urirun node serve --execute
 Execution remains explicit: `host ask` is dry-run unless `--execute` is passed,
 and `node serve` executes only when started with `--execute` or configured with
 `execute: true`.
+
+For a remotely managed node, enroll the host key once, deploy additive route
+surfaces with `--merge`, and verify the result before dispatching work:
+
+```bash
+uri-copy-id http://laptop.local:8765 -i ~/.ssh/id_ed25519 --enroll-token TOKEN
+
+urirun host deploy laptop \
+  --bindings bindings.json \
+  --code handler.py \
+  --allow 'app://**' --allow 'screen://**' --allow 'kvm://**' --allow 'browser://**' \
+  --merge \
+  --identity ~/.ssh/id_ed25519
+
+urirun host probe laptop
+```
+
+When the node is not in the saved mesh config, use transient routing instead of
+editing config during experiments:
+
+```bash
+urirun host routes --node-url lenovo=http://192.168.188.201:8766 --json
+urirun host run --node-url lenovo=http://192.168.188.201:8766 \
+  lenovo screen://laptop/portal/query/capture --payload '{}'
+```
 
 ## Planfile-backed host tasks
 

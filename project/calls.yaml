@@ -1,37 +1,51 @@
 project: /home/tom/github/if-uri/urirun
 generated_from: code2llm call graph analysis
 stats:
-  total_nodes: 382
+  total_nodes: 385
   total_edges: 500
   modules_count: 31
 nodes:
-  adapters.python.urirun.host.domain_monitor._project:
-    name: _project
-    module: adapters.python.urirun.host.domain_monitor
-    line: 336
-    cyclomatic_complexity: 3
+  adapters.python.urirun.host.host_db.connection:
+    name: connection
+    module: adapters.python.urirun.host.host_db
+    line: 115
+    cyclomatic_complexity: 1
     calls_out: 3
-    calls_in: 2
-  adapters.python.urirun.host.task_planner.normalize_text:
-    name: normalize_text
-    module: adapters.python.urirun.host.task_planner
-    line: 44
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 5
-  adapters.python.urirun.testing.assert_registry_portable:
-    name: assert_registry_portable
-    module: adapters.python.urirun.testing
-    line: 101
-    cyclomatic_complexity: 2
+    calls_in: 15
+  adapters.python.urirun.compile_registry:
+    name: compile_registry
+    module: adapters.python.urirun
+    line: 324
+    cyclomatic_complexity: 1
     calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.run_shell_template:
-    name: run_shell_template
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime._policy_denial:
+    name: _policy_denial
+    module: adapters.python.urirun.runtime._runtime
+    line: 116
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_install:
+    name: _cmd_install
     module: adapters.python.urirun.runtime.v2
-    line: 544
-    cyclomatic_complexity: 4
-    calls_out: 5
+    line: 2217
+    cyclomatic_complexity: 2
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.run_host_data:
+    name: run_host_data
+    module: adapters.python.urirun.runtime.v2
+    line: 641
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.shell:
+    name: shell
+    module: adapters.python.urirun
+    line: 65
+    cyclomatic_complexity: 1
+    calls_out: 1
     calls_in: 0
   adapters.python.urirun.runtime.errors._emit:
     name: _emit
@@ -40,76 +54,202 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 2
     calls_in: 7
-  adapters.python.urirun.runtime.v2._schema_for:
-    name: _schema_for
-    module: adapters.python.urirun.runtime.v2
-    line: 442
-    cyclomatic_complexity: 3
-    calls_out: 3
+  adapters.python.urirun.runtime.v1.render_value:
+    name: render_value
+    module: adapters.python.urirun.runtime.v1
+    line: 67
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 6
+  adapters.python.urirun.host.task_planner._derive_plan_labels:
+    name: _derive_plan_labels
+    module: adapters.python.urirun.host.task_planner
+    line: 156
+    cyclomatic_complexity: 7
+    calls_out: 6
     calls_in: 1
-  adapters.python.urirun.host.domain_monitor._persist_check_effects:
-    name: _persist_check_effects
-    module: adapters.python.urirun.host.domain_monitor
-    line: 245
-    cyclomatic_complexity: 6
+  adapters.python.urirun.runtime._runtime.run_spawn:
+    name: run_spawn
+    module: adapters.python.urirun.runtime._runtime
+    line: 151
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._pip_command:
+    name: _pip_command
+    module: adapters.python.urirun.runtime.v2
+    line: 2165
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._cmd_outdated:
+    name: _cmd_outdated
+    module: adapters.python.urirun.runtime.v2
+    line: 2330
+    cyclomatic_complexity: 8
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urirun.host.planfile_adapter.fail_or_retry:
+    name: fail_or_retry
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 218
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urirun.host.task_planner.quiet_completion:
+    name: quiet_completion
+    module: adapters.python.urirun.host.task_planner
+    line: 232
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.result_data:
+    name: result_data
+    module: adapters.python.urirun
+    line: 164
+    cyclomatic_complexity: 8
     calls_out: 7
+    calls_in: 2
+  adapters.python.urirun.runtime.v1.load_registry_arg:
+    name: load_registry_arg
+    module: adapters.python.urirun.runtime.v1
+    line: 386
+    cyclomatic_complexity: 4
+    calls_out: 9
     calls_in: 1
-  adapters.python.urirun.runtime.v2._binding_config:
-    name: _binding_config
+  adapters.python.urirun.runtime.v2.entry_point_registry:
+    name: entry_point_registry
     module: adapters.python.urirun.runtime.v2
-    line: 881
-    cyclomatic_complexity: 6
-    calls_out: 3
+    line: 430
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._scan_package_json:
+    name: _scan_package_json
+    module: adapters.python.urirun.runtime.v2
+    line: 1189
+    cyclomatic_complexity: 4
+    calls_out: 9
     calls_in: 1
-  adapters.python.urirun.runtime.v2._cmd_connectors:
-    name: _cmd_connectors
-    module: adapters.python.urirun.runtime.v2
-    line: 2323
+  adapters.python.urirun.runtime.v1._proc_env:
+    name: _proc_env
+    module: adapters.python.urirun.runtime.v1
+    line: 88
     cyclomatic_complexity: 3
     calls_out: 6
-    calls_in: 0
-  adapters.python.urirun.host.domain_monitor.dns_mismatches:
-    name: dns_mismatches
-    module: adapters.python.urirun.host.domain_monitor
-    line: 106
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._run_resolve_route:
+    name: _run_resolve_route
+    module: adapters.python.urirun.runtime.v2
+    line: 763
     cyclomatic_complexity: 4
     calls_out: 5
     calls_in: 1
-  adapters.python.urirun.host.host_db.create_llm_session:
-    name: create_llm_session
-    module: adapters.python.urirun.host.host_db
-    line: 371
+  adapters.go.urirun.Bindings:
+    name: Bindings
+    module: adapters.go.urirun
+    line: 72
     cyclomatic_complexity: 1
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime.errors._aggregate:
-    name: _aggregate
-    module: adapters.python.urirun.runtime.errors
-    line: 348
-    cyclomatic_complexity: 4
-    calls_out: 13
-    calls_in: 2
-  adapters.python.urirun.connectors.connector_lint.lint_connector:
-    name: lint_connector
-    module: adapters.python.urirun.connectors.connector_lint
-    line: 214
-    cyclomatic_complexity: 10
-    calls_out: 20
-    calls_in: 2
-  adapters.python.urirun.runtime.errors.problem:
-    name: problem
-    module: adapters.python.urirun.runtime.errors
-    line: 243
-    cyclomatic_complexity: 10
-    calls_out: 22
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._cmd_doctor:
-    name: _cmd_doctor
-    module: adapters.python.urirun.runtime.v2
-    line: 2047
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.planfile_adapter.load_planfile:
+    name: load_planfile
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 63
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 12
+  adapters.python.urirun.host.host_db.search_records:
+    name: search_records
+    module: adapters.python.urirun.host.host_db
+    line: 256
+    cyclomatic_complexity: 6
+    calls_out: 21
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen._routes:
+    name: _routes
+    module: adapters.python.urirun.runtime.codegen
+    line: 43
+    cyclomatic_complexity: 7
+    calls_out: 9
+    calls_in: 5
+  adapters.python.urirun.host.task_planner.heuristic_plan_chat_request:
+    name: heuristic_plan_chat_request
+    module: adapters.python.urirun.host.task_planner
+    line: 186
     cyclomatic_complexity: 12
-    calls_out: 18
+    calls_out: 16
+    calls_in: 2
+  adapters.python.urirun.host.planfile_adapter.normalize_priority:
+    name: normalize_priority
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 49
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.host.planfile_adapter.ready_ticket:
+    name: ready_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 266
+    cyclomatic_complexity: 2
+    calls_out: 3
     calls_in: 0
+  adapters.python.urirun.runtime.v2._entry_point_script_issues:
+    name: _entry_point_script_issues
+    module: adapters.python.urirun.runtime.v2
+    line: 312
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._run_validate:
+    name: _run_validate
+    module: adapters.python.urirun.runtime.v2
+    line: 776
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.errors.fix_hints:
+    name: fix_hints
+    module: adapters.python.urirun.runtime.errors
+    line: 300
+    cyclomatic_complexity: 5
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard.summary:
+    name: summary
+    module: adapters.python.urirun.host.host_dashboard
+    line: 472
+    cyclomatic_complexity: 6
+    calls_out: 25
+    calls_in: 1
+  adapters.python.urirun.host.task_planner.is_ambiguous:
+    name: is_ambiguous
+    module: adapters.python.urirun.host.task_planner
+    line: 95
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.main:
+    name: main
+    module: adapters.python.urirun.runtime.v2
+    line: 2571
+    cyclomatic_complexity: 4
+    calls_out: 6
+    calls_in: 0
+  adapters.python.urirun._connector_cli_routes:
+    name: _connector_cli_routes
+    module: adapters.python.urirun
+    line: 665
+    cyclomatic_complexity: 12
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.runtime.v1.resolve_params:
+    name: resolve_params
+    module: adapters.python.urirun.runtime.v1
+    line: 44
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 1
   adapters.python.urirun.runtime.v2._host_integrations:
     name: _host_integrations
     module: adapters.python.urirun.runtime.v2
@@ -117,146 +257,272 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 0
     calls_in: 6
-  scripts.repin_connectors.main:
-    name: main
-    module: scripts.repin_connectors
-    line: 97
-    cyclomatic_complexity: 18
-    calls_out: 28
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._resolve_list_registry:
-    name: _resolve_list_registry
-    module: adapters.python.urirun.runtime.v2
-    line: 2401
-    cyclomatic_complexity: 13
-    calls_out: 17
+  adapters.python.urirun.host.host_integrations._write_planfile_action:
+    name: _write_planfile_action
+    module: adapters.python.urirun.host.host_integrations
+    line: 160
+    cyclomatic_complexity: 8
+    calls_out: 39
     calls_in: 1
-  adapters.python.urirun.runtime.introspect.registry_introspect_bindings:
-    name: registry_introspect_bindings
-    module: adapters.python.urirun.runtime.introspect
-    line: 25
+  adapters.python.urirun.host.planfile_adapter.list_tickets:
+    name: list_tickets
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 159
+    cyclomatic_complexity: 9
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.runtime.v1._run_process_streaming:
+    name: _run_process_streaming
+    module: adapters.python.urirun.runtime.v1
+    line: 122
+    cyclomatic_complexity: 7
+    calls_out: 20
+    calls_in: 1
+  adapters.python.urirun.host.host_db.add_llm_message:
+    name: add_llm_message
+    module: adapters.python.urirun.host.host_db
+    line: 382
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 0
+  adapters.python.urirun.connector:
+    name: connector
+    module: adapters.python.urirun
+    line: 597
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._collision_index:
+    name: _collision_index
+    module: adapters.python.urirun.runtime.v2
+    line: 361
+    cyclomatic_complexity: 7
+    calls_out: 12
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen.to_client_python:
+    name: to_client_python
+    module: adapters.python.urirun.runtime.codegen
+    line: 330
+    cyclomatic_complexity: 6
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._rel:
+    name: _rel
+    module: adapters.python.urirun.runtime.v2
+    line: 1173
+    cyclomatic_complexity: 2
+    calls_out: 5
+    calls_in: 6
+  adapters.python.urirun.host.domain_monitor.capture_screenshot_artifact:
+    name: capture_screenshot_artifact
+    module: adapters.python.urirun.host.domain_monitor
+    line: 116
+    cyclomatic_complexity: 3
+    calls_out: 8
+    calls_in: 3
+  adapters.python.urirun.host.domain_monitor.create_dns_repair_ticket:
+    name: create_dns_repair_ticket
+    module: adapters.python.urirun.host.domain_monitor
+    line: 137
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._pip_install_args:
+    name: _pip_install_args
+    module: adapters.python.urirun.runtime.v2
+    line: 2205
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.runtime._runtime._looks_destructive:
+    name: _looks_destructive
+    module: adapters.python.urirun.runtime._runtime
+    line: 85
+    cyclomatic_complexity: 5
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._print_doctor_report:
+    name: _print_doctor_report
+    module: adapters.python.urirun.runtime.v2
+    line: 2372
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.host.task_planner.create_tickets_from_plan:
+    name: create_tickets_from_plan
+    module: adapters.python.urirun.host.task_planner
+    line: 357
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 0
+  adapters.php.Urirun.Urirun.Connector.bindingsJson:
+    name: bindingsJson
+    module: adapters.php.Urirun
+    line: 69
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.connector_health:
+    name: connector_health
+    module: adapters.python.urirun.runtime.v2
+    line: 334
+    cyclomatic_complexity: 5
+    calls_out: 13
+    calls_in: 4
+  adapters.python.urirun.host.host_integrations._planfile_update:
+    name: _planfile_update
+    module: adapters.python.urirun.host.host_integrations
+    line: 146
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  adapters.c.urirun.memcpy:
+    name: memcpy
+    module: adapters.c.urirun
+    line: 7
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._first:
+    name: _first
+    module: adapters.python.urirun.host.host_dashboard
+    line: 434
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 9
+  adapters.python.urirun.runtime.v2.input_schema_from_params:
+    name: input_schema_from_params
+    module: adapters.python.urirun.runtime.v2
+    line: 1039
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen._uri_parts:
+    name: _uri_parts
+    module: adapters.python.urirun.runtime.codegen
+    line: 68
+    cyclomatic_complexity: 5
+    calls_out: 3
+    calls_in: 5
+  scripts.lint_connectors.lint_fleet:
+    name: lint_fleet
+    module: scripts.lint_connectors
+    line: 46
+    cyclomatic_complexity: 4
+    calls_out: 12
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_scan:
+    name: _cmd_scan
+    module: adapters.python.urirun.runtime.v2
+    line: 2029
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.decorated_bindings:
+    name: decorated_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 212
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.runtime.errors.address:
+    name: address
+    module: adapters.python.urirun.runtime.errors
+    line: 203
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 5
+  adapters.python.urirun.runtime.v2._scan_pyproject:
+    name: _scan_pyproject
+    module: adapters.python.urirun.runtime.v2
+    line: 1217
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urirun.runtime.v1._params_spec:
+    name: _params_spec
+    module: adapters.python.urirun.runtime.v1
+    line: 39
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.errors.recent:
+    name: recent
+    module: adapters.python.urirun.runtime.errors
+    line: 367
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.host.planfile_adapter.next_ticket:
+    name: next_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 182
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urirun.runtime._runtime.default_policy:
+    name: default_policy
+    module: adapters.python.urirun.runtime._runtime
+    line: 54
     cyclomatic_complexity: 1
     calls_out: 0
     calls_in: 1
-  adapters.python.urirun.runtime.errors.store_path:
-    name: store_path
-    module: adapters.python.urirun.runtime.errors
-    line: 123
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._apply_defaults:
-    name: _apply_defaults
-    module: adapters.python.urirun.runtime.v2
-    line: 447
-    cyclomatic_complexity: 14
-    calls_out: 12
-    calls_in: 3
-  adapters.python.urirun.runtime.daemon._main:
-    name: _main
-    module: adapters.python.urirun.runtime.daemon
-    line: 105
-    cyclomatic_complexity: 9
-    calls_out: 7
-    calls_in: 0
-  adapters.python.urirun.host.host_db.run_uri_route:
-    name: run_uri_route
-    module: adapters.python.urirun.host.host_db
-    line: 478
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._run_execute:
-    name: _run_execute
-    module: adapters.python.urirun.runtime.v2
-    line: 799
-    cyclomatic_complexity: 6
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.build_invocation:
-    name: build_invocation
-    module: adapters.python.urirun
-    line: 27
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  adapters.js.buildInvocation:
-    name: buildInvocation
-    module: adapters.js
-    line: 19
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._record_error:
-    name: _record_error
-    module: adapters.python.urirun.runtime.v2
-    line: 729
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen._pascal:
-    name: _pascal
-    module: adapters.python.urirun.runtime.codegen
-    line: 35
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor._screenshot_dir:
-    name: _screenshot_dir
-    module: adapters.python.urirun.host.domain_monitor
-    line: 340
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 3
-  adapters.python.urirun._connector_run_command:
-    name: _connector_run_command
-    module: adapters.python.urirun
-    line: 663
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime._fetch_render:
-    name: _fetch_render
+  adapters.python.urirun.runtime._runtime._truncate:
+    name: _truncate
     module: adapters.python.urirun.runtime._runtime
-    line: 31
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 3
-  adapters.python.urirun.runtime.errors._cmd_ticket:
-    name: _cmd_ticket
-    module: adapters.python.urirun.runtime.errors
-    line: 524
+    line: 143
     cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.errors.help_url:
-    name: help_url
-    module: adapters.python.urirun.runtime.errors
-    line: 207
-    cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 6
-  adapters.js.dispatch:
-    name: dispatch
-    module: adapters.js
-    line: 25
-    cyclomatic_complexity: 3
+  adapters.python.urirun.runtime.v2.planfile_task_bindings:
+    name: planfile_task_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 627
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.host.domain_monitor._route_browser:
+    name: _route_browser
+    module: adapters.python.urirun.host.domain_monitor
+    line: 382
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._iter_files:
+    name: _iter_files
+    module: adapters.python.urirun.runtime.v2
+    line: 1165
+    cyclomatic_complexity: 5
     calls_out: 4
     calls_in: 1
-  adapters.python.urirun.host.host_dashboard._safe_tickets:
-    name: _safe_tickets
-    module: adapters.python.urirun.host.host_dashboard
-    line: 457
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.uri_shell:
-    name: uri_shell
-    module: adapters.python.urirun.runtime.v2
+  adapters.python.urirun.host.planfile_adapter.create_ticket:
+    name: create_ticket
+    module: adapters.python.urirun.host.planfile_adapter
     line: 149
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urirun.host.domain_monitor._route_monitor:
+    name: _route_monitor
+    module: adapters.python.urirun.host.domain_monitor
+    line: 362
+    cyclomatic_complexity: 3
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urirun.host.host_dashboard.command:
+    name: command
+    module: adapters.python.urirun.host.host_dashboard
+    line: 590
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.host.host_integrations.run_planfile_task:
+    name: run_planfile_task
+    module: adapters.python.urirun.host.host_integrations
+    line: 191
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 0
   adapters.python.urirun.host.host_dashboard._html_response:
     name: _html_response
     module: adapters.python.urirun.host.host_dashboard
@@ -271,222 +537,117 @@ nodes:
     cyclomatic_complexity: 7
     calls_out: 8
     calls_in: 3
-  adapters.python.urirun.host.host_db.init_db:
-    name: init_db
-    module: adapters.python.urirun.host.host_db
-    line: 142
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 14
-  adapters.python.urirun.runtime.v1.render_command:
-    name: render_command
+  adapters.python.urirun.runtime.v1._run_process:
+    name: _run_process
     module: adapters.python.urirun.runtime.v1
-    line: 76
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  adapters.python.urirun.runtime.v2._empty_input_schema:
-    name: _empty_input_schema
-    module: adapters.python.urirun.runtime.v2
-    line: 1169
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 4
-  adapters.python.urirun.runtime.v2._pipspec_version:
-    name: _pipspec_version
-    module: adapters.python.urirun.runtime.v2
-    line: 2210
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.command:
-    name: command
-    module: adapters.python.urirun
-    line: 47
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.runtime.v1.run:
-    name: run
-    module: adapters.python.urirun.runtime.v1
-    line: 226
-    cyclomatic_complexity: 14
-    calls_out: 23
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen.to_proto:
-    name: to_proto
-    module: adapters.python.urirun.runtime.codegen
-    line: 300
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.load_registry_arg:
-    name: load_registry_arg
-    module: adapters.python.urirun.runtime.v2
-    line: 1082
-    cyclomatic_complexity: 7
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen._field_type:
-    name: _field_type
-    module: adapters.python.urirun.runtime.codegen
-    line: 138
-    cyclomatic_complexity: 14
-    calls_out: 14
-    calls_in: 2
-  scripts.repin_connectors.find_root:
-    name: find_root
-    module: scripts.repin_connectors
-    line: 53
-    cyclomatic_complexity: 5
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.runtime.errors.main:
-    name: main
-    module: adapters.python.urirun.runtime.errors
-    line: 551
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.host.host_dashboard._dashboard_api_response:
-    name: _dashboard_api_response
-    module: adapters.python.urirun.host.host_dashboard
-    line: 521
-    cyclomatic_complexity: 13
-    calls_out: 25
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter._model_dict:
-    name: _model_dict
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 59
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.testing.assert_smoke:
-    name: assert_smoke
-    module: adapters.python.urirun.testing
-    line: 162
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.runtime.codegen.dispatch_field_collisions:
-    name: dispatch_field_collisions
-    module: adapters.python.urirun.runtime.codegen
-    line: 208
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._coerce_default:
-    name: _coerce_default
-    module: adapters.python.urirun.runtime.v2
-    line: 978
-    cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.connector_bindings:
-    name: connector_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 224
-    cyclomatic_complexity: 11
-    calls_out: 11
-    calls_in: 0
-  adapters.python.urirun.runtime.codegen._handler_signature:
-    name: _handler_signature
-    module: adapters.python.urirun.runtime.codegen
-    line: 345
-    cyclomatic_complexity: 7
+    line: 97
+    cyclomatic_complexity: 3
     calls_out: 10
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.domain_monitor_bindings:
-    name: domain_monitor_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 645
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  examples.matrix.verify.main:
-    name: main
-    module: examples.matrix.verify
-    line: 30
-    cyclomatic_complexity: 9
-    calls_out: 20
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.run_dsl:
-    name: run_dsl
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 271
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._cmd_run_or_list:
-    name: _cmd_run_or_list
-    module: adapters.python.urirun.runtime.v2
-    line: 2433
-    cyclomatic_complexity: 5
-    calls_out: 12
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.run:
-    name: run
-    module: adapters.python.urirun.runtime.v2
-    line: 821
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.exec.main:
-    name: main
-    module: adapters.python.urirun.exec
-    line: 31
-    cyclomatic_complexity: 10
-    calls_out: 15
-    calls_in: 0
-  adapters.python.urirun.host.host_db.row_dict:
-    name: row_dict
-    module: adapters.python.urirun.host.host_db
-    line: 124
-    cyclomatic_complexity: 7
-    calls_out: 5
-    calls_in: 8
-  adapters.python.urirun.runtime.errors._cmd_search:
-    name: _cmd_search
-    module: adapters.python.urirun.runtime.errors
-    line: 517
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.codegen._snake:
-    name: _snake
-    module: adapters.python.urirun.runtime.codegen
-    line: 39
+    calls_in: 4
+  adapters.python.urirun.runtime.v1._has_placeholders:
+    name: _has_placeholders
+    module: adapters.python.urirun.runtime.v1
+    line: 81
     cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 1
-  adapters.python.urirun.runtime._runtime.run_fetch:
-    name: run_fetch
-    module: adapters.python.urirun.runtime._runtime
-    line: 259
-    cyclomatic_complexity: 5
-    calls_out: 12
+  adapters.python.urirun.host.planfile_adapter.start_ticket:
+    name: start_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 197
+    cyclomatic_complexity: 2
+    calls_out: 3
     calls_in: 0
   adapters.python.urirun.runtime.v2._cmd_adopt_pack:
     name: _cmd_adopt_pack
     module: adapters.python.urirun.runtime.v2
-    line: 1978
+    line: 2059
     cyclomatic_complexity: 2
     calls_out: 4
     calls_in: 0
-  adapters.python.urirun.runtime._runtime._hydrate_local_function:
-    name: _hydrate_local_function
-    module: adapters.python.urirun.runtime._runtime
-    line: 271
-    cyclomatic_complexity: 6
-    calls_out: 9
+  adapters.java.Urirun.Urirun.Connector:
+    name: Connector
+    module: adapters.java.Urirun
+    line: 18
+    cyclomatic_complexity: 1
+    calls_out: 0
     calls_in: 1
-  adapters.python.urirun.runtime.v2._bindings_as_map:
-    name: _bindings_as_map
-    module: adapters.python.urirun.runtime.v2
-    line: 957
+  adapters.js.match:
+    name: match
+    module: adapters.js
+    line: 5
     cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_integrations._planfile_action:
+    name: _planfile_action
+    module: adapters.python.urirun.host.host_integrations
+    line: 99
+    cyclomatic_complexity: 7
+    calls_out: 1
+    calls_in: 1
+  adapters.js.buildInvocation:
+    name: buildInvocation
+    module: adapters.js
+    line: 19
+    cyclomatic_complexity: 1
     calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.run_domain_monitor:
+    name: run_domain_monitor
+    module: adapters.python.urirun.runtime.v2
+    line: 660
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.codegen._field_type:
+    name: _field_type
+    module: adapters.python.urirun.runtime.codegen
+    line: 144
+    cyclomatic_complexity: 14
+    calls_out: 14
+    calls_in: 2
+  adapters.python.urirun.testing.assert_registry_portable:
+    name: assert_registry_portable
+    module: adapters.python.urirun.testing
+    line: 101
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urirun.load_manifest:
+    name: load_manifest
+    module: adapters.python.urirun
+    line: 608
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urirun.runtime._runtime._fetch_render:
+    name: _fetch_render
+    module: adapters.python.urirun.runtime._runtime
+    line: 31
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 3
+  adapters.python.urirun.policy:
+    name: policy
+    module: adapters.python.urirun
+    line: 124
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  scripts.lint_connectors.main:
+    name: main
+    module: scripts.lint_connectors
+    line: 85
+    cyclomatic_complexity: 14
+    calls_out: 27
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._schema_for:
+    name: _schema_for
+    module: adapters.python.urirun.runtime.v2
+    line: 442
+    cyclomatic_complexity: 3
+    calls_out: 3
     calls_in: 1
   adapters.python.urirun.host.task_planner._unique:
     name: _unique
@@ -495,125 +656,237 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 1
     calls_in: 4
-  adapters.python.urirun.host.task_planner.llm_plan_chat_request:
-    name: llm_plan_chat_request
-    module: adapters.python.urirun.host.task_planner
+  adapters.python.urirun.runtime.codegen.proto_from_registry:
+    name: proto_from_registry
+    module: adapters.python.urirun.runtime.codegen
     line: 232
-    cyclomatic_complexity: 4
-    calls_out: 10
-    calls_in: 1
-  adapters.python.urirun.host.host_db.now_iso:
-    name: now_iso
+    cyclomatic_complexity: 13
+    calls_out: 25
+    calls_in: 2
+  adapters.python.urirun.host.host_db.create_llm_session:
+    name: create_llm_session
     module: adapters.python.urirun.host.host_db
-    line: 97
+    line: 371
+    cyclomatic_complexity: 1
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._build_parser:
+    name: _build_parser
+    module: adapters.python.urirun.runtime.v2
+    line: 1406
+    cyclomatic_complexity: 1
+    calls_out: 484
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._builtin_binding_items:
+    name: _builtin_binding_items
+    module: adapters.python.urirun.runtime.v2
+    line: 2444
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.list_routes:
+    name: list_routes
+    module: adapters.python.urirun.runtime.v2
+    line: 878
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime._make_secret_injector:
+    name: _make_secret_injector
+    module: adapters.python.urirun.runtime._runtime
+    line: 213
+    cyclomatic_complexity: 3
+    calls_out: 12
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._binding_pairs:
+    name: _binding_pairs
+    module: adapters.python.urirun.runtime.v2
+    line: 933
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen.to_openapi:
+    name: to_openapi
+    module: adapters.python.urirun.runtime.codegen
+    line: 310
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  adapters.python.urirun.runtime.introspect.registry_introspect_bindings:
+    name: registry_introspect_bindings
+    module: adapters.python.urirun.runtime.introspect
+    line: 25
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime._resolve_fetch_url:
+    name: _resolve_fetch_url
+    module: adapters.python.urirun.runtime._runtime
+    line: 196
+    cyclomatic_complexity: 8
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen._snake:
+    name: _snake
+    module: adapters.python.urirun.runtime.codegen
+    line: 39
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.v1.run_docker_run:
+    name: run_docker_run
+    module: adapters.python.urirun.runtime.v1
+    line: 203
+    cyclomatic_complexity: 5
+    calls_out: 13
+    calls_in: 0
+  adapters.python.urirun.runtime.codegen.assign_rpc_names:
+    name: assign_rpc_names
+    module: adapters.python.urirun.runtime.codegen
+    line: 92
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.uri_shell:
+    name: uri_shell
+    module: adapters.python.urirun.runtime.v2
+    line: 149
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_db.recent_checks:
+    name: recent_checks
+    module: adapters.python.urirun.host.host_db
+    line: 334
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._load_many:
+    name: _load_many
+    module: adapters.python.urirun.runtime.v2
+    line: 1366
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._cmd_add_pypi:
+    name: _cmd_add_pypi
+    module: adapters.python.urirun.runtime.v2
+    line: 2111
     cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 7
-  adapters.python.urirun.host.planfile_adapter.fail_or_retry:
-    name: fail_or_retry
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 218
-    cyclomatic_complexity: 4
-    calls_out: 11
     calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.start_ticket:
-    name: start_ticket
-    module: adapters.python.urirun.host.planfile_adapter
+  adapters.python.urirun.host.task_planner._ambiguous_plan:
+    name: _ambiguous_plan
+    module: adapters.python.urirun.host.task_planner
+    line: 131
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.Connector.manifest:
+    name: manifest
+    module: adapters.python.urirun
+    line: 552
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2_service.call:
+    name: call
+    module: adapters.python.urirun.runtime.v2_service
+    line: 66
+    cyclomatic_complexity: 9
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urirun.host.host_db._validate_record:
+    name: _validate_record
+    module: adapters.python.urirun.host.host_db
     line: 197
     cyclomatic_complexity: 2
     calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.host.planfile_adapter.complete_ticket:
+    name: complete_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 202
+    cyclomatic_complexity: 2
+    calls_out: 3
     calls_in: 0
-  adapters.python.urirun.runtime.v2.run_planfile_task:
-    name: run_planfile_task
-    module: adapters.python.urirun.runtime.v2
-    line: 632
+  adapters.python.urirun.runtime.errors._normalize_message:
+    name: _normalize_message
+    module: adapters.python.urirun.runtime.errors
+    line: 127
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urirun.host.scheduler.cron_line:
+    name: cron_line
+    module: adapters.python.urirun.host.scheduler
+    line: 76
     cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.runtime.v2_service.service_base:
-    name: service_base
-    module: adapters.python.urirun.runtime.v2_service
-    line: 39
-    cyclomatic_complexity: 3
     calls_out: 4
     calls_in: 1
-  adapters.python.urirun.host.host_integrations._read_planfile_action:
-    name: _read_planfile_action
-    module: adapters.python.urirun.host.host_integrations
-    line: 129
-    cyclomatic_complexity: 7
-    calls_out: 14
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen._msg_pascal:
-    name: _msg_pascal
-    module: adapters.python.urirun.runtime.codegen
-    line: 64
+  adapters.python.urirun.runtime.v1.run_fetch:
+    name: run_fetch
+    module: adapters.python.urirun.runtime.v1
+    line: 223
     cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 5
-  adapters.python.urirun.runtime.errors.search:
-    name: search
-    module: adapters.python.urirun.runtime.errors
-    line: 372
-    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.runtime.codegen._disambiguate_rpc_name:
+    name: _disambiguate_rpc_name
+    module: adapters.python.urirun.runtime.codegen
+    line: 120
+    cyclomatic_complexity: 8
     calls_out: 9
     calls_in: 1
-  adapters.python.urirun.runtime.errors._cmd_bindings:
-    name: _cmd_bindings
-    module: adapters.python.urirun.runtime.errors
-    line: 536
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.host.domain_monitor.check_domain:
-    name: check_domain
-    module: adapters.python.urirun.host.domain_monitor
-    line: 176
-    cyclomatic_complexity: 8
-    calls_out: 11
-    calls_in: 2
-  adapters.python.urirun.host.domain_monitor.run_uri_route:
-    name: run_uri_route
-    module: adapters.python.urirun.host.domain_monitor
-    line: 465
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.runtime.errors.info:
-    name: info
-    module: adapters.python.urirun.runtime.errors
-    line: 320
-    cyclomatic_complexity: 13
-    calls_out: 27
-    calls_in: 2
-  adapters.python.urirun.runtime.v2_service._post:
-    name: _post
-    module: adapters.python.urirun.runtime.v2_service
-    line: 48
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._run_dry:
-    name: _run_dry
-    module: adapters.python.urirun.runtime.v2
-    line: 786
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.validate_binding_document:
+  adapters.python.urirun.validate_binding_document:
     name: validate_binding_document
-    module: adapters.python.urirun.runtime.v2
-    line: 1116
-    cyclomatic_complexity: 12
-    calls_out: 24
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._cmd_add_command:
-    name: _cmd_add_command
-    module: adapters.python.urirun.runtime.v2
-    line: 2021
+    module: adapters.python.urirun
+    line: 338
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_db.get_dataset:
+    name: get_dataset
+    module: adapters.python.urirun.host.host_db
+    line: 185
     cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
+    calls_out: 7
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._strip_runtime_only:
+    name: _strip_runtime_only
+    module: adapters.python.urirun.runtime.v2
+    line: 885
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 2
+  adapters.python.urirun.host.host_integrations._simulate_planfile:
+    name: _simulate_planfile
+    module: adapters.python.urirun.host.host_integrations
+    line: 118
+    cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._pipspec_version:
+    name: _pipspec_version
+    module: adapters.python.urirun.runtime.v2
+    line: 2291
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor._screenshot_artifacts:
+    name: _screenshot_artifacts
+    module: adapters.python.urirun.host.domain_monitor
+    line: 227
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen._message_fields:
+    name: _message_fields
+    module: adapters.python.urirun.runtime.codegen
+    line: 188
+    cyclomatic_complexity: 9
+    calls_out: 15
+    calls_in: 2
   adapters.python.urirun.host.domain_monitor.run_daily:
     name: run_daily
     module: adapters.python.urirun.host.domain_monitor
@@ -621,202 +894,160 @@ nodes:
     cyclomatic_complexity: 7
     calls_out: 14
     calls_in: 1
-  adapters.python.urirun.host.host_dashboard.task_action:
-    name: task_action
-    module: adapters.python.urirun.host.host_dashboard
-    line: 504
-    cyclomatic_complexity: 8
-    calls_out: 16
+  adapters.python.urirun.runtime.codegen._handler_signature:
+    name: _handler_signature
+    module: adapters.python.urirun.runtime.codegen
+    line: 351
+    cyclomatic_complexity: 7
+    calls_out: 10
     calls_in: 1
-  adapters.python.urirun.runtime.v2._entry_point_script_issues:
-    name: _entry_point_script_issues
+  adapters.python.urirun.testing._resolve_bindings:
+    name: _resolve_bindings
+    module: adapters.python.urirun.testing
+    line: 53
+    cyclomatic_complexity: 5
+    calls_out: 8
+    calls_in: 2
+  adapters.python.urirun.host.host_db._run_query_route:
+    name: _run_query_route
+    module: adapters.python.urirun.host.host_db
+    line: 413
+    cyclomatic_complexity: 7
+    calls_out: 26
+    calls_in: 1
+  adapters.python.urirun.runtime.introspect._introspect_binding:
+    name: _introspect_binding
+    module: adapters.python.urirun.runtime.introspect
+    line: 78
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_connectors:
+    name: _cmd_connectors
     module: adapters.python.urirun.runtime.v2
-    line: 312
+    line: 2407
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 0
+  adapters.php.Urirun.Urirun.Connector.bindings:
+    name: bindings
+    module: adapters.php.Urirun
+    line: 64
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urirun.runtime.errors._load:
+    name: _load
+    module: adapters.python.urirun.runtime.errors
+    line: 284
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 2
+  adapters.python.urirun.runtime.v1.expand_binding:
+    name: expand_binding
+    module: adapters.python.urirun.runtime.v1
+    line: 348
+    cyclomatic_complexity: 7
+    calls_out: 6
+    calls_in: 1
+  adapters.go.urirun.BindingsJSON:
+    name: BindingsJSON
+    module: adapters.go.urirun
+    line: 77
+    cyclomatic_complexity: 1
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urirun.dispatch:
+    name: dispatch
+    module: adapters.python.urirun
+    line: 35
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 0
+  adapters.python.urirun.host.host_db._schema_json:
+    name: _schema_json
+    module: adapters.python.urirun.host.host_db
+    line: 156
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor.expected_records:
+    name: expected_records
+    module: adapters.python.urirun.host.domain_monitor
+    line: 95
+    cyclomatic_complexity: 8
+    calls_out: 15
+    calls_in: 3
+  adapters.python.urirun.host.task_planner._json_from_text:
+    name: _json_from_text
+    module: adapters.python.urirun.host.task_planner
+    line: 82
     cyclomatic_complexity: 5
     calls_out: 7
     calls_in: 1
-  adapters.python.urirun.host.domain_monitor.http_status:
-    name: http_status
-    module: adapters.python.urirun.host.domain_monitor
-    line: 44
-    cyclomatic_complexity: 5
-    calls_out: 15
-    calls_in: 2
-  adapters.python.urirun.host.domain_monitor.create_dns_repair_ticket:
-    name: create_dns_repair_ticket
-    module: adapters.python.urirun.host.domain_monitor
-    line: 137
-    cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime.default_policy:
-    name: default_policy
-    module: adapters.python.urirun.runtime._runtime
-    line: 54
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.host.host_integrations._planfile_project:
-    name: _planfile_project
-    module: adapters.python.urirun.host.host_integrations
-    line: 113
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._error_search:
-    name: _error_search
-    module: adapters.python.urirun.runtime.v2
-    line: 578
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.host.domain_monitor._db:
-    name: _db
-    module: adapters.python.urirun.host.domain_monitor
-    line: 332
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 5
-  adapters.python.urirun.runtime.errors.category_meta:
-    name: category_meta
+  adapters.python.urirun.runtime.errors.main:
+    name: main
     module: adapters.python.urirun.runtime.errors
-    line: 199
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 3
-  adapters.python.urirun.runtime.v1._params_spec:
-    name: _params_spec
-    module: adapters.python.urirun.runtime.v1
-    line: 38
+    line: 551
     cyclomatic_complexity: 4
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._resolve_pip_targets:
-    name: _resolve_pip_targets
-    module: adapters.python.urirun.runtime.v2
-    line: 2096
-    cyclomatic_complexity: 10
-    calls_out: 10
-    calls_in: 2
-  adapters.python.urirun.runtime._runtime._policy_denial:
-    name: _policy_denial
-    module: adapters.python.urirun.runtime._runtime
-    line: 116
-    cyclomatic_complexity: 9
-    calls_out: 12
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._cmd_upgrade:
-    name: _cmd_upgrade
-    module: adapters.python.urirun.runtime.v2
-    line: 2159
-    cyclomatic_complexity: 14
-    calls_out: 27
-    calls_in: 0
-  adapters.python.urirun.host.host_db.add_llm_message:
-    name: add_llm_message
-    module: adapters.python.urirun.host.host_db
-    line: 382
-    cyclomatic_complexity: 2
-    calls_out: 9
-    calls_in: 0
-  adapters.python.urirun.host.scheduler.build_loop_command:
-    name: build_loop_command
-    module: adapters.python.urirun.host.scheduler
-    line: 14
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.decorated_bindings:
-    name: decorated_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 212
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  adapters.python.urirun.runtime.introspect._introspect_list:
-    name: _introspect_list
-    module: adapters.python.urirun.runtime.introspect
-    line: 93
-    cyclomatic_complexity: 9
-    calls_out: 10
-    calls_in: 1
-  adapters.python.urirun.host.host_db.search_records:
-    name: search_records
-    module: adapters.python.urirun.host.host_db
-    line: 256
-    cyclomatic_complexity: 6
-    calls_out: 21
-    calls_in: 1
-  adapters.python.urirun.policy:
-    name: policy
-    module: adapters.python.urirun
-    line: 124
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.ts.urirun.Connector.document:
-    name: document
-    module: adapters.ts.urirun
-    line: 30
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._cmd_compile:
-    name: _cmd_compile
-    module: adapters.python.urirun.runtime.v2
-    line: 1959
-    cyclomatic_complexity: 3
     calls_out: 5
     calls_in: 0
-  adapters.python.urirun.testing.registry_portability:
-    name: registry_portability
-    module: adapters.python.urirun.testing
-    line: 89
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.load_planfile:
-    name: load_planfile
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 63
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 12
-  adapters.python.urirun.host.task_planner.heuristic_plan_chat_request:
-    name: heuristic_plan_chat_request
-    module: adapters.python.urirun.host.task_planner
-    line: 186
-    cyclomatic_complexity: 12
-    calls_out: 16
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._first_payload_value:
-    name: _first_payload_value
+  adapters.python.urirun.runtime.v2._builtin_registry_route_entry:
+    name: _builtin_registry_route_entry
     module: adapters.python.urirun.runtime.v2
-    line: 553
+    line: 731
     cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 4
-  adapters.python.urirun.runtime.v2._cmd_add_pypi:
-    name: _cmd_add_pypi
-    module: adapters.python.urirun.runtime.v2
-    line: 2030
-    cyclomatic_complexity: 1
     calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urirun.runtime.v2
+    line: 544
+    cyclomatic_complexity: 4
+    calls_out: 5
     calls_in: 0
-  adapters.python.urirun.runtime._runtime.build_policy:
-    name: build_policy
-    module: adapters.python.urirun.runtime._runtime
-    line: 426
-    cyclomatic_complexity: 13
-    calls_out: 13
-    calls_in: 3
-  adapters.python.urirun.host.domain_monitor.default_url:
-    name: default_url
+  adapters.python.urirun.host.domain_monitor._domain:
+    name: _domain
     module: adapters.python.urirun.host.domain_monitor
-    line: 40
+    line: 36
     cyclomatic_complexity: 2
-    calls_out: 1
+    calls_out: 2
     calls_in: 3
+  adapters.python.urirun.runtime.errors.record:
+    name: record
+    module: adapters.python.urirun.runtime.errors
+    line: 227
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.render_value:
+    name: render_value
+    module: adapters.python.urirun.runtime.v2
+    line: 493
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 3
+  adapters.python.urirun.runtime.v1.expand_bindings:
+    name: expand_bindings
+    module: adapters.python.urirun.runtime.v1
+    line: 375
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.runtime.v2.expand_bindings:
+    name: expand_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 946
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 8
+  adapters.js.dispatch:
+    name: dispatch
+    module: adapters.js
+    line: 25
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
   adapters.python.urirun.host.planfile_adapter.project_root:
     name: project_root
     module: adapters.python.urirun.host.planfile_adapter
@@ -824,47 +1055,75 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 4
     calls_in: 2
-  adapters.python.urirun.runtime.errors._cmd_categories:
-    name: _cmd_categories
+  adapters.python.urirun.runtime.errors._cmd_ticket:
+    name: _cmd_ticket
     module: adapters.python.urirun.runtime.errors
-    line: 531
-    cyclomatic_complexity: 2
-    calls_out: 2
+    line: 524
+    cyclomatic_complexity: 3
+    calls_out: 4
     calls_in: 0
-  adapters.python.urirun.runtime.v2.input_schema_from_params:
-    name: input_schema_from_params
+  adapters.python.urirun.runtime.errors.search:
+    name: search
+    module: adapters.python.urirun.runtime.errors
+    line: 372
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._run_executor:
+    name: _run_executor
     module: adapters.python.urirun.runtime.v2
-    line: 1028
+    line: 785
     cyclomatic_complexity: 4
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.host.task_planner.ticket_payload:
+    name: ticket_payload
+    module: adapters.python.urirun.host.task_planner
+    line: 325
+    cyclomatic_complexity: 3
     calls_out: 2
     calls_in: 1
-  adapters.python.urirun.runtime.v2_service.call:
-    name: call
-    module: adapters.python.urirun.runtime.v2_service
-    line: 64
-    cyclomatic_complexity: 9
-    calls_out: 10
-    calls_in: 0
-  adapters.python.urirun.host.domain_monitor._route_browser:
-    name: _route_browser
+  adapters.python.urirun.host.domain_monitor._screenshot_dir:
+    name: _screenshot_dir
     module: adapters.python.urirun.host.domain_monitor
-    line: 382
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.entry_point_binding_document:
-    name: entry_point_binding_document
-    module: adapters.python.urirun.runtime.v2
-    line: 418
-    cyclomatic_complexity: 2
-    calls_out: 2
+    line: 340
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 3
+  adapters.python.urirun.runtime.errors.error_code:
+    name: error_code
+    module: adapters.python.urirun.runtime.errors
+    line: 134
+    cyclomatic_complexity: 1
+    calls_out: 4
     calls_in: 2
-  adapters.python.urirun.runtime.v1.expand_bindings:
-    name: expand_bindings
-    module: adapters.python.urirun.runtime.v1
-    line: 335
+  adapters.python.urirun.host.planfile_adapter._imports:
+    name: _imports
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 22
     cyclomatic_complexity: 2
-    calls_out: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.runtime.errors.category_meta:
+    name: category_meta
+    module: adapters.python.urirun.runtime.errors
+    line: 199
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.runtime.v2.run_error_store:
+    name: run_error_store
+    module: adapters.python.urirun.runtime.v2
+    line: 610
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 0
+  adapters.python.urirun.runtime._runtime._matches_any:
+    name: _matches_any
+    module: adapters.python.urirun.runtime._runtime
+    line: 78
+    cyclomatic_complexity: 3
+    calls_out: 1
     calls_in: 2
   adapters.python.urirun.host.domain_monitor._namecheap_moved:
     name: _namecheap_moved
@@ -873,82 +1132,488 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 2
-  adapters.python.urirun.host.scheduler.shell_join:
-    name: shell_join
-    module: adapters.python.urirun.host.scheduler
-    line: 44
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 3
-  adapters.python.urirun.node.mesh._pool_executors:
-    name: _pool_executors
-    module: adapters.python.urirun.node.mesh
-    line: 1655
-    cyclomatic_complexity: 1
-    calls_out: 8
-    calls_in: 2
-  adapters.python.urirun.runtime.errors._append:
-    name: _append
-    module: adapters.python.urirun.runtime.errors
-    line: 261
+  adapters.python.urirun.Connector._live_bindings:
+    name: _live_bindings
+    module: adapters.python.urirun
+    line: 544
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.runtime.v1._binding_pairs:
+    name: _binding_pairs
+    module: adapters.python.urirun.runtime.v1
+    line: 362
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.runtime.v1.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urirun.runtime.v1
+    line: 177
     cyclomatic_complexity: 3
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime._fetch_fill:
-    name: _fetch_fill
-    module: adapters.python.urirun.runtime._runtime
-    line: 27
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 3
-  adapters.python.urirun.runtime.v2.run_domain_monitor:
-    name: run_domain_monitor
-    module: adapters.python.urirun.runtime.v2
-    line: 660
-    cyclomatic_complexity: 1
-    calls_out: 2
+    calls_out: 7
     calls_in: 0
-  adapters.python.urirun.host.host_db._run_query_route:
-    name: _run_query_route
-    module: adapters.python.urirun.host.host_db
-    line: 413
-    cyclomatic_complexity: 7
-    calls_out: 26
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._cmd_discover:
-    name: _cmd_discover
-    module: adapters.python.urirun.runtime.v2
-    line: 1970
+  examples.matrix.verify.essential:
+    name: essential
+    module: examples.matrix.verify
+    line: 16
     cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.fail_ticket:
-    name: fail_ticket
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.host.planfile_adapter.wait_for_input:
+    name: wait_for_input
     module: adapters.python.urirun.host.planfile_adapter
-    line: 213
+    line: 255
     cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 0
-  adapters.python.urirun.runtime.daemon.serve:
-    name: serve
-    module: adapters.python.urirun.runtime.daemon
-    line: 50
-    cyclomatic_complexity: 14
-    calls_out: 41
-    calls_in: 1
-  adapters.python.urirun.host.host_db.create_dataset:
-    name: create_dataset
-    module: adapters.python.urirun.host.host_db
-    line: 162
+  adapters.python.urirun.testing.registry_portability:
+    name: registry_portability
+    module: adapters.python.urirun.testing
+    line: 89
     cyclomatic_complexity: 1
+    calls_out: 3
+    calls_in: 1
+  scripts.repin_connectors.find_root:
+    name: find_root
+    module: scripts.repin_connectors
+    line: 53
+    cyclomatic_complexity: 5
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime.run_fetch:
+    name: run_fetch
+    module: adapters.python.urirun.runtime._runtime
+    line: 259
+    cyclomatic_complexity: 5
+    calls_out: 12
+    calls_in: 0
+  adapters.python.urirun.host.task_planner.normalize_text:
+    name: normalize_text
+    module: adapters.python.urirun.host.task_planner
+    line: 44
+    cyclomatic_complexity: 3
+    calls_out: 6
+    calls_in: 5
+  adapters.python.urirun.runtime.codegen.dispatch_field_collisions:
+    name: dispatch_field_collisions
+    module: adapters.python.urirun.runtime.codegen
+    line: 214
+    cyclomatic_complexity: 5
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urirun.host.host_db.connect:
+    name: connect
+    module: adapters.python.urirun.host.host_db
+    line: 105
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.host.host_db.list_datasets:
+    name: list_datasets
+    module: adapters.python.urirun.host.host_db
+    line: 178
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.runtime.errors.capture:
+    name: capture
+    module: adapters.python.urirun.runtime.errors
+    line: 461
+    cyclomatic_complexity: 1
+    calls_out: 9
+    calls_in: 0
+  adapters.python.urirun.run:
+    name: run
+    module: adapters.python.urirun
+    line: 345
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 2
+  adapters.python.urirun.host.host_integrations._planfile_project:
+    name: _planfile_project
+    module: adapters.python.urirun.host.host_integrations
+    line: 113
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._is_pipx_env:
+    name: _is_pipx_env
+    module: adapters.python.urirun.runtime.v2
+    line: 1396
+    cyclomatic_complexity: 3
+    calls_out: 0
+    calls_in: 3
+  adapters.python.urirun.host.domain_monitor._route_dns:
+    name: _route_dns
+    module: adapters.python.urirun.host.domain_monitor
+    line: 369
+    cyclomatic_complexity: 9
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.exec._resolve:
+    name: _resolve
+    module: adapters.python.urirun.exec
+    line: 24
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor.now_id:
+    name: now_id
+    module: adapters.python.urirun.host.domain_monitor
+    line: 24
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.runtime.errors.bindings:
+    name: bindings
+    module: adapters.python.urirun.runtime.errors
+    line: 409
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor._db:
+    name: _db
+    module: adapters.python.urirun.host.domain_monitor
+    line: 332
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 5
+  adapters.python.urirun.host.domain_monitor._persist_check_effects:
+    name: _persist_check_effects
+    module: adapters.python.urirun.host.domain_monitor
+    line: 245
+    cyclomatic_complexity: 6
     calls_out: 7
     calls_in: 1
-  adapters.python.urirun.host.host_integrations.run_planfile_task:
-    name: run_planfile_task
-    module: adapters.python.urirun.host.host_integrations
-    line: 191
+  adapters.js.parseUri:
+    name: parseUri
+    module: adapters.js
+    line: 4
+    cyclomatic_complexity: 8
+    calls_out: 9
+    calls_in: 1
+  examples.matrix.verify.main:
+    name: main
+    module: examples.matrix.verify
+    line: 30
+    cyclomatic_complexity: 9
+    calls_out: 20
+    calls_in: 0
+  adapters.python.urirun._example_payload:
+    name: _example_payload
+    module: adapters.python.urirun
+    line: 94
+    cyclomatic_complexity: 9
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urirun.build_invocation:
+    name: build_invocation
+    module: adapters.python.urirun
+    line: 27
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_add_command:
+    name: _cmd_add_command
+    module: adapters.python.urirun.runtime.v2
+    line: 2102
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._coerce_default:
+    name: _coerce_default
+    module: adapters.python.urirun.runtime.v2
+    line: 989
+    cyclomatic_complexity: 4
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._safe_tickets:
+    name: _safe_tickets
+    module: adapters.python.urirun.host.host_dashboard
+    line: 457
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urirun.host.host_dashboard.create_handler:
+    name: create_handler
+    module: adapters.python.urirun.host.host_dashboard
+    line: 550
+    cyclomatic_complexity: 1
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor._list:
+    name: _list
+    module: adapters.python.urirun.host.domain_monitor
+    line: 28
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 7
+  adapters.c.urirun_test.assert:
+    name: assert
+    module: adapters.c.urirun_test
+    line: 16
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.c.urirun.is_path_end:
+    name: is_path_end
+    module: adapters.c.urirun
+    line: 12
+    cyclomatic_complexity: 3
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime._policy_allow:
+    name: _policy_allow
+    module: adapters.python.urirun.runtime._runtime
+    line: 133
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  scripts.repin_connectors.main:
+    name: main
+    module: scripts.repin_connectors
+    line: 97
+    cyclomatic_complexity: 18
+    calls_out: 28
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.entry_point_binding_document:
+    name: entry_point_binding_document
+    module: adapters.python.urirun.runtime.v2
+    line: 418
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.runtime.v2.validate_input:
+    name: validate_input
+    module: adapters.python.urirun.runtime.v2
+    line: 474
+    cyclomatic_complexity: 6
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.host.planfile_adapter.update_ticket:
+    name: update_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 247
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._binding_config:
+    name: _binding_config
+    module: adapters.python.urirun.runtime.v2
+    line: 892
+    cyclomatic_complexity: 6
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._parse_dockerfile_labels:
+    name: _parse_dockerfile_labels
+    module: adapters.python.urirun.runtime.v2
+    line: 1270
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._host_db:
+    name: _host_db
+    module: adapters.python.urirun.host.host_dashboard
+    line: 439
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 4
+  adapters.python.urirun.runtime.errors.info:
+    name: info
+    module: adapters.python.urirun.runtime.errors
+    line: 320
+    cyclomatic_complexity: 13
+    calls_out: 27
+    calls_in: 2
+  adapters.python.urirun.runtime.v2.compile_registry:
+    name: compile_registry
+    module: adapters.python.urirun.runtime.v2
+    line: 953
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 9
+  adapters.python.urirun.host.domain_monitor.dns_records:
+    name: dns_records
+    module: adapters.python.urirun.host.domain_monitor
+    line: 78
+    cyclomatic_complexity: 11
+    calls_out: 8
+    calls_in: 2
+  adapters.python.urirun.host.domain_monitor._project:
+    name: _project
+    module: adapters.python.urirun.host.domain_monitor
+    line: 336
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urirun.exec.main:
+    name: main
+    module: adapters.python.urirun.exec
+    line: 31
+    cyclomatic_complexity: 10
+    calls_out: 15
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._resolve_list_registry:
+    name: _resolve_list_registry
+    module: adapters.python.urirun.runtime.v2
+    line: 2485
+    cyclomatic_complexity: 13
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.runtime._runtime.evaluate_policy:
+    name: evaluate_policy
+    module: adapters.python.urirun.runtime._runtime
+    line: 92
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 3
+  adapters.python.urirun.host.domain_monitor.dns_mismatches:
+    name: dns_mismatches
+    module: adapters.python.urirun.host.domain_monitor
+    line: 106
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  scripts.lint_connectors.classify:
+    name: classify
+    module: scripts.lint_connectors
+    line: 38
+    cyclomatic_complexity: 5
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_db.row_dict:
+    name: row_dict
+    module: adapters.python.urirun.host.host_db
+    line: 124
+    cyclomatic_complexity: 7
+    calls_out: 5
+    calls_in: 8
+  adapters.python.urirun.runtime.v2._cmd_validate:
+    name: _cmd_validate
+    module: adapters.python.urirun.runtime.v2
+    line: 2086
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.build_binding_document:
+    name: build_binding_document
+    module: adapters.python.urirun.runtime.v2
+    line: 957
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 7
+  adapters.c.urirun.copy_token:
+    name: copy_token
+    module: adapters.c.urirun
+    line: 4
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urirun.host.host_db.route_db_path:
+    name: route_db_path
+    module: adapters.python.urirun.host.host_db
+    line: 409
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._bindings_as_map:
+    name: _bindings_as_map
+    module: adapters.python.urirun.runtime.v2
+    line: 968
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._json_response:
+    name: _json_response
+    module: adapters.python.urirun.host.host_dashboard
+    line: 404
+    cyclomatic_complexity: 1
+    calls_out: 13
+    calls_in: 6
+  adapters.python.urirun.runtime.errors._cmd_search:
+    name: _cmd_search
+    module: adapters.python.urirun.runtime.errors
+    line: 517
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._placeholder_kwargs:
+    name: _placeholder_kwargs
+    module: adapters.python.urirun.runtime.v2
+    line: 81
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_db.now_iso:
+    name: now_iso
+    module: adapters.python.urirun.host.host_db
+    line: 97
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 7
+  adapters.python.urirun.runtime.codegen._msg_pascal:
+    name: _msg_pascal
+    module: adapters.python.urirun.runtime.codegen
+    line: 64
+    cyclomatic_complexity: 3
+    calls_out: 3
+    calls_in: 5
+  adapters.python.urirun.runtime.v2.model_from_function:
+    name: model_from_function
+    module: adapters.python.urirun.runtime.v2
+    line: 70
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 2
+  adapters.python.urirun.runtime.v2.entry_point_bindings:
+    name: entry_point_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 284
+    cyclomatic_complexity: 6
+    calls_out: 9
+    calls_in: 4
+  adapters.python.urirun.testing._nonportable_routes:
+    name: _nonportable_routes
+    module: adapters.python.urirun.testing
+    line: 76
     cyclomatic_complexity: 5
     calls_out: 8
+    calls_in: 2
+  adapters.python.urirun.runtime.errors.classify:
+    name: classify
+    module: adapters.python.urirun.runtime.errors
+    line: 179
+    cyclomatic_complexity: 8
+    calls_out: 5
+    calls_in: 4
+  adapters.python.urirun.runtime.v2._record_error:
+    name: _record_error
+    module: adapters.python.urirun.runtime.v2
+    line: 740
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._planfile_adapter:
+    name: _planfile_adapter
+    module: adapters.python.urirun.host.host_dashboard
+    line: 451
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._load_json_arg:
+    name: _load_json_arg
+    module: adapters.python.urirun.runtime.v2
+    line: 1358
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 3
+  adapters.c.urirun_test.main:
+    name: main
+    module: adapters.c.urirun_test
+    line: 5
+    cyclomatic_complexity: 2
+    calls_out: 3
     calls_in: 0
   adapters.python.urirun.runtime.v2._input_values:
     name: _input_values
@@ -957,118 +1622,160 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 8
     calls_in: 1
-  adapters.python.urirun.runtime._runtime.run_shell_template:
-    name: run_shell_template
-    module: adapters.python.urirun.runtime._runtime
-    line: 172
-    cyclomatic_complexity: 3
-    calls_out: 11
+  adapters.python.urirun.runtime.errors.problem:
+    name: problem
+    module: adapters.python.urirun.runtime.errors
+    line: 243
+    cyclomatic_complexity: 10
+    calls_out: 22
     calls_in: 0
-  adapters.c.urirun.copy_token:
-    name: copy_token
-    module: adapters.c.urirun
-    line: 4
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.host.host_integrations._planfile_update:
-    name: _planfile_update
-    module: adapters.python.urirun.host.host_integrations
-    line: 146
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 1
-  adapters.python.urirun.connector_main:
-    name: connector_main
-    module: adapters.python.urirun
-    line: 601
-    cyclomatic_complexity: 6
-    calls_out: 12
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.normalize_priority:
-    name: normalize_priority
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 49
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 2
-  adapters.python.urirun.host.host_db.list_artifacts:
-    name: list_artifacts
-    module: adapters.python.urirun.host.host_db
-    line: 310
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor._route_flow:
-    name: _route_flow
-    module: adapters.python.urirun.host.domain_monitor
-    line: 407
-    cyclomatic_complexity: 4
-    calls_out: 20
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._scan_pyproject:
-    name: _scan_pyproject
-    module: adapters.python.urirun.runtime.v2
-    line: 1206
-    cyclomatic_complexity: 4
+  adapters.python.urirun.runtime.introspect._introspect_list:
+    name: _introspect_list
+    module: adapters.python.urirun.runtime.introspect
+    line: 93
+    cyclomatic_complexity: 9
     calls_out: 10
     calls_in: 1
-  adapters.python.urirun.runtime.v2.entry_point_bindings:
-    name: entry_point_bindings
+  adapters.python.urirun.runtime.v2.run_planfile_task:
+    name: run_planfile_task
     module: adapters.python.urirun.runtime.v2
-    line: 284
-    cyclomatic_complexity: 6
-    calls_out: 9
-    calls_in: 4
-  adapters.python.urirun.runtime.v2._print_doctor_report:
-    name: _print_doctor_report
-    module: adapters.python.urirun.runtime.v2
-    line: 2288
-    cyclomatic_complexity: 7
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._placeholder_kwargs:
-    name: _placeholder_kwargs
-    module: adapters.python.urirun.runtime.v2
-    line: 81
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.run_steps:
-    name: run_steps
-    module: adapters.python.urirun
-    line: 186
-    cyclomatic_complexity: 14
-    calls_out: 15
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.entry_point_registry:
-    name: entry_point_registry
-    module: adapters.python.urirun.runtime.v2
-    line: 430
+    line: 632
     cyclomatic_complexity: 1
     calls_out: 2
     calls_in: 0
-  adapters.python.urirun.runtime.introspect._introspect_binding:
-    name: _introspect_binding
-    module: adapters.python.urirun.runtime.introspect
-    line: 78
+  adapters.python.urirun.runtime.v2.command_binding_from_cli:
+    name: command_binding_from_cli
+    module: adapters.python.urirun.runtime.v2
+    line: 1053
+    cyclomatic_complexity: 5
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.validate_binding_document:
+    name: validate_binding_document
+    module: adapters.python.urirun.runtime.v2
+    line: 1127
+    cyclomatic_complexity: 12
+    calls_out: 24
+    calls_in: 2
+  adapters.python.urirun.runtime.v1.render_command:
+    name: render_command
+    module: adapters.python.urirun.runtime.v1
+    line: 77
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._select_entry_points:
+    name: _select_entry_points
+    module: adapters.python.urirun.runtime.v2
+    line: 255
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._cmd_discover:
+    name: _cmd_discover
+    module: adapters.python.urirun.runtime.v2
+    line: 2051
+    cyclomatic_complexity: 2
+    calls_out: 4
+    calls_in: 0
+  adapters.python.urirun.runtime.daemon.serve:
+    name: serve
+    module: adapters.python.urirun.runtime.daemon
+    line: 50
+    cyclomatic_complexity: 14
+    calls_out: 41
+    calls_in: 1
+  adapters.python.urirun.runtime.errors._match_message_rules:
+    name: _match_message_rules
+    module: adapters.python.urirun.runtime.errors
+    line: 161
+    cyclomatic_complexity: 4
+    calls_out: 1
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._apply_defaults:
+    name: _apply_defaults
+    module: adapters.python.urirun.runtime.v2
+    line: 447
+    cyclomatic_complexity: 14
+    calls_out: 12
+    calls_in: 3
+  adapters.python.urirun.host.task_planner.slug:
+    name: slug
+    module: adapters.python.urirun.host.task_planner
+    line: 50
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 6
+  adapters.python.urirun.runtime.errors._cmd_categories:
+    name: _cmd_categories
+    module: adapters.python.urirun.runtime.errors
+    line: 531
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.host.planfile_adapter.fail_ticket:
+    name: fail_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 213
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urirun.runtime.v1.compile_registry:
+    name: compile_registry
+    module: adapters.python.urirun.runtime.v1
+    line: 382
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 2
+  adapters.python.urirun.parse_uri:
+    name: parse_uri
+    module: adapters.python.urirun
+    line: 12
     cyclomatic_complexity: 7
-    calls_out: 11
+    calls_out: 13
     calls_in: 1
   adapters.python.urirun.runtime.v1.run_spawn:
     name: run_spawn
     module: adapters.python.urirun.runtime.v1
-    line: 124
+    line: 164
     cyclomatic_complexity: 6
     calls_out: 7
     calls_in: 0
-  adapters.python.urirun.host.domain_monitor._list:
-    name: _list
-    module: adapters.python.urirun.host.domain_monitor
-    line: 28
-    cyclomatic_complexity: 6
-    calls_out: 8
-    calls_in: 7
+  adapters.python.urirun.runtime.v2.scan_artifacts:
+    name: scan_artifacts
+    module: adapters.python.urirun.runtime.v2
+    line: 1327
+    cyclomatic_complexity: 11
+    calls_out: 19
+    calls_in: 4
+  adapters.python.urirun.run_steps:
+    name: run_steps
+    module: adapters.python.urirun
+    line: 214
+    cyclomatic_complexity: 14
+    calls_out: 15
+    calls_in: 0
+  adapters.python.urirun.host.host_db.init_db:
+    name: init_db
+    module: adapters.python.urirun.host.host_db
+    line: 142
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 14
+  adapters.python.urirun.host.host_dashboard.task_action:
+    name: task_action
+    module: adapters.python.urirun.host.host_dashboard
+    line: 504
+    cyclomatic_complexity: 8
+    calls_out: 16
+    calls_in: 1
+  adapters.python.urirun.host.host_integrations._read_planfile_action:
+    name: _read_planfile_action
+    module: adapters.python.urirun.host.host_integrations
+    line: 129
+    cyclomatic_complexity: 7
+    calls_out: 14
+    calls_in: 1
   adapters.python.urirun.host.host_integrations._planfile_dsl:
     name: _planfile_dsl
     module: adapters.python.urirun.host.host_integrations
@@ -1076,66 +1783,367 @@ nodes:
     cyclomatic_complexity: 3
     calls_out: 5
     calls_in: 1
-  adapters.python.urirun.runtime.v1.render_value:
-    name: render_value
+  adapters.python.urirun.runtime.v1._env_flags:
+    name: _env_flags
     module: adapters.python.urirun.runtime.v1
-    line: 66
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 6
-  adapters.python.urirun.runtime.v2.pypi_binding:
-    name: pypi_binding
-    module: adapters.python.urirun.runtime.v2
-    line: 1064
+    line: 154
     cyclomatic_complexity: 3
-    calls_out: 1
+    calls_out: 5
+    calls_in: 2
+  adapters.python.urirun.runtime.codegen.to_handlers:
+    name: to_handlers
+    module: adapters.python.urirun.runtime.codegen
+    line: 369
+    cyclomatic_complexity: 10
+    calls_out: 13
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._resolve_error_action:
+    name: _resolve_error_action
+    module: adapters.python.urirun.runtime.v2
+    line: 561
+    cyclomatic_complexity: 10
+    calls_out: 7
     calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.claim_ticket:
-    name: claim_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 192
+  adapters.python.urirun.runtime._runtime._build_fetch_body:
+    name: _build_fetch_body
+    module: adapters.python.urirun.runtime._runtime
+    line: 236
+    cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.runtime.errors._append:
+    name: _append
+    module: adapters.python.urirun.runtime.errors
+    line: 261
+    cyclomatic_complexity: 3
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.run:
+    name: run
+    module: adapters.python.urirun.runtime.v2
+    line: 832
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.runtime.errors._errno_category:
+    name: _errno_category
+    module: adapters.python.urirun.runtime.errors
+    line: 169
+    cyclomatic_complexity: 6
+    calls_out: 3
+    calls_in: 1
+  adapters.ts.urirun.Connector.document:
+    name: document
+    module: adapters.ts.urirun
+    line: 30
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 1
+  adapters.python.urirun.runtime.errors._require_arg:
+    name: _require_arg
+    module: adapters.python.urirun.runtime.errors
+    line: 498
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.python.urirun.host.host_db.register_artifact:
+    name: register_artifact
+    module: adapters.python.urirun.host.host_db
+    line: 295
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard._mesh:
+    name: _mesh
+    module: adapters.python.urirun.host.host_dashboard
+    line: 445
+    cyclomatic_complexity: 1
+    calls_out: 0
+    calls_in: 2
+  adapters.python.urirun.Connector.registry:
+    name: registry
+    module: adapters.python.urirun
+    line: 516
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.host.domain_monitor.check_domain:
+    name: check_domain
+    module: adapters.python.urirun.host.domain_monitor
+    line: 176
+    cyclomatic_complexity: 8
+    calls_out: 11
+    calls_in: 2
+  adapters.python.urirun.runtime.errors.to_ticket:
+    name: to_ticket
+    module: adapters.python.urirun.runtime.errors
+    line: 382
+    cyclomatic_complexity: 7
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.render_sequence:
+    name: render_sequence
+    module: adapters.python.urirun.runtime.v2
+    line: 503
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urirun.host.task_planner.llm_plan_chat_request:
+    name: llm_plan_chat_request
+    module: adapters.python.urirun.host.task_planner
+    line: 247
+    cyclomatic_complexity: 4
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urirun.runtime.v1.run:
+    name: run
+    module: adapters.python.urirun.runtime.v1
+    line: 266
+    cyclomatic_complexity: 14
+    calls_out: 23
+    calls_in: 1
+  adapters.python.urirun.host.host_db.db_path:
+    name: db_path
+    module: adapters.python.urirun.host.host_db
+    line: 93
     cyclomatic_complexity: 2
     calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.errors.error_code:
-    name: error_code
-    module: adapters.python.urirun.runtime.errors
-    line: 134
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.expand_bindings:
-    name: expand_bindings
+    calls_in: 3
+  adapters.python.urirun.runtime._runtime._send_fetch:
+    name: _send_fetch
+    module: adapters.python.urirun.runtime._runtime
+    line: 248
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.host.host_integrations._ticket_id:
+    name: _ticket_id
+    module: adapters.python.urirun.host.host_integrations
+    line: 92
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 9
+  adapters.python.urirun.runtime.v2.run_argv_template:
+    name: run_argv_template
     module: adapters.python.urirun.runtime.v2
-    line: 935
+    line: 533
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._run_dry:
+    name: _run_dry
+    module: adapters.python.urirun.runtime.v2
+    line: 797
+    cyclomatic_complexity: 3
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._first_payload_value:
+    name: _first_payload_value
+    module: adapters.python.urirun.runtime.v2
+    line: 553
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 4
+  adapters.python.urirun.host.host_db.read_only_sql:
+    name: read_only_sql
+    module: adapters.python.urirun.host.host_db
+    line: 396
+    cyclomatic_complexity: 5
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.node.mesh._pool_executors:
+    name: _pool_executors
+    module: adapters.python.urirun.node.mesh
+    line: 1139
+    cyclomatic_complexity: 1
+    calls_out: 8
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._scan_dockerfile:
+    name: _scan_dockerfile
+    module: adapters.python.urirun.runtime.v2
+    line: 1290
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.host_data_bindings:
+    name: host_data_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 636
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.connector_main:
+    name: connector_main
+    module: adapters.python.urirun
+    line: 629
+    cyclomatic_complexity: 6
+    calls_out: 12
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.load_registry_arg:
+    name: load_registry_arg
+    module: adapters.python.urirun.runtime.v2
+    line: 1093
+    cyclomatic_complexity: 7
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._binding_adapter_kind:
+    name: _binding_adapter_kind
+    module: adapters.python.urirun.runtime.v2
+    line: 903
+    cyclomatic_complexity: 6
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2_service.service_base:
+    name: service_base
+    module: adapters.python.urirun.runtime.v2_service
+    line: 39
+    cyclomatic_complexity: 5
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urirun.runtime.errors.help_url:
+    name: help_url
+    module: adapters.python.urirun.runtime.errors
+    line: 207
     cyclomatic_complexity: 2
     calls_out: 2
-    calls_in: 8
-  adapters.python.urirun.host.host_integrations._write_planfile_action:
-    name: _write_planfile_action
-    module: adapters.python.urirun.host.host_integrations
-    line: 160
-    cyclomatic_complexity: 8
-    calls_out: 39
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.render_argv:
-    name: render_argv
+    calls_in: 6
+  adapters.python.urirun.Connector._dispatch_cli:
+    name: _dispatch_cli
+    module: adapters.python.urirun
+    line: 481
+    cyclomatic_complexity: 11
+    calls_out: 16
+    calls_in: 0
+  adapters.python.urirun.host.host_db.rows_dict:
+    name: rows_dict
+    module: adapters.python.urirun.host.host_db
+    line: 137
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 7
+  adapters.python.urirun.runtime.errors._aggregate:
+    name: _aggregate
+    module: adapters.python.urirun.runtime.errors
+    line: 348
+    cyclomatic_complexity: 4
+    calls_out: 13
+    calls_in: 2
+  adapters.python.urirun.runtime.v2.connector_collisions:
+    name: connector_collisions
     module: adapters.python.urirun.runtime.v2
-    line: 510
+    line: 383
+    cyclomatic_complexity: 11
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_connectors_doctor:
+    name: _cmd_connectors_doctor
+    module: adapters.python.urirun.runtime.v2
+    line: 2389
+    cyclomatic_complexity: 11
+    calls_out: 10
+    calls_in: 1
+  adapters.python.urirun.runtime.introspect.run_registry_introspect:
+    name: run_registry_introspect
+    module: adapters.python.urirun.runtime.introspect
+    line: 53
     cyclomatic_complexity: 7
     calls_out: 11
-    calls_in: 3
-  adapters.python.urirun.runtime.v2._cmd_outdated:
-    name: _cmd_outdated
-    module: adapters.python.urirun.runtime.v2
-    line: 2249
-    cyclomatic_complexity: 8
-    calls_out: 10
     calls_in: 0
-  adapters.python.urirun.load_manifest:
-    name: load_manifest
+  adapters.python.urirun.connectors.connector_lint.lint_connector:
+    name: lint_connector
+    module: adapters.python.urirun.connectors.connector_lint
+    line: 214
+    cyclomatic_complexity: 10
+    calls_out: 20
+    calls_in: 3
+  adapters.python.urirun.host.host_db._run_command_route:
+    name: _run_command_route
+    module: adapters.python.urirun.host.host_db
+    line: 442
+    cyclomatic_complexity: 11
+    calls_out: 17
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.uri_handler:
+    name: uri_handler
+    module: adapters.python.urirun.runtime.v2
+    line: 163
+    cyclomatic_complexity: 1
+    calls_out: 8
+    calls_in: 1
+  adapters.python.urirun.host.host_db.recent_logs:
+    name: recent_logs
+    module: adapters.python.urirun.host.host_db
+    line: 358
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.connector_bindings:
+    name: connector_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 224
+    cyclomatic_complexity: 11
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urirun.host.planfile_adapter.build_ticket_payload:
+    name: build_ticket_payload
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 124
+    cyclomatic_complexity: 8
+    calls_out: 16
+    calls_in: 1
+  adapters.python.urirun.runtime.errors.stamp:
+    name: stamp
+    module: adapters.python.urirun.runtime.errors
+    line: 212
+    cyclomatic_complexity: 4
+    calls_out: 11
+    calls_in: 1
+  adapters.python.urirun.host.scheduler.shell_join:
+    name: shell_join
+    module: adapters.python.urirun.host.scheduler
+    line: 44
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 3
+  adapters.python.urirun.command:
+    name: command
     module: adapters.python.urirun
-    line: 580
+    line: 47
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.expand_binding:
+    name: expand_binding
+    module: adapters.python.urirun.runtime.v2
+    line: 909
+    cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 9
+  adapters.python.urirun.runtime.v1.run_docker_exec:
+    name: run_docker_exec
+    module: adapters.python.urirun.runtime.v1
+    line: 187
+    cyclomatic_complexity: 4
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.runtime.codegen.gen_command:
+    name: gen_command
+    module: adapters.python.urirun.runtime.codegen
+    line: 408
+    cyclomatic_complexity: 9
+    calls_out: 20
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._resolve_pip_targets:
+    name: _resolve_pip_targets
+    module: adapters.python.urirun.runtime.v2
+    line: 2177
+    cyclomatic_complexity: 10
+    calls_out: 10
+    calls_in: 2
+  adapters.python.urirun.runtime.codegen.to_proto:
+    name: to_proto
+    module: adapters.python.urirun.runtime.codegen
+    line: 306
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 0
@@ -1146,75 +2154,96 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 2
     calls_in: 2
-  adapters.python.urirun.Connector._live_bindings:
-    name: _live_bindings
-    module: adapters.python.urirun
-    line: 516
+  adapters.python.urirun.runtime.errors._cmd_recent:
+    name: _cmd_recent
+    module: adapters.python.urirun.runtime.errors
+    line: 505
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._load_entry_point_bindings:
+    name: _load_entry_point_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 264
     cyclomatic_complexity: 4
+    calls_out: 9
+    calls_in: 2
+  adapters.python.urirun.runtime.v2._run_execute:
+    name: _run_execute
+    module: adapters.python.urirun.runtime.v2
+    line: 810
+    cyclomatic_complexity: 6
     calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.Connector.manifest:
-    name: manifest
-    module: adapters.python.urirun
-    line: 524
-    cyclomatic_complexity: 11
-    calls_out: 13
     calls_in: 1
-  adapters.python.urirun.host.host_integrations._ticket_id:
-    name: _ticket_id
-    module: adapters.python.urirun.host.host_integrations
-    line: 92
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 9
-  adapters.python.urirun.host.domain_monitor._route_log:
-    name: _route_log
+  adapters.python.urirun.host.planfile_adapter.ticket_to_dict:
+    name: ticket_to_dict
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 67
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 13
+  adapters.python.urirun.host.domain_monitor.http_status:
+    name: http_status
     module: adapters.python.urirun.host.domain_monitor
-    line: 395
-    cyclomatic_complexity: 10
-    calls_out: 11
+    line: 44
+    cyclomatic_complexity: 5
+    calls_out: 15
+    calls_in: 2
+  adapters.python.urirun.host.planfile_adapter.run_dsl:
+    name: run_dsl
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 271
+    cyclomatic_complexity: 1
+    calls_out: 4
     calls_in: 0
-  adapters.php.Urirun.Urirun.Connector.bindings:
-    name: bindings
-    module: adapters.php.Urirun
-    line: 64
+  adapters.python.urirun.host.task_planner.is_destructive:
+    name: is_destructive
+    module: adapters.python.urirun.host.task_planner
+    line: 101
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  adapters.python.urirun.runtime.daemon._main:
+    name: _main
+    module: adapters.python.urirun.runtime.daemon
+    line: 105
+    cyclomatic_complexity: 9
+    calls_out: 7
+    calls_in: 0
+  adapters.python.urirun.runtime._runtime._fetch_fill:
+    name: _fetch_fill
+    module: adapters.python.urirun.runtime._runtime
+    line: 27
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._empty_input_schema:
+    name: _empty_input_schema
+    module: adapters.python.urirun.runtime.v2
+    line: 1180
     cyclomatic_complexity: 1
     calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.Connector.registry:
-    name: registry
-    module: adapters.python.urirun
-    line: 488
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.run_host_data:
-    name: run_host_data
+    calls_in: 4
+  adapters.python.urirun.runtime.v2._load_manifest:
+    name: _load_manifest
     module: adapters.python.urirun.runtime.v2
-    line: 641
+    line: 1184
     cyclomatic_complexity: 1
     calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.runtime.errors.record:
-    name: record
-    module: adapters.python.urirun.runtime.errors
-    line: 227
-    cyclomatic_complexity: 6
-    calls_out: 8
+    calls_in: 3
+  adapters.python.urirun.host.host_db.add_log:
+    name: add_log
+    module: adapters.python.urirun.host.host_db
+    line: 347
+    cyclomatic_complexity: 2
+    calls_out: 9
     calls_in: 1
-  adapters.python.urirun.runtime.v2._run_executor:
-    name: _run_executor
+  adapters.python.urirun.runtime.v2._cmd_compile:
+    name: _cmd_compile
     module: adapters.python.urirun.runtime.v2
-    line: 774
-    cyclomatic_complexity: 4
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.runtime.v1.run_docker_run:
-    name: run_docker_run
-    module: adapters.python.urirun.runtime.v1
-    line: 163
-    cyclomatic_complexity: 5
-    calls_out: 13
+    line: 2040
+    cyclomatic_complexity: 3
+    calls_out: 5
     calls_in: 0
   adapters.python.urirun.runtime.errors._cmd_info:
     name: _cmd_info
@@ -1223,629 +2252,41 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 0
-  adapters.python.urirun.host.scheduler.preview:
-    name: preview
-    module: adapters.python.urirun.host.scheduler
-    line: 81
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.ticket_to_dict:
-    name: ticket_to_dict
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 67
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 13
-  adapters.python.urirun.runtime.v2._builtin_error_route_entry:
-    name: _builtin_error_route_entry
-    module: adapters.python.urirun.runtime.v2
-    line: 703
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._cmd_scan:
-    name: _cmd_scan
-    module: adapters.python.urirun.runtime.v2
-    line: 1948
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.wait_for_input:
-    name: wait_for_input
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 255
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._is_pipx_env:
-    name: _is_pipx_env
-    module: adapters.python.urirun.runtime.v2
-    line: 1385
-    cyclomatic_complexity: 3
-    calls_out: 0
-    calls_in: 3
-  adapters.python.urirun.runtime.v2._strip_runtime_only:
-    name: _strip_runtime_only
-    module: adapters.python.urirun.runtime.v2
-    line: 874
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.merge_binding_document:
-    name: merge_binding_document
-    module: adapters.python.urirun.runtime.v2
-    line: 962
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._collision_index:
-    name: _collision_index
-    module: adapters.python.urirun.runtime.v2
-    line: 361
-    cyclomatic_complexity: 7
-    calls_out: 12
-    calls_in: 1
-  adapters.python.urirun.host.task_planner._ambiguous_plan:
-    name: _ambiguous_plan
-    module: adapters.python.urirun.host.task_planner
-    line: 131
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.host_db._validate_record:
-    name: _validate_record
+  adapters.python.urirun.host.host_db.create_dataset:
+    name: create_dataset
     module: adapters.python.urirun.host.host_db
-    line: 197
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.c.urirun_test.assert:
-    name: assert
-    module: adapters.c.urirun_test
-    line: 16
+    line: 162
     cyclomatic_complexity: 1
-    calls_out: 0
+    calls_out: 7
     calls_in: 1
-  adapters.python.urirun.host.task_planner.slug:
-    name: slug
-    module: adapters.python.urirun.host.task_planner
-    line: 50
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.errors._require_arg:
-    name: _require_arg
-    module: adapters.python.urirun.runtime.errors
-    line: 498
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
   adapters.python.urirun.runtime.v2._scan_shell_script:
     name: _scan_shell_script
     module: adapters.python.urirun.runtime.v2
-    line: 1224
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.compile_registry:
-    name: compile_registry
-    module: adapters.python.urirun.runtime.v2
-    line: 942
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 9
-  adapters.python.urirun.runtime.errors.bindings:
-    name: bindings
-    module: adapters.python.urirun.runtime.errors
-    line: 409
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.host.host_db.register_artifact:
-    name: register_artifact
-    module: adapters.python.urirun.host.host_db
-    line: 295
-    cyclomatic_complexity: 2
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.host.host_db.db_path:
-    name: db_path
-    module: adapters.python.urirun.host.host_db
-    line: 93
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 3
-  adapters.python.urirun.runtime.v2.connector_collisions:
-    name: connector_collisions
-    module: adapters.python.urirun.runtime.v2
-    line: 383
-    cyclomatic_complexity: 11
-    calls_out: 13
-    calls_in: 1
-  scripts.lint_connectors.lint_fleet:
-    name: lint_fleet
-    module: scripts.lint_connectors
-    line: 46
-    cyclomatic_complexity: 4
-    calls_out: 12
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._registry_from_module:
-    name: _registry_from_module
-    module: adapters.python.urirun.runtime.v2
-    line: 2376
-    cyclomatic_complexity: 5
-    calls_out: 15
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.update_ticket:
-    name: update_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 247
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.host.host_dashboard._first:
-    name: _first
-    module: adapters.python.urirun.host.host_dashboard
-    line: 434
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 9
-  adapters.python.urirun.runtime.v2.scan_artifacts:
-    name: scan_artifacts
-    module: adapters.python.urirun.runtime.v2
-    line: 1316
-    cyclomatic_complexity: 11
-    calls_out: 19
-    calls_in: 4
-  adapters.python.urirun.runtime.v2.uri_command:
-    name: uri_command
-    module: adapters.python.urirun.runtime.v2
-    line: 85
-    cyclomatic_complexity: 1
-    calls_out: 6
-    calls_in: 2
-  adapters.python.urirun.host.host_dashboard.serve:
-    name: serve
-    module: adapters.python.urirun.host.host_dashboard
-    line: 584
-    cyclomatic_complexity: 1
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.next_ticket:
-    name: next_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 182
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.introspect.run_registry_introspect:
-    name: run_registry_introspect
-    module: adapters.python.urirun.runtime.introspect
-    line: 53
-    cyclomatic_complexity: 7
-    calls_out: 11
-    calls_in: 0
-  adapters.python.urirun.run:
-    name: run
-    module: adapters.python.urirun
-    line: 317
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 2
-  adapters.python.urirun.testing._nonportable_routes:
-    name: _nonportable_routes
-    module: adapters.python.urirun.testing
-    line: 76
-    cyclomatic_complexity: 5
-    calls_out: 8
-    calls_in: 2
-  adapters.python.urirun.runtime.codegen._field_snake:
-    name: _field_snake
-    module: adapters.python.urirun.runtime.codegen
-    line: 58
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 6
-  adapters.python.urirun.runtime.errors.to_ticket:
-    name: to_ticket
-    module: adapters.python.urirun.runtime.errors
-    line: 382
-    cyclomatic_complexity: 7
-    calls_out: 17
-    calls_in: 1
-  adapters.python.urirun.runtime.v1.run_docker_exec:
-    name: run_docker_exec
-    module: adapters.python.urirun.runtime.v1
-    line: 147
-    cyclomatic_complexity: 4
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime._runtime._policy_allow:
-    name: _policy_allow
-    module: adapters.python.urirun.runtime._runtime
-    line: 133
-    cyclomatic_complexity: 3
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._pip_command:
-    name: _pip_command
-    module: adapters.python.urirun.runtime.v2
-    line: 2084
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  examples.matrix.verify.essential:
-    name: essential
-    module: examples.matrix.verify
-    line: 16
-    cyclomatic_complexity: 2
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.host.host_db.new_id:
-    name: new_id
-    module: adapters.python.urirun.host.host_db
-    line: 101
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 7
-  adapters.python.urirun.runtime._runtime._resolve_fetch_url:
-    name: _resolve_fetch_url
-    module: adapters.python.urirun.runtime._runtime
-    line: 196
-    cyclomatic_complexity: 8
-    calls_out: 17
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.main:
-    name: main
-    module: adapters.python.urirun.runtime.v2
-    line: 2487
-    cyclomatic_complexity: 4
-    calls_out: 6
-    calls_in: 0
-  adapters.python.urirun.runtime.v1._has_placeholders:
-    name: _has_placeholders
-    module: adapters.python.urirun.runtime.v1
-    line: 80
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.build_ticket_payload:
-    name: build_ticket_payload
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 124
-    cyclomatic_complexity: 8
-    calls_out: 16
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen._message_fields:
-    name: _message_fields
-    module: adapters.python.urirun.runtime.codegen
-    line: 182
-    cyclomatic_complexity: 9
-    calls_out: 15
-    calls_in: 2
-  adapters.python.urirun.host.domain_monitor._provider:
-    name: _provider
-    module: adapters.python.urirun.host.domain_monitor
-    line: 344
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._builtin_registry_route_entry:
-    name: _builtin_registry_route_entry
-    module: adapters.python.urirun.runtime.v2
-    line: 720
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.run_argv_template:
-    name: run_argv_template
-    module: adapters.python.urirun.runtime.v2
-    line: 533
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 0
-  adapters.python.urirun._example_payload:
-    name: _example_payload
-    module: adapters.python.urirun
-    line: 94
-    cyclomatic_complexity: 9
-    calls_out: 8
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._load_manifest:
-    name: _load_manifest
-    module: adapters.python.urirun.runtime.v2
-    line: 1173
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 3
-  adapters.python.urirun.runtime.v2._cmd_install:
-    name: _cmd_install
-    module: adapters.python.urirun.runtime.v2
-    line: 2136
-    cyclomatic_complexity: 2
-    calls_out: 11
-    calls_in: 0
-  adapters.python.urirun.runtime.errors.recent:
-    name: recent
-    module: adapters.python.urirun.runtime.errors
-    line: 367
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.host_db.add_check:
-    name: add_check
-    module: adapters.python.urirun.host.host_db
-    line: 323
-    cyclomatic_complexity: 2
-    calls_out: 9
-    calls_in: 1
-  adapters.php.Urirun.Urirun.Connector.bindingsJson:
-    name: bindingsJson
-    module: adapters.php.Urirun
-    line: 69
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter._imports:
-    name: _imports
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 22
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 3
-  adapters.python.urirun.runtime.errors.address:
-    name: address
-    module: adapters.python.urirun.runtime.errors
-    line: 203
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 5
-  adapters.python.urirun.host.host_dashboard.command:
-    name: command
-    module: adapters.python.urirun.host.host_dashboard
-    line: 590
-    cyclomatic_complexity: 8
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.runtime.v1.run_shell_template:
-    name: run_shell_template
-    module: adapters.python.urirun.runtime.v1
-    line: 137
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
-  adapters.python.urirun.host.domain_monitor._route_dns:
-    name: _route_dns
-    module: adapters.python.urirun.host.domain_monitor
-    line: 369
-    cyclomatic_complexity: 9
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime.codegen._routes:
-    name: _routes
-    module: adapters.python.urirun.runtime.codegen
-    line: 43
-    cyclomatic_complexity: 7
-    calls_out: 9
-    calls_in: 5
-  adapters.python.urirun.runtime.v2._rel:
-    name: _rel
-    module: adapters.python.urirun.runtime.v2
-    line: 1162
-    cyclomatic_complexity: 2
-    calls_out: 5
-    calls_in: 6
-  adapters.python.urirun.runtime.codegen.to_client_python:
-    name: to_client_python
-    module: adapters.python.urirun.runtime.codegen
-    line: 324
-    cyclomatic_complexity: 6
-    calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.runtime.v1.compile_registry:
-    name: compile_registry
-    module: adapters.python.urirun.runtime.v1
-    line: 342
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._manifest_candidates:
-    name: _manifest_candidates
-    module: adapters.python.urirun.runtime.v2
-    line: 1272
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.go.urirun.Bindings:
-    name: Bindings
-    module: adapters.go.urirun
-    line: 72
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen.to_openapi:
-    name: to_openapi
-    module: adapters.python.urirun.runtime.codegen
-    line: 304
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._run_validate:
-    name: _run_validate
-    module: adapters.python.urirun.runtime.v2
-    line: 765
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._scan_makefile:
-    name: _scan_makefile
-    module: adapters.python.urirun.runtime.v2
     line: 1235
-    cyclomatic_complexity: 5
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.model_from_function:
-    name: model_from_function
-    module: adapters.python.urirun.runtime.v2
-    line: 70
-    cyclomatic_complexity: 4
+    cyclomatic_complexity: 1
     calls_out: 5
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._run_parse:
-    name: _run_parse
-    module: adapters.python.urirun.runtime.v2
-    line: 741
-    cyclomatic_complexity: 2
-    calls_out: 6
     calls_in: 1
-  adapters.python.urirun.runtime.v2._binding_pairs:
-    name: _binding_pairs
-    module: adapters.python.urirun.runtime.v2
-    line: 922
-    cyclomatic_complexity: 8
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.host.host_db.recent_logs:
-    name: recent_logs
-    module: adapters.python.urirun.host.host_db
-    line: 358
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.runtime.errors._cmd_recent:
-    name: _cmd_recent
-    module: adapters.python.urirun.runtime.errors
-    line: 505
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.host_data_bindings:
-    name: host_data_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 636
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._select_entry_points:
-    name: _select_entry_points
-    module: adapters.python.urirun.runtime.v2
-    line: 255
-    cyclomatic_complexity: 5
-    calls_out: 6
-    calls_in: 3
-  adapters.python.urirun.runtime.v2._cmd_validate:
-    name: _cmd_validate
-    module: adapters.python.urirun.runtime.v2
-    line: 2005
-    cyclomatic_complexity: 7
+  adapters.python.urirun.runtime._runtime.run_shell_template:
+    name: run_shell_template
+    module: adapters.python.urirun.runtime._runtime
+    line: 172
+    cyclomatic_complexity: 3
     calls_out: 11
     calls_in: 0
-  adapters.python.urirun.host.scheduler.systemd_units:
-    name: systemd_units
-    module: adapters.python.urirun.host.scheduler
-    line: 48
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.host.host_dashboard._json_response:
-    name: _json_response
-    module: adapters.python.urirun.host.host_dashboard
-    line: 404
-    cyclomatic_complexity: 1
+  adapters.python.urirun.runtime._runtime.build_policy:
+    name: build_policy
+    module: adapters.python.urirun.runtime._runtime
+    line: 426
+    cyclomatic_complexity: 13
     calls_out: 13
-    calls_in: 6
-  adapters.python.urirun.runtime.v1._run_process:
-    name: _run_process
-    module: adapters.python.urirun.runtime.v1
-    line: 96
-    cyclomatic_complexity: 1
-    calls_out: 8
-    calls_in: 4
-  adapters.python.urirun.runtime.v2._load_json_arg:
-    name: _load_json_arg
-    module: adapters.python.urirun.runtime.v2
-    line: 1347
-    cyclomatic_complexity: 2
-    calls_out: 4
     calls_in: 3
-  adapters.python.urirun.runtime.codegen.assign_rpc_names:
-    name: assign_rpc_names
+  adapters.python.urirun.runtime.codegen._pascal:
+    name: _pascal
     module: adapters.python.urirun.runtime.codegen
-    line: 92
-    cyclomatic_complexity: 15
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.host.host_dashboard.summary:
-    name: summary
-    module: adapters.python.urirun.host.host_dashboard
-    line: 472
-    cyclomatic_complexity: 6
-    calls_out: 25
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter._normalize_labels:
-    name: _normalize_labels
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 71
-    cyclomatic_complexity: 6
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._scan_dockerfile:
-    name: _scan_dockerfile
-    module: adapters.python.urirun.runtime.v2
-    line: 1279
-    cyclomatic_complexity: 7
-    calls_out: 13
-    calls_in: 1
-  v1.js.urirun-v1.executor:
-    name: executor
-    module: v1.js.urirun-v1
-    line: 265
+    line: 35
     cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 7
-  adapters.python.urirun.runtime.v1._env_flags:
-    name: _env_flags
-    module: adapters.python.urirun.runtime.v1
-    line: 114
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 2
-  adapters.python.urirun.runtime.errors._load:
-    name: _load
-    module: adapters.python.urirun.runtime.errors
-    line: 284
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 2
-  adapters.python.urirun.host.host_db.get_dataset:
-    name: get_dataset
-    module: adapters.python.urirun.host.host_db
-    line: 185
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 3
-  adapters.python.urirun.host.host_db._schema_json:
-    name: _schema_json
-    module: adapters.python.urirun.host.host_db
-    line: 156
-    cyclomatic_complexity: 2
-    calls_out: 2
+    calls_out: 3
     calls_in: 1
-  adapters.python.urirun.runtime.v2._package_version:
-    name: _package_version
-    module: adapters.python.urirun.runtime.v2
-    line: 1373
-    cyclomatic_complexity: 3
-    calls_out: 5
-    calls_in: 3
-  adapters.python.urirun.host.planfile_adapter.create_ticket:
-    name: create_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 149
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
   adapters.python.urirun.testing.smoke:
     name: smoke
     module: adapters.python.urirun.testing
@@ -1853,48 +2294,6 @@ nodes:
     cyclomatic_complexity: 9
     calls_out: 23
     calls_in: 1
-  adapters.python.urirun.host.domain_monitor.capture_screenshot_artifact:
-    name: capture_screenshot_artifact
-    module: adapters.python.urirun.host.domain_monitor
-    line: 116
-    cyclomatic_complexity: 3
-    calls_out: 8
-    calls_in: 3
-  adapters.python.urirun.host.task_planner._derive_acceptance_criteria:
-    name: _derive_acceptance_criteria
-    module: adapters.python.urirun.host.task_planner
-    line: 173
-    cyclomatic_complexity: 5
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime.run_spawn:
-    name: run_spawn
-    module: adapters.python.urirun.runtime._runtime
-    line: 151
-    cyclomatic_complexity: 5
-    calls_out: 10
-    calls_in: 0
-  adapters.python.urirun.runtime.codegen._rpc_name:
-    name: _rpc_name
-    module: adapters.python.urirun.runtime.codegen
-    line: 76
-    cyclomatic_complexity: 5
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime.evaluate_policy:
-    name: evaluate_policy
-    module: adapters.python.urirun.runtime._runtime
-    line: 92
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 3
-  adapters.python.urirun.host.host_integrations._list_param:
-    name: _list_param
-    module: adapters.python.urirun.host.host_integrations
-    line: 84
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 3
   adapters.python.urirun.host.host_db.upsert_record:
     name: upsert_record
     module: adapters.python.urirun.host.host_db
@@ -1902,587 +2301,104 @@ nodes:
     cyclomatic_complexity: 1
     calls_out: 12
     calls_in: 1
-  adapters.python.urirun.runtime._runtime._looks_destructive:
-    name: _looks_destructive
-    module: adapters.python.urirun.runtime._runtime
-    line: 85
+  adapters.python.urirun.host.host_dashboard._dashboard_api_response:
+    name: _dashboard_api_response
+    module: adapters.python.urirun.host.host_dashboard
+    line: 521
+    cyclomatic_complexity: 13
+    calls_out: 25
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_run_or_list:
+    name: _cmd_run_or_list
+    module: adapters.python.urirun.runtime.v2
+    line: 2517
     cyclomatic_complexity: 5
-    calls_out: 10
-    calls_in: 1
-  adapters.ts.urirun.Connector.toJSON:
-    name: toJSON
-    module: adapters.ts.urirun
-    line: 34
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.runtime.v1.expand_binding:
-    name: expand_binding
-    module: adapters.python.urirun.runtime.v1
-    line: 308
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._build_parser:
-    name: _build_parser
-    module: adapters.python.urirun.runtime.v2
-    line: 1395
-    cyclomatic_complexity: 1
-    calls_out: 430
-    calls_in: 1
-  adapters.c.urirun_test.main:
-    name: main
-    module: adapters.c.urirun_test
-    line: 5
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.v1._proc_env:
-    name: _proc_env
-    module: adapters.python.urirun.runtime.v1
-    line: 87
-    cyclomatic_complexity: 3
-    calls_out: 6
-    calls_in: 1
-  scripts.lint_connectors.main:
-    name: main
-    module: scripts.lint_connectors
-    line: 85
-    cyclomatic_complexity: 14
-    calls_out: 27
-    calls_in: 0
-  adapters.python.urirun.runtime.v1._binding_pairs:
-    name: _binding_pairs
-    module: adapters.python.urirun.runtime.v1
-    line: 322
-    cyclomatic_complexity: 8
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._read_toml:
-    name: _read_toml
-    module: adapters.python.urirun.runtime.v2
-    line: 1197
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._pip_install_args:
-    name: _pip_install_args
-    module: adapters.python.urirun.runtime.v2
-    line: 2124
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 2
-  adapters.python.urirun.runtime.v1.run_fetch:
-    name: run_fetch
-    module: adapters.python.urirun.runtime.v1
-    line: 183
-    cyclomatic_complexity: 3
-    calls_out: 8
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._outdated_rows:
-    name: _outdated_rows
-    module: adapters.python.urirun.runtime.v2
-    line: 2224
-    cyclomatic_complexity: 9
-    calls_out: 14
-    calls_in: 1
-  adapters.java.Urirun.Urirun.Connector:
-    name: Connector
-    module: adapters.java.Urirun
-    line: 18
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.runtime.errors.classify:
-    name: classify
-    module: adapters.python.urirun.runtime.errors
-    line: 179
-    cyclomatic_complexity: 8
-    calls_out: 5
-    calls_in: 4
-  adapters.python.urirun.runtime.v2._binding_adapter_kind:
-    name: _binding_adapter_kind
-    module: adapters.python.urirun.runtime.v2
-    line: 892
-    cyclomatic_complexity: 6
-    calls_out: 2
-    calls_in: 1
-  scripts.lint_connectors.classify:
-    name: classify
-    module: scripts.lint_connectors
-    line: 38
-    cyclomatic_complexity: 5
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.exec._resolve:
-    name: _resolve
-    module: adapters.python.urirun.exec
-    line: 24
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.render_value:
-    name: render_value
-    module: adapters.python.urirun.runtime.v2
-    line: 493
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 3
-  adapters.python.urirun.host.host_integrations._simulate_planfile:
-    name: _simulate_planfile
-    module: adapters.python.urirun.host.host_integrations
-    line: 118
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.runtime.errors._normalize_message:
-    name: _normalize_message
-    module: adapters.python.urirun.runtime.errors
-    line: 127
-    cyclomatic_complexity: 2
-    calls_out: 6
-    calls_in: 1
-  adapters.python.urirun.runtime.errors.capture:
-    name: capture
-    module: adapters.python.urirun.runtime.errors
-    line: 461
-    cyclomatic_complexity: 1
-    calls_out: 9
-    calls_in: 0
-  adapters.python.urirun.host.task_planner.is_ambiguous:
-    name: is_ambiguous
-    module: adapters.python.urirun.host.task_planner
-    line: 95
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 1
-  adapters.python.urirun.host.task_planner.ticket_payload:
-    name: ticket_payload
-    module: adapters.python.urirun.host.task_planner
-    line: 312
-    cyclomatic_complexity: 3
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor._route_monitor:
-    name: _route_monitor
-    module: adapters.python.urirun.host.domain_monitor
-    line: 362
-    cyclomatic_complexity: 3
-    calls_out: 7
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.expand_binding:
-    name: expand_binding
-    module: adapters.python.urirun.runtime.v2
-    line: 898
-    cyclomatic_complexity: 6
-    calls_out: 6
-    calls_in: 9
-  adapters.python.urirun.runtime.v2._iter_files:
-    name: _iter_files
-    module: adapters.python.urirun.runtime.v2
-    line: 1154
-    cyclomatic_complexity: 5
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.render_sequence:
-    name: render_sequence
-    module: adapters.python.urirun.runtime.v2
-    line: 503
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.host.planfile_adapter.complete_ticket:
-    name: complete_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 202
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.host.host_db.add_log:
-    name: add_log
-    module: adapters.python.urirun.host.host_db
-    line: 347
-    cyclomatic_complexity: 2
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime._send_fetch:
-    name: _send_fetch
-    module: adapters.python.urirun.runtime._runtime
-    line: 248
-    cyclomatic_complexity: 2
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.host.host_integrations._planfile_action:
-    name: _planfile_action
-    module: adapters.python.urirun.host.host_integrations
-    line: 99
-    cyclomatic_complexity: 7
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor.dns_records:
-    name: dns_records
-    module: adapters.python.urirun.host.domain_monitor
-    line: 78
-    cyclomatic_complexity: 11
-    calls_out: 8
-    calls_in: 2
-  adapters.python.urirun.host.host_db.list_datasets:
-    name: list_datasets
-    module: adapters.python.urirun.host.host_db
-    line: 178
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.handler:
-    name: handler
-    module: adapters.python.urirun
-    line: 72
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 9
-  adapters.python.urirun.runtime.errors.fix_hints:
-    name: fix_hints
-    module: adapters.python.urirun.runtime.errors
-    line: 300
-    cyclomatic_complexity: 5
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen.gen_command:
-    name: gen_command
-    module: adapters.python.urirun.runtime.codegen
-    line: 402
-    cyclomatic_complexity: 9
-    calls_out: 20
-    calls_in: 0
-  adapters.python.urirun.connector_emit:
-    name: connector_emit
-    module: adapters.python.urirun
-    line: 587
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 5
-  adapters.python.urirun.runtime.v2.list_routes:
-    name: list_routes
-    module: adapters.python.urirun.runtime.v2
-    line: 867
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.connector_health:
-    name: connector_health
-    module: adapters.python.urirun.runtime.v2
-    line: 334
-    cyclomatic_complexity: 5
-    calls_out: 13
-    calls_in: 4
-  adapters.python.urirun.host.host_db.read_only_sql:
-    name: read_only_sql
-    module: adapters.python.urirun.host.host_db
-    line: 396
-    cyclomatic_complexity: 5
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.get_ticket:
-    name: get_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 187
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.c.urirun.memcpy:
-    name: memcpy
-    module: adapters.c.urirun
-    line: 7
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime._matches_any:
-    name: _matches_any
-    module: adapters.python.urirun.runtime._runtime
-    line: 78
-    cyclomatic_complexity: 3
-    calls_out: 1
-    calls_in: 2
-  adapters.python.urirun.host.domain_monitor._domain:
-    name: _domain
-    module: adapters.python.urirun.host.domain_monitor
-    line: 36
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 3
-  adapters.python.urirun.host.host_db.rows_dict:
-    name: rows_dict
-    module: adapters.python.urirun.host.host_db
-    line: 137
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 7
-  adapters.python.urirun.runtime._runtime._make_secret_injector:
-    name: _make_secret_injector
-    module: adapters.python.urirun.runtime._runtime
-    line: 213
-    cyclomatic_complexity: 3
     calls_out: 12
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor.now_id:
-    name: now_id
-    module: adapters.python.urirun.host.domain_monitor
-    line: 24
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun.parse_uri:
-    name: parse_uri
-    module: adapters.python.urirun
-    line: 12
-    cyclomatic_complexity: 7
-    calls_out: 13
-    calls_in: 1
+    calls_in: 0
   adapters.python.urirun.runtime.v2.write_or_emit_binding:
     name: write_or_emit_binding
     module: adapters.python.urirun.runtime.v2
-    line: 969
+    line: 980
     cyclomatic_complexity: 3
     calls_out: 7
     calls_in: 2
-  adapters.python.urirun.dispatch:
-    name: dispatch
-    module: adapters.python.urirun
-    line: 35
-    cyclomatic_complexity: 4
-    calls_out: 10
-    calls_in: 0
-  adapters.python.urirun.host.host_db.route_db_path:
-    name: route_db_path
-    module: adapters.python.urirun.host.host_db
-    line: 409
+  adapters.python.urirun.runtime.v2.pypi_binding:
+    name: pypi_binding
+    module: adapters.python.urirun.runtime.v2
+    line: 1075
     cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.domain_monitor_bindings:
+    name: domain_monitor_bindings
+    module: adapters.python.urirun.runtime.v2
+    line: 645
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.host.planfile_adapter._normalize_labels:
+    name: _normalize_labels
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 71
+    cyclomatic_complexity: 6
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.runtime.v2.merge_binding_document:
+    name: merge_binding_document
+    module: adapters.python.urirun.runtime.v2
+    line: 973
+    cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 1
-  adapters.js.match:
-    name: match
-    module: adapters.js
-    line: 5
-    cyclomatic_complexity: 2
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.host.host_db.recent_checks:
-    name: recent_checks
-    module: adapters.python.urirun.host.host_db
-    line: 334
-    cyclomatic_complexity: 2
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.host.host_dashboard._host_db:
-    name: _host_db
-    module: adapters.python.urirun.host.host_dashboard
-    line: 439
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 4
-  adapters.python.urirun.runtime.v2.validate_input:
-    name: validate_input
-    module: adapters.python.urirun.runtime.v2
-    line: 474
-    cyclomatic_complexity: 6
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.host.task_planner._derive_plan_labels:
-    name: _derive_plan_labels
-    module: adapters.python.urirun.host.task_planner
-    line: 156
-    cyclomatic_complexity: 7
-    calls_out: 6
-    calls_in: 1
-  adapters.python.urirun.compile_registry:
-    name: compile_registry
+  adapters.python.urirun.error_bindings:
+    name: error_bindings
     module: adapters.python.urirun
-    line: 296
+    line: 310
     cyclomatic_complexity: 1
     calls_out: 1
     calls_in: 1
-  adapters.python.urirun.host.host_db.connect:
-    name: connect
-    module: adapters.python.urirun.host.host_db
-    line: 105
-    cyclomatic_complexity: 1
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._run_resolve_route:
-    name: _run_resolve_route
-    module: adapters.python.urirun.runtime.v2
-    line: 752
-    cyclomatic_complexity: 4
-    calls_out: 5
-    calls_in: 1
-  adapters.python.urirun.host.host_dashboard.create_handler:
-    name: create_handler
-    module: adapters.python.urirun.host.host_dashboard
-    line: 550
-    cyclomatic_complexity: 1
-    calls_out: 17
-    calls_in: 1
-  adapters.python.urirun.host.scheduler.cron_line:
-    name: cron_line
+  adapters.python.urirun.host.scheduler.preview:
+    name: preview
     module: adapters.python.urirun.host.scheduler
-    line: 76
-    cyclomatic_complexity: 1
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen.proto_from_registry:
-    name: proto_from_registry
-    module: adapters.python.urirun.runtime.codegen
-    line: 226
-    cyclomatic_complexity: 13
-    calls_out: 25
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.run_error_store:
-    name: run_error_store
-    module: adapters.python.urirun.runtime.v2
-    line: 610
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 0
-  adapters.python.urirun.result_data:
-    name: result_data
-    module: adapters.python.urirun
-    line: 164
-    cyclomatic_complexity: 8
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.host.domain_monitor.expected_records:
-    name: expected_records
-    module: adapters.python.urirun.host.domain_monitor
-    line: 95
-    cyclomatic_complexity: 8
-    calls_out: 15
-    calls_in: 3
-  adapters.python.urirun.host.host_db._run_command_route:
-    name: _run_command_route
-    module: adapters.python.urirun.host.host_db
-    line: 442
-    cyclomatic_complexity: 11
-    calls_out: 17
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._load_entry_point_bindings:
-    name: _load_entry_point_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 264
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.uri_handler:
-    name: uri_handler
-    module: adapters.python.urirun.runtime.v2
-    line: 163
-    cyclomatic_complexity: 1
-    calls_out: 8
-    calls_in: 1
-  adapters.python.urirun.connector:
-    name: connector
-    module: adapters.python.urirun
-    line: 569
-    cyclomatic_complexity: 2
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.host.task_planner.create_tickets_from_plan:
-    name: create_tickets_from_plan
-    module: adapters.python.urirun.host.task_planner
-    line: 344
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.v2.build_binding_document:
-    name: build_binding_document
-    module: adapters.python.urirun.runtime.v2
-    line: 946
+    line: 81
     cyclomatic_complexity: 3
     calls_out: 5
-    calls_in: 7
-  adapters.go.urirun.BindingsJSON:
-    name: BindingsJSON
-    module: adapters.go.urirun
-    line: 77
-    cyclomatic_complexity: 1
-    calls_out: 4
     calls_in: 0
-  adapters.python.urirun.host.task_planner._json_from_text:
-    name: _json_from_text
-    module: adapters.python.urirun.host.task_planner
-    line: 82
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.runtime.v1.resolve_params:
-    name: resolve_params
-    module: adapters.python.urirun.runtime.v1
-    line: 43
-    cyclomatic_complexity: 11
-    calls_out: 13
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._parse_dockerfile_labels:
-    name: _parse_dockerfile_labels
-    module: adapters.python.urirun.runtime.v2
-    line: 1259
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._builtin_binding_items:
-    name: _builtin_binding_items
-    module: adapters.python.urirun.runtime.v2
-    line: 2360
+  adapters.python.urirun.runtime.errors._cmd_bindings:
+    name: _cmd_bindings
+    module: adapters.python.urirun.runtime.errors
+    line: 536
     cyclomatic_complexity: 2
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._resolve_error_action:
-    name: _resolve_error_action
-    module: adapters.python.urirun.runtime.v2
-    line: 561
-    cyclomatic_complexity: 10
-    calls_out: 7
-    calls_in: 1
-  adapters.c.urirun.is_path_end:
-    name: is_path_end
-    module: adapters.c.urirun
-    line: 12
-    cyclomatic_complexity: 3
-    calls_out: 0
-    calls_in: 1
-  adapters.python.urirun.runtime.v2._error_ticket:
-    name: _error_ticket
-    module: adapters.python.urirun.runtime.v2
-    line: 593
-    cyclomatic_complexity: 3
-    calls_out: 4
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._cmd_connectors_doctor:
-    name: _cmd_connectors_doctor
-    module: adapters.python.urirun.runtime.v2
-    line: 2305
-    cyclomatic_complexity: 11
-    calls_out: 10
-    calls_in: 1
-  adapters.python.urirun.runtime._runtime._truncate:
-    name: _truncate
-    module: adapters.python.urirun.runtime._runtime
-    line: 143
-    cyclomatic_complexity: 3
     calls_out: 2
-    calls_in: 6
-  adapters.python.urirun.Connector._dispatch_cli:
-    name: _dispatch_cli
-    module: adapters.python.urirun
-    line: 453
-    cyclomatic_complexity: 11
-    calls_out: 16
     calls_in: 0
-  adapters.python.urirun.runtime.v2.parse_param_declaration:
-    name: parse_param_declaration
+  adapters.python.urirun.runtime.codegen._field_snake:
+    name: _field_snake
+    module: adapters.python.urirun.runtime.codegen
+    line: 58
+    cyclomatic_complexity: 1
+    calls_out: 5
+    calls_in: 6
+  adapters.python.urirun.host.host_db.new_id:
+    name: new_id
+    module: adapters.python.urirun.host.host_db
+    line: 101
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 7
+  adapters.python.urirun.runtime.v2._scan_makefile:
+    name: _scan_makefile
     module: adapters.python.urirun.runtime.v2
-    line: 988
-    cyclomatic_complexity: 8
-    calls_out: 13
+    line: 1246
+    cyclomatic_complexity: 5
+    calls_out: 11
     calls_in: 1
+  adapters.python.urirun.host.task_planner.plan_chat_request:
+    name: plan_chat_request
+    module: adapters.python.urirun.host.task_planner
+    line: 292
+    cyclomatic_complexity: 3
+    calls_out: 4
+    calls_in: 0
   adapters.python.urirun.runtime.v2._document_binding_from_expanded:
     name: _document_binding_from_expanded
     module: adapters.python.urirun.runtime.v2
@@ -2490,132 +2406,6 @@ nodes:
     cyclomatic_complexity: 4
     calls_out: 5
     calls_in: 1
-  adapters.python.urirun.runtime.errors.stamp:
-    name: stamp
-    module: adapters.python.urirun.runtime.errors
-    line: 212
-    cyclomatic_complexity: 4
-    calls_out: 11
-    calls_in: 1
-  adapters.python.urirun.runtime.codegen.to_handlers:
-    name: to_handlers
-    module: adapters.python.urirun.runtime.codegen
-    line: 363
-    cyclomatic_complexity: 10
-    calls_out: 13
-    calls_in: 0
-  adapters.python.urirun.host.host_dashboard._mesh:
-    name: _mesh
-    module: adapters.python.urirun.host.host_dashboard
-    line: 445
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 2
-  adapters.python.urirun.host.domain_monitor._screenshot_artifacts:
-    name: _screenshot_artifacts
-    module: adapters.python.urirun.host.domain_monitor
-    line: 227
-    cyclomatic_complexity: 4
-    calls_out: 2
-    calls_in: 1
-  adapters.python.urirun._connector_cli_routes:
-    name: _connector_cli_routes
-    module: adapters.python.urirun
-    line: 637
-    cyclomatic_complexity: 12
-    calls_out: 17
-    calls_in: 1
-  adapters.python.urirun.runtime.v2.command_binding_from_cli:
-    name: command_binding_from_cli
-    module: adapters.python.urirun.runtime.v2
-    line: 1042
-    cyclomatic_complexity: 5
-    calls_out: 7
-    calls_in: 1
-  adapters.python.urirun.shell:
-    name: shell
-    module: adapters.python.urirun
-    line: 65
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 0
-  adapters.python.urirun.runtime.v1.load_registry_arg:
-    name: load_registry_arg
-    module: adapters.python.urirun.runtime.v1
-    line: 346
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.ready_ticket:
-    name: ready_ticket
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 266
-    cyclomatic_complexity: 2
-    calls_out: 3
-    calls_in: 0
-  adapters.python.urirun.runtime.v2._scan_package_json:
-    name: _scan_package_json
-    module: adapters.python.urirun.runtime.v2
-    line: 1178
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.testing._resolve_bindings:
-    name: _resolve_bindings
-    module: adapters.python.urirun.testing
-    line: 53
-    cyclomatic_complexity: 5
-    calls_out: 8
-    calls_in: 2
-  adapters.python.urirun.runtime.v2._load_many:
-    name: _load_many
-    module: adapters.python.urirun.runtime.v2
-    line: 1355
-    cyclomatic_complexity: 4
-    calls_out: 9
-    calls_in: 2
-  adapters.python.urirun.host.host_dashboard._planfile_adapter:
-    name: _planfile_adapter
-    module: adapters.python.urirun.host.host_dashboard
-    line: 451
-    cyclomatic_complexity: 1
-    calls_out: 0
-    calls_in: 2
-  adapters.python.urirun.runtime.v2.planfile_task_bindings:
-    name: planfile_task_bindings
-    module: adapters.python.urirun.runtime.v2
-    line: 627
-    cyclomatic_complexity: 1
-    calls_out: 2
-    calls_in: 0
-  adapters.python.urirun.error_bindings:
-    name: error_bindings
-    module: adapters.python.urirun
-    line: 282
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.python.urirun.validate_binding_document:
-    name: validate_binding_document
-    module: adapters.python.urirun
-    line: 310
-    cyclomatic_complexity: 1
-    calls_out: 1
-    calls_in: 1
-  adapters.js.parseUri:
-    name: parseUri
-    module: adapters.js
-    line: 4
-    cyclomatic_complexity: 8
-    calls_out: 9
-    calls_in: 1
-  adapters.python.urirun.host.host_db.connection:
-    name: connection
-    module: adapters.python.urirun.host.host_db
-    line: 115
-    cyclomatic_complexity: 1
-    calls_out: 3
-    calls_in: 15
   adapters.python.urirun.runtime.v2._handler_kwargs:
     name: _handler_kwargs
     module: adapters.python.urirun.runtime.v2
@@ -2623,12 +2413,47 @@ nodes:
     cyclomatic_complexity: 7
     calls_out: 5
     calls_in: 2
-  adapters.python.urirun.runtime._runtime._build_fetch_body:
-    name: _build_fetch_body
-    module: adapters.python.urirun.runtime._runtime
-    line: 236
+  adapters.python.urirun.result_degraded:
+    name: result_degraded
+    module: adapters.python.urirun
+    line: 189
+    cyclomatic_complexity: 9
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.handler:
+    name: handler
+    module: adapters.python.urirun
+    line: 72
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 9
+  adapters.python.urirun.host.domain_monitor._route_log:
+    name: _route_log
+    module: adapters.python.urirun.host.domain_monitor
+    line: 395
+    cyclomatic_complexity: 10
+    calls_out: 11
+    calls_in: 0
+  adapters.python.urirun.runtime.v2_service._post:
+    name: _post
+    module: adapters.python.urirun.runtime.v2_service
+    line: 50
     cyclomatic_complexity: 4
-    calls_out: 9
+    calls_out: 11
+    calls_in: 4
+  adapters.python.urirun.testing.assert_smoke:
+    name: assert_smoke
+    module: adapters.python.urirun.testing
+    line: 162
+    cyclomatic_complexity: 2
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._read_toml:
+    name: _read_toml
+    module: adapters.python.urirun.runtime.v2
+    line: 1208
+    cyclomatic_complexity: 2
+    calls_out: 3
     calls_in: 1
   adapters.js.fn:
     name: fn
@@ -2637,48 +2462,244 @@ nodes:
     cyclomatic_complexity: 2
     calls_out: 1
     calls_in: 9
-  adapters.python.urirun.runtime.codegen._uri_parts:
-    name: _uri_parts
-    module: adapters.python.urirun.runtime.codegen
-    line: 68
+  adapters.python.urirun.host.task_planner._derive_acceptance_criteria:
+    name: _derive_acceptance_criteria
+    module: adapters.python.urirun.host.task_planner
+    line: 173
     cyclomatic_complexity: 5
-    calls_out: 3
-    calls_in: 5
-  adapters.python.urirun.runtime.errors._match_message_rules:
-    name: _match_message_rules
-    module: adapters.python.urirun.runtime.errors
-    line: 161
-    cyclomatic_complexity: 4
-    calls_out: 1
-    calls_in: 2
-  adapters.python.urirun.host.task_planner.is_destructive:
-    name: is_destructive
-    module: adapters.python.urirun.host.task_planner
-    line: 101
-    cyclomatic_complexity: 4
-    calls_out: 4
-    calls_in: 1
-  adapters.python.urirun.host.planfile_adapter.list_tickets:
-    name: list_tickets
-    module: adapters.python.urirun.host.planfile_adapter
-    line: 159
-    cyclomatic_complexity: 9
     calls_out: 5
-    calls_in: 0
-  adapters.python.urirun.host.task_planner.plan_chat_request:
-    name: plan_chat_request
-    module: adapters.python.urirun.host.task_planner
-    line: 279
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._run_parse:
+    name: _run_parse
+    module: adapters.python.urirun.runtime.v2
+    line: 752
+    cyclomatic_complexity: 2
+    calls_out: 6
+    calls_in: 1
+  adapters.python.urirun._connector_run_command:
+    name: _connector_run_command
+    module: adapters.python.urirun
+    line: 691
+    cyclomatic_complexity: 9
+    calls_out: 12
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._error_ticket:
+    name: _error_ticket
+    module: adapters.python.urirun.runtime.v2
+    line: 593
     cyclomatic_complexity: 3
     calls_out: 4
     calls_in: 0
-  adapters.python.urirun.runtime.errors._errno_category:
-    name: _errno_category
-    module: adapters.python.urirun.runtime.errors
-    line: 169
+  adapters.python.urirun.runtime.v2._builtin_error_route_entry:
+    name: _builtin_error_route_entry
+    module: adapters.python.urirun.runtime.v2
+    line: 714
+    cyclomatic_complexity: 4
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._package_version:
+    name: _package_version
+    module: adapters.python.urirun.runtime.v2
+    line: 1384
+    cyclomatic_complexity: 3
+    calls_out: 5
+    calls_in: 3
+  adapters.python.urirun.host.domain_monitor._route_flow:
+    name: _route_flow
+    module: adapters.python.urirun.host.domain_monitor
+    line: 407
+    cyclomatic_complexity: 4
+    calls_out: 20
+    calls_in: 0
+  adapters.python.urirun.host.planfile_adapter.claim_ticket:
+    name: claim_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 192
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urirun.host.host_integrations._list_param:
+    name: _list_param
+    module: adapters.python.urirun.host.host_integrations
+    line: 84
     cyclomatic_complexity: 6
+    calls_out: 6
+    calls_in: 3
+  adapters.python.urirun.host.planfile_adapter._model_dict:
+    name: _model_dict
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 59
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.host.host_dashboard.serve:
+    name: serve
+    module: adapters.python.urirun.host.host_dashboard
+    line: 584
+    cyclomatic_complexity: 1
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.host.host_db.run_uri_route:
+    name: run_uri_route
+    module: adapters.python.urirun.host.host_db
+    line: 478
+    cyclomatic_complexity: 6
+    calls_out: 8
+    calls_in: 0
+  adapters.python.urirun.runtime.v2._cmd_doctor:
+    name: _cmd_doctor
+    module: adapters.python.urirun.runtime.v2
+    line: 2128
+    cyclomatic_complexity: 12
+    calls_out: 18
+    calls_in: 0
+  adapters.python.urirun.host.host_db.list_artifacts:
+    name: list_artifacts
+    module: adapters.python.urirun.host.host_db
+    line: 310
+    cyclomatic_complexity: 2
+    calls_out: 7
+    calls_in: 1
+  adapters.python.urirun.host.domain_monitor._provider:
+    name: _provider
+    module: adapters.python.urirun.host.domain_monitor
+    line: 344
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 1
+  adapters.python.urirun.connector_emit:
+    name: connector_emit
+    module: adapters.python.urirun
+    line: 615
+    cyclomatic_complexity: 1
+    calls_out: 1
+    calls_in: 5
+  adapters.python.urirun.runtime.errors.store_path:
+    name: store_path
+    module: adapters.python.urirun.runtime.errors
+    line: 123
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 2
+  adapters.python.urirun.host.planfile_adapter.get_ticket:
+    name: get_ticket
+    module: adapters.python.urirun.host.planfile_adapter
+    line: 187
+    cyclomatic_complexity: 2
+    calls_out: 3
+    calls_in: 0
+  adapters.python.urirun.host.host_db.add_check:
+    name: add_check
+    module: adapters.python.urirun.host.host_db
+    line: 323
+    cyclomatic_complexity: 2
+    calls_out: 9
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._outdated_rows:
+    name: _outdated_rows
+    module: adapters.python.urirun.runtime.v2
+    line: 2305
+    cyclomatic_complexity: 9
+    calls_out: 14
+    calls_in: 1
+  adapters.python.urirun.host.scheduler.systemd_units:
+    name: systemd_units
+    module: adapters.python.urirun.host.scheduler
+    line: 48
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 1
+  adapters.python.urirun.runtime.codegen._rpc_name:
+    name: _rpc_name
+    module: adapters.python.urirun.runtime.codegen
+    line: 76
+    cyclomatic_complexity: 5
+    calls_out: 2
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._cmd_upgrade:
+    name: _cmd_upgrade
+    module: adapters.python.urirun.runtime.v2
+    line: 2240
+    cyclomatic_complexity: 14
+    calls_out: 27
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.uri_command:
+    name: uri_command
+    module: adapters.python.urirun.runtime.v2
+    line: 85
+    cyclomatic_complexity: 1
+    calls_out: 6
+    calls_in: 2
+  adapters.python.urirun.host.domain_monitor.default_url:
+    name: default_url
+    module: adapters.python.urirun.host.domain_monitor
+    line: 40
+    cyclomatic_complexity: 2
+    calls_out: 1
+    calls_in: 3
+  adapters.ts.urirun.Connector.toJSON:
+    name: toJSON
+    module: adapters.ts.urirun
+    line: 34
+    cyclomatic_complexity: 1
+    calls_out: 2
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.render_argv:
+    name: render_argv
+    module: adapters.python.urirun.runtime.v2
+    line: 510
+    cyclomatic_complexity: 7
+    calls_out: 11
+    calls_in: 3
+  adapters.python.urirun.runtime.v2._registry_from_module:
+    name: _registry_from_module
+    module: adapters.python.urirun.runtime.v2
+    line: 2460
+    cyclomatic_complexity: 5
+    calls_out: 15
+    calls_in: 1
+  adapters.python.urirun.host.scheduler.build_loop_command:
+    name: build_loop_command
+    module: adapters.python.urirun.host.scheduler
+    line: 14
+    cyclomatic_complexity: 4
+    calls_out: 4
+    calls_in: 1
+  v1.js.urirun-v1.executor:
+    name: executor
+    module: v1.js.urirun-v1
+    line: 265
+    cyclomatic_complexity: 3
+    calls_out: 1
+    calls_in: 7
+  adapters.python.urirun.host.domain_monitor.run_uri_route:
+    name: run_uri_route
+    module: adapters.python.urirun.host.domain_monitor
+    line: 465
+    cyclomatic_complexity: 5
+    calls_out: 5
+    calls_in: 0
+  adapters.python.urirun.runtime.v2.parse_param_declaration:
+    name: parse_param_declaration
+    module: adapters.python.urirun.runtime.v2
+    line: 999
+    cyclomatic_complexity: 8
+    calls_out: 13
+    calls_in: 1
+  adapters.python.urirun.runtime.v2._manifest_candidates:
+    name: _manifest_candidates
+    module: adapters.python.urirun.runtime.v2
+    line: 1283
+    cyclomatic_complexity: 2
     calls_out: 3
     calls_in: 1
+  adapters.python.urirun.runtime.v2._error_search:
+    name: _error_search
+    module: adapters.python.urirun.runtime.v2
+    line: 578
+    cyclomatic_complexity: 4
+    calls_out: 5
+    calls_in: 0
 edges:
 - caller: examples.matrix.verify.main
   callee: adapters.python.urirun.validate_binding_document
@@ -2754,6 +2775,9 @@ edges:
   call_type: resolved
 - caller: adapters.python.urirun.policy
   callee: adapters.python.urirun.runtime._runtime.build_policy
+  call_type: resolved
+- caller: adapters.python.urirun.result_degraded
+  callee: adapters.python.urirun.result_data
   call_type: resolved
 - caller: adapters.python.urirun.run_steps
   callee: adapters.python.urirun.run
@@ -3251,6 +3275,9 @@ edges:
   callee: adapters.python.urirun.host.task_planner._derive_acceptance_criteria
   call_type: resolved
 - caller: adapters.python.urirun.host.task_planner.llm_plan_chat_request
+  callee: adapters.python.urirun.host.task_planner.quiet_completion
+  call_type: resolved
+- caller: adapters.python.urirun.host.task_planner.llm_plan_chat_request
   callee: adapters.python.urirun.host.task_planner._json_from_text
   call_type: resolved
 - caller: adapters.python.urirun.host.task_planner.plan_chat_request
@@ -3426,6 +3453,9 @@ edges:
   call_type: resolved
 - caller: adapters.python.urirun.runtime.v1._proc_env
   callee: adapters.python.urirun.runtime.v1.render_value
+  call_type: resolved
+- caller: adapters.python.urirun.runtime.v1._run_process
+  callee: adapters.python.urirun.runtime.v1._run_process_streaming
   call_type: resolved
 - caller: adapters.python.urirun.runtime.v1._run_process
   callee: adapters.python.urirun.runtime.v1._proc_env
@@ -3629,9 +3659,12 @@ edges:
   callee: adapters.python.urirun.runtime.codegen._rpc_name
   call_type: resolved
 - caller: adapters.python.urirun.runtime.codegen.assign_rpc_names
+  callee: adapters.python.urirun.runtime.codegen._disambiguate_rpc_name
+  call_type: resolved
+- caller: adapters.python.urirun.runtime.codegen._disambiguate_rpc_name
   callee: adapters.python.urirun.runtime.codegen._uri_parts
   call_type: resolved
-- caller: adapters.python.urirun.runtime.codegen.assign_rpc_names
+- caller: adapters.python.urirun.runtime.codegen._disambiguate_rpc_name
   callee: adapters.python.urirun.runtime.codegen._msg_pascal
   call_type: resolved
 - caller: adapters.python.urirun.runtime.codegen._field_type
@@ -4168,18 +4201,6 @@ edges:
 - caller: adapters.python.urirun.runtime._runtime.run_fetch
   callee: adapters.python.urirun.runtime._runtime._make_secret_injector
   call_type: resolved
-- caller: adapters.python.urirun.runtime._runtime.run_fetch
-  callee: adapters.python.urirun.runtime._runtime._build_fetch_body
-  call_type: resolved
-- caller: adapters.python.urirun.runtime._runtime.run_fetch
-  callee: adapters.python.urirun.runtime._runtime._send_fetch
-  call_type: resolved
-- caller: adapters.python.urirun.runtime._runtime.run_fetch
-  callee: adapters.python.urirun.runtime._runtime._fetch_fill
-  call_type: resolved
-- caller: adapters.python.urirun.runtime._runtime._hydrate_local_function
-  callee: adapters.python.urirun.runtime.v2._handler_kwargs
-  call_type: resolved
 modules:
   adapters.c.urirun:
   - adapters.c.urirun.copy_token
@@ -4223,6 +4244,7 @@ modules:
   - adapters.python.urirun.parse_uri
   - adapters.python.urirun.policy
   - adapters.python.urirun.result_data
+  - adapters.python.urirun.result_degraded
   - adapters.python.urirun.run
   - adapters.python.urirun.run_steps
   - adapters.python.urirun.shell
@@ -4354,6 +4376,7 @@ modules:
   - adapters.python.urirun.host.task_planner.llm_plan_chat_request
   - adapters.python.urirun.host.task_planner.normalize_text
   - adapters.python.urirun.host.task_planner.plan_chat_request
+  - adapters.python.urirun.host.task_planner.quiet_completion
   - adapters.python.urirun.host.task_planner.slug
   - adapters.python.urirun.host.task_planner.ticket_payload
   adapters.python.urirun.node.mesh:
@@ -4362,7 +4385,6 @@ modules:
   - adapters.python.urirun.runtime._runtime._build_fetch_body
   - adapters.python.urirun.runtime._runtime._fetch_fill
   - adapters.python.urirun.runtime._runtime._fetch_render
-  - adapters.python.urirun.runtime._runtime._hydrate_local_function
   - adapters.python.urirun.runtime._runtime._looks_destructive
   - adapters.python.urirun.runtime._runtime._make_secret_injector
   - adapters.python.urirun.runtime._runtime._matches_any
@@ -4379,6 +4401,7 @@ modules:
   - adapters.python.urirun.runtime._runtime.run_shell_template
   - adapters.python.urirun.runtime._runtime.run_spawn
   adapters.python.urirun.runtime.codegen:
+  - adapters.python.urirun.runtime.codegen._disambiguate_rpc_name
   - adapters.python.urirun.runtime.codegen._field_snake
   - adapters.python.urirun.runtime.codegen._field_type
   - adapters.python.urirun.runtime.codegen._handler_signature
@@ -4444,6 +4467,7 @@ modules:
   - adapters.python.urirun.runtime.v1._params_spec
   - adapters.python.urirun.runtime.v1._proc_env
   - adapters.python.urirun.runtime.v1._run_process
+  - adapters.python.urirun.runtime.v1._run_process_streaming
   - adapters.python.urirun.runtime.v1.compile_registry
   - adapters.python.urirun.runtime.v1.expand_binding
   - adapters.python.urirun.runtime.v1.expand_bindings
@@ -4653,6 +4677,7 @@ entry_points:
 - adapters.python.urirun.connectors.connect_catalog._cmd_show
 - adapters.python.urirun.connectors.connect_catalog.connectors_command
 - adapters.python.urirun.connectors.connector_lint.lint_command
+- adapters.python.urirun.connectors.connector_lint.verify_command
 - adapters.python.urirun.connectors.connector_scaffold._go_files
 - adapters.python.urirun.connectors.connector_scaffold._js_files
 - adapters.python.urirun.connectors.connector_scaffold._php_files
@@ -4663,6 +4688,8 @@ entry_points:
 - adapters.python.urirun.connectors.connector_smoke.smoke_command
 - adapters.python.urirun.connectors.declarative.from_spec_command
 - adapters.python.urirun.connectors.openapi_import.add_openapi_command
+- adapters.python.urirun.connectors.resolver.index_command
+- adapters.python.urirun.connectors.resolver.resolve_command
 - adapters.python.urirun.dispatch
 - adapters.python.urirun.entry_point_binding_document
 - adapters.python.urirun.entry_point_bindings
@@ -4704,18 +4731,46 @@ entry_points:
 - adapters.python.urirun.host.scheduler.preview
 - adapters.python.urirun.host.task_planner.create_tickets_from_plan
 - adapters.python.urirun.host.task_planner.plan_chat_request
-- adapters.python.urirun.host.task_planner.slug
 - adapters.python.urirun.list_routes
 - adapters.python.urirun.load_manifest
+- adapters.python.urirun.node._util.now_id
+- adapters.python.urirun.node._util.slug
+- adapters.python.urirun.node.client.NodeClient.__init__
+- adapters.python.urirun.node.client.NodeClient._auth
+- adapters.python.urirun.node.client.NodeClient.cancel
+- adapters.python.urirun.node.client.NodeClient.concretize
+- adapters.python.urirun.node.client.NodeClient.deploy
+- adapters.python.urirun.node.client.NodeClient.ensure_scheme
+- adapters.python.urirun.node.client.NodeClient.get
+- adapters.python.urirun.node.client.NodeClient.push_folder
+- adapters.python.urirun.node.client.NodeClient.recent_log
+- adapters.python.urirun.node.client.NodeClient.request_capability
+- adapters.python.urirun.node.client.NodeClient.resolve_refs
+- adapters.python.urirun.node.client.NodeClient.routes
+- adapters.python.urirun.node.client.NodeClient.run
+- adapters.python.urirun.node.client.NodeClient.run_async
+- adapters.python.urirun.node.client.NodeClient.run_ensuring
+- adapters.python.urirun.node.client.NodeClient.schemes
+- adapters.python.urirun.node.client.NodeClient.status
+- adapters.python.urirun.node.client.NodeClient.stream_run
+- adapters.python.urirun.node.client.NodeClient.value
+- adapters.python.urirun.node.client.NodeClient.watch
+- adapters.python.urirun.node.client._post
 - adapters.python.urirun.node.keyauth.add_authorized
 - adapters.python.urirun.node.keyauth.available
+- adapters.python.urirun.node.keyauth.new_enroll_token
 - adapters.python.urirun.node.keyauth.public_openssh
 - adapters.python.urirun.node.keyauth.sign
+- adapters.python.urirun.node.keyauth.token_matches
 - adapters.python.urirun.node.keyauth.verify_request
 - adapters.python.urirun.node.manage.bindings
+- adapters.python.urirun.node.manage.connector_discover
 - adapters.python.urirun.node.manage.connector_install
+- adapters.python.urirun.node.manage.install_policy
 - adapters.python.urirun.node.manage.package_install
 - adapters.python.urirun.node.manage.package_list
+- adapters.python.urirun.node.manage.registry_adopt
+- adapters.python.urirun.node.manage.registry_installed
 - adapters.python.urirun.node.manage.runtime_info
 - adapters.python.urirun.node.mesh.EventHub.__init__
 - adapters.python.urirun.node.mesh.EventHub.count
@@ -4726,17 +4781,23 @@ entry_points:
 - adapters.python.urirun.node.mesh.EventHub.unsubscribe
 - adapters.python.urirun.node.mesh.NodeContext.__init__
 - adapters.python.urirun.node.mesh.NodeHandler._admin_ok
+- adapters.python.urirun.node.mesh.NodeHandler._dispatch_control_uri
 - adapters.python.urirun.node.mesh.NodeHandler._get
 - adapters.python.urirun.node.mesh.NodeHandler._get_errors
 - adapters.python.urirun.node.mesh.NodeHandler._guarded
+- adapters.python.urirun.node.mesh.NodeHandler._handle_adopt
 - adapters.python.urirun.node.mesh.NodeHandler._handle_deploy
 - adapters.python.urirun.node.mesh.NodeHandler._handle_enroll
+- adapters.python.urirun.node.mesh.NodeHandler._handle_need
 - adapters.python.urirun.node.mesh.NodeHandler._handle_run
+- adapters.python.urirun.node.mesh.NodeHandler._handle_run_control
 - adapters.python.urirun.node.mesh.NodeHandler._post
 - adapters.python.urirun.node.mesh.NodeHandler._publish_run
+- adapters.python.urirun.node.mesh.NodeHandler._respond_async
 - adapters.python.urirun.node.mesh.NodeHandler._run_ok
 - adapters.python.urirun.node.mesh.NodeHandler._run_target
 - adapters.python.urirun.node.mesh.NodeHandler._stream_events
+- adapters.python.urirun.node.mesh.NodeHandler._validate_run_request
 - adapters.python.urirun.node.mesh.NodeHandler.do_GET
 - adapters.python.urirun.node.mesh.NodeHandler.do_OPTIONS
 - adapters.python.urirun.node.mesh.NodeHandler.do_POST
@@ -4759,12 +4820,13 @@ entry_points:
 - adapters.python.urirun.node.mesh._task_start
 - adapters.python.urirun.node.mesh._task_wait
 - adapters.python.urirun.node.mesh.copy_id_cli
-- adapters.python.urirun.node.mesh.fanout_to_mqtt
 - adapters.python.urirun.node.mesh.host_command
 - adapters.python.urirun.node.mesh.node_command
 - adapters.python.urirun.node.mesh.read_json
+- adapters.python.urirun.node.transport.fanout_to_mqtt
 - adapters.python.urirun.ok
 - adapters.python.urirun.plan
+- adapters.python.urirun.result_degraded
 - adapters.python.urirun.run_steps
 - adapters.python.urirun.runtime._registry.discover_entry_points
 - adapters.python.urirun.runtime._registry.exec_fetch
@@ -4808,6 +4870,16 @@ entry_points:
 - adapters.python.urirun.runtime.errors.main
 - adapters.python.urirun.runtime.errors.problem
 - adapters.python.urirun.runtime.introspect.run_registry_introspect
+- adapters.python.urirun.runtime.progress.RunControl.__init__
+- adapters.python.urirun.runtime.progress.RunControl.kill
+- adapters.python.urirun.runtime.progress.RunControl.register_proc
+- adapters.python.urirun.runtime.progress.active
+- adapters.python.urirun.runtime.progress.bind
+- adapters.python.urirun.runtime.progress.cancelled
+- adapters.python.urirun.runtime.progress.current
+- adapters.python.urirun.runtime.progress.emit
+- adapters.python.urirun.runtime.progress.register_proc
+- adapters.python.urirun.runtime.progress.reset
 - adapters.python.urirun.runtime.secrets.SecretStr.__bool__
 - adapters.python.urirun.runtime.secrets.SecretStr.__init__
 - adapters.python.urirun.runtime.secrets.SecretStr.__repr__

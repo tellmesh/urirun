@@ -27,6 +27,7 @@ import sys
 from pathlib import Path
 
 from urirun import _registry as reglib, _scan as scan, _runtime as runtime
+from urirun.runtime import progress
 
 PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z0-9_.]+)\}")
 PROCESS_CONFIG_KEYS = ("image", "mount", "env", "stdin", "timeout", "cwd", "params")
@@ -94,20 +95,59 @@ def _proc_env(config: dict, params: dict) -> dict | None:
 
 
 def _run_process(command, config: dict, policy: dict, params: dict, shell: bool = False) -> dict:
+    timeout = config.get("timeout", policy.get("timeout", runtime.DEFAULT_TIMEOUT))
+    stdin = config.get("stdin")
+    # When a progress sink is bound (a streaming /run) and there's no stdin to feed, run the
+    # process incrementally and emit each stdout line live — so ANY argv/spawn/shell command
+    # streams to the host as it runs, with no handler code. Otherwise: the simple blocking path.
+    if stdin is None and progress.active():
+        return _run_process_streaming(command, config, params, shell, timeout)
     completed = subprocess.run(
         command,
         capture_output=True,
         text=True,
         shell=shell,
-        timeout=config.get("timeout", policy.get("timeout", runtime.DEFAULT_TIMEOUT)),
+        timeout=timeout,
         cwd=config.get("cwd"),
         env=_proc_env(config, params),
-        input=config.get("stdin"),
+        input=stdin,
     )
     return {
         "exitCode": completed.returncode,
         "stdout": runtime._truncate(completed.stdout),
         "stderr": runtime._truncate(completed.stderr),
+    }
+
+
+def _run_process_streaming(command, config: dict, params: dict, shell: bool, timeout) -> dict:
+    import threading
+    proc = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=shell,
+        cwd=config.get("cwd"), env=_proc_env(config, params), bufsize=1,
+    )
+    progress.register_proc(proc)   # let a run:// cancel kill it (unblocks the reader below)
+    timed_out = {"v": False}
+    timer = threading.Timer(timeout, lambda: (timed_out.__setitem__("v", True), proc.kill())) if timeout else None
+    if timer:
+        timer.start()
+    out: list[str] = []
+    try:
+        for n, line in enumerate(proc.stdout):
+            out.append(line)
+            progress.emit({"stream": "stdout", "seq": n, "line": line.rstrip("\n")})
+        proc.wait()
+    finally:
+        if timer:
+            timer.cancel()
+    stderr = proc.stderr.read() if proc.stderr else ""
+    if timed_out["v"]:
+        raise subprocess.TimeoutExpired(command, timeout)
+    return {
+        "exitCode": proc.returncode,
+        "stdout": runtime._truncate("".join(out)),
+        "stderr": runtime._truncate(stderr),
+        "streamed": True,
+        "cancelled": progress.cancelled(),
     }
 
 

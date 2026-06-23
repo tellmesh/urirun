@@ -89,3 +89,32 @@ class ConnectorLintTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def _make_connector(root, pkg_name, export_name):
+    pkg = root / pkg_name
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text(
+        "def handler(**p):\n    return {'ok': True}\n\n"
+        "def urirun_bindings():\n"
+        "    return {'version': 'urirun.bindings.v2', 'bindings': {\n"
+        "        'x://host/a/query/b': {'kind': 'query', 'adapter': 'local-function',\n"
+        "            'python': {'type': 'python', 'module': %r, 'export': %r},\n"
+        "            'inputSchema': {'type': 'object', 'properties': {}}, 'uri': 'x://host/a/query/b'}}}\n"
+        % (pkg_name, export_name))
+    return root
+
+
+def test_verify_connector_passes_when_handler_resolves(tmp_path):
+    root = _make_connector(tmp_path / "good", "pkg_verify_good", "handler")
+    rep = connector_lint.verify_connector(root)
+    assert rep["ok"] is True
+    assert {c["check"]: c["ok"] for c in rep["checks"]}["handlers/resolve"] is True
+
+
+def test_verify_connector_fails_on_advertised_but_dead_route(tmp_path):
+    root = _make_connector(tmp_path / "dead", "pkg_verify_dead", "does_not_exist")
+    rep = connector_lint.verify_connector(root)
+    assert rep["ok"] is False
+    resolve = [c for c in rep["checks"] if c["check"] == "handlers/resolve"][0]
+    assert resolve["ok"] is False and "does_not_exist" in resolve["detail"]
