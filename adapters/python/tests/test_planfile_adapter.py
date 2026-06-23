@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from urirun import mesh, planfile_adapter, task_planner, v2
+from urirun.node import task_cli
 
 
 PLANFILE_AVAILABLE = importlib.util.find_spec("planfile") is not None
@@ -105,9 +106,9 @@ class PlanfileAdapterTests(unittest.TestCase):
                 "results": {"proc": {"ok": True}},
             }
             with (
-                patch.object(mesh, "load_host_config", return_value={}),
-                patch.object(mesh, "discover_mesh", return_value=fake_mesh),
-                patch.object(mesh, "execute_flow", return_value=fake_execution),
+                patch.object(task_cli, "host_config_for_args", return_value={}),
+                patch.object(task_cli, "discover_mesh", return_value=fake_mesh),
+                patch.object(task_cli, "execute_flow", return_value=fake_execution),
                 contextlib.redirect_stdout(io.StringIO()),
             ):
                 self.assertEqual(mesh.task_command(args), 0)
@@ -284,9 +285,9 @@ class PlanfileAdapterTests(unittest.TestCase):
             fake_mesh = {"nodes": [], "routes": [], "serviceMap": {}}
             fake_execution = {"ok": False, "timeline": [], "results": {}}
             with (
-                patch.object(mesh, "load_host_config", return_value={}),
-                patch.object(mesh, "discover_mesh", return_value=fake_mesh),
-                patch.object(mesh, "execute_flow", return_value=fake_execution),
+                patch.object(task_cli, "host_config_for_args", return_value={}),
+                patch.object(task_cli, "discover_mesh", return_value=fake_mesh),
+                patch.object(task_cli, "execute_flow", return_value=fake_execution),
                 contextlib.redirect_stdout(io.StringIO()),
             ):
                 self.assertEqual(mesh.task_command(args), 1)

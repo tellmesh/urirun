@@ -32,6 +32,8 @@ _SERVICE_THREADS: dict[str, threading.Thread] = {}
 _DOCUMENT_INDEX_LOCK = threading.Lock()
 _SCANNER_BEST_LOCK = threading.Lock()
 _SCANNER_BEST_SESSIONS: dict[str, dict] = {}
+_PAGE_ACTION_LOCK = threading.Lock()
+_PAGE_ACTION_QUEUES: dict[str, list[dict]] = {}
 
 
 INDEX_HTML = r"""<!doctype html>
@@ -679,6 +681,7 @@ SCANNER_HTML = r"""<!doctype html>
     .controls { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     button, select, input { min-height:44px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--ink); font:inherit; padding:0 12px; }
     button.primary { background:var(--accent); border-color:var(--accent); color:#042f2e; font-weight:700; }
+    button.remote-click { outline:3px solid #fde68a; outline-offset:2px; }
     button:disabled { opacity:.55; }
     .status { color:var(--muted); overflow-wrap:anywhere; }
     .error { color:var(--bad); }
@@ -706,10 +709,20 @@ SCANNER_HTML = r"""<!doctype html>
         <option value="0.82">JPEG 82%</option>
         <option value="0.70">JPEG 70%</option>
       </select>
+      <label><input type="checkbox" id="startBest" checked> best after start</label>
       <label><input type="checkbox" id="auto"> auto every 1s</label>
     </div>
     <p class="status">Use this page from the phone on the same LAN. Mobile browsers usually require HTTPS or a trusted local exception for camera access.</p>
   </main>
+  <script src="/assets/urirun.js"
+          data-site="urirun-phone-scanner"
+          data-endpoint="/api/uri/event"
+          data-action-endpoint="/api/uri/invoke"
+          data-load="0"
+          data-clicks="0"
+          data-forms="0"
+          data-spa="0"
+          data-debug="1"></script>
   <script>
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -717,35 +730,49 @@ SCANNER_HTML = r"""<!doctype html>
     const startBtn = document.getElementById('start');
     const captureBtn = document.getElementById('capture');
     const bestBtn = document.getElementById('best');
+    const startBest = document.getElementById('startBest');
     const auto = document.getElementById('auto');
     let stream = null;
     let timer = null;
     let bestRunning = false;
+    let startCameraPromise = null;
+    let startCameraClickPromise = null;
 
     function setState(text, error=false) {
       state.textContent = text;
       state.className = error ? 'status error' : 'status';
     }
 
+    function invokeURI(uri, payload={}) {
+      if (window.urirun && typeof window.urirun.invoke === 'function') {
+        return window.urirun.invoke(uri, payload);
+      }
+      return fetch('/api/uri/invoke', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({uri, payload})
+      }).then((response) => response.json());
+    }
+
     async function announce(event, extra={}) {
       try {
-        await fetch('/api/scanner/session', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            event,
-            href: location.href,
-            width: window.innerWidth,
-            height: window.innerHeight,
-            userAgent: navigator.userAgent,
-            at: new Date().toISOString(),
-            ...extra
-          })
+        await invokeURI('scanner://host/session/command/log', {
+          event,
+          href: location.href,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          userAgent: navigator.userAgent,
+          at: new Date().toISOString(),
+          ...extra
         });
       } catch (_) {}
     }
 
-    async function startCamera() {
+    async function startCamera(options={}) {
+      if (stream && stream.getVideoTracks && stream.getVideoTracks().some((track) => track.readyState === 'live')) {
+        await waitForVideoReady();
+        return cameraStatus();
+      }
       stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
@@ -755,18 +782,85 @@ SCANNER_HTML = r"""<!doctype html>
         }
       });
       video.srcObject = stream;
+      if (video.play) await video.play().catch(() => {});
+      await waitForVideoReady();
       captureBtn.disabled = false;
       bestBtn.disabled = false;
       setState('camera ready');
       await announce('camera-started', {tracks: stream.getVideoTracks().map((track) => track.label)});
+      const shouldStartBest = Object.prototype.hasOwnProperty.call(options || {}, 'startBest') ? !!options.startBest : startBest.checked;
+      if (shouldStartBest) {
+        setTimeout(() => bestPdf().catch((err) => setState(err.message, true)), 350);
+      }
+      return cameraStatus();
+    }
+
+    function runStartCamera(options={}) {
+      if (!startCameraPromise) {
+        startCameraPromise = startCamera(options).finally(() => {
+          startCameraPromise = null;
+        });
+      }
+      return startCameraPromise;
+    }
+
+    function beginStartCamera(options={}) {
+      const promise = runStartCamera(options);
+      startCameraClickPromise = promise;
+      promise.finally(() => {
+        if (startCameraClickPromise === promise) startCameraClickPromise = null;
+      });
+      return promise;
+    }
+
+    function dispatchRemoteButtonClick(button) {
+      button.classList.add('remote-click');
+      const makeEvent = (name) => new Event(name, {bubbles: true, cancelable: true});
+      try {
+        button.dispatchEvent(makeEvent('pointerdown'));
+        button.dispatchEvent(makeEvent('mousedown'));
+        button.dispatchEvent(makeEvent('pointerup'));
+        button.dispatchEvent(makeEvent('mouseup'));
+        button.click();
+      } finally {
+        setTimeout(() => button.classList.remove('remote-click'), 450);
+      }
+    }
+
+    async function clickStartCameraButton(payload={}) {
+      if (Object.prototype.hasOwnProperty.call(payload || {}, 'startBest')) {
+        startBest.checked = !!payload.startBest;
+      }
+      setState('URI click Start camera');
+      dispatchRemoteButtonClick(startBtn);
+      const status = await (startCameraClickPromise || beginStartCamera(payload || {}));
+      return {ok: true, clicked: true, button: 'Start camera', uri: 'scanner://page/ui/button/start-camera/command/click', status};
     }
 
     function sleep(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
+    function waitForVideoReady(timeout=3000) {
+      if (video.videoWidth && video.videoHeight) return Promise.resolve();
+      return new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          video.removeEventListener('loadedmetadata', finish);
+          video.removeEventListener('canplay', finish);
+          resolve();
+        };
+        video.addEventListener('loadedmetadata', finish);
+        video.addEventListener('canplay', finish);
+        setTimeout(finish, timeout);
+      });
+    }
+
     async function sendFrame(options={}) {
       if (!stream) return;
+      await waitForVideoReady();
       const w = video.videoWidth || 1920;
       const h = video.videoHeight || 1080;
       canvas.width = w;
@@ -774,38 +868,33 @@ SCANNER_HTML = r"""<!doctype html>
       canvas.getContext('2d').drawImage(video, 0, 0, w, h);
       const quality = Number(document.getElementById('quality').value || '0.92');
       const image = canvas.toDataURL('image/jpeg', quality);
-      const response = await fetch('/api/scanner/capture', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          source: 'phone',
-          image,
-          width: w,
-          height: h,
-          userAgent: navigator.userAgent,
-          capturedAt: new Date().toISOString(),
-          ...options
-        })
+      return invokeURI('scanner://host/capture/command/run', {
+        source: 'phone',
+        image,
+        width: w,
+        height: h,
+        userAgent: navigator.userAgent,
+        capturedAt: new Date().toISOString(),
+        ...options
       });
-      const data = await response.json();
-      if (!response.ok || data.ok === false) throw new Error(data.error || response.statusText);
-      return data;
     }
 
-    async function capture() {
+    async function capture(options={}) {
       const w = video.videoWidth || 1920;
       const h = video.videoHeight || 1080;
       setState(`uploading ${w}x${h}...`);
-      const data = await sendFrame({archive: true});
+      const data = await sendFrame({archive: true, ...options});
+      if (!data || data.ok === false) throw new Error((data && data.error) || 'scan failed');
       setState(`saved ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
+      return data;
     }
 
-    async function bestPdf() {
+    async function bestPdf(options={}) {
       if (!stream || bestRunning) return;
       bestRunning = true;
       bestBtn.disabled = true;
       captureBtn.disabled = true;
-      const total = Number(document.getElementById('bestCount').value || '6');
+      const total = Number(options.count || document.getElementById('bestCount').value || '6');
       const seriesId = `best-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       try {
         let best = null;
@@ -818,19 +907,16 @@ SCANNER_HTML = r"""<!doctype html>
             frameIndex: frame,
             frameCount: total
           });
+          if (!data || data.ok === false) throw new Error((data && data.error) || 'candidate scan failed');
           best = data.series && data.series.best ? data.series.best : data.candidate;
           const score = best && best.quality ? Number(best.quality.score || 0).toFixed(1) : '0.0';
           setState(`frame ${frame}/${total}, best score ${score}`);
           if (frame < total) await sleep(1000);
         }
-        const response = await fetch('/api/scanner/best/finish', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({seriesId, minScore: 45})
-        });
-        const finalData = await response.json();
-        if (!response.ok || finalData.ok === false) throw new Error(finalData.error || response.statusText);
+        const finalData = await invokeURI('scanner://host/best/command/finish', {seriesId, minScore: options.minScore || 45});
+        if (!finalData || finalData.ok === false) throw new Error((finalData && finalData.error) || 'best scan failed');
         setState(`saved best ${finalData.document && finalData.document.path ? finalData.document.path : finalData.uri}`);
+        return finalData;
       } finally {
         bestRunning = false;
         bestBtn.disabled = !stream;
@@ -838,8 +924,87 @@ SCANNER_HTML = r"""<!doctype html>
       }
     }
 
+    function cameraStatus() {
+      const track = stream && stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+      return {
+        ok: true,
+        uri: 'scanner://page/camera/query/status',
+        ready: !!stream,
+        runningBest: bestRunning,
+        width: video.videoWidth || 0,
+        height: video.videoHeight || 0,
+        track: track ? {label: track.label, readyState: track.readyState, enabled: track.enabled} : null,
+        localActions: window.urirun && window.urirun.listActions ? window.urirun.listActions() : []
+      };
+    }
+
+    function registerCameraActions() {
+      if (!window.urirun || typeof window.urirun.registerAction !== 'function') return;
+      window.urirun.registerAction('scanner://page/ui/button/start-camera/command/click', (payload) => clickStartCameraButton(payload || {}), {
+        label: 'Click Start camera button', layer: 'page', kind: 'command', sideEffects: ['dom-click', 'camera-permission', 'media-stream']
+      });
+      window.urirun.registerAction('scanner://page/camera/command/start', (payload) => runStartCamera(payload || {}), {
+        label: 'Start camera', layer: 'page', kind: 'command', sideEffects: ['camera-permission', 'media-stream']
+      });
+      window.urirun.registerAction('scanner://page/camera/command/scan', (payload) => capture(payload || {}), {
+        label: 'Scan current frame', layer: 'page', kind: 'command', sideEffects: ['network', 'document-write']
+      });
+      window.urirun.registerAction('scanner://page/camera/command/best-pdf', (payload) => bestPdf(payload || {}), {
+        label: 'Capture best PDF', layer: 'page', kind: 'command', sideEffects: ['camera-read', 'network', 'document-write']
+      });
+      window.urirun.registerAction('scanner://page/camera/query/status', () => cameraStatus(), {
+        label: 'Camera page status', layer: 'page', kind: 'query', sideEffects: []
+      });
+      window.urirun.registerAction('scanner://page/actions/query/list', () => ({ok: true, actions: window.urirun.listActions()}), {
+        label: 'List page actions', layer: 'page', kind: 'query', sideEffects: []
+      });
+      window.urirun.track('scanner_actions_ready', { count: window.urirun.listActions().length });
+    }
+
+    async function sendActionResult(action, result, error) {
+      try {
+        await fetch('/api/page/actions/result', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: action.id,
+            target: action.target || 'scanner',
+            uri: action.uri,
+            ok: !error && (!result || result.ok !== false),
+            error: error ? String(error.message || error) : '',
+            result: result || null,
+            at: new Date().toISOString()
+          })
+        });
+      } catch (_) {}
+    }
+
+    async function pollPageActions() {
+      if (!window.urirun || typeof window.urirun.invoke !== 'function') return;
+      let data = null;
+      try {
+        const response = await fetch('/api/page/actions/poll?target=scanner&limit=4', {cache: 'no-store'});
+        data = await response.json();
+      } catch (_) {
+        return;
+      }
+      const actions = data && Array.isArray(data.actions) ? data.actions : [];
+      for (const action of actions) {
+        try {
+          setState(`URI ${action.uri}`);
+          const result = await window.urirun.invoke(action.uri, action.payload || {}, {mode: action.mode || 'execute', localOnly: true});
+          await sendActionResult(action, result, null);
+        } catch (err) {
+          setState(err.message || String(err), true);
+          await sendActionResult(action, null, err);
+        }
+      }
+    }
+
     announce('open');
-    startBtn.addEventListener('click', () => startCamera().catch((err) => setState(err.message, true)));
+    registerCameraActions();
+    setInterval(() => pollPageActions().catch(() => {}), 1000);
+    startBtn.addEventListener('click', () => beginStartCamera().catch((err) => setState(err.message, true)));
     captureBtn.addEventListener('click', () => capture().catch((err) => setState(err.message, true)));
     bestBtn.addEventListener('click', () => bestPdf().catch((err) => {
       bestRunning = false;
@@ -880,6 +1045,39 @@ def _html_response(handler: BaseHTTPRequestHandler, html: str = INDEX_HTML) -> N
     handler.send_header("Content-Length", str(len(body)))
     handler.end_headers()
     handler.wfile.write(body)
+
+
+def _asset_response(handler: BaseHTTPRequestHandler, body: bytes, content_type: str) -> None:
+    handler.send_response(200)
+    handler.send_header("Content-Type", content_type)
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    handler.wfile.write(body)
+
+
+def _js_sdk_response(handler: BaseHTTPRequestHandler, project: str) -> None:
+    configured = os.environ.get("URIRUN_JS_SDK")
+    roots = []
+    if configured:
+        roots.append(Path(configured).expanduser())
+    project_path = Path(project).expanduser().resolve()
+    roots.extend([
+        project_path.parent / "js-urirun-com" / "urirun.js",
+        project_path.parent / "js-urirun-com" / "src" / "urirun.js",
+        Path("/home/tom/github/if-uri/js-urirun-com/urirun.js"),
+        Path("/home/tom/github/if-uri/js-urirun-com/src/urirun.js"),
+    ])
+    for source in roots:
+        try:
+            resolved = source.expanduser().resolve()
+            if resolved.is_file():
+                _asset_response(handler, resolved.read_bytes(), "application/javascript; charset=utf-8")
+                return
+        except Exception:  # noqa: BLE001
+            continue
+    _json_response(handler, 404, {"ok": False, "error": "urirun JS SDK not found"})
 
 
 def _read_json(handler: BaseHTTPRequestHandler) -> dict:
@@ -1610,6 +1808,13 @@ def _is_phone_scanner_prompt(prompt: str) -> bool:
     return wants_start and (wants_scanner or (wants_service and mobile_context))
 
 
+def _is_camera_start_prompt(prompt: str) -> bool:
+    text = _nl_text(prompt)
+    camera_terms = ("kamer", "camera", "webcam", "aparat", "obiektyw")
+    start_terms = ("wlacz", "uruchom", "start", "odpal", "otworz", "aktywow", "enable")
+    return any(word in text for word in camera_terms) and any(word in text for word in start_terms)
+
+
 def ensure_phone_scanner_service(
     project: str,
     db: str | None,
@@ -2123,6 +2328,271 @@ def scanner_session(db: str | None, payload: dict) -> dict:
     return {"ok": True, "uri": uri, "message": message}
 
 
+def uri_event(db: str | None, query: dict[str, list[str]]) -> dict:
+    event = _first(query, "e", "event") or "event"
+    detail = {
+        "site": _first(query, "s", ""),
+        "event": event,
+        "path": _first(query, "p", ""),
+        "url": _first(query, "u", ""),
+        "referrer": _first(query, "r", ""),
+        "label": _first(query, "l", ""),
+        "value": _first(query, "v", ""),
+        "raw": {key: values[0] if len(values) == 1 else values for key, values in query.items()},
+    }
+    try:
+        _host_db().add_log(db, "uri-js", event, detail)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "event": event}
+
+
+def page_action_enqueue(
+    db: str | None,
+    *,
+    target: str,
+    uri: str,
+    payload: dict | None = None,
+    mode: str = "execute",
+    source: str = "host",
+) -> dict:
+    target = (target or "scanner").strip() or "scanner"
+    action_id = hashlib.sha256(f"{time.time_ns()}:{target}:{uri}".encode("utf-8")).hexdigest()[:16]
+    item = {
+        "id": action_id,
+        "target": target,
+        "uri": uri,
+        "payload": payload or {},
+        "mode": _uri_mode(mode),
+        "source": source,
+        "createdAt": _utc_now(),
+    }
+    with _PAGE_ACTION_LOCK:
+        queue = _PAGE_ACTION_QUEUES.setdefault(target, [])
+        queue.append(item)
+        _PAGE_ACTION_QUEUES[target] = queue[-50:]
+    try:
+        _host_db().add_log(db, "page-action", "queued", item)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "queued": True, "target": target, "action": item}
+
+
+def page_action_poll(target: str = "scanner", limit: int = 4) -> dict:
+    target = (target or "scanner").strip() or "scanner"
+    limit = max(1, min(20, int(limit or 4)))
+    with _PAGE_ACTION_LOCK:
+        queue = _PAGE_ACTION_QUEUES.get(target, [])
+        actions = queue[:limit]
+        _PAGE_ACTION_QUEUES[target] = queue[limit:]
+    return {"ok": True, "target": target, "actions": actions, "count": len(actions)}
+
+
+def page_action_result(db: str | None, payload: dict) -> dict:
+    detail = {
+        "id": payload.get("id"),
+        "target": payload.get("target") or "scanner",
+        "uri": payload.get("uri"),
+        "ok": payload.get("ok"),
+        "error": payload.get("error"),
+        "result": payload.get("result"),
+        "at": payload.get("at") or _utc_now(),
+    }
+    try:
+        _host_db().add_log(db, "page-action", "result", detail)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "result": detail}
+
+
+def _uri_action_catalog() -> list[dict]:
+    return [
+        {
+            "uri": "scanner://page/ui/button/start-camera/command/click",
+            "layer": "page",
+            "kind": "command",
+            "label": "Click the Start camera button in the scanner page",
+            "sideEffects": ["dom-click", "camera-permission", "media-stream"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://page/camera/command/start",
+            "layer": "page",
+            "kind": "command",
+            "label": "Start browser camera stream",
+            "sideEffects": ["camera-permission", "media-stream"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://page/camera/command/scan",
+            "layer": "page",
+            "kind": "command",
+            "label": "Capture one frame and send it to host",
+            "sideEffects": ["camera-read", "network", "document-write"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://page/camera/command/best-pdf",
+            "layer": "page",
+            "kind": "command",
+            "label": "Capture a burst and archive the best PDF",
+            "sideEffects": ["camera-read", "network", "document-write"],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://page/camera/query/status",
+            "layer": "page",
+            "kind": "query",
+            "label": "Inspect camera page state",
+            "sideEffects": [],
+            "where": "browser page via urirun.registerAction",
+        },
+        {
+            "uri": "scanner://host/capture/command/run",
+            "layer": "host",
+            "kind": "command",
+            "label": "Analyze or archive a scanner frame",
+            "sideEffects": ["file-write", "ocr", "optional-document-write"],
+            "where": "host dashboard /api/uri/invoke",
+        },
+        {
+            "uri": "scanner://host/best/command/finish",
+            "layer": "host",
+            "kind": "command",
+            "label": "Archive the best frame from a scanner series",
+            "sideEffects": ["file-write", "document-write", "chat-message"],
+            "where": "host dashboard /api/uri/invoke",
+        },
+        {
+            "uri": "scanner://host/session/command/log",
+            "layer": "host",
+            "kind": "command",
+            "label": "Log scanner page/session event",
+            "sideEffects": ["chat-message"],
+            "where": "host dashboard /api/uri/invoke",
+        },
+        {
+            "uri": "scanner://host/actions/query/list",
+            "layer": "host",
+            "kind": "query",
+            "label": "List scanner URI actions across layers",
+            "sideEffects": [],
+            "where": "host dashboard /api/uri/invoke",
+        },
+        {
+            "uri": "dashboard://host/phone-scanner/command/start",
+            "layer": "dashboard",
+            "kind": "command",
+            "label": "Start phone scanner service and QR message",
+            "sideEffects": ["service-start", "chat-message", "qr-artifact"],
+            "where": "host dashboard /api/uri/invoke",
+        },
+    ]
+
+
+def _uri_action_lookup(uri: str) -> dict | None:
+    for item in _uri_action_catalog():
+        if item["uri"] == uri:
+            return item
+    aliases = {
+        "scanner://host/capture": "scanner://host/capture/command/run",
+        "scanner://host/best/finish": "scanner://host/best/command/finish",
+        "scanner://host/session": "scanner://host/session/command/log",
+        "scanner://page/start-button": "scanner://page/ui/button/start-camera/command/click",
+        "dashboard://host/actions/query/list": "scanner://host/actions/query/list",
+    }
+    target = aliases.get(uri)
+    if target:
+        return _uri_action_lookup(target)
+    return None
+
+
+def _uri_mode(value: Any) -> str:
+    mode = str(value or "execute").strip().lower()
+    if mode in {"execute", "exec", "run"}:
+        return "execute"
+    return "dry-run"
+
+
+def _uri_simulated_result(uri: str, mode: str, action_payload: dict, action: dict | None) -> dict:
+    return {
+        "ok": True,
+        "uri": uri,
+        "invokedUri": uri,
+        "mode": mode,
+        "simulated": True,
+        "dryRun": True,
+        "action": action or {"uri": uri},
+        "payload": action_payload,
+        "wouldRun": {
+            "uri": uri,
+            "layer": (action or {}).get("layer"),
+            "kind": (action or {}).get("kind"),
+            "sideEffects": (action or {}).get("sideEffects", []),
+        },
+    }
+
+
+def uri_invoke(
+    project: str,
+    db: str | None,
+    config: str | None,
+    payload: dict,
+    *,
+    node_urls: list[str] | None = None,
+    token: str | None = None,
+    identity: str | None = None,
+) -> dict:
+    uri = str(payload.get("uri") or "").strip()
+    action_payload = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+    mode = _uri_mode(payload.get("mode") or payload.get("runMode") or action_payload.get("mode"))
+    if not uri:
+        raise ValueError("uri is required")
+    action = _uri_action_lookup(uri)
+
+    if uri in {"scanner://host/actions/query/list", "dashboard://host/actions/query/list"}:
+        return {"ok": True, "mode": mode, "actions": _uri_action_catalog(), "invokedUri": uri}
+
+    if mode != "execute":
+        return _uri_simulated_result(uri, mode, action_payload, action)
+
+    if action and action.get("layer") == "page":
+        source = str(payload.get("source") or action_payload.get("source") or "").strip().lower()
+        if source in {"page", "scanner-page"}:
+            raise ValueError(f"page URI action must be handled locally by the scanner page: {uri}")
+        return page_action_enqueue(
+            db,
+            target=str(action_payload.get("target") or "scanner"),
+            uri=uri,
+            payload=action_payload,
+            mode=mode,
+            source=str(payload.get("source") or "uri-invoke"),
+        )
+
+    if uri in {"scanner://host/capture/command/run", "scanner://host/capture"}:
+        result = scanner_capture(project, db, action_payload)
+    elif uri in {"scanner://host/best/command/finish", "scanner://host/best/finish"}:
+        result = scanner_best_finish(project, db, action_payload)
+    elif uri in {"scanner://host/session/command/log", "scanner://host/session"}:
+        result = scanner_session(db, action_payload)
+    elif uri == "dashboard://host/phone-scanner/command/start":
+        result = ensure_phone_scanner_service(
+            project,
+            db,
+            config,
+            node_urls=node_urls,
+            token=token,
+            identity=identity,
+        )
+    else:
+        raise ValueError(f"unsupported URI action: {uri}")
+
+    if isinstance(result, dict):
+        result.setdefault("invokedUri", uri)
+        return result
+    return {"ok": True, "invokedUri": uri, "result": result}
+
+
 def _first(query: dict[str, list[str]], name: str, default: str | None = None) -> str | None:
     values = query.get(name)
     return values[0] if values else default
@@ -2237,6 +2707,27 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             token=token,
             identity=identity,
         )
+        queued_camera = None
+        if _is_camera_start_prompt(prompt):
+            camera_click_uri = "scanner://page/ui/button/start-camera/command/click"
+            queued_camera = page_action_enqueue(
+                db,
+                target="scanner",
+                uri=camera_click_uri,
+                payload={"target": "scanner", "startBest": True},
+                mode="execute",
+                source="chat",
+            )
+            camera_message = _chat_message(
+                "system",
+                "Camera start queued for the open scanner page. Open the scanner URL and accept the browser camera permission if prompted.",
+                detail={
+                    "uri": camera_click_uri,
+                    "queued": queued_camera,
+                    "scannerUrl": service.get("url"),
+                },
+            )
+            _add_chat_message(db, camera_message)
         result = {
             "ok": bool(service.get("ok")),
             "prompt": prompt,
@@ -2245,16 +2736,32 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "generator": {"provider": "host-dashboard", "intent": "phone-scanner-service"},
             "flow": {
                 "task": {"id": "phone-scanner-service", "title": "Start phone scanner service"},
-                "steps": [{"id": "start-phone-scanner", "uri": "dashboard://host/phone-scanner/command/start", "payload": {}}],
+                "steps": [
+                    {"id": "start-phone-scanner", "uri": "dashboard://host/phone-scanner/command/start", "payload": {}},
+                    *([{
+                        "id": "queue-camera-start",
+                        "uri": camera_click_uri,
+                        "payload": {"target": "scanner", "startBest": True},
+                    }] if queued_camera else []),
+                ],
             },
-            "timeline": [{
-                "id": "start-phone-scanner",
-                "uri": "dashboard://host/phone-scanner/command/start",
-                "target": "host",
-                "ok": bool(service.get("ok")),
-                "status": service.get("status"),
-            }],
-            "results": {"phone-scanner-service": service},
+            "timeline": [
+                {
+                    "id": "start-phone-scanner",
+                    "uri": "dashboard://host/phone-scanner/command/start",
+                    "target": "host",
+                    "ok": bool(service.get("ok")),
+                    "status": service.get("status"),
+                },
+                *([{
+                    "id": "queue-camera-start",
+                    "uri": camera_click_uri,
+                    "target": "scanner-page",
+                    "ok": bool(queued_camera.get("ok")),
+                    "status": "queued",
+                }] if queued_camera else []),
+            ],
+            "results": {"phone-scanner-service": service, **({"camera-start": queued_camera} if queued_camera else {})},
             "attachments": ((service.get("message") or {}).get("attachments") or []),
         }
         try:
@@ -2419,6 +2926,20 @@ def create_handler(
                 if parsed.path == "/scanner":
                     _html_response(self, SCANNER_HTML)
                     return
+                if parsed.path == "/assets/urirun.js":
+                    _js_sdk_response(self, project)
+                    return
+                if parsed.path == "/api/uri/event":
+                    _json_response(self, 200, uri_event(db, parse_qs(parsed.query)))
+                    return
+                if parsed.path == "/api/page/actions/poll":
+                    query = parse_qs(parsed.query)
+                    _json_response(
+                        self,
+                        200,
+                        page_action_poll(_first(query, "target", "scanner") or "scanner", int(_first(query, "limit", "4") or 4)),
+                    )
+                    return
                 if parsed.path == "/api/file":
                     path = _first(parse_qs(parsed.query), "path")
                     if not path:
@@ -2443,6 +2964,22 @@ def create_handler(
                     payload = _read_json(self)
                     _json_response(self, 200, chat_ask(project, db, config, payload, node_urls=node_urls,
                                                        token=token, identity=identity))
+                    return
+                if parsed.path == "/api/uri/invoke":
+                    payload = _read_json(self)
+                    if not payload.get("source"):
+                        ref_path = urlparse(self.headers.get("Referer", "") or "").path
+                        if ref_path == "/scanner":
+                            payload["source"] = "scanner-page"
+                    _json_response(
+                        self,
+                        200,
+                        uri_invoke(project, db, config, payload, node_urls=node_urls, token=token, identity=identity),
+                    )
+                    return
+                if parsed.path == "/api/page/actions/result":
+                    payload = _read_json(self)
+                    _json_response(self, 200, page_action_result(db, payload))
                     return
                 if parsed.path == "/api/scanner/capture":
                     payload = _read_json(self)

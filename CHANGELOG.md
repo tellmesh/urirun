@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 2026-06-23
+
+### Fixed
+- Fix string-concat issues (ticket-1ed4ffa6)
+- Fix unused-imports issues (ticket-833a8eb0)
+- Fix magic-numbers issues (ticket-2c2b9916)
+- Fix unused-imports issues (ticket-73f83818)
+
+## [0.4.71] - 2026-06-23
+
+### Added
+- **`urirun connectors sync-manifest <pkg> [--check]`.** Projects a connector's `routes`,
+  `uriSchemes` and `adapterKinds` from its `@handler`/`.command`/`.shell` decorators (static AST
+  scan, no import) into `connector.manifest.json`, so the manifest can never drift from the code.
+  `--check` is a CI gate that fails on drift without writing. Applied across all 22 Python
+  connectors: fixed real route drift and back-filled `uriSchemes` on 12 connectors that lacked it
+  (which had made them invisible to scheme discovery / self-healing).
+- **Route-granular connector discovery.** `node/connector_discover` now reports each local
+  connector's `routes` (not just `schemes`), and `ensure_scheme`/`run_ensuring` take an optional
+  `route` and prefer the connector whose routes actually cover the requested URI — so a scheme
+  split across connectors (e.g. `fs://` duplicates vs dir/file) acquires the *right* one.
+
+### Changed
+- **Hardened the isolated-subprocess result contract.** `urirun.exec` now runs the handler with
+  its stdout redirected to stderr and writes only the result JSON to stdout, so a handler — or a
+  library it imports (e.g. litellm's "Provider List" banner) — can no longer corrupt the contract.
+  The subprocess adapter additionally recovers the result by parsing the last balanced JSON object
+  on stdout (resilient to older nodes / stray prints) instead of surfacing `{stdout: …}`.
+- **Schema generator handles `**kwargs`.** A handler whose signature is `**kw` (or has `*args`,
+  or a bound `self`/`cls`) no longer yields a schema requiring a phantom `kw` property; a `**kw`
+  handler now produces `additionalProperties: true` and accepts any payload.
+- **`node/mesh.py` decomposed further** ~2050 → 1721 L: table rendering → `node/formatting.py`,
+  the host task/ticket DSL CLI (`task_command` + the `_task_*` family) → `node/task_cli.py`
+  (both re-exported from `mesh`).
+
 ## [0.4.70] - 2026-06-23
 
 ### Added
@@ -143,6 +178,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.74] - 2026-06-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/REFACTOR_ROADMAP.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_host_dashboard.py
+
+### Other
+- Update adapters/python/tests/test_planfile_adapter.py
+- Update adapters/python/urirun/host/host_dashboard.py
+- Update adapters/python/urirun/node/_util.py
+- Update adapters/python/urirun/node/mesh.py
+- Update adapters/python/urirun/node/task_cli.py
+- Update planfile.yaml
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- ... and 14 more files
 
 ## [0.4.73] - 2026-06-23
 

@@ -1,5 +1,5 @@
-# urirun | 157f 29371L | python:135,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
-# stats: 1136 func | 49 cls | 157 mod | CC̄=4.6 | critical:123 | cycles:0
+# urirun | 157f 29725L | python:135,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
+# stats: 1149 func | 49 cls | 157 mod | CC̄=4.6 | critical:124 | cycles:0
 # alerts[5]: CC _document_frame_quality=31; CC scanner_best_finish=31; CC chat_ask=25; CC apply_deploy=20; CC _resolve_serve_opts=20
 # hotspots[5]: run_command fan=28; serve fan=28; _write_document_pdf fan=27; _archive_scanned_document fan=27; scanner_capture fan=25
 # evolution: baseline
@@ -79,7 +79,7 @@ M[157]:
   adapters/python/urirun/exec.py,62
   adapters/python/urirun/host/__init__.py,2
   adapters/python/urirun/host/domain_monitor.py,486
-  adapters/python/urirun/host/host_dashboard.py,2529
+  adapters/python/urirun/host/host_dashboard.py,2810
   adapters/python/urirun/host/host_db.py,500
   adapters/python/urirun/host/host_integrations.py,356
   adapters/python/urirun/host/planfile_adapter.py,280
@@ -157,7 +157,7 @@ M[157]:
   scripts/sync-versions.sh,26
   security/mesh-probe/probe.py,115
   test/urirun.test.js,11
-  tests/test_host_dashboard.py,475
+  tests/test_host_dashboard.py,548
   tests/test_urirun.py,12
   tests/test_v2_service_auth.py,47
   tree.sh,5
@@ -644,9 +644,11 @@ D:
     _route_flow(rc)
     run_uri_route(ctx;execute)
   adapters/python/urirun/host/host_dashboard.py:
-    e: _json_response,_html_response,_read_json,_file_response,_preview_url,_is_image_path,_collect_attachments,_chat_message,_add_chat_message,chat_history,_local_image_ocr,_document_archive_root,_document_index_path,_utc_now,_file_sha256,_normalized_document_text,_load_document_index,_save_document_index,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_extract_document_metadata,_filename_part,_canonical_document_filename,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_nl_text,_is_phone_scanner_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_document_frame_quality,_public_scanner_candidate,_scanner_best_update,_scanner_best_take,_register_scanner_result,scanner_capture,scanner_best_finish,scanner_session,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,summary,_compact_chat_result,chat_ask,task_action,_dashboard_api_response,create_handler,serve,command,default_host
+    e: _json_response,_html_response,_asset_response,_js_sdk_response,_read_json,_file_response,_preview_url,_is_image_path,_collect_attachments,_chat_message,_add_chat_message,chat_history,_local_image_ocr,_document_archive_root,_document_index_path,_utc_now,_file_sha256,_normalized_document_text,_load_document_index,_save_document_index,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_extract_document_metadata,_filename_part,_canonical_document_filename,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_nl_text,_is_phone_scanner_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_document_frame_quality,_public_scanner_candidate,_scanner_best_update,_scanner_best_take,_register_scanner_result,scanner_capture,scanner_best_finish,scanner_session,uri_event,_uri_action_catalog,_uri_action_lookup,_uri_mode,_uri_simulated_result,uri_invoke,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,summary,_compact_chat_result,chat_ask,task_action,_dashboard_api_response,create_handler,serve,command,default_host
     _json_response(handler;status;payload)
     _html_response(handler;html)
+    _asset_response(handler;body;content_type)
+    _js_sdk_response(handler;project)
     _read_json(handler)
     _file_response(handler;path;project)
     _preview_url(path;project)
@@ -699,6 +701,12 @@ D:
     scanner_capture(project;db;payload)
     scanner_best_finish(project;db;payload)
     scanner_session(db;payload)
+    uri_event(db;query)
+    _uri_action_catalog()
+    _uri_action_lookup(uri)
+    _uri_mode(value)
+    _uri_simulated_result(uri;mode;action_payload;action)
+    uri_invoke(project;db;config;payload)
     _first(query;name;default)
     _host_db()
     _mesh()
@@ -1564,7 +1572,7 @@ D:
     _attacker_key()
     record(cat;fid;bad;note)
   tests/test_host_dashboard.py:
-    e: test_chat_ask_generates_and_dry_runs_uri_flow,test_chat_ask_execute_and_transient_node_urls,test_chat_ask_requires_prompt,test_phone_scanner_prompt_intent_is_specific,test_chat_ask_starts_phone_scanner_service_from_nl,test_chat_history_reads_message_logs,test_chat_history_limit_ignores_technical_ask_logs,test_startup_phone_qr_adds_chat_message,test_scanner_session_adds_chat_message,test_scanner_capture_registers_artifact_and_chat_message,test_scanner_capture_uses_receipt_crop_for_preview_and_ocr,test_scanner_capture_candidate_scores_without_archiving,test_scanner_best_finish_archives_best_candidate,test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate,test_document_metadata_does_not_parse_date_as_amount,FakeMesh,FakeHostDb
+    e: test_chat_ask_generates_and_dry_runs_uri_flow,test_chat_ask_execute_and_transient_node_urls,test_chat_ask_requires_prompt,test_phone_scanner_prompt_intent_is_specific,test_chat_ask_starts_phone_scanner_service_from_nl,test_chat_history_reads_message_logs,test_chat_history_limit_ignores_technical_ask_logs,test_startup_phone_qr_adds_chat_message,test_scanner_session_adds_chat_message,test_uri_event_logs_js_event,test_uri_invoke_dispatches_scanner_session,test_uri_invoke_lists_supported_host_actions,test_uri_invoke_dry_run_does_not_execute_side_effects,test_uri_invoke_execute_session_logs,test_scanner_capture_registers_artifact_and_chat_message,test_scanner_capture_uses_receipt_crop_for_preview_and_ocr,test_scanner_capture_candidate_scores_without_archiving,test_scanner_best_finish_archives_best_candidate,test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate,test_document_metadata_does_not_parse_date_as_amount,FakeMesh,FakeHostDb
     FakeMesh: __init__(0),load_host_config(1),config_with_transient_node_urls(2),discover_mesh(1),make_flow(4),registry_from_routes(1),execute_flow(4)
     FakeHostDb: __init__(0),add_log(4),recent_logs(3),register_artifact(5)
     test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch)
@@ -1576,6 +1584,11 @@ D:
     test_chat_history_limit_ignores_technical_ask_logs(monkeypatch)
     test_startup_phone_qr_adds_chat_message(monkeypatch;tmp_path)
     test_scanner_session_adds_chat_message(monkeypatch)
+    test_uri_event_logs_js_event(monkeypatch)
+    test_uri_invoke_dispatches_scanner_session(monkeypatch)
+    test_uri_invoke_lists_supported_host_actions()
+    test_uri_invoke_dry_run_does_not_execute_side_effects(monkeypatch)
+    test_uri_invoke_execute_session_logs(monkeypatch)
     test_scanner_capture_registers_artifact_and_chat_message(monkeypatch;tmp_path)
     test_scanner_capture_uses_receipt_crop_for_preview_and_ocr(monkeypatch;tmp_path)
     test_scanner_capture_candidate_scores_without_archiving(monkeypatch;tmp_path)

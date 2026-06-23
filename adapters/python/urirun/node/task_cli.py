@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from urirun import _registry as reglib, v2
+from urirun.node._util import _parse_json_option
 from urirun.node.config import host_config_for_args
 from urirun.node.flow import execute_flow, make_flow
 from urirun.node.formatting import format_tickets

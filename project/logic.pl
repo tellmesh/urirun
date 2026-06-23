@@ -76,7 +76,7 @@ project_file('adapters/python/urirun/errors.py', 9, 'python').
 project_file('adapters/python/urirun/exec.py', 62, 'python').
 project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 486, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 2529, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 2810, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 500, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 356, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 280, 'python').
@@ -154,7 +154,7 @@ project_file('scripts/repin_connectors.py', 167, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
-project_file('tests/test_host_dashboard.py', 475, 'python').
+project_file('tests/test_host_dashboard.py', 548, 'python').
 project_file('tests/test_urirun.py', 12, 'python').
 project_file('tests/test_v2_service_auth.py', 47, 'python').
 project_file('tree.sh', 5, 'shell').
@@ -489,6 +489,8 @@ python_function('adapters/python/urirun/host/domain_monitor.py', '_route_flow', 
 python_function('adapters/python/urirun/host/domain_monitor.py', 'run_uri_route', 2, 5, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_json_response', 3, 1, 8).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_html_response', 2, 1, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_asset_response', 3, 1, 6).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_js_sdk_response', 2, 5, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_read_json', 1, 3, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_file_response', 3, 6, 16).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_preview_url', 2, 6, 9).
@@ -541,6 +543,12 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_register_scan
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_capture', 3, 16, 25).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_best_finish', 3, 31, 17).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_session', 2, 5, 8).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'uri_event', 2, 5, 5).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_uri_action_catalog', 0, 1, 0).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_uri_action_lookup', 1, 4, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_uri_mode', 1, 3, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_uri_simulated_result', 4, 5, 1).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'uri_invoke', 4, 13, 14).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_first', 3, 2, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_host_db', 0, 1, 0).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_mesh', 0, 1, 0).
@@ -553,7 +561,7 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_compact_chat_
 python_function('adapters/python/urirun/host/host_dashboard.py', 'chat_ask', 7, 25, 22).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'task_action', 4, 8, 9).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_dashboard_api_response', 6, 15, 14).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'create_handler', 6, 1, 17).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'create_handler', 6, 1, 20).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'serve', 12, 5, 13).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'command', 1, 10, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'default_host', 0, 1, 2).
@@ -1288,6 +1296,11 @@ python_function('tests/test_host_dashboard.py', 'test_chat_history_reads_message
 python_function('tests/test_host_dashboard.py', 'test_chat_history_limit_ignores_technical_ask_logs', 1, 2, 4).
 python_function('tests/test_host_dashboard.py', 'test_startup_phone_qr_adds_chat_message', 2, 7, 7).
 python_function('tests/test_host_dashboard.py', 'test_scanner_session_adds_chat_message', 1, 5, 4).
+python_function('tests/test_host_dashboard.py', 'test_uri_event_logs_js_event', 1, 5, 3).
+python_function('tests/test_host_dashboard.py', 'test_uri_invoke_dispatches_scanner_session', 1, 4, 3).
+python_function('tests/test_host_dashboard.py', 'test_uri_invoke_lists_supported_host_actions', 0, 6, 2).
+python_function('tests/test_host_dashboard.py', 'test_uri_invoke_dry_run_does_not_execute_side_effects', 1, 6, 3).
+python_function('tests/test_host_dashboard.py', 'test_uri_invoke_execute_session_logs', 1, 4, 3).
 python_function('tests/test_host_dashboard.py', 'test_scanner_capture_registers_artifact_and_chat_message', 2, 4, 7).
 python_function('tests/test_host_dashboard.py', 'test_scanner_capture_uses_receipt_crop_for_preview_and_ocr', 2, 7, 12).
 python_function('tests/test_host_dashboard.py', 'test_scanner_capture_candidate_scores_without_archiving', 2, 7, 12).

@@ -3,11 +3,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.39-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-58.4h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.74-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.55-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-59.3h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $8.3870 (188 commits)
-- 👤 **Human dev:** ~$5841 (58.4h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $8.5546 (189 commits)
+- 👤 **Human dev:** ~$5927 (59.3h @ $100/h, 30min dedup)
 
 Generated on 2026-06-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -65,7 +65,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
   `urirun/runtime/` (URI, registry, schema, policy, executors; CLI argument parser in
   `runtime/cli.py`), `urirun/connectors/`, `urirun/host/`, and `urirun/node/` (the former
   `mesh.py` god-module is decomposed into `routing`, `config`, `transport`, `flow`, `paths`,
-  `_version`, `_util`, `_artifacts` + the node server, all re-exported from `mesh`)
+  `_version`, `_util`, `_artifacts`, `formatting` (CLI tables), `task_cli` (the host task/ticket
+  DSL) + the node server, all re-exported from `mesh`)
 - `adapters/c/` - C firmware-style reference adapter
 - `docs/URIRUN_PACKAGE_SPLIT_PLAN.md` - migration plan for splitting core,
   connectors, runtime SDKs and the host app (see its STATUS block for what's done)
@@ -136,6 +137,8 @@ urirun connectors show planfile             # routes, install spec and one-liner
 urirun connectors install planfile          # dry-run: prints the pip command
 urirun connectors install planfile --execute  # actually run pip
 urirun connectors check path/to/connector.manifest.json  # CI guard: package vs hub
+urirun connectors sync-manifest path/to/connector         # write routes/uriSchemes from the code
+urirun connectors sync-manifest path/to/connector --check # CI gate: fail if the manifest drifted
 ```
 
 Connectors are polyglot — the runtime only needs a v2 bindings document and an
@@ -421,6 +424,27 @@ The scanner has a `Best PDF` mode for phone capture. It samples a short burst at
 1 frame per second, scores every candidate using crop confidence, OCR text,
 document type/date/amount and visual sharpness/contrast, and archives only the
 best receipt/invoice candidate as PDF.
+
+Every scanner layer is addressable by URI. The browser page exposes local
+actions such as `scanner://page/camera/command/start`; the host exposes
+`scanner://host/capture/command/run`,
+`scanner://host/best/command/finish` and
+`dashboard://host/phone-scanner/command/start` through `/api/uri/invoke`.
+Use the same URI with `mode: "dry-run"` to simulate, or `mode: "execute"` to
+run:
+
+```js
+await urirun.simulate('scanner://page/camera/command/best-pdf', { count: 6 })
+await urirun.invoke('scanner://page/camera/command/best-pdf', { count: 6 }, { mode: 'execute' })
+await urirun.invoke('scanner://host/actions/query/list')
+```
+
+From the dashboard Chat tab you can also type `wlacz kamere telefonu na porcie
+8196`. The host starts the scanner service, emits the QR message, and queues
+`scanner://page/camera/command/start` for the open `/scanner` page. The page
+polls the host every second and executes queued page-layer URI actions with the
+JavaScript SDK. If the page is not open yet, the command waits until it polls;
+the browser may still show a camera permission prompt.
 
 Daily queues can be scheduled without hand-editing systemd files:
 

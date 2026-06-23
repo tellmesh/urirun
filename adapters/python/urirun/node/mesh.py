@@ -124,7 +124,7 @@ from urirun.node.config import (  # noqa: E402
 # Foundational primitives (_util) and base64-artifact helpers (_artifacts) live in
 # sibling modules now; re-exported here so `mesh.<name>` and `from …mesh import <name>`
 # keep working unchanged for callers (domain_monitor, task_planner, _scan, v2, tests).
-from urirun.node._util import json_load, json_write, now_id, slug  # noqa: E402,F401
+from urirun.node._util import _parse_json_option, json_load, json_write, now_id, slug  # noqa: E402,F401
 from urirun.node._artifacts import (  # noqa: E402
     BASE64_ARTIFACT_MIN_CHARS,
     DEFAULT_HOST_ARTIFACT_DIR,
@@ -228,12 +228,6 @@ from urirun.node.formatting import (  # noqa: E402,F401
     format_table,
     format_tickets,
 )
-
-
-def _parse_json_option(value: str | None, default=None):
-    if value is None:
-        return default
-    return json.loads(value)
 
 
 def data_command(args: argparse.Namespace) -> int:

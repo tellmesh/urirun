@@ -235,6 +235,147 @@ def test_scanner_session_adds_chat_message(monkeypatch):
     assert fake_db.logs[-1]["detail"]["detail"]["href"] == "https://host/scanner"
 
 
+def test_uri_event_logs_js_event(monkeypatch):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.uri_event(":memory:", {
+        "s": ["scanner"],
+        "e": ["scanner_actions_ready"],
+        "p": ["/scanner"],
+        "l": ["ready"],
+    })
+
+    assert result["ok"] is True
+    assert fake_db.logs[-1]["stream"] == "uri-js"
+    assert fake_db.logs[-1]["event"] == "scanner_actions_ready"
+    assert fake_db.logs[-1]["detail"]["path"] == "/scanner"
+
+
+def test_uri_invoke_dispatches_scanner_session(monkeypatch):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.uri_invoke(".", ":memory:", None, {
+        "uri": "scanner://host/session/command/log",
+        "payload": {"event": "open", "href": "https://host/scanner"},
+    })
+
+    assert result["ok"] is True
+    assert result["invokedUri"] == "scanner://host/session/command/log"
+    assert fake_db.logs[-1]["detail"]["detail"]["href"] == "https://host/scanner"
+
+
+def test_uri_invoke_lists_supported_host_actions():
+    result = host_dashboard.uri_invoke(".", None, None, {"uri": "scanner://host/actions/query/list"})
+
+    assert result["ok"] is True
+    uris = {item["uri"] for item in result["actions"]}
+    assert "scanner://page/ui/button/start-camera/command/click" in uris
+    assert "scanner://page/camera/command/best-pdf" in uris
+    assert "scanner://host/capture/command/run" in uris
+    assert all("layer" in item for item in result["actions"])
+
+
+def test_uri_invoke_dry_run_does_not_execute_side_effects(monkeypatch):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.uri_invoke(".", ":memory:", None, {
+        "uri": "scanner://host/session/command/log",
+        "mode": "dry-run",
+        "payload": {"event": "open", "href": "https://host/scanner"},
+    })
+
+    assert result["ok"] is True
+    assert result["simulated"] is True
+    assert result["wouldRun"]["uri"] == "scanner://host/session/command/log"
+    assert result["wouldRun"]["sideEffects"] == ["chat-message"]
+    assert fake_db.logs == []
+
+
+def test_uri_invoke_execute_session_logs(monkeypatch):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.uri_invoke(".", ":memory:", None, {
+        "uri": "scanner://host/session/command/log",
+        "mode": "execute",
+        "payload": {"event": "open", "href": "https://host/scanner"},
+    })
+
+    assert result["ok"] is True
+    assert result["invokedUri"] == "scanner://host/session/command/log"
+    assert fake_db.logs[-1]["detail"]["detail"]["href"] == "https://host/scanner"
+
+
+def test_uri_invoke_page_action_queues_for_scanner(monkeypatch):
+    fake_db = FakeHostDb()
+    host_dashboard._PAGE_ACTION_QUEUES.clear()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.uri_invoke(".", ":memory:", None, {
+        "uri": "scanner://page/ui/button/start-camera/command/click",
+        "mode": "execute",
+        "payload": {"target": "scanner"},
+    })
+
+    assert result["ok"] is True
+    assert result["queued"] is True
+    polled = host_dashboard.page_action_poll("scanner")
+    assert polled["count"] == 1
+    assert polled["actions"][0]["uri"] == "scanner://page/ui/button/start-camera/command/click"
+    assert host_dashboard.page_action_poll("scanner")["count"] == 0
+
+
+def test_uri_invoke_rejects_scanner_page_requeue_loop(monkeypatch):
+    fake_db = FakeHostDb()
+    host_dashboard._PAGE_ACTION_QUEUES.clear()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    try:
+        host_dashboard.uri_invoke(".", ":memory:", None, {
+            "uri": "scanner://page/ui/button/start-camera/command/click",
+            "source": "scanner-page",
+            "mode": "execute",
+            "payload": {"target": "scanner"},
+        })
+    except ValueError as exc:
+        assert "must be handled locally" in str(exc)
+    else:
+        raise AssertionError("scanner page request should not requeue page actions")
+
+    assert host_dashboard.page_action_poll("scanner")["count"] == 0
+
+
+def test_chat_camera_prompt_starts_service_and_queues_page_action(monkeypatch):
+    fake_db = FakeHostDb()
+    host_dashboard._PAGE_ACTION_QUEUES.clear()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    def fake_ensure(*args, **kwargs):
+        return {
+            "ok": True,
+            "status": "started",
+            "url": "https://192.168.1.10:8196/scanner",
+            "message": {"attachments": [{"kind": "qr-code", "path": "/tmp/qr.png"}]},
+        }
+
+    monkeypatch.setattr(host_dashboard, "ensure_phone_scanner_service", fake_ensure)
+
+    result = host_dashboard.chat_ask(".", ":memory:", None, {
+        "prompt": "wlacz kamere telefonu na porcie 8196",
+        "execute": True,
+        "no_llm": True,
+    })
+
+    assert result["ok"] is True
+    assert result["results"]["camera-start"]["queued"] is True
+    assert result["timeline"][-1]["uri"] == "scanner://page/ui/button/start-camera/command/click"
+    polled = host_dashboard.page_action_poll("scanner")
+    assert polled["actions"][0]["uri"] == "scanner://page/ui/button/start-camera/command/click"
+
+
 def test_scanner_capture_registers_artifact_and_chat_message(monkeypatch, tmp_path):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)

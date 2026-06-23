@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 81f 20269L | 2026-06-23
+# redup/duplication | 15 groups | 81f 20663L | 2026-06-23
 
 SUMMARY:
   files_scanned: 81
-  total_lines:   20269
+  total_lines:   20663
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       684
+  scan_ms:       781
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.3%)
@@ -33,9 +33,9 @@ DUPLICATES[15] (ranked by impact):
       runtime/v2.py:1852-1855  (_cmd_host)
       runtime/v2.py:1858-1861  (_cmd_node)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:2022-2025  (_host_db)
-      host/host_dashboard.py:2028-2031  (_mesh)
-      host/host_dashboard.py:2034-2037  (_planfile_adapter)
+      host/host_dashboard.py:2398-2401  (_host_db)
+      host/host_dashboard.py:2404-2407  (_mesh)
+      host/host_dashboard.py:2410-2413  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
   [60d4dcb768819ab9]   EXAC  _binding_pairs  L=11 N=2 saved=11 sim=1.00
       runtime/v1.py:362-372  (_binding_pairs)

@@ -20,6 +20,13 @@ def slug(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")[:64] or "step"
 
 
+def _parse_json_option(value: str | None, default=None):
+    """Parse an optional JSON CLI argument; return ``default`` when unset."""
+    if value is None:
+        return default
+    return json.loads(value)
+
+
 def json_load(path: str | Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 

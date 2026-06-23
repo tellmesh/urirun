@@ -6,6 +6,23 @@ Last updated: 2026-06-23.
 
 ## Landed (2026-06-23)
 
+- **Isolated-subprocess result contract hardened.** `urirun.exec` redirects the handler's stdout
+  to stderr and emits only the result JSON; the subprocess adapter recovers the last balanced JSON
+  object on stdout instead of `{stdout: …}`. Kills a whole bug class (a handler or an imported lib
+  — e.g. litellm's banner — printing to stdout broke every `local-function-subprocess` caller).
+- **Schema generator handles `**kwargs`/`*args`/`self`.** `model_from_function` skips var-keyword,
+  var-positional and the bound receiver; a `**kw` handler yields `additionalProperties: true`
+  instead of a phantom `required: ["kw"]`.
+- **Manifest drift killed at the tool level.** New `urirun connectors sync-manifest <pkg> [--check]`
+  projects `routes`/`uriSchemes`/`adapterKinds` from the decorators into the manifest (AST, no
+  import). Run across all 22 Python connectors — fixed real route drift and back-filled
+  `uriSchemes` on 12 connectors, restoring scheme discovery / self-healing for them.
+- **Route-granular discovery.** `connector_discover` exposes per-connector `routes`;
+  `ensure_scheme`/`run_ensuring` take a `route` and prefer the connector covering it (a scheme
+  split across connectors, e.g. `fs://`, now resolves to the right package).
+- **`node/mesh.py` decomposed further** ~2050 → 1721 L: `node/formatting.py` (CLI tables) and
+  `node/task_cli.py` (host task/ticket DSL: `task_command` + the `_task_*` family), re-exported
+  from `mesh`.
 - **Security — RCE classification hole closed.** `shell://…/command/exec` (a
   `subprocess shell=True` handler) was auto-classified `safe`; added `/command/exec` to the
   denylist and centralized the safe decision (see below). `tests/test_routing.py`.
