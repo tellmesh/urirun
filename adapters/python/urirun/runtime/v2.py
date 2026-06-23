@@ -1754,6 +1754,8 @@ def _build_parser(prog: str) -> argparse.ArgumentParser:
     host_copyid.add_argument("node", nargs="?", help="configured node name or a node URL")
     host_copyid.add_argument("--all", action="store_true", help="enroll on every node in the mesh config")
     host_copyid.add_argument("--identity", help="SSH private key (default ~/.ssh/id_ed25519)")
+    host_copyid.add_argument("--enroll-token", default=None,
+                             help="the node's console TOKEN (shown in red at its startup) authorizing this enrollment")
 
     host_probe = host_sub.add_parser("probe", parents=[host_common],
                                      help="Snapshot a node's surface and test every route pinned to it; detects a churning/hot-swapped registry")

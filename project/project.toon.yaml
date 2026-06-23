@@ -1,26 +1,26 @@
-# urirun | 1016 func | 69f | 21577L | python | 2026-06-22
+# urirun | 1057 func | 70f | 22418L | python | 2026-06-23
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.4  critical=106 (limit:10)  dup=2  cycles=0
+  CC̄=4.5  critical=117 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     _build_parser = 112 (limit:10)
+  !!! high_fan_out     _build_parser = 116 (limit:10)
+  !!! high_fan_out     NodeHandler._handle_run = 34 (limit:10)
   !!! cc_exceeded      probe_command = 33 (limit:15)
-  !!! high_fan_out     NodeHandler._handle_run = 31 (limit:10)
+  !!! high_fan_out     run_command = 33 (limit:10)
   !!! high_fan_out     serve = 30 (limit:10)
-  !!! high_fan_out     run_command = 30 (limit:10)
+  !!! cc_exceeded      connector_discover = 29 (limit:15)
   !!! high_fan_out     main = 29 (limit:10)
   !!! high_fan_out     NodeHandler._stream_events = 28 (limit:10)
+  !!! cc_exceeded      NodeHandler._handle_run = 26 (limit:15)
   !!! high_fan_out     main = 26 (limit:10)
-  !!! high_fan_out     main = 25 (limit:10)
-  !!! high_fan_out     probe_command = 25 (limit:10)
 
-MODULES[136] (top by size):
-  M[adapters/python/urirun/node/mesh.py] 2674L C:3 F:152 CC↑33 D:1 (python)
-  M[adapters/python/urirun/runtime/v2.py] 2542L C:1 F:125 CC↑14 D:3 (python)
+MODULES[137] (top by size):
+  M[adapters/python/urirun/node/mesh.py] 3043L C:3 F:169 CC↑33 D:1 (python)
+  M[adapters/python/urirun/runtime/v2.py] 2582L C:1 F:125 CC↑14 D:2 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:0 (python)
+  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/__init__.py] 702L C:1 F:49 CC↑14 D:10 (python)
   M[adapters/python/urirun/runtime/_scan.py] 673L C:0 F:37 CC↑14 D:0 (python)
   M[adapters/python/urirun/host/host_dashboard.py] 609L C:0 F:16 CC↑13 D:0 (python)
@@ -32,21 +32,21 @@ MODULES[136] (top by size):
   M[adapters/python/urirun/runtime/v1.py] 471L C:0 F:25 CC↑14 D:0 (python)
   M[adapters/python/urirun/runtime/codegen.py] 438L C:0 F:19 CC↑14 D:0 (python)
   M[adapters/python/urirun/connectors/connector_scaffold.py] 412L C:0 F:11 CC↑3 D:0 (python)
-  LANGS: python:77/json:12/shell:10/csharp:4/yaml:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
+  LANGS: python:78/json:12/shell:10/csharp:4/yaml:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
-  ★ _build_parser fan=112  // Orchestrates 112 calls
-  ★ NodeHandler._handle_run fan=31  // Orchestrates 31 calls
+  ★ _build_parser fan=116  // Orchestrates 116 calls
+  ★ NodeHandler._handle_run fan=34  // Orchestrates 34 calls
+  ★ run_command fan=33  // `urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
   ★ serve fan=30  // Run the daemon: warm registry + worker pool, one Unix socket, one process.
-  ★ run_command fan=30  // `urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
   ★ main fan=29  // Orchestrates 29 calls
 
 REFACTOR[15]:
-  [1] H/L Split probe_command (CC=33)
-  [2] H/H Split god module adapters/python/urirun/node/mesh.py (2674L, 3 classes)
-  [3] H/H Split god module adapters/python/urirun/__init__.py (702L, 1 classes)
-  [4] H/H Split god module adapters/python/urirun/runtime/_registry.py (718L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun/runtime/_scan.py (673L, 0 classes)
+  [1] H/L Split connector_discover (CC=29)
+  [2] H/L Split probe_command (CC=33)
+  [3] H/L Split NodeHandler._handle_run (CC=26)
+  [4] H/H Split god module adapters/python/urirun/node/mesh.py (3043L, 3 classes)
+  [5] H/H Split god module adapters/python/urirun/__init__.py (702L, 1 classes)
 
 EVOLUTION:
-  2026-06-22 CC̄=4.4 crit=106 21577L // Automated analysis
+  2026-06-23 CC̄=4.5 crit=117 22418L // Automated analysis

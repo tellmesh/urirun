@@ -23,6 +23,26 @@ PURPOSE_ENROLL = "enroll"
 PURPOSE_RUN = "run"  # signs POST /run when the node enforces --require-run-auth
 MAX_SKEW = 300  # seconds a signed request stays valid (replay window on a trusted LAN)
 
+# Console-readable alphabet for the out-of-band enrollment PIN: uppercase + digits, minus
+# the look-alikes (0/O, 1/I) so a human can transcribe it off a node's console without error.
+ENROLL_TOKEN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def new_enroll_token(length: int = 6) -> str:
+    """A short enrollment PIN the node prints (in red) at startup. An operator who can SEE
+    the node authorizes a `copy-id` by quoting it; this replaces blind trust-on-first-use,
+    so reaching the port no longer makes you admin — you must also read the console."""
+    import secrets
+    return "".join(secrets.choice(ENROLL_TOKEN_ALPHABET) for _ in range(length))
+
+
+def token_matches(expected: str | None, provided: str | None) -> bool:
+    """Constant-time, case/space-insensitive compare of an enrollment PIN."""
+    import hmac
+    if not expected or not provided:
+        return False
+    return hmac.compare_digest(str(expected).strip().upper(), str(provided).strip().upper())
+
 
 def available() -> bool:
     try:

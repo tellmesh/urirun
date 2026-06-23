@@ -6,6 +6,7 @@ import tempfile
 import time
 import unittest
 import base64
+import argparse
 from pathlib import Path
 
 from urirun import mesh
@@ -1149,6 +1150,17 @@ class MeshTests(unittest.TestCase):
 
         self.assertEqual(flow["steps"][0]["uri"], "screen://laptop/portal/query/capture")
 
+    def test_heuristic_flow_filters_selected_node_when_route_targets_overlap(self):
+        nodes = [{"name": "officepc", "reachable": True}, {"name": "laptop", "reachable": True}]
+        routes = [
+            {"uri": "env://laptop/runtime/query/health", "node": "officepc", "safe": True},
+            {"uri": "screen://laptop/portal/query/capture", "node": "laptop", "safe": True},
+        ]
+
+        flow = mesh.heuristic_flow("sprawdź ekran laptop", routes, nodes, selected_nodes=["laptop"])
+
+        self.assertEqual([step["uri"] for step in flow["steps"]], ["screen://laptop/portal/query/capture"])
+
     def test_heuristic_flow_maps_browser_linkedin_prompt_to_cdp(self):
         nodes = [{"name": "laptop", "reachable": True}]
         routes = [
@@ -1180,6 +1192,26 @@ class MeshTests(unittest.TestCase):
         flattened = mesh.routes_from_registry(registry)
         self.assertEqual(flattened[0]["uri"], "proc://pc1/process/query/list")
         self.assertEqual(flattened[0]["adapter"], "http-service")
+
+    def test_service_map_prefers_exact_uri_over_shared_target(self):
+        from urirun import v2_service
+        import os
+
+        old = os.environ.get("URI_SERVICE_MAP")
+        os.environ["URI_SERVICE_MAP"] = json.dumps({
+            "laptop": "http://wrong-node:8765",
+            "screen://laptop/portal/query/capture": "http://right-node:8766",
+        })
+        try:
+            self.assertEqual(
+                v2_service.service_base("laptop", "screen://laptop/portal/query/capture"),
+                "http://right-node:8766",
+            )
+        finally:
+            if old is None:
+                os.environ.pop("URI_SERVICE_MAP", None)
+            else:
+                os.environ["URI_SERVICE_MAP"] = old
 
     def test_resolve_step_payload_chains_prior_results(self):
         results = {"slugify": {"ok": True, "result": {"slug": "june-report"}}}
@@ -1366,6 +1398,33 @@ def test_config_with_transient_node_urls():
     assert any(node["name"] == "example_org_7777" and node["url"] == "http://example.org:7777"
                for node in out["nodes"])
     assert config["nodes"] == []
+
+
+def test_deploy_command_uses_transient_node_url(tmp_path, monkeypatch, capsys):
+    from urirun.node import mesh as nodemesh
+
+    config_path = tmp_path / "mesh.json"
+    bindings_path = tmp_path / "bindings.json"
+    nodemesh.save_host_config({"version": nodemesh.CONFIG_VERSION, "host": {"name": "h"},
+                               "nodes": [{"name": "laptop", "url": "http://127.0.0.1:8765"}]},
+                              str(config_path))
+    bindings_path.write_text(json.dumps({"version": "urirun.bindings.v2", "bindings": {}}), encoding="utf-8")
+    seen = {}
+
+    def fake_deploy(url, **kwargs):
+        seen["url"] = url
+        seen["merge"] = kwargs.get("merge")
+        return {"ok": True, "url": url}
+
+    monkeypatch.setattr(nodemesh, "deploy_to_node", fake_deploy)
+    args = argparse.Namespace(config=str(config_path), node="laptop",
+                              node_url=["laptop=http://192.168.188.201:8766"],
+                              bindings=str(bindings_path), code=[], allow=[], env=[],
+                              name=None, token=None, identity=None, merge=True)
+
+    assert nodemesh.deploy_command(args) == 0
+    capsys.readouterr()
+    assert seen == {"url": "http://192.168.188.201:8766", "merge": True}
 
 
 def test_apply_deploy_merge_preserves_existing_allowlist():

@@ -36,10 +36,12 @@ from urirun import _registry as reglib, v2
 DEFAULT_PORT = 8080
 
 
-def service_base(target: str) -> str:
+def service_base(target: str, uri: str | None = None) -> str:
     mapping = os.getenv("URI_SERVICE_MAP")
     if mapping:
         table = json.loads(mapping)
+        if uri and uri in table:
+            return str(table[uri]).rstrip("/")
         if target in table:
             return str(table[target]).rstrip("/")
     return f"http://{target}:{DEFAULT_PORT}"
@@ -85,7 +87,7 @@ def call(uri: str, payload: dict | None = None, registry: dict | None = None, mo
             envelope["error"] = {"type": "schema", "message": err.message}
             return envelope
 
-    url = f"{service_base(translation['target'])}/run"
+    url = f"{service_base(translation['target'], descriptor['normalized'])}/run"
     envelope["url"] = url
     body = {"uri": descriptor["normalized"], "payload": payload}
 

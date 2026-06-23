@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import subprocess
@@ -95,6 +96,43 @@ def package_install(**payload: Any) -> dict:
     return res
 
 
+def _refresh_install_caches() -> None:
+    """Make a just-pip-installed connector visible to THIS long-running process without a
+    restart. Two things go stale: (1) an EDITABLE install adds its source via a .pth/finder that
+    site only processes at interpreter startup — so re-run site.addsitedir to activate it, else
+    ep.load() raises ModuleNotFoundError and the connector is silently skipped; (2) importlib's
+    metadata/import caches — drop them so the new dist-info and modules are discoverable."""
+    import site
+    for d in (*site.getsitepackages(), site.getusersitepackages()):
+        if os.path.isdir(d):
+            site.addsitedir(d)  # replays .pth files → activates a new editable install's finder
+    importlib.invalidate_caches()
+    try:
+        from importlib import metadata as _md
+        for cached in (getattr(_md.FastPath.__new__, "cache_clear", None),
+                       getattr(_md.FastPath.lookup, "cache_clear", None)):
+            if cached:
+                cached()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _project_root(path: str) -> str:
+    """A local connector's installable root: the nearest ancestor (incl. itself) holding a
+    pyproject.toml/setup.py/setup.cfg. Connectors that keep connector.manifest.json INSIDE the
+    package dir yield a `source` that pip can't install (-e on a bare package dir); walk up so
+    `pip install -e` resolves to the project that actually declares the build."""
+    cur = os.path.abspath(path)
+    for _ in range(5):
+        if any(os.path.exists(os.path.join(cur, f)) for f in ("pyproject.toml", "setup.py", "setup.cfg")):
+            return cur
+        parent = os.path.dirname(cur)
+        if parent == cur:
+            break
+        cur = parent
+    return path
+
+
 def connector_install(**payload: Any) -> dict:
     """Install a connector from ANY source into the node's venv:
       - a catalog id ("browser-control") → urirun-connector-<id> (PyPI, then if-uri GitHub),
@@ -114,7 +152,7 @@ def connector_install(**payload: Any) -> dict:
         spec = s if s.startswith(("git+", "git@", "ssh://")) else "git+" + s
         res = _pip(["install", "--upgrade", spec])
     elif kind == "local":
-        path = os.path.expanduser(s)
+        path = _project_root(os.path.expanduser(s))
         res = _pip(["install", "--upgrade", *(["-e"] if payload.get("editable") else []), path])
     else:
         res = _pip(["install", "--upgrade", f"urirun-connector-{s}"])
@@ -122,6 +160,8 @@ def connector_install(**payload: Any) -> dict:
             gurl = f"git+https://github.com/if-uri/urirun-connector-{s}.git"
             if _policy_allows("git", gurl, policy)[0]:
                 res = _pip(["install", "--upgrade", gurl])
+    if res.get("ok"):
+        _refresh_install_caches()
     res["connector"], res["source"], res["sourceKind"] = s, s, kind
     res["hint"] = "make routes live: run node://<name>/registry/command/adopt or deploy the connector bindings with --merge"
     return res

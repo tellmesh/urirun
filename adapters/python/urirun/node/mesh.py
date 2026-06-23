@@ -272,6 +272,12 @@ def config_with_transient_node_urls(config: dict, specs: list[str] | None) -> di
     return out
 
 
+def host_config_for_args(args: argparse.Namespace) -> dict:
+    """Load host config and apply transient --node-url entries for any host subcommand."""
+    config = load_host_config(getattr(args, "config", None))
+    return config_with_transient_node_urls(config, getattr(args, "node_url", None))
+
+
 def default_node_config(name: str | None = None, registry: str = ".urirun/registry.merged.json") -> dict:
     return {
         "version": CONFIG_VERSION,
@@ -663,11 +669,13 @@ def fanout_to_mqtt(events, broker: str, topic_prefix: str = "urirun/events",
     return n
 
 
-def copy_id(url: str, identity: str, *, timeout: float = 10.0) -> dict:
-    """ssh-copy-id for urirun: enroll an SSH public key as an admin on the node. On a
-    fresh node (empty authorized_keys) this is trust-on-first-use — no secret needed;
-    once keys exist, the enrollment is signed with the same identity so only an already
-    enrolled admin can add more. `identity` is the private key path (its .pub is sent).
+def copy_id(url: str, identity: str, *, token: str | None = None, timeout: float = 10.0) -> dict:
+    """ssh-copy-id for urirun: enroll an SSH public key as an admin on the node. If the node
+    prints a console TOKEN at startup, pass it as `token` to authorize the enrollment (the
+    node requires it instead of trusting whoever reaches the port first). Otherwise a fresh
+    node (empty authorized_keys) is trust-on-first-use, and once keys exist the enrollment is
+    signed with the same identity so only an already-enrolled admin can add more. `identity`
+    is the private key path (its .pub is sent).
 
     Pre-flights the node's /health so a stale or non-urirun node gives an actionable
     error instead of a bare 404 "not found": old urirun lacks the /authorized-keys
@@ -690,6 +698,8 @@ def copy_id(url: str, identity: str, *, timeout: float = 10.0) -> dict:
     headers: dict = {}
     if keyauth.available():  # sign so add-after-first works; ignored by a fresh node
         headers = keyauth.sign(identity, keyauth.PURPOSE_ENROLL, raw)
+    if token:  # out-of-band console PIN authorizing this enrollment
+        headers["X-Urirun-Enroll-Token"] = str(token).strip()
     return http_json("POST", f"{base}/authorized-keys", raw=raw, timeout=timeout, headers=headers)
 
 
@@ -761,6 +771,7 @@ def discover_mesh(config: dict) -> dict:
             item["node"] = node["name"]
             item["nodeUrl"] = node["url"]
             routes.append(item)
+            service_map[item["uri"]] = node["url"]
             try:
                 service_map.setdefault(route_target(item["uri"]), node["url"])
             except ValueError:
@@ -898,8 +909,21 @@ def _append_target_steps(steps: list[dict], route_uris: set, target: str, intent
 
 
 def heuristic_flow(prompt: str, routes: list[dict], nodes: list[dict], selected_nodes: list[str] | None = None) -> dict:
-    route_uris = {route["uri"] for route in routes if safe_route(route)}
-    targets = route_targets_for_nodes(routes, target_nodes(prompt, nodes, selected_nodes))
+    selected = target_nodes(prompt, nodes, selected_nodes)
+
+    def selected_route(route: dict) -> bool:
+        if not selected:
+            return True
+        if route.get("node"):
+            return route.get("node") in selected
+        try:
+            return route_target(str(route.get("uri") or "")) in selected
+        except Exception:
+            return False
+
+    selected_routes = [route for route in routes if safe_route(route) and selected_route(route)]
+    route_uris = {route["uri"] for route in selected_routes}
+    targets = route_targets_for_nodes(selected_routes, selected)
     lowered = nl_key(prompt)
     intents = _flow_intents(lowered)
     url = first_url(prompt) or ("https://www.linkedin.com/feed/" if "linkedin" in lowered else "https://example.com/")
@@ -1167,7 +1191,7 @@ def materialize_base64_artifacts(data: Any, *, artifact_dir: str | None = None,
     The node keeps returning ordinary JSON, but host commands should not dump a full PNG
     to stdout. We preserve exact bytes on disk and leave a small structured reference.
     """
-    artifacts: list[dict] = []
+    artifacts_by_sha: dict[str, dict] = {}
 
     def walk(value: Any, path_hint: str) -> Any:
         if isinstance(value, dict):
@@ -1177,8 +1201,13 @@ def materialize_base64_artifacts(data: Any, *, artifact_dir: str | None = None,
                     decoded = _decode_base64_artifact(item)
                     if decoded:
                         raw, mime = decoded
-                        artifact = _write_artifact(raw, artifact_dir=artifact_dir, hint=f"{path_hint}-{key}", mime=mime)
-                        artifacts.append({"field": f"{path_hint}.{key}", **artifact})
+                        digest = hashlib.sha256(raw).hexdigest()
+                        artifact = artifacts_by_sha.get(digest)
+                        if artifact is None:
+                            artifact = _write_artifact(raw, artifact_dir=artifact_dir, hint=f"{path_hint}-{key}", mime=mime)
+                            artifact["fields"] = []
+                            artifacts_by_sha[digest] = artifact
+                        artifact["fields"].append(f"{path_hint}.{key}")
                         out[key] = {"artifactPath": artifact["path"], "bytes": artifact["bytes"],
                                     "sha256": artifact["sha256"], "mime": artifact["mime"]}
                         continue
@@ -1188,7 +1217,7 @@ def materialize_base64_artifacts(data: Any, *, artifact_dir: str | None = None,
             return [walk(item, f"{path_hint}.{idx}") for idx, item in enumerate(value)]
         return value
 
-    return walk(data, hint), artifacts
+    return walk(data, hint), list(artifacts_by_sha.values())
 
 
 def compact_result_artifacts(result: dict, args: argparse.Namespace, *, hint: str) -> dict:
@@ -1540,7 +1569,7 @@ def _run_task_flow(args: argparse.Namespace, ticket: dict, *, mutate: bool) -> d
         generator = {"kind": "executor-handler", "handler": handler}
         flow = {"handler": handler}
     else:
-        config = load_host_config(args.config)
+        config = host_config_for_args(args)
         mesh = discover_mesh(config)
         flow, generator = make_flow(prompt, mesh, selected_nodes=args.node, use_llm=not args.no_llm)
         registry = registry_from_routes(mesh["routes"])
@@ -1830,7 +1859,7 @@ def supply_command(args: argparse.Namespace) -> int:
     """`urirun host supply <node>` — watch a node's `need://` events and fulfill each by
     supplying the connector/folder it asks for (the host as a capability provider)."""
     from urirun.node.client import NodeClient
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node)
     token = getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN")
     roots = getattr(args, "roots", None)
@@ -1854,7 +1883,7 @@ def ensure_command(args: argparse.Namespace) -> int:
     """`urirun host ensure <node> <scheme>` — make a capability live, acquiring it if the
     node lacks it (discover installed/local connector → merge-deploy). Self-management."""
     from urirun.node.client import NodeClient
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node)
     token = getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN")
     client = NodeClient(url, token=token)
@@ -1868,7 +1897,7 @@ def run_command(args: argparse.Namespace) -> int:
     """`urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
     node; with --stream, start it async and print the node's live progress until done."""
     from urirun.node.client import NodeClient
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node)
     token = getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN")
     client = NodeClient(url, token=token)
@@ -1933,7 +1962,7 @@ def _print_event(ev: dict, as_json: bool) -> None:
 def watch_command(args: argparse.Namespace) -> int:
     """`urirun host watch <node>` — stream the node's live events (run/error) as URIs.
     Reconnects automatically, replaying missed events via Last-Event-ID."""
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node)
     scheme = [s for s in (getattr(args, "scheme", None) or "").split(",") if s] or None
     run = getattr(args, "run", None)
@@ -2020,7 +2049,7 @@ def copy_id_command(args: argparse.Namespace) -> int:
         sys.stderr.write("this needs the 'cryptography' package: pip install cryptography\n")
         return 1
     identity = getattr(args, "identity", None) or DEFAULT_IDENTITY
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
 
     if getattr(args, "all", False):
         nodes = config.get("nodes", [])
@@ -2031,7 +2060,7 @@ def copy_id_command(args: argparse.Namespace) -> int:
         for node in nodes:
             url = str(node["url"]).rstrip("/")
             try:
-                res = copy_id(url, identity)
+                res = copy_id(url, identity, token=getattr(args, "enroll_token", None))
             except Exception as exc:  # noqa: BLE001
                 res = {"ok": False, "error": str(exc)}
             mark = res.get("fingerprint") if res.get("ok") else f"FAIL {res.get('error')}"
@@ -2044,7 +2073,7 @@ def copy_id_command(args: argparse.Namespace) -> int:
         sys.stderr.write("pass a node (name or URL) or --all\n")
         return 2
     url = node_url(config, args.node)
-    result = copy_id(url, identity)
+    result = copy_id(url, identity, token=getattr(args, "enroll_token", None))
     reglib._emit_json(result, "-")
     if result.get("ok"):
         sys.stderr.write(f"enrolled {result.get('fingerprint')} on {url} "
@@ -2062,6 +2091,8 @@ def copy_id_cli(argv: list[str] | None = None) -> int:
                            description="Enroll your SSH public key on a urirun node (ssh-copy-id for urirun)")
     p.add_argument("node", help="node URL (e.g. 192.168.188.201) or a configured node name")
     p.add_argument("-i", "--identity", default=DEFAULT_IDENTITY, help="SSH private key (default ~/.ssh/id_ed25519)")
+    p.add_argument("-t", "--enroll-token", default=None,
+                   help="the node's console TOKEN (shown in red at its startup), authorizing this enrollment")
     p.add_argument("--config", default=None, help="host mesh config (to resolve a node name)")
     args = p.parse_args(argv)
     # bare host -> default urirun port
@@ -2077,7 +2108,7 @@ def copy_id_cli(argv: list[str] | None = None) -> int:
 
 def deploy_command(args: argparse.Namespace) -> int:
     """`urirun host deploy <node> --bindings F [--allow G] [--code F] [--env K=V]`."""
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node)
 
     bindings = registry = None
@@ -2131,8 +2162,7 @@ def host_command(args: argparse.Namespace) -> int:
     delegated = _host_delegated_command(args)
     if delegated is not None:
         return delegated
-    config = load_host_config(args.config)
-    config = config_with_transient_node_urls(config, getattr(args, "node_url", None))
+    config = host_config_for_args(args)
     mesh = discover_mesh(config)
     result = _host_mesh_command(args, config, mesh)
     return result if result is not None else 1
@@ -2194,7 +2224,7 @@ def probe_command(args: argparse.Namespace) -> int:
 
     import urirun
 
-    config = load_host_config(args.config)
+    config = host_config_for_args(args)
     url = node_url(config, args.node).rstrip("/")
     snap = http_json("GET", f"{url}/routes")
     etag0, gen0 = snap.get("etag"), snap.get("generation")
@@ -2839,9 +2869,24 @@ class NodeHandler(BaseHTTPRequestHandler):
         if not pub:
             send_json(self, 400, {"ok": False, "error": "missing publicKey"})
             return
-        if keyauth.load_authorized() and not keyauth.verify_request(self.headers, raw, keyauth.PURPOSE_ENROLL):
-            send_json(self, 403, {"ok": False, "error": "node already enrolled; sign the request with an authorized key"})
-            return
+        # Authorization to enroll a key, in order of preference:
+        #   1. signed by an already-enrolled admin → always allowed (add more keys headlessly);
+        #   2. quotes the node's console TOKEN → out-of-band proof of console access.
+        # When a console TOKEN exists it REPLACES trust-on-first-use: even the first key needs
+        # it, so merely reaching the port no longer makes you admin. A node without a TOKEN
+        # (key-auth/cryptography unavailable) keeps the legacy TOFU-on-empty-file behavior.
+        signed_ok = keyauth.verify_request(self.headers, raw, keyauth.PURPOSE_ENROLL)
+        token_ok = keyauth.token_matches(getattr(c, "enroll_token", None),
+                                         self.headers.get("X-Urirun-Enroll-Token"))
+        if not signed_ok and not token_ok:
+            if getattr(c, "enroll_token", None):
+                send_json(self, 403, {"ok": False, "error": "enrollment needs this node's console TOKEN "
+                          "(shown in red at startup): pass it via `uri-copy-id --enroll-token`, "
+                          "or sign the request with an already-enrolled key"})
+                return
+            if keyauth.load_authorized():
+                send_json(self, 403, {"ok": False, "error": "node already enrolled; sign the request with an authorized key"})
+                return
         try:
             res = keyauth.add_authorized(pub)
         except Exception as exc:  # noqa: BLE001
@@ -2890,10 +2935,15 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
         from urirun.runtime.worker import ConnectorPools
         pool_executors = _pool_executors(ConnectorPools())   # warm workers, reused across requests
 
+    # Out-of-band enrollment PIN: shown (in red) on this node's console at startup; an
+    # operator quotes it to authorize `uri-copy-id`, closing the trust-on-first-use hole
+    # where whoever first reaches the port could enroll as admin. Per-session (regenerated
+    # each restart) and kept only in memory.
+    enroll_token = keyauth.new_enroll_token() if (key_auth and keyauth.available()) else None
     ctx = NodeContext(state=state, hub=hub, execute=execute, public_url=public_url,
                       deploy_enabled=deploy_enabled, key_auth=key_auth, admin_token=admin_token,
                       allow_secrets=allow_secrets, pool_executors=pool_executors,
-                      run_auth_enforced=run_auth_enforced,
+                      run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
                       manage_registry=manage_registry, manage_policy=manage_policy,
                       runs={})  # run id -> progress.RunControl, for streaming/cancel/status
     server = ThreadingHTTPServer((host, port), NodeHandler)
@@ -2903,6 +2953,11 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
     if vstatus["status"] == "update-available":
         sys.stderr.write(f"[urirun] a newer version is available: {vstatus['latest']} "
                          f"(pip install -U 'urirun[keyauth]')\n")
+    if enroll_token:
+        # red, bold, and isolated on its own line so it stands out in the console scrollback.
+        sys.stderr.write(f"\033[1;31mTOKEN: {enroll_token}\033[0m"
+                         f"  — quote this to authorize enrollment: uri-copy-id {public_url} "
+                         f"--enroll-token {enroll_token}\n")
     sys.stderr.flush()
     print(json.dumps({"event": "urirun.node.started", "name": name, "host": host, "port": port,
                       "execute": execute, "routes": len(state["routes"]),

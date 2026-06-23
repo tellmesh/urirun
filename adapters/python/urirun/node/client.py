@@ -142,15 +142,17 @@ class NodeClient:
             disc = self.value(self.run(f"{mgmt}/connector/query/discover",
                                        {"scheme": scheme, **({"roots": roots} if roots else {})}))
             disc = disc if isinstance(disc, dict) else {}
-            sources = [c["source"] for c in disc.get("local", []) if c.get("source")]
-            if sources:
-                self.run(f"{mgmt}/connector/command/install", {"source": sources[0], "editable": True})
+            locals_ = [c for c in disc.get("local", []) if c.get("source")]
+            # prefer connectors that explicitly declare this scheme; try each until one adopts
+            declared = [c for c in locals_ if scheme in (c.get("schemes") or [])]
+            for c in (declared or locals_):
+                self.run(f"{mgmt}/connector/command/install", {"source": c["source"], "editable": True})
                 adopted = try_adopt()
                 if adopted.get("ok"):
                     return adopted
-                inst = self.value(self.run(f"{mgmt}/registry/query/installed", {"scheme": scheme}))
-                inst = inst if isinstance(inst, dict) else {}
-                binds = inst.get("bindings") or {}
+            inst = self.value(self.run(f"{mgmt}/registry/query/installed", {"scheme": scheme}))
+            inst = inst if isinstance(inst, dict) else {}
+            binds = inst.get("bindings") or {}
         if not binds:
             return {"ok": False, "scheme": scheme, "error": "no installed bindings or local source for scheme"}
         dep = self.deploy(bindings={"version": inst.get("version", "urirun.bindings.v2"), "bindings": binds},
