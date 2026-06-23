@@ -13,11 +13,19 @@ import os
 import re
 import socket
 import ssl
+import subprocess
+import threading
 import time
+import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, quote, unquote, urlparse
+
+
+_SERVICE_LOCK = threading.Lock()
+_SERVICE_SERVERS: dict[str, ThreadingHTTPServer] = {}
+_SERVICE_THREADS: dict[str, threading.Thread] = {}
 
 
 INDEX_HTML = r"""<!doctype html>
@@ -199,6 +207,13 @@ INDEX_HTML = r"""<!doctype html>
       border-radius: 6px;
       background: #f8fafc;
     }
+    .attachment.attachment-qr {
+      max-width: 380px;
+    }
+    .attachment.attachment-qr img {
+      max-height: 340px;
+      image-rendering: pixelated;
+    }
     pre {
       margin: 0;
       padding: 10px;
@@ -356,7 +371,9 @@ INDEX_HTML = r"""<!doctype html>
     <button data-view="activity">Activity</button>
   </nav>
   <script>
-    const state = { summary: null, tasks: [], view: 'overview', chatMessages: [] };
+    const params = new URLSearchParams(window.location.search);
+    const initialView = params.get('view') || 'overview';
+    const state = { summary: null, tasks: [], view: initialView, chatMessages: [] };
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
@@ -479,13 +496,14 @@ INDEX_HTML = r"""<!doctype html>
     function renderAttachment(att) {
       const meta = att.meta || {};
       const ocr = meta.ocr || {};
+      const qrClass = att.kind === 'qr-code' ? ' attachment-qr' : '';
       const preview = att.previewUrl
         ? `<img src="${esc(att.previewUrl)}" alt="${esc(basename(att.path))}" loading="lazy">`
         : `<div class="subtle">preview unavailable</div>`;
       const ocrLine = ocr.ok
         ? `<div class="subtle">OCR ${esc(ocr.backend || '')}: ${esc(text(ocr.text).slice(0, 160))}</div>`
         : (ocr.error ? `<div class="subtle">OCR: ${esc(ocr.error)}</div>` : '');
-      return `<div class="attachment">
+      return `<div class="attachment${qrClass}">
         ${preview}
         <div class="mono">${esc(basename(att.path))}</div>
         <div class="subtle">${esc(att.kind || 'file')} ${meta.width && meta.height ? `· ${meta.width}x${meta.height}` : ''}</div>
@@ -513,7 +531,16 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function renderChatHistory() {
-      $('chatResult').innerHTML = state.chatMessages.map(renderChatMessage).join('') || empty('No chat messages yet');
+      const seenQr = new Set();
+      const visible = [...state.chatMessages].reverse().filter((message) => {
+        const uri = message.detail && message.detail.uri;
+        if (uri && uri.startsWith('dashboard://host/qr/')) {
+          if (seenQr.has(uri)) return false;
+          seenQr.add(uri);
+        }
+        return true;
+      }).reverse();
+      $('chatResult').innerHTML = visible.map(renderChatMessage).join('') || empty('No chat messages yet');
     }
 
     async function loadChatHistory() {
@@ -607,6 +634,7 @@ INDEX_HTML = r"""<!doctype html>
       $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
     });
     renderChatHistory();
+    setInterval(() => loadChatHistory().catch(() => {}), 4000);
     load().catch((error) => {
       $('contextLine').textContent = error.message;
     });
@@ -673,6 +701,24 @@ SCANNER_HTML = r"""<!doctype html>
       state.className = error ? 'status error' : 'status';
     }
 
+    async function announce(event, extra={}) {
+      try {
+        await fetch('/api/scanner/session', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            event,
+            href: location.href,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            userAgent: navigator.userAgent,
+            at: new Date().toISOString(),
+            ...extra
+          })
+        });
+      } catch (_) {}
+    }
+
     async function startCamera() {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: false,
@@ -685,6 +731,7 @@ SCANNER_HTML = r"""<!doctype html>
       video.srcObject = stream;
       captureBtn.disabled = false;
       setState('camera ready');
+      await announce('camera-started', {tracks: stream.getVideoTracks().map((track) => track.label)});
     }
 
     async function capture() {
@@ -714,6 +761,7 @@ SCANNER_HTML = r"""<!doctype html>
       setState(`saved ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
     }
 
+    announce('open');
     startBtn.addEventListener('click', () => startCamera().catch((err) => setState(err.message, true)));
     captureBtn.addEventListener('click', () => capture().catch((err) => setState(err.message, true)));
     auto.addEventListener('change', () => {
@@ -899,6 +947,332 @@ def shutil_which(binary: str) -> str | None:
     return shutil.which(binary)
 
 
+def _lan_host() -> str:
+    configured = os.environ.get("URIRUN_DASHBOARD_PUBLIC_HOST")
+    if configured:
+        return configured
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.connect(("8.8.8.8", 80))
+        host = sock.getsockname()[0]
+        if host and not host.startswith("127."):
+            return host
+    except OSError:
+        pass
+    finally:
+        sock.close()
+    try:
+        host = socket.gethostbyname(socket.gethostname())
+        if host and not host.startswith("127."):
+            return host
+    except OSError:
+        pass
+    return "127.0.0.1"
+
+
+def _url_host(host: str) -> str:
+    if ":" in host and not host.startswith("["):
+        return f"[{host}]"
+    return host
+
+
+def _public_base_url(scheme: str, host: str, port: int) -> str:
+    explicit = os.environ.get("URIRUN_DASHBOARD_PUBLIC_URL")
+    if explicit:
+        return explicit.rstrip("/")
+    bind_host = (host or "127.0.0.1").strip("[]")
+    if bind_host in {"", "0.0.0.0", "::"}:
+        public_host = _lan_host()
+    else:
+        public_host = bind_host
+    return f"{scheme}://{_url_host(public_host)}:{port}"
+
+
+def _write_qr_png(url: str, path: Path) -> None:
+    import qrcode
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=12,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+    image.save(path)
+
+
+def startup_phone_qr(project: str, db: str | None, *, scheme: str, host: str, port: int,
+                     qr_url: str | None = None, content_prefix: str = "Phone scanner QR ready") -> dict:
+    base_url = _public_base_url(scheme, host, port)
+    scanner_url = (qr_url or os.environ.get("URIRUN_DASHBOARD_QR_URL") or f"{base_url}/scanner").strip()
+    digest = hashlib.sha256(scanner_url.encode("utf-8")).hexdigest()
+    root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
+    path = root / f"phone-scanner-{digest[:12]}.png"
+    bind_host = (host or "").strip("[]")
+    reachable_from_phone = bind_host not in {"127.0.0.1", "localhost", "::1"}
+    secure_camera_context = scanner_url.startswith("https://") or scanner_url.startswith("http://127.0.0.1") or scanner_url.startswith("http://localhost")
+    meta = {
+        "url": scanner_url,
+        "dashboardUrl": f"{base_url}/",
+        "scannerUrl": scanner_url,
+        "bindHost": host,
+        "port": port,
+        "scheme": scheme,
+        "reachableFromPhone": reachable_from_phone,
+        "secureCameraContext": secure_camera_context,
+    }
+    uri = f"dashboard://host/qr/{digest[:16]}"
+    attachment = None
+    try:
+        _write_qr_png(scanner_url, path)
+        artifact = _host_db().register_artifact(db, "dashboard-qr", uri, str(path), meta)
+        attachment = {
+            "kind": "qr-code",
+            "path": str(path),
+            "uri": uri,
+            "previewUrl": _preview_url(str(path), project),
+            "meta": meta,
+        }
+    except Exception as exc:  # noqa: BLE001 - QR is helpful, not required for serving.
+        artifact = {"kind": "dashboard-qr", "uri": uri, "path": None, "meta": {**meta, "error": str(exc)}}
+
+    content = f"{content_prefix}: {scanner_url}"
+    if not reachable_from_phone:
+        content += " (dashboard is bound to loopback; use --host 0.0.0.0 for phone access)"
+    elif not secure_camera_context:
+        content += " (phone camera usually needs HTTPS)"
+    message = _chat_message(
+        "system",
+        content,
+        detail={"uri": uri, "url": scanner_url, "artifact": artifact, "metadata": meta},
+        attachments=[attachment] if attachment else [],
+    )
+    _add_chat_message(db, message)
+    return {"ok": True, "uri": uri, "url": scanner_url, "artifact": artifact, "message": message}
+
+
+def _ensure_tls_cert(cert: str, key: str) -> tuple[str, str]:
+    cert_path = Path(cert).expanduser()
+    key_path = Path(key).expanduser()
+    if cert_path.is_file() and key_path.is_file():
+        return str(cert_path), str(key_path)
+    cert_path.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            "openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+            "-keyout", str(key_path),
+            "-out", str(cert_path),
+            "-days", "365",
+            "-subj", "/CN=urirun-dashboard.local",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return str(cert_path), str(key_path)
+
+
+def _probe_scanner_url(url: str, timeout: float = 1.5) -> bool:
+    import urllib.request
+
+    try:
+        context = ssl._create_unverified_context() if url.startswith("https://") else None
+        with urllib.request.urlopen(url, timeout=timeout, context=context) as response:
+            return 200 <= int(response.status) < 500
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _nl_text(text: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", text.lower())
+    return "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+
+
+def _is_phone_scanner_prompt(prompt: str) -> bool:
+    text = _nl_text(prompt)
+    scanner_terms = (
+        "skaner", "scanner", "skan", "scan", "kamera", "camera", "telefon", "phone", "mobile", "mobil",
+        "webrtc", "qr", "qrcode", "paragon", "rachunek",
+    )
+    service_terms = ("aplikac", "uslug", "service", "stron", "narzedz", "interfejs")
+    start_terms = (
+        "uruchom", "wystart", "stworz", "utworz", "start", "create", "open", "wlacz", "odpal", "daj",
+        "pokaz", "link", "adres", "ip", "qr",
+    )
+    wants_scanner = any(word in text for word in scanner_terms)
+    wants_service = any(word in text for word in service_terms)
+    wants_start = any(word in text for word in start_terms)
+    mobile_context = any(word in text for word in ("telefon", "phone", "mobile", "mobil", "webrtc", "kamera", "camera", "qr", "skaner", "scanner"))
+    return wants_start and (wants_scanner or (wants_service and mobile_context))
+
+
+def ensure_phone_scanner_service(
+    project: str,
+    db: str | None,
+    config: str | None = None,
+    node_urls: list[str] | None = None,
+    token: str | None = None,
+    identity: str | None = None,
+    *,
+    host: str | None = None,
+    port: int | None = None,
+    tls_cert: str | None = None,
+    tls_key: str | None = None,
+) -> dict:
+    bind_host = host or os.environ.get("URIRUN_PHONE_SCANNER_HOST", "0.0.0.0")
+    scanner_port = int(port or os.environ.get("URIRUN_PHONE_SCANNER_PORT", "8196"))
+    cert = tls_cert or os.environ.get("URIRUN_PHONE_SCANNER_TLS_CERT", "~/.urirun/certs/urirun-dashboard.crt")
+    key = tls_key or os.environ.get("URIRUN_PHONE_SCANNER_TLS_KEY", "~/.urirun/certs/urirun-dashboard.key")
+    cert, key = _ensure_tls_cert(cert, key)
+    scanner_url = f"https://{_url_host(_lan_host())}:{scanner_port}/scanner"
+    service_id = f"https://{bind_host}:{scanner_port}"
+
+    with _SERVICE_LOCK:
+        server = _SERVICE_SERVERS.get(service_id)
+        thread = _SERVICE_THREADS.get(service_id)
+        if server is not None and thread is not None and thread.is_alive():
+            status = "already-running"
+        elif _probe_scanner_url(scanner_url):
+            status = "external-running"
+        else:
+            server = serve(
+                project=project,
+                db=db,
+                config=config,
+                host=bind_host,
+                port=scanner_port,
+                node_urls=node_urls,
+                token=token,
+                identity=identity,
+                tls_cert=cert,
+                tls_key=key,
+                startup_qr=False,
+            )
+            thread = threading.Thread(target=server.serve_forever, name=f"urirun-phone-scanner-{scanner_port}", daemon=True)
+            thread.start()
+            _SERVICE_SERVERS[service_id] = server
+            _SERVICE_THREADS[service_id] = thread
+            status = "started"
+
+    qr = startup_phone_qr(
+        project,
+        db,
+        scheme="https",
+        host=bind_host,
+        port=scanner_port,
+        qr_url=scanner_url,
+        content_prefix="Phone scanner service ready",
+    )
+    meta = {
+        "status": status,
+        "service": "phone-scanner",
+        "url": scanner_url,
+        "bindHost": bind_host,
+        "hostIp": _lan_host(),
+        "port": scanner_port,
+        "tlsCert": cert,
+    }
+    try:
+        _host_db().add_log(db, "service", "phone-scanner", meta)
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, **meta, "qr": qr, "message": qr.get("message")}
+
+
+def _auto_crop_receipt(path: Path) -> dict:
+    try:
+        from PIL import Image, ImageOps
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "reason": f"pillow unavailable: {exc}"}
+
+    try:
+        with Image.open(path) as opened:
+            image = ImageOps.exif_transpose(opened).convert("RGB")
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "reason": f"image decode failed: {exc}"}
+
+    width, height = image.size
+    if width < 80 or height < 80:
+        return {"ok": False, "reason": "image too small", "width": width, "height": height}
+
+    max_side = 900
+    scale = min(1.0, max_side / max(width, height))
+    analysis = image.resize((max(1, int(width * scale)), max(1, int(height * scale)))) if scale < 1.0 else image
+    aw, ah = analysis.size
+    pixels = analysis.load()
+    xs: list[int] = []
+    ys: list[int] = []
+    for y in range(ah):
+        for x in range(aw):
+            r, g, b = pixels[x, y]
+            hi = max(r, g, b)
+            lo = min(r, g, b)
+            lum = (299 * r + 587 * g + 114 * b) // 1000
+            sat = hi - lo
+            if (lum >= 150 and sat <= 70) or lum >= 215:
+                xs.append(x)
+                ys.append(y)
+
+    coverage = len(xs) / float(aw * ah)
+    if coverage < 0.035:
+        return {"ok": False, "reason": "not enough receipt-like pixels", "coverage": round(coverage, 4)}
+
+    xs.sort()
+    ys.sort()
+
+    def quantile(values: list[int], q: float) -> int:
+        return values[min(len(values) - 1, max(0, int(len(values) * q)))]
+
+    left = quantile(xs, 0.01)
+    right = quantile(xs, 0.99)
+    top = quantile(ys, 0.01)
+    bottom = quantile(ys, 0.99)
+    bw = max(1, right - left + 1)
+    bh = max(1, bottom - top + 1)
+    bbox_area = (bw * bh) / float(aw * ah)
+    if bbox_area < 0.08:
+        return {"ok": False, "reason": "detected region too small", "coverage": round(coverage, 4), "bboxArea": round(bbox_area, 4)}
+    if bbox_area > 0.96:
+        return {"ok": False, "reason": "receipt already fills frame", "coverage": round(coverage, 4), "bboxArea": round(bbox_area, 4)}
+
+    pad_x = max(4, int(bw * 0.035))
+    pad_y = max(4, int(bh * 0.035))
+    left = max(0, left - pad_x)
+    top = max(0, top - pad_y)
+    right = min(aw - 1, right + pad_x)
+    bottom = min(ah - 1, bottom + pad_y)
+
+    inv_scale = 1.0 / scale
+    box = (
+        max(0, int(left * inv_scale)),
+        max(0, int(top * inv_scale)),
+        min(width, int((right + 1) * inv_scale)),
+        min(height, int((bottom + 1) * inv_scale)),
+    )
+    if box[2] - box[0] < 50 or box[3] - box[1] < 50:
+        return {"ok": False, "reason": "crop too small", "box": list(box)}
+    if box[0] <= 3 and box[1] <= 3 and box[2] >= width - 3 and box[3] >= height - 3:
+        return {"ok": False, "reason": "crop equals original", "box": list(box)}
+
+    crop = image.crop(box)
+    crop_path = path.with_name(f"{path.stem}-receipt-crop.jpg")
+    crop.save(crop_path, format="JPEG", quality=94, optimize=True)
+    return {
+        "ok": True,
+        "path": str(crop_path),
+        "box": list(box),
+        "coverage": round(coverage, 4),
+        "bboxArea": round(bbox_area, 4),
+        "originalWidth": width,
+        "originalHeight": height,
+        "width": crop.size[0],
+        "height": crop.size[1],
+    }
+
+
 def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     raw_image = str(payload.get("image") or "")
     match = re.match(r"^data:(image/[a-zA-Z0-9.+-]+);base64,(.+)$", raw_image, re.S)
@@ -913,7 +1287,9 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     name = f"{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-phone-scan-{digest[:12]}{ext}"
     path = root / name
     path.write_bytes(raw)
-    ocr = _local_image_ocr(str(path))
+    crop = _auto_crop_receipt(path)
+    display_path = Path(crop["path"]) if crop.get("ok") and crop.get("path") else path
+    ocr = _local_image_ocr(str(display_path))
     meta = {
         "source": payload.get("source") or "phone",
         "width": payload.get("width"),
@@ -921,20 +1297,25 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
         "mime": mime,
         "sha256": digest,
         "bytes": len(raw),
+        "originalPath": str(path),
+        "displayPath": str(display_path),
+        "crop": crop,
         "capturedAt": payload.get("capturedAt"),
         "userAgent": payload.get("userAgent", ""),
         "ocr": ocr,
     }
     uri = f"scanner://host/capture/{digest[:16]}"
-    artifact = _host_db().register_artifact(db, "camera-scan", uri, str(path), meta)
+    artifact = _host_db().register_artifact(db, "camera-scan", uri, str(display_path), meta)
     attachment = {
-        "kind": "image",
-        "path": str(path),
+        "kind": "receipt-crop" if crop.get("ok") else "image",
+        "path": str(display_path),
         "uri": uri,
-        "previewUrl": _preview_url(str(path), project),
+        "previewUrl": _preview_url(str(display_path), project),
         "meta": meta,
     }
     content = "Phone scan saved"
+    if crop.get("ok"):
+        content += " (cropped to receipt)"
     if ocr.get("ok") and ocr.get("text"):
         content += f": {str(ocr.get('text'))[:180]}"
     elif ocr.get("error"):
@@ -942,6 +1323,32 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     message = _chat_message("system", content, detail={"artifact": artifact, "uri": uri, "ocr": ocr}, attachments=[attachment])
     _add_chat_message(db, message)
     return {"ok": True, "uri": uri, "artifact": artifact, "ocr": ocr, "message": message}
+
+
+def scanner_session(db: str | None, payload: dict) -> dict:
+    event = str(payload.get("event") or "open")
+    fingerprint = json.dumps({
+        "event": event,
+        "userAgent": payload.get("userAgent", ""),
+        "href": payload.get("href", ""),
+        "at": payload.get("at", ""),
+    }, sort_keys=True)
+    digest = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
+    uri = f"scanner://host/session/{digest[:16]}"
+    detail = {
+        "uri": uri,
+        "event": event,
+        "href": payload.get("href"),
+        "width": payload.get("width"),
+        "height": payload.get("height"),
+        "userAgent": payload.get("userAgent", ""),
+        "at": payload.get("at"),
+        "tracks": payload.get("tracks") or [],
+    }
+    label = "Phone scanner opened" if event == "open" else "Phone scanner camera started" if event == "camera-started" else f"Phone scanner {event}"
+    message = _chat_message("system", label, detail=detail)
+    _add_chat_message(db, message)
+    return {"ok": True, "uri": uri, "message": message}
 
 
 def _first(query: dict[str, list[str]], name: str, default: str | None = None) -> str | None:
@@ -1049,6 +1456,52 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         prompt,
         detail={"execute": execute, "selectedNodes": selected_nodes, "noLlm": no_llm},
     ))
+    if _is_phone_scanner_prompt(prompt):
+        service = ensure_phone_scanner_service(
+            project,
+            db,
+            config=config,
+            node_urls=node_urls,
+            token=token,
+            identity=identity,
+        )
+        result = {
+            "ok": bool(service.get("ok")),
+            "prompt": prompt,
+            "execute": True,
+            "selectedNodes": selected_nodes,
+            "generator": {"provider": "host-dashboard", "intent": "phone-scanner-service"},
+            "flow": {
+                "task": {"id": "phone-scanner-service", "title": "Start phone scanner service"},
+                "steps": [{"id": "start-phone-scanner", "uri": "dashboard://host/phone-scanner/command/start", "payload": {}}],
+            },
+            "timeline": [{
+                "id": "start-phone-scanner",
+                "uri": "dashboard://host/phone-scanner/command/start",
+                "target": "host",
+                "ok": bool(service.get("ok")),
+                "status": service.get("status"),
+            }],
+            "results": {"phone-scanner-service": service},
+            "attachments": ((service.get("message") or {}).get("attachments") or []),
+        }
+        try:
+            _host_db().add_log(
+                db,
+                "chat",
+                "ask",
+                {
+                    "prompt": prompt,
+                    "execute": True,
+                    "ok": result.get("ok"),
+                    "selectedNodes": selected_nodes,
+                    "generator": result.get("generator"),
+                    "timeline": result.get("timeline") or [],
+                },
+            )
+        except Exception:
+            pass
+        return result
     mesh = _mesh()
     old_token = os.environ.get("URIRUN_RUN_TOKEN")
     old_identity = os.environ.get("URIRUN_RUN_IDENTITY")
@@ -1223,6 +1676,10 @@ def create_handler(
                     payload = _read_json(self)
                     _json_response(self, 200, scanner_capture(project, db, payload))
                     return
+                if parsed.path == "/api/scanner/session":
+                    payload = _read_json(self)
+                    _json_response(self, 200, scanner_session(db, payload))
+                    return
                 _json_response(self, 404, {"ok": False, "error": "not found"})
             except Exception as exc:  # noqa: BLE001
                 _json_response(self, 400, {"ok": False, "error": str(exc)})
@@ -1244,6 +1701,8 @@ def serve(
     identity: str | None = None,
     tls_cert: str | None = None,
     tls_key: str | None = None,
+    startup_qr: bool = False,
+    qr_url: str | None = None,
 ) -> ThreadingHTTPServer:
     server = ThreadingHTTPServer((host, port), create_handler(project, db=db, config=config, node_urls=node_urls,
                                                              token=token, identity=identity))
@@ -1253,7 +1712,13 @@ def serve(
         context.load_cert_chain(os.path.expanduser(tls_cert), os.path.expanduser(tls_key))
         server.socket = context.wrap_socket(server.socket, server_side=True)
         scheme = "https"
-    print(json.dumps({"event": "urirun.host_dashboard.started", "url": f"{scheme}://{host}:{server.server_address[1]}/", "project": str(Path(project).resolve())}), flush=True)
+    qr = startup_phone_qr(project, db, scheme=scheme, host=host, port=server.server_address[1], qr_url=qr_url) if startup_qr else None
+    print(json.dumps({
+        "event": "urirun.host_dashboard.started",
+        "url": f"{scheme}://{host}:{server.server_address[1]}/",
+        "qrUrl": qr.get("url") if qr else None,
+        "project": str(Path(project).resolve()),
+    }), flush=True)
     return server
 
 
@@ -1261,12 +1726,15 @@ def command(args) -> int:
     if args.dashboard_command == "serve":
         host = args.host or "127.0.0.1"
         port = int(args.port or 8194)
+        startup_qr = bool(getattr(args, "startup_qr", False)) and not bool(getattr(args, "no_startup_qr", False))
         server = serve(project=args.project, db=args.db, config=args.config, host=host, port=port,
                        node_urls=getattr(args, "node_url", None),
                        token=getattr(args, "token", None) or os.environ.get("URIRUN_NODE_TOKEN"),
                        identity=getattr(args, "identity", None),
                        tls_cert=getattr(args, "tls_cert", None),
-                       tls_key=getattr(args, "tls_key", None))
+                       tls_key=getattr(args, "tls_key", None),
+                       startup_qr=startup_qr,
+                       qr_url=getattr(args, "qr_url", None))
         try:
             server.serve_forever()
         except KeyboardInterrupt:

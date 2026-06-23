@@ -250,6 +250,37 @@ def lint_connector(pkg_dir: str | Path) -> dict:
     }
 
 
+def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
+    """Make the manifest's machine fields a PROJECTION of the code: derive ``routes``,
+    ``uriSchemes`` and ``adapterKinds`` from the ``@handler``/``.command``/``.shell``
+    decorators (static AST scan, no import) and write them into connector.manifest.json so
+    the manifest can never drift from the code. `write=False` reports the diff without writing
+    (a CI check). Skips declarative / JS connectors that have no decorator routes."""
+    root = Path(pkg_dir)
+    manifests = list(root.rglob("connector.manifest.json"))
+    if not manifests:
+        return {"ok": False, "error": "no connector.manifest.json under " + str(root)}
+    mpath = manifests[0]
+    py_files = [p for p in root.rglob("*.py") if "__pycache__" not in p.parts]
+    _objs, code_routes = _scan_code_routes(py_files)
+    if not code_routes:
+        return {"ok": False, "error": "no @decorator routes found (declarative or non-Python connector)",
+                "manifest": str(mpath)}
+    routes = sorted({r["uri"] for r in code_routes})
+    desired = {
+        "routes": routes,
+        "uriSchemes": sorted({u.split("://", 1)[0] for u in routes if "://" in u}),
+        "adapterKinds": sorted({KIND_TO_ADAPTER[r["kind"]] for r in code_routes if r["kind"] in KIND_TO_ADAPTER}),
+    }
+    manifest = json.loads(mpath.read_text(encoding="utf-8"))
+    changed = [f for f in MACHINE_FIELDS if manifest.get(f) != desired[f] and (desired[f] or f in manifest)]
+    if write and changed:
+        for f in changed:
+            manifest[f] = desired[f]
+        mpath.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return {"ok": True, "manifest": str(mpath), "changed": changed, "wrote": bool(write and changed), **desired}
+
+
 def _format_report(rep: dict) -> str:
     lines = [f"connector lint · {rep['package']}"]
     rc = rep["routeCount"]
@@ -280,6 +311,27 @@ def _format_report(rep: dict) -> str:
         if p["factor"] > 1:
             lines.append(f"    {p['uri']} — {p['factor']}×: {', '.join(p['places'])}")
     return "\n".join(lines)
+
+
+def sync_manifest_command(args: argparse.Namespace) -> int:
+    """`urirun connectors sync-manifest <package> [--check]` — project the code's routes/
+    schemes/adapters into the manifest (or, with --check, fail if they have drifted)."""
+    res = sync_manifest(args.package, write=not getattr(args, "check", False))
+    if getattr(args, "json", False):
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+    elif not res.get("ok"):
+        print(f"sync-manifest · {res.get('error')}")
+    elif getattr(args, "check", False):
+        if res["changed"]:
+            print(f"DRIFT · manifest machine fields are stale: {res['changed']} (run without --check to fix)")
+        else:
+            print("ok · manifest machine fields match the code")
+    else:
+        print(f"synced {res['manifest']} · {('updated ' + str(res['changed'])) if res['wrote'] else 'already in sync'}"
+              f"\n  routes={len(res['routes'])} uriSchemes={res['uriSchemes']} adapterKinds={res['adapterKinds']}")
+    if not res.get("ok"):
+        return 2
+    return 1 if (getattr(args, "check", False) and res["changed"]) else 0
 
 
 def lint_command(args: argparse.Namespace) -> int:

@@ -1766,6 +1766,7 @@ def _cmd_agent(args, parser) -> int:
 
 _CONNECTOR_SUBCOMMANDS = {
     "lint": ("urirun.connectors.connector_lint", "lint_command"),
+    "sync-manifest": ("urirun.connectors.connector_lint", "sync_manifest_command"),
     "verify": ("urirun.connectors.connector_lint", "verify_command"),
     "new": ("urirun.connector_scaffold", "new_command"),
     "smoke": ("urirun.connector_smoke", "smoke_command"),

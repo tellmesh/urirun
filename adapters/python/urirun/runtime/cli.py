@@ -81,6 +81,11 @@ def _add_connectors_subparser(subparsers) -> None:
     connectors_lint.add_argument("package", help="Path to a connector package directory")
     connectors_lint.add_argument("--json", action="store_true")
     connectors_lint.add_argument("--strict", action="store_true", help="Also fail when a route is spelled out in more than one place")
+    connectors_sync = connectors_sub.add_parser("sync-manifest",
+        help="Project the code's routes/uriSchemes/adapterKinds into connector.manifest.json (kills drift)")
+    connectors_sync.add_argument("package", help="Path to a connector package directory")
+    connectors_sync.add_argument("--check", action="store_true", help="Fail if the manifest has drifted, without writing")
+    connectors_sync.add_argument("--json", action="store_true")
     connectors_verify = connectors_sub.add_parser("verify",
         help="Pre-deploy gate: lint + import + validate bindings + resolve every handler (catches advertised-but-dead routes)")
     connectors_verify.add_argument("package", help="Path to a connector package directory")
@@ -479,6 +484,9 @@ def _add_host_subparser(subparsers) -> None:
     dashboard_serve.add_argument("--identity", help="SSH private key to sign dashboard /run calls with an enrolled key")
     dashboard_serve.add_argument("--tls-cert", help="serve HTTPS with this certificate file; needed by most phones for camera access")
     dashboard_serve.add_argument("--tls-key", help="serve HTTPS with this private key file")
+    dashboard_serve.add_argument("--qr-url", help="URL encoded into the startup QR shown in chat; default is the dashboard /scanner URL")
+    dashboard_serve.add_argument("--startup-qr", action="store_true", help="add a phone scanner QR message to chat on dashboard startup")
+    dashboard_serve.add_argument("--no-startup-qr", action="store_true", help="compatibility flag; startup QR is off unless --startup-qr is set")
     dashboard_url = dashboard_sub.add_parser("url", parents=[host_common], help="Print the dashboard URL")
     dashboard_url.add_argument("--host", default="127.0.0.1")
     dashboard_url.add_argument("--port", type=int, default=8194)
