@@ -485,6 +485,47 @@ class MeshTests(unittest.TestCase):
                 if old_env is not None:
                     os.environ["URIRUN_NODE_TOKEN"] = old_env
 
+    def test_enroll_token_shape_and_match(self):
+        token = keyauth.new_enroll_token()
+        self.assertEqual(len(token), 6)
+        self.assertTrue(all(ch in keyauth.ENROLL_TOKEN_ALPHABET for ch in token))
+        self.assertTrue(keyauth.token_matches(token, f" {token.lower()} "))
+        self.assertFalse(keyauth.token_matches(token, "BADBAD"))
+        self.assertFalse(keyauth.token_matches(token, None))
+
+    @unittest.skipUnless(keyauth.available(), "cryptography not installed")
+    def test_copy_id_requires_console_enroll_token_for_first_key(self):
+        import os
+        import socket as _socket
+        import subprocess
+        import threading
+
+        registry = mesh.v2.compile_registry({"version": mesh.v2.VERSION, "bindings": {}})
+        with tempfile.TemporaryDirectory() as tmp:
+            old_home = os.environ.get("HOME")
+            os.environ["HOME"] = tmp
+            identity = str(Path(tmp) / "id_ed25519")
+            subprocess.run(["ssh-keygen", "-t", "ed25519", "-f", identity, "-N", "", "-q"], check=True)
+            s = _socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+            server = mesh.serve_node("pin", registry, "127.0.0.1", port, execute=True, key_auth=True)
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            base = f"http://127.0.0.1:{port}"
+            try:
+                _wait_healthy(base)
+                token = server.ctx.enroll_token
+                self.assertTrue(token)
+                self.assertFalse(mesh.copy_id(base, identity).get("ok"))                    # no PIN -> blocked
+                self.assertFalse(mesh.copy_id(base, identity, token="WRONG").get("ok"))     # wrong PIN -> blocked
+                enrolled = mesh.copy_id(base, identity, token=token.lower())                # case-insensitive
+                self.assertTrue(enrolled.get("ok"), enrolled)
+                self.assertEqual(enrolled.get("count"), 1)
+            finally:
+                server.shutdown()
+                if old_home is None:
+                    os.environ.pop("HOME", None)
+                else:
+                    os.environ["HOME"] = old_home
+
     @unittest.skipUnless(keyauth.available(), "cryptography not installed")
     def test_verify_request_rejects_replay(self):
         import os

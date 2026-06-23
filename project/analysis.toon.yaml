@@ -1,31 +1,29 @@
-# code2llm | 137f 22418L | python:78,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
-# generated in 0.05s
-# CC̅=4.5 | critical:18/1057 | dups:0 | cycles:0
+# code2llm | 137f 22520L | python:78,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# generated in 0.06s
+# CC̅=4.4 | critical:16/1068 | dups:0 | cycles:0
 
-HEALTH[18]:
+HEALTH[16]:
   🟡 CC    main CC=18 (limit:15)
   🟡 CC    main CC=17 (limit:15)
-  🟡 CC    resolveParams CC=15 (limit:15)
-  🟡 CC    run CC=19 (limit:15)
-  🟡 CC    connector_discover CC=29 (limit:15)
   🟡 CC    ensure_scheme CC=20 (limit:15)
   🟡 CC    push_folder CC=16 (limit:15)
   🟡 CC    watch CC=16 (limit:15)
+  🟡 CC    resolveParams CC=15 (limit:15)
+  🟡 CC    run CC=19 (limit:15)
   🟡 CC    normalize_flow CC=15 (limit:15)
   🟡 CC    data_command CC=15 (limit:15)
   🟡 CC    watch_command CC=17 (limit:15)
   🟡 CC    _host_mesh_command CC=18 (limit:15)
   🟡 CC    deploy_command CC=15 (limit:15)
-  🟡 CC    probe_command CC=33 (limit:15)
   🟡 CC    apply_deploy CC=20 (limit:15)
-  🟡 CC    _handle_run CC=26 (limit:15)
   🟡 CC    _stream_events CC=19 (limit:15)
+  🟡 CC    serve_node CC=15 (limit:15)
   🟡 CC    _resolve_serve_opts CC=17 (limit:15)
 
 REFACTOR[1]:
-  1. split 18 high-CC methods  (CC>15)
+  1. split 16 high-CC methods  (CC>15)
 
-PIPELINES[366]:
+PIPELINES[372]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -135,9 +133,9 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.5    ←in:9  →out:0
-  │ !! mesh                      3043L  3C  169m  CC=33     ←1
-  │ !! v2                        2582L  1C  125m  CC=14     ←2
-  │ !! _registry                  718L  0C   43m  CC=14     ←1
+  │ !! mesh                      3099L  3C  174m  CC=20     ←1
+  │ !! v2                        2584L  1C  125m  CC=14     ←3
+  │ !! _registry                  718L  0C   43m  CC=14     ←0
   │ !! __init__                   702L  1C   49m  CC=14     ←10
   │ !! _scan                      673L  0C   37m  CC=14     ←0
   │ !! host_dashboard             609L  0C   16m  CC=13     ←0
@@ -151,7 +149,7 @@ LAYERS:
   │ connector_lint             390L  0C   19m  CC=14     ←1
   │ task_planner               371L  2C   17m  CC=12     ←1
   │ host_integrations          355L  0C   15m  CC=8      ←0
-  │ !! manage                     331L  0C   17m  CC=29     ←0
+  │ manage                     355L  0C   21m  CC=12     ←0
   │ !! client                     309L  1C   22m  CC=20     ←0
   │ planfile_adapter           279L  1C   26m  CC=9      ←0
   │ worker                     266L  3C   20m  CC=13     ←0
@@ -164,10 +162,10 @@ LAYERS:
   │ v2_adopt                   193L  0C    8m  CC=7      ←0
   │ testing                    189L  0C    9m  CC=9      ←0
   │ dispatch_protocol          183L  0C    8m  CC=10     ←0
+  │ keyauth                    176L  0C   16m  CC=6      ←0
   │ new-connector.sh           168L  0C    1m  CC=0.0    ←0
   │ resolver                   168L  0C   10m  CC=13     ←0
   │ discovery                  158L  0C    8m  CC=7      ←0
-  │ keyauth                    156L  0C   14m  CC=6      ←0
   │ agent                      151L  0C    6m  CC=10     ←0
   │ !! conformance                148L  0C    3m  CC=17     ←0
   │ scheduler                  133L  0C    6m  CC=4      ←0
@@ -199,9 +197,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -292,8 +290,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: adapters/ (fan-in=9)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=9)
   SMELL: adapters.python/ fan-out=17 → split needed
 
 EXTERNAL:

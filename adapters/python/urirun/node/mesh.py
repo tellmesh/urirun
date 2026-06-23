@@ -2211,65 +2211,42 @@ def _pool_executors(pools):
             "local-function-subprocess": run_pooled}
 
 
-def probe_command(args: argparse.Namespace) -> int:
-    """`urirun host probe <node> [--execute] [--json]` — snapshot the node's surface
-    (its registry etag), test every route PINNED to that snapshot, then re-read the
-    surface. A 409 on any route, or an etag/generation change between start and end,
-    means the registry was hot-swapped under the probe (churn) — so testing a node
-    whose surface keeps changing finally yields an honest verdict instead of silently
-    hitting a moving target. Dry-run by default (validates route + schema, no side
-    effects); `--execute` actually runs them."""
+def _probe_one_route(url: str, route: dict, etag0, execute: bool, timeout) -> dict:
+    """Test one route pinned to the snapshot etag; classify as ok / degraded / churn (409) / fail.
+    Dry-run unless `execute`. `degraded` is only meaningful with --execute (a dry-run result is
+    inherently simulated, which is NOT the connector running in mock mode)."""
     import urllib.error
     import urllib.request
 
     import urirun
 
-    config = host_config_for_args(args)
-    url = node_url(config, args.node).rstrip("/")
-    snap = http_json("GET", f"{url}/routes")
-    etag0, gen0 = snap.get("etag"), snap.get("generation")
-    routes = snap.get("routes", [])
-    rows: list[dict] = []
-    churn = 0
-    for route in routes:
-        uri = route["uri"]
-        required = (route.get("inputSchema") or {}).get("required") or []
-        body = {"uri": uri, "payload": {k: "" for k in required}, "expectEtag": etag0}
-        if not args.execute:
-            body["mode"] = "dry-run"
-        request = urllib.request.Request(f"{url}/run", data=json.dumps(body).encode("utf-8"),
-                                         headers={"Content-Type": "application/json"}, method="POST")
-        try:
-            with urllib.request.urlopen(request, timeout=args.timeout) as resp:
-                env = json.loads(resp.read() or b"{}")
-            # only meaningful with --execute: a dry-run result is inherently "simulated",
-            # which is NOT the connector running in mock mode.
-            degraded = urirun.result_degraded(env) if (env.get("ok") and args.execute) else None
-            rows.append({"uri": uri, "ok": bool(env.get("ok")), "degraded": degraded,
-                         "error": (env.get("error") or {}) if not env.get("ok") else None})
-        except urllib.error.HTTPError as exc:
-            if exc.code == 409:
-                churn += 1
-                rows.append({"uri": uri, "ok": False, "churn": True})
-            else:
-                rows.append({"uri": uri, "ok": False, "error": f"HTTP {exc.code}"})
-        except Exception as exc:  # noqa: BLE001
-            rows.append({"uri": uri, "ok": False, "error": str(exc)})
+    uri = route["uri"]
+    required = (route.get("inputSchema") or {}).get("required") or []
+    body = {"uri": uri, "payload": {k: "" for k in required}, "expectEtag": etag0}
+    if not execute:
+        body["mode"] = "dry-run"
+    request = urllib.request.Request(f"{url}/run", data=json.dumps(body).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as resp:
+            env = json.loads(resp.read() or b"{}")
+        degraded = urirun.result_degraded(env) if (env.get("ok") and execute) else None
+        return {"uri": uri, "ok": bool(env.get("ok")), "degraded": degraded,
+                "error": (env.get("error") or {}) if not env.get("ok") else None}
+    except urllib.error.HTTPError as exc:
+        if exc.code == 409:
+            return {"uri": uri, "ok": False, "churn": True}
+        return {"uri": uri, "ok": False, "error": f"HTTP {exc.code}"}
+    except Exception as exc:  # noqa: BLE001
+        return {"uri": uri, "ok": False, "error": str(exc)}
 
-    health = http_json("GET", f"{url}/health")
-    etag1, gen1 = health.get("registryEtag"), health.get("registryGeneration")
-    stable = etag0 == etag1 and gen0 == gen1 and churn == 0
-    passed = sum(1 for r in rows if r["ok"])
-    degraded = sum(1 for r in rows if r.get("degraded"))
-    report = {"ok": stable, "node": health.get("name"), "etag": etag0, "generation": gen0,
-              "stable": stable, "routes": len(rows), "passed": passed, "degraded": degraded,
-              "churn409": churn, "etagAfter": etag1, "generationAfter": gen1,
-              "mode": "execute" if args.execute else "dry-run", "results": rows}
-    if getattr(args, "json", False):
-        reglib._emit_json(report, "-")
-        return 0 if stable else 1
+
+def _render_probe_report(report: dict) -> None:
+    """Human-readable rendering of a probe report (the --json path emits the dict instead)."""
+    rows, degraded = report["results"], report["degraded"]
     deg_note = f", {degraded} degraded" if degraded else ""
-    print(f"probe {report['node']} — etag {etag0} gen {gen0} — {passed}/{len(rows)} routes ok{deg_note} ({report['mode']})")
+    print(f"probe {report['node']} — etag {report['etag']} gen {report['generation']} — "
+          f"{report['passed']}/{len(rows)} routes ok{deg_note} ({report['mode']})")
     for r in rows:
         if r.get("churn"):
             mark, extra = "CHURN", "registry changed"
@@ -2280,11 +2257,41 @@ def probe_command(args: argparse.Namespace) -> int:
         else:
             mark, extra = "ok", ""
         print(f"  {mark:5} {r['uri']}" + (f"  {extra}" if extra else ""))
-    if stable:
-        print(f"surface STABLE (generation {gen0})" + (f" — but {degraded} route(s) DEGRADED" if degraded else ""))
+    if report["stable"]:
+        print(f"surface STABLE (generation {report['generation']})"
+              + (f" — but {degraded} route(s) DEGRADED" if degraded else ""))
     else:
-        print(f"⚠ surface CHURNED during probe: generation {gen0}->{gen1}, "
-              f"etag {etag0}->{etag1}, {churn} route(s) hit 409 (registry changed)")
+        print(f"⚠ surface CHURNED during probe: generation {report['generation']}->{report['generationAfter']}, "
+              f"etag {report['etag']}->{report['etagAfter']}, {report['churn409']} route(s) hit 409 (registry changed)")
+
+
+def probe_command(args: argparse.Namespace) -> int:
+    """`urirun host probe <node> [--execute] [--json]` — snapshot the node's surface
+    (its registry etag), test every route PINNED to that snapshot, then re-read the
+    surface. A 409 on any route, or an etag/generation change between start and end,
+    means the registry was hot-swapped under the probe (churn) — so testing a node
+    whose surface keeps changing finally yields an honest verdict instead of silently
+    hitting a moving target. Dry-run by default (validates route + schema, no side
+    effects); `--execute` actually runs them."""
+    config = host_config_for_args(args)
+    url = node_url(config, args.node).rstrip("/")
+    snap = http_json("GET", f"{url}/routes")
+    etag0, gen0 = snap.get("etag"), snap.get("generation")
+    rows = [_probe_one_route(url, route, etag0, args.execute, args.timeout)
+            for route in snap.get("routes", [])]
+    churn = sum(1 for r in rows if r.get("churn"))
+    health = http_json("GET", f"{url}/health")
+    etag1, gen1 = health.get("registryEtag"), health.get("registryGeneration")
+    stable = etag0 == etag1 and gen0 == gen1 and churn == 0
+    report = {"ok": stable, "node": health.get("name"), "etag": etag0, "generation": gen0,
+              "stable": stable, "routes": len(rows), "passed": sum(1 for r in rows if r["ok"]),
+              "degraded": sum(1 for r in rows if r.get("degraded")),
+              "churn409": churn, "etagAfter": etag1, "generationAfter": gen1,
+              "mode": "execute" if args.execute else "dry-run", "results": rows}
+    if getattr(args, "json", False):
+        reglib._emit_json(report, "-")
+        return 0 if stable else 1
+    _render_probe_report(report)
     return 0 if stable else 1
 
 
@@ -2602,24 +2609,23 @@ class NodeHandler(BaseHTTPRequestHandler):
                            "for": uri, "code": err.get("code"), "category": err.get("category"),
                            "message": err.get("message") or err, "at": time.time(), "service": c.state["name"]})
 
-    def _handle_run(self):
+    def _validate_run_request(self, raw: bytes):
+        """Auth-gate, JSON-parse and shape-check a /run body, then enforce optimistic
+        concurrency (If-Registry-Match / expectEtag): a caller that captured the surface
+        can pin this run to it, and a hot-swapped registry answers 409 instead of silently
+        running against a different surface. Returns the body, or None after sending a 4xx."""
         c = self.ctx
-        raw = read_raw(self)
         if c.run_auth_enforced and not self._run_ok(raw):
             send_json(self, 403, {"ok": False, "error": "unauthorized (/run requires X-Urirun-Token or an enrolled-key signature)"})
-            return
+            return None
         try:
             body = json.loads(raw.decode("utf-8") or "{}")
         except Exception:
             send_json(self, 400, {"ok": False, "error": "invalid JSON body"})
-            return
+            return None
         if not isinstance(body, dict) or "uri" not in body:
             send_json(self, 400, {"ok": False, "error": "invalid request: expected JSON {uri, payload?}"})
-            return
-        # optimistic concurrency: a caller that captured the surface (etag from /routes
-        # or /health) can pin this run to it. If the registry was hot-swapped since,
-        # answer 409 with the new etag instead of silently running against a different
-        # surface — the fix for testing/driving a node whose registry churns.
+            return None
         expect = self.headers.get("If-Registry-Match") or body.get("expectEtag")
         if expect:
             actual = registry_fingerprint(c.state["routes"])
@@ -2627,16 +2633,51 @@ class NodeHandler(BaseHTTPRequestHandler):
                 send_json(self, 409, {"ok": False, "error": "registry changed since the surface was captured",
                                       "expectedEtag": expect, "actualEtag": actual,
                                       "registryGeneration": c.state.get("generation", 1)})
-                return
-        uri = str(body["uri"])
+                return None
+        return body
+
+    def _dispatch_control_uri(self, uri: str, raw: bytes, body: dict) -> bool:
+        """Handle non-registry control URIs (run:// lifecycle, node:// self-management).
+        Returns True when handled (response already sent), else False."""
         if uri.startswith("run://"):            # process lifecycle: cancel / status
             self._handle_run_control(uri)
-            return
+            return True
         if uri.startswith("node://") and uri.endswith("/registry/command/adopt"):
             self._handle_adopt(raw, body)       # node self-adopts installed connectors → live
-            return
+            return True
         if uri.startswith("node://") and uri.endswith("/host/command/request"):
             self._handle_need(raw, body)        # node asks the host for a connector/folder
+            return True
+        return False
+
+    def _respond_async(self, uri: str, run_id: str, ctrl, run_it) -> None:
+        """Run on a background thread and answer 202 now; the terminal `result` event lands
+        on /events?run=<id> (Prefer: respond-async / mode:async, real execution only)."""
+        c = self.ctx
+
+        def worker():
+            try:
+                result = run_it()
+                c.hub.publish({"event": "result", "run": run_id, "uri": uri, "ok": bool(result.get("ok")),
+                               "at": time.time(), "service": c.state["name"], "kind": result.get("kind"),
+                               "cancelled": ctrl.cancel.is_set()})
+            except Exception as exc:  # noqa: BLE001
+                c.hub.publish({"event": "result", "run": run_id, "uri": uri, "ok": False,
+                               "at": time.time(), "service": c.state["name"], "error": str(exc)})
+            finally:
+                c.runs.pop(run_id, None)
+        threading.Thread(target=worker, daemon=True).start()
+        send_json(self, 202, {"ok": True, "runId": run_id, "async": True, "status": "running",
+                              "stream": f"/events?run={run_id}", "cancel": f"run://{run_id}/command/cancel"})
+
+    def _handle_run(self):
+        c = self.ctx
+        raw = read_raw(self)
+        body = self._validate_run_request(raw)
+        if body is None:
+            return  # _validate_run_request already answered (4xx)
+        uri = str(body["uri"])
+        if self._dispatch_control_uri(uri, raw, body):
             return
         target = self._run_target(uri, raw)
         if target is None:
@@ -2644,8 +2685,7 @@ class NodeHandler(BaseHTTPRequestHandler):
         target_reg, run_policy = target
         run_policy["secretsDisabled"] = not c.allow_secrets
         # a request may DOWNGRADE to dry-run (validate route + schema, no side effects)
-        # — never escalate: a dry-run node stays dry-run. Lets `host probe` test a
-        # surface safely.
+        # — never escalate: a dry-run node stays dry-run. Lets `host probe` test safely.
         mode = "dry-run" if (body.get("mode") == "dry-run" or not c.execute) else "execute"
         # bind a RunControl so an in-process handler (or the subprocess reader) can stream
         # this run live to /events?run=<id> and a run:// cancel can stop it.
@@ -2669,24 +2709,9 @@ class NodeHandler(BaseHTTPRequestHandler):
             self._publish_run(uri, result)
             return result
 
-        # async (Prefer: respond-async / mode:async): 202 + runId now; the result lands as a
-        # terminal `result` event on /events?run=<id>. Only for real execution.
         prefer_async = body.get("mode") == "async" or "respond-async" in (self.headers.get("Prefer") or "").lower()
         if prefer_async and mode == "execute":
-            def worker():
-                try:
-                    result = _run_it()
-                    c.hub.publish({"event": "result", "run": run_id, "uri": uri, "ok": bool(result.get("ok")),
-                                   "at": time.time(), "service": c.state["name"], "kind": result.get("kind"),
-                                   "cancelled": ctrl.cancel.is_set()})
-                except Exception as exc:  # noqa: BLE001
-                    c.hub.publish({"event": "result", "run": run_id, "uri": uri, "ok": False,
-                                   "at": time.time(), "service": c.state["name"], "error": str(exc)})
-                finally:
-                    c.runs.pop(run_id, None)
-            threading.Thread(target=worker, daemon=True).start()
-            send_json(self, 202, {"ok": True, "runId": run_id, "async": True, "status": "running",
-                                  "stream": f"/events?run={run_id}", "cancel": f"run://{run_id}/command/cancel"})
+            self._respond_async(uri, run_id, ctrl, _run_it)
             return
         try:
             result = _run_it()

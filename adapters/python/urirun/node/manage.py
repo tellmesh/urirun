@@ -167,17 +167,16 @@ def connector_install(**payload: Any) -> dict:
     return res
 
 
-def connector_discover(**payload: Any) -> dict:
-    """Find connectors to satisfy a capability, across local projects and what's installed.
+def _connector_match(obj: Any, match: str) -> bool:
+    """A connector entry matches when no filter is set, or the filter substring is
+    present anywhere in its serialized form (id, scheme, summary, source path, ...)."""
+    return not match or match in json.dumps(obj, ensure_ascii=False).lower()
 
-    Scans `roots` (default $URIRUN_CONNECTOR_ROOTS or ~/github) for connector projects —
-    if-uri `connector.manifest.json` and tellmesh `manifest.yaml` (scheme + uri_patterns) —
-    and lists installed connectors. `match`/`scheme` narrows results. Each local hit carries
-    a `source` path usable directly with connector/command/install."""
+
+def _scan_local_connectors(roots: list, match: str) -> list:
+    """Scan roots for connector manifests — if-uri `connector.manifest.json` and tellmesh
+    `manifest.yaml` — returning matched local entries (each tagged with its `_mf` path)."""
     import glob
-    roots = payload.get("roots") or os.environ.get("URIRUN_CONNECTOR_ROOTS") or "~/github"
-    roots = roots if isinstance(roots, list) else str(roots).split(os.pathsep)
-    match = str(payload.get("match") or payload.get("scheme") or "").lower()
     local, seen = [], set()
     for root in roots:
         base = os.path.expanduser(root)
@@ -190,29 +189,54 @@ def connector_discover(**payload: Any) -> dict:
                 continue
             seen.add(path)
             entry = _read_connector_manifest(mf, path)
-            if entry:
-                entry["_mf"] = mf
-                if not match or match in json.dumps(entry, ensure_ascii=False).lower():
-                    local.append(entry)
-    # optionally derive each local connector's real route URIs from source (zero-install),
-    # so a planner can choose a not-yet-installed capability; capped to bound subprocess cost.
-    if payload.get("include_routes") or payload.get("routes"):
-        for entry in local[:int(payload.get("max_derive", 12))]:
-            routes = _derive_local_routes(entry.get("_mf", ""), entry["source"])
-            if routes:
-                entry["routes"] = routes
-                entry["schemes"] = sorted({u.split("://", 1)[0] for u in routes}) or entry.get("schemes")
-    for entry in local:
-        entry.pop("_mf", None)
+            if not entry:
+                continue
+            entry["_mf"] = mf
+            if _connector_match(entry, match):
+                local.append(entry)
+    return local
+
+
+def _augment_local_routes(local: list, payload: dict) -> None:
+    """Derive each local connector's real route URIs from source (zero-install), in place,
+    so a planner can choose a not-yet-installed capability. Capped to bound subprocess cost."""
+    for entry in local[:int(payload.get("max_derive", 12))]:
+        routes = _derive_local_routes(entry.get("_mf", ""), entry["source"])
+        if routes:
+            entry["routes"] = routes
+            entry["schemes"] = sorted({u.split("://", 1)[0] for u in routes}) or entry.get("schemes")
+
+
+def _list_installed_connectors(match: str) -> list:
+    """Matched connectors already installed in this node's environment (entry points)."""
     installed = []
     try:
         from urirun.runtime import v2
         for c in v2.connector_health():
             e = {"id": c.get("name"), "bindingCount": c.get("bindingCount"), "ok": c.get("ok")}
-            if not match or match in json.dumps(e, ensure_ascii=False).lower():
+            if _connector_match(e, match):
                 installed.append(e)
     except Exception:  # noqa: BLE001
         pass
+    return installed
+
+
+def connector_discover(**payload: Any) -> dict:
+    """Find connectors to satisfy a capability, across local projects and what's installed.
+
+    Scans `roots` (default $URIRUN_CONNECTOR_ROOTS or ~/github) for connector projects —
+    if-uri `connector.manifest.json` and tellmesh `manifest.yaml` (scheme + uri_patterns) —
+    and lists installed connectors. `match`/`scheme` narrows results. Each local hit carries
+    a `source` path usable directly with connector/command/install."""
+    roots = payload.get("roots") or os.environ.get("URIRUN_CONNECTOR_ROOTS") or "~/github"
+    roots = roots if isinstance(roots, list) else str(roots).split(os.pathsep)
+    match = str(payload.get("match") or payload.get("scheme") or "").lower()
+    local = _scan_local_connectors(roots, match)
+    if payload.get("include_routes") or payload.get("routes"):
+        _augment_local_routes(local, payload)
+    for entry in local:
+        entry.pop("_mf", None)
+    installed = _list_installed_connectors(match)
     return {"ok": True, "roots": [os.path.expanduser(r) for r in roots], "local": local, "installed": installed}
 
 
