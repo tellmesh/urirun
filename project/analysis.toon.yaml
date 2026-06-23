@@ -1,6 +1,6 @@
-# code2llm | 145f 22875L | python:86,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# code2llm | 145f 22868L | python:86,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
 # generated in 0.05s
-# CC̅=4.5 | critical:16/1070 | dups:0 | cycles:0
+# CC̅=4.5 | critical:16/1067 | dups:0 | cycles:0
 
 HEALTH[16]:
   🟡 CC    main CC=18 (limit:15)
@@ -135,9 +135,9 @@ LAYERS:
   adapters/                       CC̄=4.5    ←in:9  →out:0
   │ !! v2                        2584L  1C  125m  CC=14     ←3
   │ !! mesh                      2018L  3C   94m  CC=20     ←1
-  │ !! _registry                  718L  0C   43m  CC=14     ←0
+  │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! __init__                   702L  1C   49m  CC=14     ←10
-  │ !! _scan                      673L  0C   37m  CC=14     ←0
+  │ !! _scan                      666L  0C   35m  CC=14     ←0
   │ !! host_dashboard             609L  0C   16m  CC=13     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! _runtime                   540L  1C   27m  CC=13     ←2
@@ -165,7 +165,7 @@ LAYERS:
   │ testing                    189L  0C    9m  CC=9      ←0
   │ config                     185L  0C   16m  CC=9      ←1
   │ dispatch_protocol          183L  0C    8m  CC=10     ←0
-  │ keyauth                    176L  0C   16m  CC=6      ←0
+  │ keyauth                    173L  0C   15m  CC=6      ←0
   │ new-connector.sh           168L  0C    1m  CC=0.0    ←0
   │ resolver                   168L  0C   10m  CC=13     ←0
   │ discovery                  158L  0C    8m  CC=7      ←0
@@ -196,7 +196,7 @@ LAYERS:
   │ lib.rs                      39L  1C    4m  CC=1      ←0
   │ urirun.rb                   39L  1C    4m  CC=4      ←0
   │ Urirun.java                 38L  1C    3m  CC=1      ←1
-  │ paths                       38L  0C    3m  CC=5      ←3
+  │ paths                       38L  0C    3m  CC=5      ←4
   │ index.js                    33L  0C   11m  CC=8      ←8
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ _util                       30L  0C    4m  CC=2      ←3
@@ -205,9 +205,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -277,7 +277,7 @@ LAYERS:
   │ !! goal.yaml                  538L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                94L  0C    0m  CC=0.0    ←0
   │ Makefile                    90L  0C    0m  CC=0.0    ←0
-  │ project.sh                  66L  0C    0m  CC=0.0    ←0
+  │ project.sh                  69L  0C    0m  CC=0.0    ←0
   │ package.json                27L  0C    0m  CC=0.0    ←0
   │ tree.sh                      4L  0C    0m  CC=0.0    ←0
   │ requirements.txt             2L  0C    0m  CC=0.0    ←0

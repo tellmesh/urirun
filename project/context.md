@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 86, json: 12, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1070
+- **Total Functions**: 1067
 - **Total Classes**: 27
 - **Modules**: 144
 - **Entry Points**: 413
@@ -38,7 +38,7 @@
 - **File**: `_registry.py`
 
 ### adapters.python.urirun.runtime._scan
-- **Functions**: 37
+- **Functions**: 35
 - **File**: `_scan.py`
 
 ### adapters.python.urirun.runtime.errors

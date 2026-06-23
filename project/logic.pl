@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.62', 'javascript').
+project_metadata('urirun', '0.4.63', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -43,7 +43,7 @@ project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
 project_file('adapters/python/tests/test_public_api.py', 175, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
-project_file('adapters/python/tests/test_routing.py', 36, 'python').
+project_file('adapters/python/tests/test_routing.py', 55, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
@@ -95,7 +95,7 @@ project_file('adapters/python/urirun/node/keyauth.py', 177, 'python').
 project_file('adapters/python/urirun/node/manage.py', 356, 'python').
 project_file('adapters/python/urirun/node/mesh.py', 2019, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
-project_file('adapters/python/urirun/node/routing.py', 122, 'python').
+project_file('adapters/python/urirun/node/routing.py', 128, 'python').
 project_file('adapters/python/urirun/node/transport.py', 433, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
@@ -142,7 +142,7 @@ project_file('examples/matrix/flow.py', 31, 'python').
 project_file('examples/matrix/run-matrix.sh', 93, 'shell').
 project_file('examples/matrix/run.sh', 16, 'shell').
 project_file('examples/matrix/verify.py', 65, 'python').
-project_file('project.sh', 66, 'shell').
+project_file('project.sh', 69, 'shell').
 project_file('scripts/lint_connectors.py', 119, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 167, 'python').
@@ -302,6 +302,7 @@ python_function('adapters/python/tests/test_registry_portable.py', 'test_smoke_p
 python_function('adapters/python/tests/test_routing.py', 'test_arbitrary_command_verbs_are_unsafe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_fixed_and_dsl_commands_stay_safe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_explicit_safe_false_overrides', 0, 2, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_routes_from_registry_honors_author_declared_unsafe', 0, 4, 2).
 python_function('adapters/python/tests/test_secrets.py', 'test_secretstr_is_redacted', 0, 5, 6).
 python_function('adapters/python/tests/test_secrets.py', 'test_resolve_env', 1, 2, 3).
 python_function('adapters/python/tests/test_secrets.py', 'test_dry_run_never_resolves', 0, 2, 4).
@@ -727,7 +728,7 @@ python_function('adapters/python/urirun/node/mesh.py', 'node_command', 1, 13, 13
 python_function('adapters/python/urirun/node/paths.py', 'node_state_dir', 0, 1, 3).
 python_function('adapters/python/urirun/node/paths.py', 'deploy_dir', 0, 5, 7).
 python_function('adapters/python/urirun/node/paths.py', 'node_token_path', 0, 1, 1).
-python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 9, 5).
+python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 10, 5).
 python_function('adapters/python/urirun/node/routing.py', 'registry_fingerprint', 1, 2, 6).
 python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 4, 4).
 python_function('adapters/python/urirun/node/routing.py', 'route_target', 1, 1, 1).

@@ -177,12 +177,12 @@ environment[name="local"] {
 | `info` *(in adapters.python.urirun.runtime.errors)* | 13 ⚠ | 2 | 27 | **29** |
 | `main` *(in scripts.repin_connectors)* | 18 ⚠ | 0 | 28 | **28** |
 | `main` *(in scripts.lint_connectors)* | 14 ⚠ | 0 | 27 | **27** |
-| `_cmd_upgrade` *(in adapters.python.urirun.runtime.v2)* | 14 ⚠ | 0 | 27 | **27** |
 | `proto_from_registry` *(in adapters.python.urirun.runtime.codegen)* | 13 ⚠ | 2 | 25 | **27** |
+| `_run_query_route` *(in adapters.python.urirun.host.host_db)* | 7 | 1 | 26 | **27** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.19s
+# generated in 0.18s
 # nodes: 385 | edges: 500 | modules: 31
 # CC̄=4.5
 
@@ -199,34 +199,34 @@ HUBS[20]:
     CC=18  in:0  out:28  total:28
   scripts.lint_connectors.main
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.runtime.v2._cmd_upgrade
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard._dashboard_api_response
-    CC=13  in:1  out:25  total:26
+  adapters.python.urirun.runtime.v2._cmd_upgrade
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard._dashboard_api_response
+    CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.domain_monitor._route_flow
-    CC=4  in:0  out:20  total:20
+  examples.matrix.verify.main
+    CC=9  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]
@@ -499,7 +499,7 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.19s
+# generated in 0.18s
 # nodes: 385 | edges: 500 | modules: 31
 # CC̄=4.5
 
@@ -516,34 +516,34 @@ HUBS[20]:
     CC=18  in:0  out:28  total:28
   scripts.lint_connectors.main
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.runtime.v2._cmd_upgrade
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard._dashboard_api_response
-    CC=13  in:1  out:25  total:26
+  adapters.python.urirun.runtime.v2._cmd_upgrade
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard._dashboard_api_response
+    CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.domain_monitor._route_flow
-    CC=4  in:0  out:20  total:20
+  examples.matrix.verify.main
+    CC=9  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]
@@ -803,7 +803,7 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 145f 22864L | python:86,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# code2llm | 145f 22875L | python:86,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
 # generated in 0.05s
 # CC̅=4.5 | critical:16/1070 | dups:0 | cycles:0
 
@@ -977,8 +977,8 @@ LAYERS:
   │ agent                      151L  0C    6m  CC=10     ←0
   │ !! conformance                148L  0C    3m  CC=17     ←0
   │ scheduler                  133L  0C    6m  CC=4      ←0
+  │ routing                    127L  0C    8m  CC=14     ←3
   │ daemon                     116L  0C    3m  CC=14     ←0
-  │ routing                    116L  0C    8m  CC=14     ←3
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ v2_service                 111L  0C    3m  CC=9      ←1
   │ _artifacts                 110L  0C    5m  CC=9      ←1
@@ -1103,8 +1103,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: v1.js/ (fan-in=6)
   HUB: adapters/ (fan-in=9)
+  HUB: v1.js/ (fan-in=6)
   SMELL: adapters.python/ fan-out=17 → split needed
 
 EXTERNAL:
@@ -1115,15 +1115,93 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 0 groups | 7f 659L | 2026-06-23
+# redup/duplication | 11 groups | 51f 17910L | 2026-06-23
 
 SUMMARY:
-  files_scanned: 7
-  total_lines:   659
-  dup_groups:    0
-  dup_fragments: 0
-  saved_lines:   0
-  scan_ms:       2348
+  files_scanned: 51
+  total_lines:   17910
+  dup_groups:    11
+  dup_fragments: 26
+  saved_lines:   111
+  scan_ms:       1238
+
+DUPLICATES[11] (ranked by impact):
+  [5bd6303d48ae76f3]   STRU  _host_db  L=7 N=4 saved=21 sim=1.00
+      adapters/python/urirun/host/host_dashboard.py:0-6  (_host_db)
+      adapters/python/urirun/host/host_dashboard.py:0-6  (_mesh)
+      adapters/python/urirun/host/host_dashboard.py:0-6  (_planfile_adapter)
+      adapters/python/urirun/runtime/v2.py:0-6  (_host_integrations)
+  [75595116b3f8aa56]   STRU  route_db_path  L=5 N=4 saved=15 sim=1.00
+      adapters/python/urirun/host/host_db.py:0-4  (route_db_path)
+      adapters/python/urirun/host/domain_monitor.py:0-4  (_db)
+      adapters/python/urirun/host/domain_monitor.py:0-4  (_project)
+      adapters/python/urirun/host/domain_monitor.py:0-4  (_screenshot_dir)
+  [91131f5825d6d00e]   EXAC  _binding_pairs  L=14 N=2 saved=14 sim=1.00
+      adapters/python/urirun/runtime/v1.py:0-13  (_binding_pairs)
+      adapters/python/urirun/runtime/v2.py:0-13  (_binding_pairs)
+  [e694dbfd024c23af]   STRU  _json_from_text  L=14 N=2 saved=14 sim=1.00
+      adapters/python/urirun/host/task_planner.py:0-13  (_json_from_text)
+      adapters/python/urirun/node/flow.py:0-13  (json_from_text)
+  [a05da623bf3ba19d]   EXAC  write_json  L=9 N=2 saved=9 sim=1.00
+      adapters/python/urirun/runtime/_registry.py:0-8  (write_json)
+      adapters/python/urirun/runtime/_scan.py:0-8  (write_json)
+  [16c05a06a330edc3]   STRU  expand_bindings  L=8 N=2 saved=8 sim=1.00
+      adapters/python/urirun/runtime/v1.py:0-7  (expand_bindings)
+      adapters/python/urirun/runtime/v2.py:0-7  (expand_bindings)
+  [c632b89d21b6bcb1]   STRU  loads_json  L=7 N=2 saved=7 sim=1.00
+      adapters/python/urirun/host/planfile_adapter.py:0-6  (loads_json)
+      adapters/python/urirun/node/mesh.py:0-6  (_parse_json_option)
+  [5e79fb9282f3f936]   STRU  state_dir  L=7 N=2 saved=7 sim=1.00
+      adapters/python/urirun/node/keyauth.py:0-6  (state_dir)
+      adapters/python/urirun/node/paths.py:0-6  (node_state_dir)
+  [3c86be6d1996c740]   EXAC  load_json  L=6 N=2 saved=6 sim=1.00
+      adapters/python/urirun/runtime/_registry.py:0-5  (load_json)
+      adapters/python/urirun/runtime/_scan.py:0-5  (load_json)
+  [dd6ae00831180b0d]   EXAC  check  L=5 N=2 saved=5 sim=1.00
+      adapters/python/urirun/runtime/v1.py:0-4  (check)
+      adapters/python/urirun/runtime/v2.py:0-4  (check)
+  [a9f2c3bbcc6776dd]   STRU  authorized_keys_path  L=5 N=2 saved=5 sim=1.00
+      adapters/python/urirun/node/keyauth.py:0-4  (authorized_keys_path)
+      adapters/python/urirun/node/paths.py:0-4  (node_token_path)
+
+REFACTOR[11] (ranked by priority):
+  [1] ○ extract_function   → adapters/python/urirun/utils/_host_db.py
+      WHY: 4 occurrences of 7-line block across 2 files — saves 21 lines
+      FILES: adapters/python/urirun/host/host_dashboard.py, adapters/python/urirun/runtime/v2.py
+  [2] ○ extract_function   → adapters/python/urirun/host/utils/route_db_path.py
+      WHY: 4 occurrences of 5-line block across 2 files — saves 15 lines
+      FILES: adapters/python/urirun/host/domain_monitor.py, adapters/python/urirun/host/host_db.py
+  [3] ○ extract_function   → adapters/python/urirun/runtime/utils/_binding_pairs.py
+      WHY: 2 occurrences of 14-line block across 2 files — saves 14 lines
+      FILES: adapters/python/urirun/runtime/v1.py, adapters/python/urirun/runtime/v2.py
+  [4] ○ extract_function   → adapters/python/urirun/utils/_json_from_text.py
+      WHY: 2 occurrences of 14-line block across 2 files — saves 14 lines
+      FILES: adapters/python/urirun/host/task_planner.py, adapters/python/urirun/node/flow.py
+  [5] ○ extract_function   → adapters/python/urirun/runtime/utils/write_json.py
+      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
+      FILES: adapters/python/urirun/runtime/_registry.py, adapters/python/urirun/runtime/_scan.py
+  [6] ○ extract_function   → adapters/python/urirun/runtime/utils/expand_bindings.py
+      WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
+      FILES: adapters/python/urirun/runtime/v1.py, adapters/python/urirun/runtime/v2.py
+  [7] ○ extract_function   → adapters/python/urirun/utils/loads_json.py
+      WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
+      FILES: adapters/python/urirun/host/planfile_adapter.py, adapters/python/urirun/node/mesh.py
+  [8] ○ extract_function   → adapters/python/urirun/node/utils/state_dir.py
+      WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
+      FILES: adapters/python/urirun/node/keyauth.py, adapters/python/urirun/node/paths.py
+  [9] ○ extract_function   → adapters/python/urirun/runtime/utils/load_json.py
+      WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
+      FILES: adapters/python/urirun/runtime/_registry.py, adapters/python/urirun/runtime/_scan.py
+  [10] ○ extract_function   → adapters/python/urirun/runtime/utils/check.py
+      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
+      FILES: adapters/python/urirun/runtime/v1.py, adapters/python/urirun/runtime/v2.py
+  [11] ○ extract_function   → adapters/python/urirun/node/utils/authorized_keys_path.py
+      WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
+      FILES: adapters/python/urirun/node/keyauth.py, adapters/python/urirun/node/paths.py
+
+METRICS-TARGET:
+  dup_groups:  11 → 0
+  saved_lines: 111 lines recoverable
 ```
 
 ### Evolution / Churn (`project/evolution.toon.yaml`)

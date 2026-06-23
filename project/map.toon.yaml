@@ -1,6 +1,6 @@
-# urirun | 144f 22875L | yaml:4,txt:3,shell:10,json:12,python:86,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
+# urirun | 144f 22868L | yaml:4,txt:3,shell:10,python:86,yml:2,json:12,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
 # generated in 0.02s
-# stats: 1070 func | 0 cls | 144 mod | CC̄=4.5 | critical:16 | cycles:0
+# stats: 1067 func | 0 cls | 144 mod | CC̄=4.5 | critical:16 | cycles:0
 # alerts[5]: fan-out _build_parser=116; fan-out run_command=33; fan-out serve=30; fan-out main=29; fan-out NodeHandler._stream_events=28
 # hotspots[5]: _build_parser fan=116; run_command fan=33; serve fan=30; main fan=29; NodeHandler._stream_events fan=28
 # evolution: CC̄ 4.4→4.5 (regressed +0.1)
@@ -74,7 +74,7 @@ M[144]:
   adapters/python/urirun/node/client.py,318
   adapters/python/urirun/node/config.py,185
   adapters/python/urirun/node/flow.py,431
-  adapters/python/urirun/node/keyauth.py,176
+  adapters/python/urirun/node/keyauth.py,173
   adapters/python/urirun/node/manage.py,355
   adapters/python/urirun/node/mesh.py,2018
   adapters/python/urirun/node/paths.py,38
@@ -84,7 +84,7 @@ M[144]:
   adapters/python/urirun/runtime/__init__.py,1
   adapters/python/urirun/runtime/_registry.py,718
   adapters/python/urirun/runtime/_runtime.py,540
-  adapters/python/urirun/runtime/_scan.py,673
+  adapters/python/urirun/runtime/_scan.py,666
   adapters/python/urirun/runtime/adopt_pack.py,245
   adapters/python/urirun/runtime/agent.py,151
   adapters/python/urirun/runtime/codegen.py,438
@@ -137,7 +137,7 @@ M[144]:
   package.json,27
   planfile.yaml,1319
   prefact.yaml,94
-  project.sh,66
+  project.sh,69
   requirements.txt,2
   scripts/lint_connectors.py,118
   scripts/release-bump.sh,29
@@ -597,45 +597,6 @@ Connector a...
     _load_sources(paths)
     _discover_python_module(module_name)
     main(argv)
-  adapters/python/urirun/runtime/_scan.py:
-    e: slugify,relpath,now_iso,load_json,write_json,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,_scan_one_file,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
-    slugify(value;fallback)
-    relpath(path;root)
-    now_iso()
-    load_json(path)
-    write_json(path;value)
-    emit_json(value;out)
-    infer_kind(binding)
-    normalize_binding(binding;default_source)
-    binding_to_route_source(binding)
-    route_source_to_binding(route_source)
-    load_bindings_from_manifest(data;source)
-    build_binding_document(bindings;generated_at)
-    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
-    iter_project_files(root)
-    scan_manifest_files(root)
-    npm_command_for_script(script)
-    github_dependency_binding(name;spec;manager;command;source)
-    scan_package_json(path;root)
-    _read_toml(path)
-    scan_pyproject(path;root)
-    scan_makefile(path;root)
-    scan_shell_script(path;root)
-    module_ref_for_python(path;root;name)
-    scan_python_code(path;root)
-    scan_js_code(path;root)
-    parse_compose_label_line(line)
-    scan_docker_compose(path;root)
-    scan_openapi(path;root;base_url)
-    _scan_one_file(file_path;root;include_shell;openapi_base_url)
-    scan_path(path;include_shell;openapi_base_url)
-    scan_github(repo;include_shell;openapi_base_url)
-    load_binding_source(path;include_shell;openapi_base_url)
-    load_binding_sources(paths;include_shell;openapi_base_url)
-    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
-    list_bindings(paths;include_shell;openapi_base_url)
-    format_binding_table(bindings)
-    main(argv)
   adapters/python/urirun/connectors/connector_lint.py:
     e: _connector_call_target,_connector_assignment,_connector_objects,_route_uri,_decorator_routes,_cli_subcommands,_scan_code_routes,_load_manifest_routes,_route_placements,_compute_drift,_adapter_drift,_route_kind_counts,lint_connector,_format_report,lint_command,_import_first_bindings,_unresolved_handlers,verify_connector,verify_command
     _connector_call_target(call)
@@ -672,6 +633,43 @@ Connector a...
     registry_from_routes(routes)
     target_nodes(prompt;nodes;explicit)
     route_targets_for_nodes(routes;node_names)
+  adapters/python/urirun/runtime/_scan.py:
+    e: slugify,relpath,now_iso,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,_scan_one_file,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
+    slugify(value;fallback)
+    relpath(path;root)
+    now_iso()
+    emit_json(value;out)
+    infer_kind(binding)
+    normalize_binding(binding;default_source)
+    binding_to_route_source(binding)
+    route_source_to_binding(route_source)
+    load_bindings_from_manifest(data;source)
+    build_binding_document(bindings;generated_at)
+    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
+    iter_project_files(root)
+    scan_manifest_files(root)
+    npm_command_for_script(script)
+    github_dependency_binding(name;spec;manager;command;source)
+    scan_package_json(path;root)
+    _read_toml(path)
+    scan_pyproject(path;root)
+    scan_makefile(path;root)
+    scan_shell_script(path;root)
+    module_ref_for_python(path;root;name)
+    scan_python_code(path;root)
+    scan_js_code(path;root)
+    parse_compose_label_line(line)
+    scan_docker_compose(path;root)
+    scan_openapi(path;root;base_url)
+    _scan_one_file(file_path;root;include_shell;openapi_base_url)
+    scan_path(path;include_shell;openapi_base_url)
+    scan_github(repo;include_shell;openapi_base_url)
+    load_binding_source(path;include_shell;openapi_base_url)
+    load_binding_sources(paths;include_shell;openapi_base_url)
+    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
+    list_bindings(paths;include_shell;openapi_base_url)
+    format_binding_table(bindings)
+    main(argv)
   adapters/python/urirun/host/host_dashboard.py:
     e: _json_response,_html_response,_read_json,_first,_host_db,_mesh,_planfile_adapter,_safe_tickets,_task_counts,summary,task_action,_dashboard_api_response,create_handler,serve,command,default_host
     _json_response(handler;status;payload)
@@ -1153,11 +1151,10 @@ Connector a...
     smoke(bindings)
     smoke_command(args)
   adapters/python/urirun/node/keyauth.py:
-    e: new_enroll_token,token_matches,available,state_dir,authorized_keys_path,_normalize,fingerprint,load_authorized,is_authorized,add_authorized,_canonical,public_openssh,sign,verify,_replay_seen,verify_request
+    e: new_enroll_token,token_matches,available,authorized_keys_path,_normalize,fingerprint,load_authorized,is_authorized,add_authorized,_canonical,public_openssh,sign,verify,_replay_seen,verify_request
     new_enroll_token(length)
     token_matches(expected;provided)
     available()
-    state_dir()
     authorized_keys_path()
     _normalize(openssh)
     fingerprint(openssh)
@@ -1306,9 +1303,7 @@ Connector a...
   Makefile:
   requirements.txt:
   tree.sh:
-  package.json:
   prefact.yaml:
-  project.sh:
   security/mesh-probe/docker-compose.yml:
   security/mesh-probe/node.bindings.json:
   security/mesh-probe/Dockerfile:
@@ -1333,7 +1328,6 @@ Connector a...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1346,7 +1340,6 @@ Connector a...
   adapters/rust/Cargo.toml:
   adapters/php/composer.json:
   adapters/php/example/hash-connector.php:
-  adapters/python/pyproject.toml:
   adapters/python/urirun/host_db.py:
   adapters/python/urirun/v2_service.py:
   adapters/python/urirun/domain_monitor.py:
@@ -1384,3 +1377,7 @@ Connector a...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
+  package.json:
+  project.sh:
+  adapters/js/package.json:
+  adapters/python/pyproject.toml:

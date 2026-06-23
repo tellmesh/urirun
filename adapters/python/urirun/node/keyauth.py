@@ -53,14 +53,11 @@ def available() -> bool:
         return False
 
 
-def state_dir() -> Path:
-    d = Path(os.path.expanduser("~/.urirun-node"))
-    d.mkdir(parents=True, exist_ok=True)
-    return d
-
-
 def authorized_keys_path() -> Path:
-    return state_dir() / "authorized_keys"
+    # The node state dir is owned by node.paths; reuse it instead of a byte-identical
+    # local copy (redup duplicate of paths.node_state_dir).
+    from urirun.node.paths import node_state_dir
+    return node_state_dir() / "authorized_keys"
 
 
 def _normalize(openssh: str) -> str:

@@ -45,17 +45,10 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def load_json(path: str | Path):
-    with Path(path).open("r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def write_json(path: str | Path, value) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(value, f, indent=2, sort_keys=True)
-        f.write("\n")
+# Reuse the byte-identical helpers from runtime._registry instead of a second copy
+# (redup EXAC duplicate). Aliases keep every local `load_json(...)`/`write_json(...)` call.
+load_json = reglib.load_json
+write_json = reglib.write_json
 
 
 def emit_json(value, out: str | None) -> None:

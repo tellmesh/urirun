@@ -259,13 +259,13 @@ Language-agnostic URI to handler adapter
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# urirun | 149f 26225L | python:127,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
-# stats: 1037 func | 46 cls | 149 mod | CC̄=4.5 | critical:107 | cycles:0
+# urirun | 150f 26289L | python:128,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
+# stats: 1041 func | 46 cls | 150 mod | CC̄=4.5 | critical:108 | cycles:0
 # alerts[5]: CC apply_deploy=20; CC _host_mesh_command=18; CC main=18; CC main=17; CC watch_command=17
 # hotspots[5]: serve fan=28; run_command fan=27; main fan=23; main fan=23; serve_node fan=21
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[149]:
+M[150]:
   adapters/bash/example/hash-connector.sh,10
   adapters/bash/urirun.sh,18
   adapters/conformance.py,149
@@ -307,6 +307,7 @@ M[149]:
   adapters/python/tests/test_planfile_adapter.py,343
   adapters/python/tests/test_public_api.py,175
   adapters/python/tests/test_registry_portable.py,47
+  adapters/python/tests/test_routing.py,55
   adapters/python/tests/test_scheduler.py,62
   adapters/python/tests/test_secrets.py,168
   adapters/python/tests/test_tree.py,28
@@ -358,7 +359,7 @@ M[149]:
   adapters/python/urirun/node/manage.py,356
   adapters/python/urirun/node/mesh.py,2019
   adapters/python/urirun/node/paths.py,39
-  adapters/python/urirun/node/routing.py,122
+  adapters/python/urirun/node/routing.py,128
   adapters/python/urirun/node/transport.py,433
   adapters/python/urirun/planfile_adapter.py,6
   adapters/python/urirun/runtime/__init__.py,2
@@ -405,7 +406,7 @@ M[149]:
   examples/matrix/run-matrix.sh,93
   examples/matrix/run.sh,16
   examples/matrix/verify.py,65
-  project.sh,66
+  project.sh,69
   scripts/lint_connectors.py,119
   scripts/release-bump.sh,30
   scripts/repin_connectors.py,167
@@ -657,6 +658,12 @@ D:
     test_assert_registry_portable_raises_on_local_function()
     test_smoke_requires_portability_by_default()
     test_smoke_portable_allow_opts_in_for_inprocess_connectors()
+  adapters/python/tests/test_routing.py:
+    e: test_arbitrary_command_verbs_are_unsafe,test_fixed_and_dsl_commands_stay_safe,test_explicit_safe_false_overrides,test_routes_from_registry_honors_author_declared_unsafe
+    test_arbitrary_command_verbs_are_unsafe()
+    test_fixed_and_dsl_commands_stay_safe()
+    test_explicit_safe_false_overrides()
+    test_routes_from_registry_honors_author_declared_unsafe()
   adapters/python/tests/test_scheduler.py:
     e: SchedulerTests
     SchedulerTests: test_systemd_preview_and_install(0),test_cli_schedule_cron_preview(0)
@@ -1731,7 +1738,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.62', 'javascript').
+project_metadata('urirun', '0.4.63', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -1775,6 +1782,7 @@ project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
 project_file('adapters/python/tests/test_public_api.py', 175, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
+project_file('adapters/python/tests/test_routing.py', 55, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
@@ -1826,7 +1834,7 @@ project_file('adapters/python/urirun/node/keyauth.py', 177, 'python').
 project_file('adapters/python/urirun/node/manage.py', 356, 'python').
 project_file('adapters/python/urirun/node/mesh.py', 2019, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
-project_file('adapters/python/urirun/node/routing.py', 122, 'python').
+project_file('adapters/python/urirun/node/routing.py', 128, 'python').
 project_file('adapters/python/urirun/node/transport.py', 433, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
@@ -1873,7 +1881,7 @@ project_file('examples/matrix/flow.py', 31, 'python').
 project_file('examples/matrix/run-matrix.sh', 93, 'shell').
 project_file('examples/matrix/run.sh', 16, 'shell').
 project_file('examples/matrix/verify.py', 65, 'python').
-project_file('project.sh', 66, 'shell').
+project_file('project.sh', 69, 'shell').
 project_file('scripts/lint_connectors.py', 119, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 167, 'python').
@@ -2030,6 +2038,10 @@ python_function('adapters/python/tests/test_registry_portable.py', 'test_local_f
 python_function('adapters/python/tests/test_registry_portable.py', 'test_assert_registry_portable_raises_on_local_function', 0, 1, 2).
 python_function('adapters/python/tests/test_registry_portable.py', 'test_smoke_requires_portability_by_default', 0, 2, 1).
 python_function('adapters/python/tests/test_registry_portable.py', 'test_smoke_portable_allow_opts_in_for_inprocess_connectors', 0, 2, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_arbitrary_command_verbs_are_unsafe', 0, 3, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_fixed_and_dsl_commands_stay_safe', 0, 3, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_explicit_safe_false_overrides', 0, 2, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_routes_from_registry_honors_author_declared_unsafe', 0, 4, 2).
 python_function('adapters/python/tests/test_secrets.py', 'test_secretstr_is_redacted', 0, 5, 6).
 python_function('adapters/python/tests/test_secrets.py', 'test_resolve_env', 1, 2, 3).
 python_function('adapters/python/tests/test_secrets.py', 'test_dry_run_never_resolves', 0, 2, 4).
@@ -2455,7 +2467,7 @@ python_function('adapters/python/urirun/node/mesh.py', 'node_command', 1, 13, 13
 python_function('adapters/python/urirun/node/paths.py', 'node_state_dir', 0, 1, 3).
 python_function('adapters/python/urirun/node/paths.py', 'deploy_dir', 0, 5, 7).
 python_function('adapters/python/urirun/node/paths.py', 'node_token_path', 0, 1, 1).
-python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 9, 5).
+python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 10, 5).
 python_function('adapters/python/urirun/node/routing.py', 'registry_fingerprint', 1, 2, 6).
 python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 4, 4).
 python_function('adapters/python/urirun/node/routing.py', 'route_target', 1, 1, 1).
@@ -3365,12 +3377,12 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 | `info` *(in adapters.python.urirun.runtime.errors)* | 13 ⚠ | 2 | 27 | **29** |
 | `main` *(in scripts.repin_connectors)* | 18 ⚠ | 0 | 28 | **28** |
 | `main` *(in scripts.lint_connectors)* | 14 ⚠ | 0 | 27 | **27** |
-| `_cmd_upgrade` *(in adapters.python.urirun.runtime.v2)* | 14 ⚠ | 0 | 27 | **27** |
 | `proto_from_registry` *(in adapters.python.urirun.runtime.codegen)* | 13 ⚠ | 2 | 25 | **27** |
+| `_run_query_route` *(in adapters.python.urirun.host.host_db)* | 7 | 1 | 26 | **27** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.19s
+# generated in 0.18s
 # nodes: 385 | edges: 500 | modules: 31
 # CC̄=4.5
 
@@ -3387,34 +3399,34 @@ HUBS[20]:
     CC=18  in:0  out:28  total:28
   scripts.lint_connectors.main
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.runtime.v2._cmd_upgrade
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard._dashboard_api_response
-    CC=13  in:1  out:25  total:26
+  adapters.python.urirun.runtime.v2._cmd_upgrade
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard._dashboard_api_response
+    CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.domain_monitor._route_flow
-    CC=4  in:0  out:20  total:20
+  examples.matrix.verify.main
+    CC=9  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]
