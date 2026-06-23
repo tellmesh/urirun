@@ -32,7 +32,10 @@ $VENV/bin/code2llm ./ -f all -o ./project --no-chunk --exclude '*.md'
 
 #$PIP install code2docs --upgrade --quiet
 #$VENV/bin/code2docs ./ --readme-only
-$VENV/bin/redup scan . --format toon --output ./project
+# Scan the Python package, not the repo root: `redup scan .` only picked up 7 top-level
+# files (the real code lives under adapters/python/urirun) so it reported 0 duplicates and
+# masked real duplication. Pointing it at the package surfaces the actual signal.
+$VENV/bin/redup scan adapters/python/urirun --format toon --output ./project
 #$VENV/bin/redup scan . --functions-only -f toon --output ./project
 #$VENV/bin/vallm batch ./src --recursive --semantic --model qwen2.5-coder:7b
 #$VENV/bin/vallm batch --parallel .
