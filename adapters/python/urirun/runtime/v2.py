@@ -1403,16 +1403,9 @@ def _is_pipx_env() -> bool:
     return "/pipx/venvs/" in sys.executable or "/pipx/venvs/" in (sys.argv[0] or "")
 
 
-# CLI parser construction moved to urirun.runtime.cli; main()/_cmd_* stay here.
-from urirun.runtime.cli import (  # noqa: E402,F401
-    _add_connectors_subparser,
-    _add_host_data_subparser,
-    _add_host_monitor_subparser,
-    _add_host_subparser,
-    _add_host_task_subparser,
-    _add_node_subparser,
-    _build_parser,
-)
+# CLI parser construction lives in urirun.runtime.cli; main() imports _build_parser
+# lazily (function-level) so v2 does NOT import cli at module load — cli imports v2,
+# and a module-level back-import here would be a circular import.
 
 
 def _cmd_scan(args, parser) -> int:
@@ -1961,6 +1954,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     executable = Path(sys.argv[0]).name
     prog = executable if executable in {"urirun", "urirun-v2"} else "urirun"
+    from urirun.runtime.cli import _build_parser  # lazy: avoids v2<->cli import cycle
     parser = _build_parser(prog)
     args = parser.parse_args(argv)
     handler = _COMMANDS.get(args.command)

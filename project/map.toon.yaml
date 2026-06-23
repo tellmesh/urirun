@@ -1,9 +1,9 @@
-# urirun | 145f 22920L | yaml:4,txt:3,shell:10,json:12,python:87,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
+# urirun | 145f 22919L | yaml:4,txt:3,shell:10,json:12,python:87,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
 # generated in 0.02s
-# stats: 1073 func | 0 cls | 145 mod | CC̄=4.4 | critical:16 | cycles:0
+# stats: 1073 func | 0 cls | 145 mod | CC̄=4.5 | critical:16 | cycles:0
 # alerts[5]: fan-out run_command=33; fan-out serve=30; fan-out main=29; fan-out NodeHandler._stream_events=28; fan-out _add_host_subparser=27
 # hotspots[5]: run_command fan=33; serve fan=30; main fan=29; NodeHandler._stream_events fan=28; _add_host_subparser fan=27
-# evolution: CC̄ 4.4→4.4 (flat 0.0)
+# evolution: CC̄ 4.4→4.5 (regressed +0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[145]:
   Makefile,90
@@ -76,7 +76,7 @@ M[145]:
   adapters/python/urirun/node/flow.py,431
   adapters/python/urirun/node/keyauth.py,173
   adapters/python/urirun/node/manage.py,355
-  adapters/python/urirun/node/mesh.py,2018
+  adapters/python/urirun/node/mesh.py,2023
   adapters/python/urirun/node/paths.py,38
   adapters/python/urirun/node/routing.py,127
   adapters/python/urirun/node/transport.py,432
@@ -99,7 +99,7 @@ M[145]:
   adapters/python/urirun/runtime/secrets.py,234
   adapters/python/urirun/runtime/tree.py,91
   adapters/python/urirun/runtime/v1.py,471
-  adapters/python/urirun/runtime/v2.py,1973
+  adapters/python/urirun/runtime/v2.py,1967
   adapters/python/urirun/runtime/v2_adopt.py,193
   adapters/python/urirun/runtime/v2_grpc.py,204
   adapters/python/urirun/runtime/v2_mcp.py,209
@@ -220,7 +220,7 @@ D:
     _registry_to_bindings(registry)
     _deploy_registry(body;existing)
     apply_deploy(state;body)
-    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage)
+    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path)
     _resolve_serve_opts(args;node)
     _node_serve(args;node;name;registry)
     node_list_command(args)
@@ -426,124 +426,6 @@ Connector a...
     _handler_signature(props;required)
     to_handlers(registry)
     gen_command(args)
-  adapters/python/urirun/runtime/_registry.py:
-    e: parse_uri,translate,hash_uri,default_adapter,normalize_route_entry,route_from_uri,route_from_parts,coerce_route_source,_route_entry_equal,add_route,flatten_registry_tree,_get_route_entry,flatten_registry_document,discover_manifest,build_registry_document,_parse_command,discover_docker_labels,discover_docker_inspect,_operation_from_method,_default_openapi_route,discover_openapi,uri_handler,_iter_module_exports,discover_python_modules,discover_entry_points,registry_tree,_resolve_from_index,_walk_route_tree,resolve_route,_walk_route_entries,hydrate_registry,exec_local_function,exec_fetch,exec_spawn,exec_shell_template,exec_mqtt_publish,dispatch_generated,load_json,write_json,_emit_json,_load_sources,_discover_python_module,main
-    parse_uri(uri)
-    translate(descriptor)
-    hash_uri(normalized)
-    default_adapter(kind)
-    normalize_route_entry(route_entry)
-    route_from_uri(uri;route_entry;source)
-    route_from_parts(package;resource;operation;route_entry;source;target)
-    coerce_route_source(item;default_source)
-    _route_entry_equal(left;right)
-    add_route(registry_tree;route;route_entry;on_conflict)
-    flatten_registry_tree(registry_tree;source)
-    _get_route_entry(registry_tree;route)
-    flatten_registry_document(document;source)
-    discover_manifest(manifest;source)
-    build_registry_document(route_sources;generated_at;on_conflict)
-    _parse_command(value)
-    discover_docker_labels(labels;source)
-    discover_docker_inspect(inspect_data)
-    _operation_from_method(method)
-    _default_openapi_route(method;path;operation;package;target)
-    discover_openapi(spec;base_url;package;target;source)
-    uri_handler(uri)
-    _iter_module_exports(modules)
-    discover_python_modules(modules)
-    discover_entry_points(group)
-    registry_tree(registry)
-    _resolve_from_index(normalized;registry)
-    _walk_route_tree(tree;route)
-    resolve_route(translation;registry)
-    _walk_route_entries(node)
-    hydrate_registry(registry;refs)
-    exec_local_function(ctx)
-    exec_fetch(ctx)
-    exec_spawn(ctx)
-    exec_shell_template(ctx)
-    exec_mqtt_publish(ctx)
-    dispatch_generated(uri;registry;payload;runtime_cache;executors)
-    load_json(path)
-    write_json(path;value)
-    _emit_json(value;out)
-    _load_sources(paths)
-    _discover_python_module(module_name)
-    main(argv)
-  adapters/python/urirun/runtime/_scan.py:
-    e: slugify,relpath,now_iso,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,_scan_one_file,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
-    slugify(value;fallback)
-    relpath(path;root)
-    now_iso()
-    emit_json(value;out)
-    infer_kind(binding)
-    normalize_binding(binding;default_source)
-    binding_to_route_source(binding)
-    route_source_to_binding(route_source)
-    load_bindings_from_manifest(data;source)
-    build_binding_document(bindings;generated_at)
-    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
-    iter_project_files(root)
-    scan_manifest_files(root)
-    npm_command_for_script(script)
-    github_dependency_binding(name;spec;manager;command;source)
-    scan_package_json(path;root)
-    _read_toml(path)
-    scan_pyproject(path;root)
-    scan_makefile(path;root)
-    scan_shell_script(path;root)
-    module_ref_for_python(path;root;name)
-    scan_python_code(path;root)
-    scan_js_code(path;root)
-    parse_compose_label_line(line)
-    scan_docker_compose(path;root)
-    scan_openapi(path;root;base_url)
-    _scan_one_file(file_path;root;include_shell;openapi_base_url)
-    scan_path(path;include_shell;openapi_base_url)
-    scan_github(repo;include_shell;openapi_base_url)
-    load_binding_source(path;include_shell;openapi_base_url)
-    load_binding_sources(paths;include_shell;openapi_base_url)
-    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
-    list_bindings(paths;include_shell;openapi_base_url)
-    format_binding_table(bindings)
-    main(argv)
-  adapters/python/urirun/connectors/connector_lint.py:
-    e: _connector_call_target,_connector_assignment,_connector_objects,_route_uri,_decorator_routes,_cli_subcommands,_scan_code_routes,_load_manifest_routes,_route_placements,_compute_drift,_adapter_drift,_route_kind_counts,lint_connector,_format_report,lint_command,_import_first_bindings,_unresolved_handlers,verify_connector,verify_command
-    _connector_call_target(call)
-    _connector_assignment(node)
-    _connector_objects(tree)
-    _route_uri(scheme;target;path)
-    _decorator_routes(tree;objs)
-    _cli_subcommands(py_files)
-    _scan_code_routes(py_files)
-    _load_manifest_routes(manifests)
-    _route_placements(code_routes;manifest_uris;cli_subs)
-    _compute_drift(code_uris;manifest_uris;code_routes;manifest_declares_routes)
-    _adapter_drift(code_routes;manifest)
-    _route_kind_counts(code_routes)
-    lint_connector(pkg_dir)
-    _format_report(rep)
-    lint_command(args)
-    _import_first_bindings(root;add)
-    _unresolved_handlers(doc)
-    verify_connector(pkg_dir)
-    verify_command(args)
-  adapters/python/urirun/connectors/declarative.py:
-    e: load_spec,bindings_from_spec,from_spec_command
-    load_spec(path)
-    bindings_from_spec(spec)
-    from_spec_command(args)
-  adapters/python/urirun/node/routing.py:
-    e: routes_from_registry,registry_fingerprint,safe_route,route_target,binding_for_remote_route,registry_from_routes,target_nodes,route_targets_for_nodes
-    routes_from_registry(registry;source)
-    registry_fingerprint(routes)
-    safe_route(route)
-    route_target(uri)
-    binding_for_remote_route(route)
-    registry_from_routes(routes)
-    target_nodes(prompt;nodes;explicit)
-    route_targets_for_nodes(routes;node_names)
   adapters/python/urirun/runtime/v2.py:
     e: _RunAbort,model_from_function,_placeholder_kwargs,uri_command,uri_shell,_handler_kwargs,uri_handler,decorated_bindings,_document_binding_from_expanded,connector_bindings,_select_entry_points,_load_entry_point_bindings,entry_point_bindings,_entry_point_script_issues,connector_health,_collision_index,connector_collisions,entry_point_binding_document,entry_point_registry,_schema_for,_apply_defaults,_input_values,validate_input,render_value,render_sequence,render_argv,run_argv_template,run_shell_template,_first_payload_value,_resolve_error_action,_error_recent,_error_search,_error_info,_error_ticket,run_error_store,_host_integrations,planfile_task_bindings,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor,run_local_function_subprocess,_builtin_error_route_entry,_builtin_registry_route_entry,_record_error,_run_parse,_run_resolve_route,_run_validate,_run_executor,_run_dry,_run_execute,run,check,list_routes,_strip_runtime_only,_binding_config,_binding_adapter_kind,expand_binding,_binding_pairs,expand_bindings,compile_registry,build_binding_document,_bindings_as_map,merge_binding_document,write_or_emit_binding,_coerce_default,parse_param_declaration,input_schema_from_params,command_binding_from_cli,pypi_binding,load_registry_arg,_placeholders_in,validate_binding_document,_iter_files,_rel,_empty_input_schema,_load_manifest,_scan_package_json,_read_toml,_scan_pyproject,_scan_shell_script,_scan_makefile,_parse_dockerfile_labels,_manifest_candidates,_scan_dockerfile,scan_artifacts,_load_json_arg,_load_many,_package_version,_is_pipx_env,_cmd_scan,_cmd_compile,_cmd_discover,_cmd_adopt_pack,_cmd_tree,_cmd_validate,_cmd_add_command,_cmd_add_pypi,_cmd_add_openapi,_cmd_gen,_cmd_doctor,_pip_command,_resolve_pip_targets,_pip_install_args,_cmd_install,_cmd_upgrade,_pipspec_version,_outdated_rows,_cmd_outdated,_cmd_agent,_print_doctor_report,_cmd_connectors_doctor,_cmd_connectors,_cmd_errors,_cmd_compat,_cmd_host,_cmd_node,_builtin_binding_items,_registry_from_module,_resolve_list_registry,_cmd_run_or_list,_cmd_version,main
     _RunAbort(Exception): __init__(1)  # Carries a finished (error) envelope to the single exit point...
@@ -670,6 +552,124 @@ Connector a...
     _cmd_run_or_list(args;parser)
     _cmd_version(args;parser)
     main(argv)
+  adapters/python/urirun/runtime/_registry.py:
+    e: parse_uri,translate,hash_uri,default_adapter,normalize_route_entry,route_from_uri,route_from_parts,coerce_route_source,_route_entry_equal,add_route,flatten_registry_tree,_get_route_entry,flatten_registry_document,discover_manifest,build_registry_document,_parse_command,discover_docker_labels,discover_docker_inspect,_operation_from_method,_default_openapi_route,discover_openapi,uri_handler,_iter_module_exports,discover_python_modules,discover_entry_points,registry_tree,_resolve_from_index,_walk_route_tree,resolve_route,_walk_route_entries,hydrate_registry,exec_local_function,exec_fetch,exec_spawn,exec_shell_template,exec_mqtt_publish,dispatch_generated,load_json,write_json,_emit_json,_load_sources,_discover_python_module,main
+    parse_uri(uri)
+    translate(descriptor)
+    hash_uri(normalized)
+    default_adapter(kind)
+    normalize_route_entry(route_entry)
+    route_from_uri(uri;route_entry;source)
+    route_from_parts(package;resource;operation;route_entry;source;target)
+    coerce_route_source(item;default_source)
+    _route_entry_equal(left;right)
+    add_route(registry_tree;route;route_entry;on_conflict)
+    flatten_registry_tree(registry_tree;source)
+    _get_route_entry(registry_tree;route)
+    flatten_registry_document(document;source)
+    discover_manifest(manifest;source)
+    build_registry_document(route_sources;generated_at;on_conflict)
+    _parse_command(value)
+    discover_docker_labels(labels;source)
+    discover_docker_inspect(inspect_data)
+    _operation_from_method(method)
+    _default_openapi_route(method;path;operation;package;target)
+    discover_openapi(spec;base_url;package;target;source)
+    uri_handler(uri)
+    _iter_module_exports(modules)
+    discover_python_modules(modules)
+    discover_entry_points(group)
+    registry_tree(registry)
+    _resolve_from_index(normalized;registry)
+    _walk_route_tree(tree;route)
+    resolve_route(translation;registry)
+    _walk_route_entries(node)
+    hydrate_registry(registry;refs)
+    exec_local_function(ctx)
+    exec_fetch(ctx)
+    exec_spawn(ctx)
+    exec_shell_template(ctx)
+    exec_mqtt_publish(ctx)
+    dispatch_generated(uri;registry;payload;runtime_cache;executors)
+    load_json(path)
+    write_json(path;value)
+    _emit_json(value;out)
+    _load_sources(paths)
+    _discover_python_module(module_name)
+    main(argv)
+  adapters/python/urirun/runtime/_scan.py:
+    e: slugify,relpath,now_iso,emit_json,infer_kind,normalize_binding,binding_to_route_source,route_source_to_binding,load_bindings_from_manifest,build_binding_document,compile_registry_document,iter_project_files,scan_manifest_files,npm_command_for_script,github_dependency_binding,scan_package_json,_read_toml,scan_pyproject,scan_makefile,scan_shell_script,module_ref_for_python,scan_python_code,scan_js_code,parse_compose_label_line,scan_docker_compose,scan_openapi,_scan_one_file,scan_path,scan_github,load_binding_source,load_binding_sources,load_registry_arg,list_bindings,format_binding_table,main
+    slugify(value;fallback)
+    relpath(path;root)
+    now_iso()
+    emit_json(value;out)
+    infer_kind(binding)
+    normalize_binding(binding;default_source)
+    binding_to_route_source(binding)
+    route_source_to_binding(route_source)
+    load_bindings_from_manifest(data;source)
+    build_binding_document(bindings;generated_at)
+    compile_registry_document(binding_document_or_bindings;generated_at;on_conflict)
+    iter_project_files(root)
+    scan_manifest_files(root)
+    npm_command_for_script(script)
+    github_dependency_binding(name;spec;manager;command;source)
+    scan_package_json(path;root)
+    _read_toml(path)
+    scan_pyproject(path;root)
+    scan_makefile(path;root)
+    scan_shell_script(path;root)
+    module_ref_for_python(path;root;name)
+    scan_python_code(path;root)
+    scan_js_code(path;root)
+    parse_compose_label_line(line)
+    scan_docker_compose(path;root)
+    scan_openapi(path;root;base_url)
+    _scan_one_file(file_path;root;include_shell;openapi_base_url)
+    scan_path(path;include_shell;openapi_base_url)
+    scan_github(repo;include_shell;openapi_base_url)
+    load_binding_source(path;include_shell;openapi_base_url)
+    load_binding_sources(paths;include_shell;openapi_base_url)
+    load_registry_arg(arg;include_shell;openapi_base_url;generated_at;on_conflict)
+    list_bindings(paths;include_shell;openapi_base_url)
+    format_binding_table(bindings)
+    main(argv)
+  adapters/python/urirun/connectors/connector_lint.py:
+    e: _connector_call_target,_connector_assignment,_connector_objects,_route_uri,_decorator_routes,_cli_subcommands,_scan_code_routes,_load_manifest_routes,_route_placements,_compute_drift,_adapter_drift,_route_kind_counts,lint_connector,_format_report,lint_command,_import_first_bindings,_unresolved_handlers,verify_connector,verify_command
+    _connector_call_target(call)
+    _connector_assignment(node)
+    _connector_objects(tree)
+    _route_uri(scheme;target;path)
+    _decorator_routes(tree;objs)
+    _cli_subcommands(py_files)
+    _scan_code_routes(py_files)
+    _load_manifest_routes(manifests)
+    _route_placements(code_routes;manifest_uris;cli_subs)
+    _compute_drift(code_uris;manifest_uris;code_routes;manifest_declares_routes)
+    _adapter_drift(code_routes;manifest)
+    _route_kind_counts(code_routes)
+    lint_connector(pkg_dir)
+    _format_report(rep)
+    lint_command(args)
+    _import_first_bindings(root;add)
+    _unresolved_handlers(doc)
+    verify_connector(pkg_dir)
+    verify_command(args)
+  adapters/python/urirun/connectors/declarative.py:
+    e: load_spec,bindings_from_spec,from_spec_command
+    load_spec(path)
+    bindings_from_spec(spec)
+    from_spec_command(args)
+  adapters/python/urirun/node/routing.py:
+    e: routes_from_registry,registry_fingerprint,safe_route,route_target,binding_for_remote_route,registry_from_routes,target_nodes,route_targets_for_nodes
+    routes_from_registry(registry;source)
+    registry_fingerprint(routes)
+    safe_route(route)
+    route_target(uri)
+    binding_for_remote_route(route)
+    registry_from_routes(routes)
+    target_nodes(prompt;nodes;explicit)
+    route_targets_for_nodes(routes;node_names)
   adapters/python/urirun/host/host_dashboard.py:
     e: _json_response,_html_response,_read_json,_first,_host_db,_mesh,_planfile_adapter,_safe_tickets,_task_counts,summary,task_action,_dashboard_api_response,create_handler,serve,command,default_host
     _json_response(handler;status;payload)
@@ -1294,10 +1294,6 @@ Connector a...
     i: stddef.h
     e: urirun_parse
     urirun_parse()
-  adapters/csharp/Urirun.cs:
-    i: System.Collections.Generic
-    e: Connector
-    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   adapters/python/urirun/runtime/cli.py:
     e: _add_connectors_subparser,_add_node_subparser,_add_host_task_subparser,_add_host_data_subparser,_add_host_monitor_subparser,_add_host_subparser,_build_parser
     _add_connectors_subparser(subparsers)
@@ -1307,6 +1303,10 @@ Connector a...
     _add_host_monitor_subparser(host_sub)
     _add_host_subparser(subparsers)
     _build_parser(prog)
+  adapters/csharp/Urirun.cs:
+    i: System.Collections.Generic
+    e: Connector
+    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   goal.yaml:
   planfile.yaml:
   Makefile:

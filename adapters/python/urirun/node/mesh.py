@@ -1787,12 +1787,26 @@ class NodeHandler(BaseHTTPRequestHandler):
             send_json(self, 403, {"ok": False, "error": "unauthorized (need X-Urirun-Token or a signature from an enrolled key)"})
             return
         try:
-            summary = apply_deploy(c.state, json.loads(raw.decode("utf-8") or "{}"))
+            body = json.loads(raw.decode("utf-8") or "{}")
+            summary = apply_deploy(c.state, body)
         except Exception as exc:  # noqa: BLE001
             send_json(self, 400, {"ok": False, "error": str(exc)})
             return
+        if body.get("persist"):
+            # write the merged surface back to the file this node loads on startup, so the
+            # deployed routes survive a restart instead of vanishing with the process memory.
+            path = getattr(c, "registry_path", None)
+            try:
+                if not path:
+                    raise RuntimeError("node has no registry path to persist to")
+                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+                reglib.write_json(path, c.state["registry"])
+                summary["persisted"] = path
+            except Exception as exc:  # noqa: BLE001 - deploy still succeeded in memory
+                summary["persistError"] = str(exc)
         print(json.dumps({"event": "urirun.node.deployed", "name": c.state["name"],
-                          "routes": summary["routeCount"], "schemes": summary["schemes"]}), flush=True)
+                          "routes": summary["routeCount"], "schemes": summary["schemes"],
+                          "persisted": summary.get("persisted")}), flush=True)
         send_json(self, 200, summary)
 
     def _handle_enroll(self):
@@ -1847,7 +1861,8 @@ class NodeHandler(BaseHTTPRequestHandler):
 def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, public_url: str | None = None,
                allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False,
                admin_token: str | None = None, key_auth: bool = False,
-               require_run_auth: bool = False, manage: bool = False) -> ThreadingHTTPServer:
+               require_run_auth: bool = False, manage: bool = False,
+               registry_path: str | None = None) -> ThreadingHTTPServer:
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
     # /deploy is reachable when a token OR SSH key-auth is configured.
     deploy_enabled = bool(admin_token) or key_auth
@@ -1888,6 +1903,7 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                       deploy_enabled=deploy_enabled, key_auth=key_auth, admin_token=admin_token,
                       allow_secrets=allow_secrets, pool_executors=pool_executors,
                       run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
+                      registry_path=registry_path,
                       manage_registry=manage_registry, manage_policy=manage_policy,
                       runs={})  # run id -> progress.RunControl, for streaming/cancel/status
     server = ThreadingHTTPServer((host, port), NodeHandler)
@@ -1938,8 +1954,11 @@ def _resolve_serve_opts(args: argparse.Namespace, node: dict) -> dict:
 
 def _node_serve(args: argparse.Namespace, node: dict, name: str, registry: dict) -> int:
     opts = _resolve_serve_opts(args, node)
+    # the file this node loaded its registry from — so `host deploy --persist` can write the
+    # merged surface back here and the routes survive a restart (not just live in memory).
+    registry_path = args.registry or node.get("registry") or ".urirun/registry.merged.json"
     server = serve_node(name, registry, opts.pop("host"), opts.pop("port"), opts.pop("execute"),
-                        public_url=args.public_url, **opts)
+                        public_url=args.public_url, registry_path=registry_path, **opts)
     server.serve_forever()
     return 0
 

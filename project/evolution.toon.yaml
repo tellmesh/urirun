@@ -3,12 +3,12 @@
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 2018L, 3 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 40360
+      WHY: 2023L, 3 classes, max CC=20
+      EFFORT: ~4h  IMPACT: 40460
 
   [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
-      WHY: 1973L, 1 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 27622
+      WHY: 1967L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 27538
 
   [3] !  SPLIT-FUNC      NodeHandler._stream_events  CC=19  fan=28
       WHY: CC=19 exceeds 15

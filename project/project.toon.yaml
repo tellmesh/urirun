@@ -1,8 +1,8 @@
-# urirun | 1073 func | 79f | 22920L | python | 2026-06-23
+# urirun | 1073 func | 79f | 22933L | python | 2026-06-23
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.4  critical=124 (limit:10)  dup=2  cycles=0
+  CC̄=4.5  critical=124 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     run_command = 33 (limit:10)
@@ -11,16 +11,16 @@ ALERTS[20]:
   !!! high_fan_out     NodeHandler._stream_events = 28 (limit:10)
   !!! high_fan_out     _add_host_subparser = 27 (limit:10)
   !!! high_fan_out     main = 26 (limit:10)
-  !!! high_fan_out     main = 25 (limit:10)
   !!! high_fan_out     _build_parser = 25 (limit:10)
+  !!! high_fan_out     main = 25 (limit:10)
+  !!! high_fan_out     _add_host_task_subparser = 23 (limit:10)
   !!! high_fan_out     main = 23 (limit:10)
-  !!! high_fan_out     NodeHandler._handle_run = 23 (limit:10)
 
 MODULES[146] (top by size):
-  M[adapters/python/urirun/node/mesh.py] 2018L C:3 F:94 CC↑20 D:1 (python)
-  M[adapters/python/urirun/runtime/v2.py] 1973L C:1 F:124 CC↑14 D:3 (python)
+  M[adapters/python/urirun/node/mesh.py] 2037L C:3 F:94 CC↑20 D:1 (python)
+  M[adapters/python/urirun/runtime/v2.py] 1967L C:1 F:124 CC↑14 D:4 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:2 (python)
+  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/__init__.py] 702L C:1 F:49 CC↑14 D:10 (python)
   M[adapters/python/urirun/runtime/_scan.py] 666L C:0 F:35 CC↑14 D:0 (python)
   M[adapters/python/urirun/runtime/cli.py] 663L C:0 F:7 CC↑1 D:1 (python)
@@ -42,11 +42,11 @@ HOTSPOTS[10]:
   ★ _add_host_subparser fan=27  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
 
 REFACTOR[15]:
-  [1] H/H Split god module adapters/python/urirun/node/mesh.py (2018L, 3 classes)
+  [1] H/H Split god module adapters/python/urirun/node/mesh.py (2037L, 3 classes)
   [2] H/H Split god module adapters/python/urirun/__init__.py (702L, 1 classes)
   [3] H/H Split god module adapters/python/urirun/runtime/_registry.py (718L, 0 classes)
   [4] H/H Split god module adapters/python/urirun/runtime/_scan.py (666L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun/runtime/v2.py (1973L, 1 classes)
+  [5] H/H Split god module adapters/python/urirun/runtime/v2.py (1967L, 1 classes)
 
 EVOLUTION:
-  2026-06-23 CC̄=4.4 crit=124 22920L // Automated analysis
+  2026-06-23 CC̄=4.5 crit=124 22933L // Automated analysis

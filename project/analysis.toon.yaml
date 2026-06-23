@@ -1,6 +1,6 @@
-# code2llm | 146f 22920L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
-# generated in 0.04s
-# CC̅=4.4 | critical:16/1073 | dups:0 | cycles:0
+# code2llm | 146f 22919L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# generated in 0.05s
+# CC̅=4.5 | critical:16/1073 | dups:0 | cycles:0
 
 HEALTH[16]:
   🟡 CC    main CC=18 (limit:15)
@@ -8,6 +8,9 @@ HEALTH[16]:
   🟡 CC    ensure_scheme CC=20 (limit:15)
   🟡 CC    push_folder CC=16 (limit:15)
   🟡 CC    watch CC=16 (limit:15)
+  🟡 CC    normalize_flow CC=15 (limit:15)
+  🟡 CC    resolveParams CC=15 (limit:15)
+  🟡 CC    run CC=19 (limit:15)
   🟡 CC    data_command CC=15 (limit:15)
   🟡 CC    watch_command CC=17 (limit:15)
   🟡 CC    _host_mesh_command CC=18 (limit:15)
@@ -16,14 +19,11 @@ HEALTH[16]:
   🟡 CC    _stream_events CC=19 (limit:15)
   🟡 CC    serve_node CC=15 (limit:15)
   🟡 CC    _resolve_serve_opts CC=17 (limit:15)
-  🟡 CC    normalize_flow CC=15 (limit:15)
-  🟡 CC    resolveParams CC=15 (limit:15)
-  🟡 CC    run CC=19 (limit:15)
 
 REFACTOR[1]:
   1. split 16 high-CC methods  (CC>15)
 
-PIPELINES[372]:
+PIPELINES[373]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -133,9 +133,9 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.5    ←in:9  →out:0
-  │ !! mesh                      2018L  3C   94m  CC=20     ←1
-  │ !! v2                        1973L  1C  124m  CC=14     ←3
-  │ !! _registry                  718L  0C   43m  CC=14     ←2
+  │ !! mesh                      2023L  3C   94m  CC=20     ←1
+  │ !! v2                        1967L  1C  124m  CC=14     ←4
+  │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! __init__                   702L  1C   49m  CC=14     ←10
   │ !! _scan                      666L  0C   35m  CC=14     ←0
   │ !! cli                        663L  0C    7m  CC=1      ←1

@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 79f 18104L | 2026-06-23
+# redup/duplication | 15 groups | 79f 18117L | 2026-06-23
 
 SUMMARY:
   files_scanned: 79
-  total_lines:   18104
+  total_lines:   18117
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       603
+  scan_ms:       634
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.3%)
@@ -27,11 +27,11 @@ DUPLICATES[15] (ranked by impact):
       host/host_db.py:334-344  (recent_checks)
       host/host_db.py:358-368  (recent_logs)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
-      runtime/v2.py:1505-1508  (_cmd_add_openapi)
-      runtime/v2.py:1511-1514  (_cmd_gen)
-      runtime/v2.py:1744-1747  (_cmd_agent)
-      runtime/v2.py:1821-1824  (_cmd_host)
-      runtime/v2.py:1827-1830  (_cmd_node)
+      runtime/v2.py:1498-1501  (_cmd_add_openapi)
+      runtime/v2.py:1504-1507  (_cmd_gen)
+      runtime/v2.py:1737-1740  (_cmd_agent)
+      runtime/v2.py:1814-1817  (_cmd_host)
+      runtime/v2.py:1820-1823  (_cmd_node)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
       host/host_dashboard.py:439-442  (_host_db)
       host/host_dashboard.py:445-448  (_mesh)

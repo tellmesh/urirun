@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.65', 'javascript').
+project_metadata('urirun', '0.4.66', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -13,6 +13,7 @@ project_file('adapters/new-connector.sh', 169, 'shell').
 project_file('adapters/python/tests/test_adopt_pack.py', 103, 'python').
 project_file('adapters/python/tests/test_adopt_tree.py', 39, 'python').
 project_file('adapters/python/tests/test_agent_command.py', 78, 'python').
+project_file('adapters/python/tests/test_cli_parser.py', 54, 'python').
 project_file('adapters/python/tests/test_codegen.py', 164, 'python').
 project_file('adapters/python/tests/test_compat.py', 104, 'python').
 project_file('adapters/python/tests/test_connect_catalog.py', 166, 'python').
@@ -104,6 +105,7 @@ project_file('adapters/python/urirun/runtime/_runtime.py', 541, 'python').
 project_file('adapters/python/urirun/runtime/_scan.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/adopt_pack.py', 246, 'python').
 project_file('adapters/python/urirun/runtime/agent.py', 152, 'python').
+project_file('adapters/python/urirun/runtime/cli.py', 664, 'python').
 project_file('adapters/python/urirun/runtime/codegen.py', 439, 'python').
 project_file('adapters/python/urirun/runtime/compat.py', 200, 'python').
 project_file('adapters/python/urirun/runtime/daemon.py', 117, 'python').
@@ -115,7 +117,7 @@ project_file('adapters/python/urirun/runtime/progress.py', 90, 'python').
 project_file('adapters/python/urirun/runtime/secrets.py', 235, 'python').
 project_file('adapters/python/urirun/runtime/tree.py', 92, 'python').
 project_file('adapters/python/urirun/runtime/v1.py', 472, 'python').
-project_file('adapters/python/urirun/runtime/v2.py', 2599, 'python').
+project_file('adapters/python/urirun/runtime/v2.py', 1968, 'python').
 project_file('adapters/python/urirun/runtime/v2_adopt.py', 194, 'python').
 project_file('adapters/python/urirun/runtime/v2_grpc.py', 205, 'python').
 project_file('adapters/python/urirun/runtime/v2_mcp.py', 210, 'python').
@@ -168,6 +170,11 @@ python_function('adapters/python/tests/test_agent_command.py', 'test_action_spac
 python_function('adapters/python/tests/test_agent_command.py', 'test_run_plan_runs_query_and_gates_command', 0, 3, 2).
 python_function('adapters/python/tests/test_agent_command.py', 'test_run_plan_allows_command_with_permission', 0, 2, 2).
 python_function('adapters/python/tests/test_agent_command.py', 'test_load_planner_resolves_module_function', 0, 2, 1).
+python_function('adapters/python/tests/test_cli_parser.py', 'test_cli_imports_without_cycle_and_builds', 0, 2, 1).
+python_function('adapters/python/tests/test_cli_parser.py', '_commands', 1, 3, 2).
+python_function('adapters/python/tests/test_cli_parser.py', 'test_all_top_level_commands_present', 0, 3, 2).
+python_function('adapters/python/tests/test_cli_parser.py', 'test_representative_subcommands_parse_to_right_dest', 0, 3, 3).
+python_function('adapters/python/tests/test_cli_parser.py', 'test_inherited_and_typed_args_survive_extraction', 0, 3, 2).
 python_function('adapters/python/tests/test_codegen.py', '_registry', 0, 1, 1).
 python_function('adapters/python/tests/test_codegen.py', 'test_proto_has_carrier_and_one_typed_rpc_per_route', 0, 8, 6).
 python_function('adapters/python/tests/test_codegen.py', 'test_to_proto_wrapper_matches_projection', 0, 2, 3).
@@ -878,6 +885,13 @@ python_function('adapters/python/urirun/runtime/agent.py', '_resolve_refs', 2, 1
 python_function('adapters/python/urirun/runtime/agent.py', 'run_plan', 2, 7, 10).
 python_function('adapters/python/urirun/runtime/agent.py', '_load_planner', 1, 2, 4).
 python_function('adapters/python/urirun/runtime/agent.py', 'agent_command', 1, 7, 9).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_connectors_subparser', 1, 1, 4).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_node_subparser', 1, 1, 5).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_host_task_subparser', 1, 1, 4).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_host_data_subparser', 1, 1, 4).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_host_monitor_subparser', 1, 1, 4).
+python_function('adapters/python/urirun/runtime/cli.py', '_add_host_subparser', 1, 1, 7).
+python_function('adapters/python/urirun/runtime/cli.py', '_build_parser', 1, 1, 8).
 python_function('adapters/python/urirun/runtime/codegen.py', '_pascal', 1, 3, 3).
 python_function('adapters/python/urirun/runtime/codegen.py', '_snake', 1, 2, 3).
 python_function('adapters/python/urirun/runtime/codegen.py', '_routes', 1, 7, 4).
@@ -1095,10 +1109,6 @@ python_function('adapters/python/urirun/runtime/v2.py', '_load_json_arg', 1, 2, 
 python_function('adapters/python/urirun/runtime/v2.py', '_load_many', 1, 4, 7).
 python_function('adapters/python/urirun/runtime/v2.py', '_package_version', 0, 3, 5).
 python_function('adapters/python/urirun/runtime/v2.py', '_is_pipx_env', 0, 3, 0).
-python_function('adapters/python/urirun/runtime/v2.py', '_add_connectors_subparser', 1, 1, 4).
-python_function('adapters/python/urirun/runtime/v2.py', '_add_node_subparser', 1, 1, 5).
-python_function('adapters/python/urirun/runtime/v2.py', '_add_host_subparser', 1, 1, 4).
-python_function('adapters/python/urirun/runtime/v2.py', '_build_parser', 1, 1, 8).
 python_function('adapters/python/urirun/runtime/v2.py', '_cmd_scan', 2, 3, 7).
 python_function('adapters/python/urirun/runtime/v2.py', '_cmd_compile', 2, 3, 5).
 python_function('adapters/python/urirun/runtime/v2.py', '_cmd_discover', 2, 2, 4).
