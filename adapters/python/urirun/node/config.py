@@ -134,10 +134,18 @@ def default_node_config(name: str | None = None, registry: str = ".urirun/regist
         "version": CONFIG_VERSION,
         "node": {
             "name": name or socket.gethostname(),
+            # Every urirun endpoint is the same object — a "URI Node" — whether it's a laptop,
+            # a VM or a container. `kind` stays "node"; `runtime.type` (bare|docker|vm|remote)
+            # records HOW it's hosted, so a containerised node is just a node with
+            # runtime.type=docker — not a separate kind. `services` lists long-running apps
+            # ("URI Service") the node manages (e.g. a dashboard), each with a public_url.
+            "kind": "node",
             "registry": registry,
             "host": "0.0.0.0",
             "port": 8765,
             "execute": False,
+            "runtime": {"type": "bare"},
+            "services": [],
         },
     }
 

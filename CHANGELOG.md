@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.70] - 2026-06-23
+
+### Added
+- **URI Node model.** Every urirun endpoint is one object — a *URI Node* — whether laptop, VM
+  or container. Node config gains `kind` (always `node`), `runtime` (`bare`|`docker`|`vm`|`remote`
+  — a containerised node is just `runtime.type: docker`, not a separate kind) and `services`
+  (long-running apps the node manages). `GET /health` now reports `kind`/`runtime`/`serviceCount`;
+  a new `GET /services` lists the managed *URI Services*. Documented in the README *URI Node model*
+  section and `docs/HOST_NODE_COMMUNICATION.md`.
+- **`host deploy --persist`.** The node writes the merged surface back to its startup registry
+  file and persists the allow policy + registry path into the node config — so deployed routes
+  (and their `--allow`) survive a node restart instead of vanishing with process memory. Verified:
+  deploy → kill → restart from config re-serves 36 routes with allow intact and a route executes.
+- **Out-of-band enrollment TOKEN.** A `--key-auth` node prints a 6-char console TOKEN (red, at
+  startup); `uri-copy-id --enroll-token <PIN>` (or a signed enrolled key) is required to enroll,
+  closing the blind trust-on-first-use takeover race — reaching the port is no longer enough.
+
+### Fixed
+- **Self-healing install from a local source now works.** `host run --ensure` / `host supply`
+  could discover but not install an uninstalled local connector. `connector_install` resolves a
+  package-dir source up to its project root (`_project_root`); `_refresh_install_caches` makes a
+  just-installed editable connector importable in the *running* node (replays `site.addsitedir`
+  + drops `importlib.metadata` FastPath caches); `ensure_scheme` tries each candidate source,
+  preferring connectors that declare the scheme. Verified live: a bare node acquired `browser://`
+  from source and ran it (6 → 26 routes, no restart).
+
 ## [0.4.69] - 2026-06-23
 
 ### Security
@@ -117,6 +143,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   expose their schema too. See `examples/28-llm-novnc-desktop` (an LLM drives a noVNC
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
+
+## [0.4.71] - 2026-06-23
+
+### Docs
+- Update CHANGELOG.md
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update docs/HOST_NODE_COMMUNICATION.md
+- Update project/IMPROVEMENTS.md
+- Update project/context.md
+- Update security/mesh-probe/SECURITY-ANALYSIS.md
+- Update v2/README.md
+
+### Other
+- Update adapters/python/urirun/node/config.py
+- Update adapters/python/urirun/node/mesh.py
+- Update project/analysis.toon.yaml
+- Update project/calls.mmd
+- Update project/calls.png
+- Update project/calls.toon.yaml
+- Update project/calls.yaml
+- Update project/duplication.toon.yaml
+- Update project/evolution.toon.yaml
+- Update project/index.html
+- ... and 6 more files
 
 ## [0.4.70] - 2026-06-23
 

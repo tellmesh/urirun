@@ -259,8 +259,8 @@ Language-agnostic URI to handler adapter
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# urirun | 153f 26487L | python:131,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
-# stats: 1057 func | 46 cls | 153 mod | CC̄=4.4 | critical:108 | cycles:0
+# urirun | 153f 26538L | python:131,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-23
+# stats: 1061 func | 46 cls | 153 mod | CC̄=4.4 | critical:107 | cycles:0
 # alerts[5]: CC apply_deploy=20; CC _host_mesh_command=18; CC main=18; CC main=17; CC watch_command=17
 # hotspots[5]: serve fan=28; run_command fan=27; main fan=23; main fan=23; serve_node fan=21
 # evolution: baseline
@@ -309,7 +309,7 @@ M[153]:
   adapters/python/tests/test_planfile_adapter.py,343
   adapters/python/tests/test_public_api.py,175
   adapters/python/tests/test_registry_portable.py,47
-  adapters/python/tests/test_routing.py,55
+  adapters/python/tests/test_routing.py,73
   adapters/python/tests/test_scheduler.py,62
   adapters/python/tests/test_secrets.py,168
   adapters/python/tests/test_tree.py,28
@@ -359,9 +359,9 @@ M[153]:
   adapters/python/urirun/node/flow.py,432
   adapters/python/urirun/node/keyauth.py,174
   adapters/python/urirun/node/manage.py,356
-  adapters/python/urirun/node/mesh.py,2039
+  adapters/python/urirun/node/mesh.py,2053
   adapters/python/urirun/node/paths.py,39
-  adapters/python/urirun/node/routing.py,128
+  adapters/python/urirun/node/routing.py,144
   adapters/python/urirun/node/transport.py,436
   adapters/python/urirun/planfile_adapter.py,6
   adapters/python/urirun/runtime/__init__.py,2
@@ -370,7 +370,7 @@ M[153]:
   adapters/python/urirun/runtime/_scan.py,667
   adapters/python/urirun/runtime/adopt_pack.py,246
   adapters/python/urirun/runtime/agent.py,152
-  adapters/python/urirun/runtime/cli.py,664
+  adapters/python/urirun/runtime/cli.py,667
   adapters/python/urirun/runtime/codegen.py,439
   adapters/python/urirun/runtime/compat.py,200
   adapters/python/urirun/runtime/daemon.py,117
@@ -679,10 +679,12 @@ D:
     test_smoke_requires_portability_by_default()
     test_smoke_portable_allow_opts_in_for_inprocess_connectors()
   adapters/python/tests/test_routing.py:
-    e: test_arbitrary_command_verbs_are_unsafe,test_fixed_and_dsl_commands_stay_safe,test_explicit_safe_false_overrides,test_routes_from_registry_honors_author_declared_unsafe
+    e: test_arbitrary_command_verbs_are_unsafe,test_fixed_and_dsl_commands_stay_safe,test_explicit_safe_false_overrides,test_route_is_safe_single_source_of_truth,test_safe_route_and_route_is_safe_agree,test_routes_from_registry_honors_author_declared_unsafe
     test_arbitrary_command_verbs_are_unsafe()
     test_fixed_and_dsl_commands_stay_safe()
     test_explicit_safe_false_overrides()
+    test_route_is_safe_single_source_of_truth()
+    test_safe_route_and_route_is_safe_agree()
     test_routes_from_registry_honors_author_declared_unsafe()
   adapters/python/tests/test_scheduler.py:
     e: SchedulerTests
@@ -1193,7 +1195,7 @@ D:
     _registry_to_bindings(registry)
     _deploy_registry(body;existing)
     apply_deploy(state;body)
-    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path)
+    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path;config_path)
     _resolve_serve_opts(args;node)
     _node_serve(args;node;name;registry)
     node_list_command(args)
@@ -1205,7 +1207,9 @@ D:
     deploy_dir()
     node_token_path()
   adapters/python/urirun/node/routing.py:
-    e: routes_from_registry,registry_fingerprint,safe_route,route_target,binding_for_remote_route,registry_from_routes,target_nodes,route_targets_for_nodes
+    e: uri_is_denied,route_is_safe,routes_from_registry,registry_fingerprint,safe_route,route_target,binding_for_remote_route,registry_from_routes,target_nodes,route_targets_for_nodes
+    uri_is_denied(uri)
+    route_is_safe(uri;declared)
     routes_from_registry(registry;source)
     registry_fingerprint(routes)
     safe_route(route)
@@ -1763,7 +1767,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.67', 'javascript').
+project_metadata('urirun', '0.4.70', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -1809,7 +1813,7 @@ project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
 project_file('adapters/python/tests/test_public_api.py', 175, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
-project_file('adapters/python/tests/test_routing.py', 55, 'python').
+project_file('adapters/python/tests/test_routing.py', 73, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
@@ -1859,9 +1863,9 @@ project_file('adapters/python/urirun/node/config.py', 186, 'python').
 project_file('adapters/python/urirun/node/flow.py', 432, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
 project_file('adapters/python/urirun/node/manage.py', 356, 'python').
-project_file('adapters/python/urirun/node/mesh.py', 2039, 'python').
+project_file('adapters/python/urirun/node/mesh.py', 2053, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
-project_file('adapters/python/urirun/node/routing.py', 128, 'python').
+project_file('adapters/python/urirun/node/routing.py', 144, 'python').
 project_file('adapters/python/urirun/node/transport.py', 436, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
@@ -1870,7 +1874,7 @@ project_file('adapters/python/urirun/runtime/_runtime.py', 541, 'python').
 project_file('adapters/python/urirun/runtime/_scan.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/adopt_pack.py', 246, 'python').
 project_file('adapters/python/urirun/runtime/agent.py', 152, 'python').
-project_file('adapters/python/urirun/runtime/cli.py', 664, 'python').
+project_file('adapters/python/urirun/runtime/cli.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/codegen.py', 439, 'python').
 project_file('adapters/python/urirun/runtime/compat.py', 200, 'python').
 project_file('adapters/python/urirun/runtime/daemon.py', 117, 'python').
@@ -2082,6 +2086,8 @@ python_function('adapters/python/tests/test_registry_portable.py', 'test_smoke_p
 python_function('adapters/python/tests/test_routing.py', 'test_arbitrary_command_verbs_are_unsafe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_fixed_and_dsl_commands_stay_safe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_explicit_safe_false_overrides', 0, 2, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_route_is_safe_single_source_of_truth', 0, 8, 2).
+python_function('adapters/python/tests/test_routing.py', 'test_safe_route_and_route_is_safe_agree', 0, 3, 4).
 python_function('adapters/python/tests/test_routing.py', 'test_routes_from_registry_honors_author_declared_unsafe', 0, 4, 2).
 python_function('adapters/python/tests/test_secrets.py', 'test_secretstr_is_redacted', 0, 5, 6).
 python_function('adapters/python/tests/test_secrets.py', 'test_resolve_env', 1, 2, 3).
@@ -2498,18 +2504,20 @@ python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_env', 2, 4
 python_function('adapters/python/urirun/node/mesh.py', '_registry_to_bindings', 1, 5, 4).
 python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 2, 8, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'apply_deploy', 2, 20, 19).
-python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 14, 15, 21).
+python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 15, 15, 21).
 python_function('adapters/python/urirun/node/mesh.py', '_resolve_serve_opts', 2, 17, 10).
-python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 5).
+python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 6).
 python_function('adapters/python/urirun/node/mesh.py', 'node_list_command', 1, 7, 7).
 python_function('adapters/python/urirun/node/mesh.py', 'node_stop_command', 1, 14, 9).
 python_function('adapters/python/urirun/node/mesh.py', 'node_command', 1, 13, 13).
 python_function('adapters/python/urirun/node/paths.py', 'node_state_dir', 0, 1, 3).
 python_function('adapters/python/urirun/node/paths.py', 'deploy_dir', 0, 5, 7).
 python_function('adapters/python/urirun/node/paths.py', 'node_token_path', 0, 1, 1).
-python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 10, 5).
+python_function('adapters/python/urirun/node/routing.py', 'uri_is_denied', 1, 2, 1).
+python_function('adapters/python/urirun/node/routing.py', 'route_is_safe', 2, 3, 2).
+python_function('adapters/python/urirun/node/routing.py', 'routes_from_registry', 2, 8, 5).
 python_function('adapters/python/urirun/node/routing.py', 'registry_fingerprint', 1, 2, 6).
-python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 4, 4).
+python_function('adapters/python/urirun/node/routing.py', 'safe_route', 1, 1, 3).
 python_function('adapters/python/urirun/node/routing.py', 'route_target', 1, 1, 1).
 python_function('adapters/python/urirun/node/routing.py', 'binding_for_remote_route', 1, 3, 1).
 python_function('adapters/python/urirun/node/routing.py', 'registry_from_routes', 1, 3, 3).
@@ -3286,7 +3294,7 @@ python_method('NodeHandler', '_handle_run_control', 1, 8, 5).
 python_method('NodeHandler', '_stream_events', 0, 19, 23).
 python_method('NodeHandler', '_admin_ok', 1, 5, 4).
 python_method('NodeHandler', '_run_ok', 1, 5, 4).
-python_method('NodeHandler', '_handle_deploy', 0, 8, 16).
+python_method('NodeHandler', '_handle_deploy', 0, 11, 20).
 python_method('NodeHandler', '_handle_enroll', 0, 11, 14).
 python_method('NodeHandler', 'log_message', 1, 1, 0).
 python_class('adapters/python/urirun/runtime/_runtime.py', 'PolicyError').
@@ -3409,7 +3417,7 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 
 ## Call Graph
 
-*385 nodes · 500 edges · 32 modules · CC̄=4.5*
+*385 nodes · 500 edges · 32 modules · CC̄=4.4*
 
 ### Hubs (by degree)
 
@@ -3420,15 +3428,15 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 | `_write_planfile_action` *(in adapters.python.urirun.host.host_integrations)* | 8 | 1 | 39 | **40** |
 | `info` *(in adapters.python.urirun.runtime.errors)* | 13 ⚠ | 2 | 27 | **29** |
 | `main` *(in scripts.repin_connectors)* | 18 ⚠ | 0 | 28 | **28** |
-| `main` *(in scripts.lint_connectors)* | 14 ⚠ | 0 | 27 | **27** |
 | `_cmd_upgrade` *(in adapters.python.urirun.runtime.v2)* | 14 ⚠ | 0 | 27 | **27** |
+| `proto_from_registry` *(in adapters.python.urirun.runtime.codegen)* | 13 ⚠ | 2 | 25 | **27** |
 | `_run_query_route` *(in adapters.python.urirun.host.host_db)* | 7 | 1 | 26 | **27** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.18s
+# generated in 0.21s
 # nodes: 385 | edges: 500 | modules: 32
-# CC̄=4.5
+# CC̄=4.4
 
 HUBS[20]:
   adapters.python.urirun.runtime.cli._build_parser
@@ -3441,36 +3449,36 @@ HUBS[20]:
     CC=13  in:2  out:27  total:29
   scripts.repin_connectors.main
     CC=18  in:0  out:28  total:28
-  scripts.lint_connectors.main
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.v2._cmd_upgrade
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
+  scripts.lint_connectors.main
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard._dashboard_api_response
     CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.host_db.init_db
-    CC=2  in:14  out:6  total:20
+  adapters.python.urirun.host.domain_monitor._route_flow
+    CC=4  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]

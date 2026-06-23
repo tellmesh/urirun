@@ -1,9 +1,9 @@
-# urirun | 145f 22970L | yaml:4,txt:3,shell:10,python:87,yml:2,json:12,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
+# urirun | 145f 22996L | yaml:4,txt:3,shell:10,python:87,yml:2,json:12,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-23
 # generated in 0.02s
-# stats: 1075 func | 0 cls | 145 mod | CC̄=4.4 | critical:16 | cycles:0
+# stats: 1075 func | 0 cls | 145 mod | CC̄=4.5 | critical:17 | cycles:0
 # alerts[5]: fan-out run_command=33; fan-out serve=30; fan-out main=29; fan-out NodeHandler._stream_events=28; fan-out _add_host_subparser=27
 # hotspots[5]: run_command fan=33; serve fan=30; main fan=29; NodeHandler._stream_events fan=28; _add_host_subparser fan=27
-# evolution: CC̄ 4.4→4.4 (flat 0.0)
+# evolution: CC̄ 4.4→4.5 (regressed +0.1)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[145]:
   Makefile,90
@@ -72,11 +72,11 @@ M[145]:
   adapters/python/urirun/node/_util.py,30
   adapters/python/urirun/node/_version.py,74
   adapters/python/urirun/node/client.py,318
-  adapters/python/urirun/node/config.py,185
+  adapters/python/urirun/node/config.py,193
   adapters/python/urirun/node/flow.py,431
   adapters/python/urirun/node/keyauth.py,173
   adapters/python/urirun/node/manage.py,355
-  adapters/python/urirun/node/mesh.py,2052
+  adapters/python/urirun/node/mesh.py,2070
   adapters/python/urirun/node/paths.py,38
   adapters/python/urirun/node/routing.py,143
   adapters/python/urirun/node/transport.py,435
@@ -220,7 +220,7 @@ D:
     _registry_to_bindings(registry)
     _deploy_registry(body;existing)
     apply_deploy(state;body)
-    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path;config_path)
+    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path;config_path;kind;runtime;services)
     _resolve_serve_opts(args;node)
     _node_serve(args;node;name;registry)
     node_list_command(args)
@@ -1057,6 +1057,13 @@ Connector a...
     _handle_mcp_request(request;registry;index;public_tools;respond;mode;policy)
     serve_mcp(registry;policy;mode;instream;outstream)
     main(argv)
+  adapters/python/urirun/node/_artifacts.py:
+    e: _artifact_extension,_decode_base64_artifact,_write_artifact,materialize_base64_artifacts,compact_result_artifacts
+    _artifact_extension(raw;mime)
+    _decode_base64_artifact(value)
+    _write_artifact(raw)
+    materialize_base64_artifacts(data)
+    compact_result_artifacts(result;args)
   adapters/python/urirun/node/config.py:
     e: host_config_path,node_config_path,default_host_config,load_host_config,save_host_config,init_host,add_node,_coerce_node_url,_node_name_from_url,config_with_transient_node_urls,host_config_for_args,default_node_config,load_node_config,save_node_config,init_node,node_url
     host_config_path(path)
@@ -1075,13 +1082,6 @@ Connector a...
     save_node_config(config;path)
     init_node(path;name;registry;host;port;execute)
     node_url(config;name_or_url)
-  adapters/python/urirun/node/_artifacts.py:
-    e: _artifact_extension,_decode_base64_artifact,_write_artifact,materialize_base64_artifacts,compact_result_artifacts
-    _artifact_extension(raw;mime)
-    _decode_base64_artifact(value)
-    _write_artifact(raw)
-    materialize_base64_artifacts(data)
-    compact_result_artifacts(result;args)
   adapters/js/index.js:
     e: parseUri,match,path,segments,buildInvocation,functionName,dispatch,descriptor,invocation,mod,fn
     parseUri()
@@ -1296,10 +1296,6 @@ Connector a...
     i: stddef.h
     e: urirun_parse
     urirun_parse()
-  adapters/csharp/Urirun.cs:
-    i: System.Collections.Generic
-    e: Connector
-    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   adapters/python/urirun/runtime/cli.py:
     e: _add_connectors_subparser,_add_node_subparser,_add_host_task_subparser,_add_host_data_subparser,_add_host_monitor_subparser,_add_host_subparser,_build_parser
     _add_connectors_subparser(subparsers)
@@ -1309,6 +1305,10 @@ Connector a...
     _add_host_monitor_subparser(host_sub)
     _add_host_subparser(subparsers)
     _build_parser(prog)
+  adapters/csharp/Urirun.cs:
+    i: System.Collections.Generic
+    e: Connector
+    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   goal.yaml:
   planfile.yaml:
   Makefile:

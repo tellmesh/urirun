@@ -1444,6 +1444,11 @@ class NodeHandler(BaseHTTPRequestHandler):
         if self.path == "/health":
             send_json(self, 200, {"ok": True, "name": c.state["name"], "execute": c.execute,
                                   "version": current_version(),
+                                  # URI Node model: kind is always "node"; runtime says how it's
+                                  # hosted (bare/docker/vm/remote); services = managed long-runners.
+                                  "kind": getattr(c, "kind", "node"),
+                                  "runtime": getattr(c, "runtime", {"type": "bare"}),
+                                  "serviceCount": len(getattr(c, "services", []) or []),
                                   "routeCount": len(c.state["routes"]),
                                   "registryEtag": registry_fingerprint(c.state["routes"]),
                                   "registryGeneration": c.state.get("generation", 1),
@@ -1452,6 +1457,13 @@ class NodeHandler(BaseHTTPRequestHandler):
                                              "requireRunAuth": bool(c.run_auth_enforced),
                                              "allowSecrets": bool(c.allow_secrets)},
                                   "keyAuth": c.key_auth, "keyCount": len(keyauth.load_authorized()) if c.key_auth else 0})
+            return
+        if self.path == "/services":
+            # the long-running apps ("URI Service") this node manages — each with a public_url
+            # and declared lifecycle. Surfaced so a host treats a panel/worker node uniformly.
+            send_json(self, 200, {"ok": True, "name": c.state["name"],
+                                  "kind": getattr(c, "kind", "node"), "runtime": getattr(c, "runtime", {"type": "bare"}),
+                                  "services": list(getattr(c, "services", []) or [])})
             return
         if self.path == "/events" or self.path.startswith("/events?"):
             self._stream_events()
@@ -1876,7 +1888,8 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False,
                admin_token: str | None = None, key_auth: bool = False,
                require_run_auth: bool = False, manage: bool = False,
-               registry_path: str | None = None, config_path: str | None = None) -> ThreadingHTTPServer:
+               registry_path: str | None = None, config_path: str | None = None,
+               kind: str = "node", runtime: dict | None = None, services: list | None = None) -> ThreadingHTTPServer:
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
     # /deploy is reachable when a token OR SSH key-auth is configured.
     deploy_enabled = bool(admin_token) or key_auth
@@ -1918,6 +1931,7 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
                       allow_secrets=allow_secrets, pool_executors=pool_executors,
                       run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
                       registry_path=registry_path, config_path=config_path,
+                      kind=kind, runtime=runtime or {"type": "bare"}, services=list(services or []),
                       manage_registry=manage_registry, manage_policy=manage_policy,
                       runs={})  # run id -> progress.RunControl, for streaming/cancel/status
     server = ThreadingHTTPServer((host, port), NodeHandler)
@@ -1963,6 +1977,10 @@ def _resolve_serve_opts(args: argparse.Namespace, node: dict) -> dict:
         "pool": bool(getattr(args, "pool", False) or node.get("pool")),
         "admin_token": admin_token, "key_auth": key_auth, "manage": manage,
         "require_run_auth": bool(getattr(args, "require_run_auth", False) or node.get("requireRunAuth")),
+        # URI Node model: how this node is hosted + the long-running services it manages.
+        "kind": node.get("kind") or "node",
+        "runtime": node.get("runtime") or {"type": "bare"},
+        "services": list(node.get("services") or []),
     }
 
 

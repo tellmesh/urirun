@@ -165,7 +165,7 @@ environment[name="local"] {
 
 ## Call Graph
 
-*385 nodes · 500 edges · 32 modules · CC̄=4.5*
+*385 nodes · 500 edges · 32 modules · CC̄=4.4*
 
 ### Hubs (by degree)
 
@@ -176,15 +176,15 @@ environment[name="local"] {
 | `_write_planfile_action` *(in adapters.python.urirun.host.host_integrations)* | 8 | 1 | 39 | **40** |
 | `info` *(in adapters.python.urirun.runtime.errors)* | 13 ⚠ | 2 | 27 | **29** |
 | `main` *(in scripts.repin_connectors)* | 18 ⚠ | 0 | 28 | **28** |
-| `main` *(in scripts.lint_connectors)* | 14 ⚠ | 0 | 27 | **27** |
 | `_cmd_upgrade` *(in adapters.python.urirun.runtime.v2)* | 14 ⚠ | 0 | 27 | **27** |
+| `proto_from_registry` *(in adapters.python.urirun.runtime.codegen)* | 13 ⚠ | 2 | 25 | **27** |
 | `_run_query_route` *(in adapters.python.urirun.host.host_db)* | 7 | 1 | 26 | **27** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.18s
+# generated in 0.21s
 # nodes: 385 | edges: 500 | modules: 32
-# CC̄=4.5
+# CC̄=4.4
 
 HUBS[20]:
   adapters.python.urirun.runtime.cli._build_parser
@@ -197,36 +197,36 @@ HUBS[20]:
     CC=13  in:2  out:27  total:29
   scripts.repin_connectors.main
     CC=18  in:0  out:28  total:28
-  scripts.lint_connectors.main
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.v2._cmd_upgrade
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
+  scripts.lint_connectors.main
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard._dashboard_api_response
     CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.host_db.init_db
-    CC=2  in:14  out:6  total:20
+  adapters.python.urirun.host.domain_monitor._route_flow
+    CC=4  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]
@@ -501,9 +501,9 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.18s
+# generated in 0.21s
 # nodes: 385 | edges: 500 | modules: 32
-# CC̄=4.5
+# CC̄=4.4
 
 HUBS[20]:
   adapters.python.urirun.runtime.cli._build_parser
@@ -516,36 +516,36 @@ HUBS[20]:
     CC=13  in:2  out:27  total:29
   scripts.repin_connectors.main
     CC=18  in:0  out:28  total:28
-  scripts.lint_connectors.main
-    CC=14  in:0  out:27  total:27
   adapters.python.urirun.runtime.v2._cmd_upgrade
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
+  scripts.lint_connectors.main
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun.host.host_dashboard._dashboard_api_response
     CC=13  in:1  out:25  total:26
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:1  out:25  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=10  in:3  out:20  total:23
   adapters.python.urirun.runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
-  adapters.python.urirun.host.host_db.init_db
-    CC=2  in:14  out:6  total:20
+  adapters.python.urirun.host.domain_monitor._route_flow
+    CC=4  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [3 funcs]
@@ -807,9 +807,9 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 146f 22919L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# code2llm | 146f 22970L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
 # generated in 0.05s
-# CC̅=4.5 | critical:16/1073 | dups:0 | cycles:0
+# CC̅=4.4 | critical:16/1075 | dups:0 | cycles:0
 
 HEALTH[16]:
   🟡 CC    main CC=18 (limit:15)
@@ -942,12 +942,12 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.5    ←in:9  →out:0
-  │ !! mesh                      2023L  3C   94m  CC=20     ←1
+  │ !! mesh                      2052L  3C   94m  CC=20     ←1
   │ !! v2                        1967L  1C  124m  CC=14     ←4
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! __init__                   702L  1C   49m  CC=14     ←10
   │ !! _scan                      666L  0C   35m  CC=14     ←0
-  │ !! cli                        663L  0C    7m  CC=1      ←1
+  │ !! cli                        666L  0C    7m  CC=1      ←1
   │ !! host_dashboard             609L  0C   16m  CC=13     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! _runtime                   540L  1C   27m  CC=13     ←2
@@ -955,7 +955,7 @@ LAYERS:
   │ domain_monitor             485L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←0
   │ codegen                    438L  0C   19m  CC=14     ←0
-  │ transport                  432L  0C   20m  CC=13     ←2
+  │ transport                  435L  0C   20m  CC=14     ←2
   │ !! flow                       431L  0C   21m  CC=15     ←1
   │ connector_scaffold         412L  0C   11m  CC=3      ←0
   │ connector_lint             390L  0C   19m  CC=14     ←1
@@ -981,8 +981,8 @@ LAYERS:
   │ discovery                  158L  0C    8m  CC=7      ←0
   │ agent                      151L  0C    6m  CC=10     ←0
   │ !! conformance                148L  0C    3m  CC=17     ←0
+  │ routing                    143L  0C   10m  CC=14     ←3
   │ scheduler                  133L  0C    6m  CC=4      ←0
-  │ routing                    127L  0C    8m  CC=14     ←3
   │ daemon                     116L  0C    3m  CC=14     ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ v2_service                 111L  0C    3m  CC=9      ←1
@@ -1015,9 +1015,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -1120,15 +1120,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 15 groups | 79f 18117L | 2026-06-23
+# redup/duplication | 15 groups | 79f 18154L | 2026-06-23
 
 SUMMARY:
   files_scanned: 79
-  total_lines:   18117
+  total_lines:   18154
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       634
+  scan_ms:       706
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.3%)
@@ -1290,13 +1290,13 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 1060 func | 74f | 2026-06-23
+# code2llm/evolution | 1062 func | 74f | 2026-06-23
 # generated in 0.00s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 2023L, 3 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 40460
+      WHY: 2052L, 3 classes, max CC=20
+      EFFORT: ~4h  IMPACT: 41040
 
   [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
       WHY: 1967L, 1 classes, max CC=14

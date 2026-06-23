@@ -3,11 +3,11 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.70-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$7.92-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-54.2h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.71-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.34-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-55.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $7.9153 (184 commits)
-- 👤 **Human dev:** ~$5424 (54.2h @ $100/h, 30min dedup)
+- 🤖 **LLM usage:** $8.3389 (185 commits)
+- 👤 **Human dev:** ~$5502 (55.0h @ $100/h, 30min dedup)
 
 Generated on 2026-06-23 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
 
@@ -218,6 +218,53 @@ For the legacy full host task planner with optional LiteLLM support:
 pip install "urirun[host] @ git+https://github.com/if-uri/urirun.git@v0.3.14#subdirectory=adapters/python"
 ```
 
+## URI Node model
+
+Every addressable urirun endpoint is the same object — a **URI Node** — whether it is a
+physical laptop, a VM, a local dashboard, or a container. A URI Node always exposes the same
+surface (`/health`, `/routes`, `/run`, `/events`, `/deploy`, `/services`, `/enroll`), its own
+policy/tokens/keys/logs, and accepts work over `/run`. So the host manages Lenovo, a Docker
+container, and an OCR worker *identically* — `host probe|run|deploy|watch` don't care which.
+
+A few words make the model precise (only **Node** and **Service** are managed *objects*; the
+rest are descriptive vocabulary):
+
+| Term | Meaning |
+|------|---------|
+| **URI Node** | Any manageable urirun endpoint. The one object type for laptop / VM / container. |
+| **URI Service** | A long-running app a node manages (a dashboard, a worker) — own `public_url` + lifecycle. |
+| **URI Surface** | The set of URIs a node publishes (`/routes`). |
+| **URI Runtime** | The handler-execution mechanism (the adapter, e.g. `local-function-subprocess`). |
+| **URI Transport** | How you talk to it (HTTP / SSE / MQTT / local). |
+
+A **containerised node is not a different kind** — it is a URI Node with `runtime.type:
+docker`. Keep one mental model; `runtime` records *how* it is hosted, `services` lists the
+long-runners it manages:
+
+```yaml
+# .urirun/node.json  (a node that also happens to be a container = a "capsule")
+node:
+  name: invoice-dashboard
+  kind: node                       # always "node"
+  runtime: { type: docker, image: ifuri/invoice-dashboard:latest }   # bare | docker | vm | remote
+  host: 0.0.0.0
+  port: 8765
+  registry: .urirun/registry.merged.json
+  services:                        # URI Services this node manages
+    - id: invoice-panel
+      public_url: http://172.20.0.12:8100
+      lifecycle: [start, stop, status]
+```
+
+`/health` reports `kind` + `runtime` + `serviceCount`; `/services` lists the services. The host
+treats every node uniformly:
+
+```bash
+urirun host probe invoice-dashboard          # snapshot the surface (works for laptop or capsule)
+urirun host run   invoice-dashboard panel://invoice-dashboard/php/query/status
+urirun host deploy invoice-dashboard --bindings b.json --merge --persist
+```
+
 ## Host / Node Mesh
 
 `urirun host` is the control side. It keeps a list of nodes, discovers their
@@ -227,8 +274,8 @@ into a URI flow.
 The host-node protocol and operator rules are documented in
 [docs/HOST_NODE_COMMUNICATION.md](docs/HOST_NODE_COMMUNICATION.md). In short:
 the node HTTP surface is
-`/health`, `/routes`, `/mcp/tools`, `/a2a/card`, `/run`, `/events`, `/deploy`
-and `/enroll`; URI routes are the source of truth, while MCP/A2A are projections.
+`/health`, `/routes`, `/mcp/tools`, `/a2a/card`, `/run`, `/events`, `/deploy`,
+`/services` and `/enroll`; URI routes are the source of truth, while MCP/A2A are projections.
 Use dry-run first, then execute explicitly.
 
 ```bash

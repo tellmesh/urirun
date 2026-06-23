@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 79f 18154L | 2026-06-23
+# redup/duplication | 15 groups | 79f 18180L | 2026-06-23
 
 SUMMARY:
   files_scanned: 79
-  total_lines:   18154
+  total_lines:   18180
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       706
+  scan_ms:       605
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.3%)
@@ -66,7 +66,7 @@ DUPLICATES[15] (ranked by impact):
       host/planfile_adapter.py:266-268  (ready_ticket)
   [d0098f298e2a6380]   STRU  save_host_config  L=3 N=2 saved=3 sim=1.00
       node/config.py:64-66  (save_host_config)
-      node/config.py:155-157  (save_node_config)
+      node/config.py:163-165  (save_node_config)
   [79640e1194086855]   STRU  planfile_task_bindings  L=3 N=2 saved=3 sim=1.00
       runtime/v2.py:627-629  (planfile_task_bindings)
       runtime/v2.py:636-638  (host_data_bindings)

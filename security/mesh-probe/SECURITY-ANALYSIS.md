@@ -19,10 +19,10 @@ hardening gaps* in the code (replay nonce, body cap, constant-time compare).
 
 | Endpoint | Method | Auth required | Risk if exposed |
 |---|---|---|---|
-| `/health` `/routes` `/uri-processes` `/mcp/tools` `/a2a/card` | GET | none | capability disclosure |
+| `/health` `/routes` `/services` `/uri-processes` `/mcp/tools` `/a2a/card` | GET | none | capability disclosure |
 | `/errors` `/errors/*` | GET | none | error store: paths, payloads, codes |
 | `/run` | POST | **none** — only the `--allow` glob | runs any allowed route, incl. commands |
-| `/authorized-keys` (enroll) | POST | none on a *fresh* node (TOFU); signed after | node takeover race |
+| `/authorized-keys` (enroll) | POST | console **TOKEN** (red, printed at startup) or a signed key | gated; closes the blind-TOFU takeover race |
 | `/deploy` | POST | token **or** signed key | remote code execution (by design, for admins) |
 
 ## Findings (all confirmed in Docker)
@@ -32,7 +32,7 @@ hardening gaps* in the code (replay nonce, body cap, constant-time compare).
 | 1 | HIGH | **Unauthenticated command execution via `/run`** | `/run` has no credential; the only gate is `--allow`. A broad `--allow 'scheme://*'` includes `…/command/…` routes → any LAN host executes them. | Scope `--allow` to query routes / explicit safe URIs (e.g. `--allow 'demo://*/query/*'`); never expose command/`exec`/shell routes on an open node. |
 | 2 | HIGH | **Plaintext transport** | No TLS. `--admin-token` rides in a sniffable `X-Urirun-Token` header; signed headers and payloads are readable and **replayable** by a MITM. | Front the node with TLS (reverse proxy) or run it inside WireGuard/Tailscale; never send a token over open Wi-Fi. |
 | 3 | HIGH | **Signed-request replay** | `keyauth.verify` only checks a ±300s timestamp window (`MAX_SKEW`); there is **no nonce / once-only cache**. A captured signed `/deploy` (or `/enroll`) replays for 5 min. | Add a per-request nonce + a short-lived seen-nonce cache; bind the signature to the node id/URL; shrink the window. |
-| 4 | HIGH | **Trust-on-first-use enrollment race** | The first key on an empty `authorized_keys` is accepted with no credential (claim-a-fresh-node). On a shared LAN, whoever reaches the node first becomes admin. | Enroll immediately at provision time; or pre-seed `~/.urirun-node/authorized_keys`; bind a fresh node to `127.0.0.1` until claimed. |
+| 4 | ~~HIGH~~ **MITIGATED** | **Trust-on-first-use enrollment race** | Previously the first key on an empty `authorized_keys` was accepted with no credential, so on a shared LAN whoever reached the node first became admin. **Now closed:** when key-auth is on the node prints a 6-char console **TOKEN** (red, at startup) and enrollment requires it (or a signed enrolled key) — reaching the port is no longer enough; you must also see the console. | Enrollment is gated by the console TOKEN. Still: pre-seed `~/.urirun-node/authorized_keys` or bind to `127.0.0.1` for fully headless provisioning. |
 | 5 | MED | **Unbounded request body** | `read_raw` does `rfile.read(int(Content-Length))` with no cap → an attacker streams a huge body into memory. | Cap Content-Length (e.g. 1–4 MB) and reject oversized requests with 413. |
 | 6 | MED | **Unauthenticated capability/error disclosure** | `/routes`, `/errors` are open GETs. `/errors` can leak file paths, payload fragments and error codes. | Gate `/errors` (and optionally `/routes`) behind admin auth, or strip sensitive fields. |
 | 7 | MED | **Non-constant-time token compare** | `self.headers.get('X-Urirun-Token') == admin_token` is a plain `==` → timing side channel on the token. | Use `hmac.compare_digest`. |
@@ -77,7 +77,8 @@ it exits non-zero only if a `fixed`/`defended` vector reopens (replay, body cap,
 findings are reported but don't fail CI.
 
 Still open (operational, not code): **#1** scope `--allow` to query routes (verified to
-deny the command route), **#2** TLS/overlay, **#4** enroll-on-provision to win the TOFU race.
+deny the command route), **#2** TLS/overlay. **#4** is now mitigated in code — enrollment
+requires the node's console TOKEN (or a signed enrolled key), closing the blind-TOFU race.
 
 ## Priority hardening
 

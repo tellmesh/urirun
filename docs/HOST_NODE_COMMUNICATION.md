@@ -35,17 +35,23 @@ A node exposes a small protocol surface:
 
 | Endpoint | Direction | Purpose |
 | --- | --- | --- |
-| `GET /health` | host -> node | Runtime name, version, route count, policy, key-auth state. |
+| `GET /health` | host -> node | Runtime name, version, `kind`, `runtime`, `serviceCount`, route count, policy, key-auth state. |
 | `GET /routes` | host -> node | Live URI routes with kind, schema, source, node URL and safety metadata. |
+| `GET /services` | host -> node | The long-running apps (URI Services) this node manages: id, public_url, lifecycle. |
 | `GET /mcp/tools` | host -> node | MCP projection of the same registry. |
 | `GET /a2a/card` | host -> node | A2A card projection of the same registry. |
 | `POST /run` | host -> node | Dry-run or execute one URI route. |
 | `GET /events` | node -> host stream | SSE stream for run/progress/result/error events. |
-| `POST /deploy` | host -> node | Admin-gated hot deploy of bindings, handler code, env and allow policy. |
+| `POST /deploy` | host -> node | Admin-gated hot deploy of bindings, handler code, env and allow policy (`--persist` survives restart). |
 | `POST /enroll` | host -> node | First-key enrollment via console token and later key management. |
 
 The URI registry remains the source of truth. MCP and A2A are projections; they
 must not add behavior that is unavailable through URI routes.
+
+Every endpoint above is the same regardless of how the node is hosted — laptop, VM, or
+container. A node is a **URI Node**; a containerised one is just a URI Node with
+`runtime.type: docker` (a "capsule"), not a separate kind. `/health.runtime` records the
+hosting; `/services` lists the long-running **URI Services** (dashboards/workers) it manages.
 
 ## Dispatch lifecycle
 

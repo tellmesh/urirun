@@ -1,8 +1,8 @@
-# code2llm | 146f 22970L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
+# code2llm | 146f 22996L | python:87,json:12,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-23
 # generated in 0.05s
-# CC̅=4.4 | critical:16/1075 | dups:0 | cycles:0
+# CC̅=4.5 | critical:17/1075 | dups:0 | cycles:0
 
-HEALTH[16]:
+HEALTH[17]:
   🟡 CC    main CC=18 (limit:15)
   🟡 CC    main CC=17 (limit:15)
   🟡 CC    ensure_scheme CC=20 (limit:15)
@@ -16,12 +16,13 @@ HEALTH[16]:
   🟡 CC    _host_mesh_command CC=18 (limit:15)
   🟡 CC    deploy_command CC=15 (limit:15)
   🟡 CC    apply_deploy CC=20 (limit:15)
+  🟡 CC    _get CC=16 (limit:15)
   🟡 CC    _stream_events CC=19 (limit:15)
-  🟡 CC    serve_node CC=15 (limit:15)
-  🟡 CC    _resolve_serve_opts CC=17 (limit:15)
+  🟡 CC    serve_node CC=17 (limit:15)
+  🟡 CC    _resolve_serve_opts CC=20 (limit:15)
 
 REFACTOR[1]:
-  1. split 16 high-CC methods  (CC>15)
+  1. split 17 high-CC methods  (CC>15)
 
 PIPELINES[373]:
   [1] Src [http]: http
@@ -133,12 +134,12 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.5    ←in:9  →out:0
-  │ !! mesh                      2052L  3C   94m  CC=20     ←1
+  │ !! mesh                      2070L  3C   94m  CC=20     ←1
   │ !! v2                        1967L  1C  124m  CC=14     ←4
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! __init__                   702L  1C   49m  CC=14     ←10
-  │ !! _scan                      666L  0C   35m  CC=14     ←0
   │ !! cli                        666L  0C    7m  CC=1      ←1
+  │ !! _scan                      666L  0C   35m  CC=14     ←0
   │ !! host_dashboard             609L  0C   16m  CC=13     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! _runtime                   540L  1C   27m  CC=13     ←2
@@ -163,8 +164,8 @@ LAYERS:
   │ v2_grpc                    204L  0C   11m  CC=9      ←0
   │ compat                     199L  0C    6m  CC=10     ←0
   │ v2_adopt                   193L  0C    8m  CC=7      ←0
+  │ config                     193L  0C   16m  CC=9      ←1
   │ testing                    189L  0C    9m  CC=9      ←0
-  │ config                     185L  0C   16m  CC=9      ←1
   │ dispatch_protocol          183L  0C    8m  CC=10     ←0
   │ keyauth                    173L  0C   15m  CC=6      ←0
   │ new-connector.sh           168L  0C    1m  CC=0.0    ←0

@@ -204,11 +204,17 @@ urirun node serve --execute
 
 The node exposes:
 
-- `GET /health`
+- `GET /health`  (also reports `kind` + `runtime` + `serviceCount`)
 - `GET /routes`
+- `GET /services`  (long-running apps the node manages — a URI Service)
 - `GET /mcp/tools`
 - `GET /a2a/card`
 - `POST /run`
+- `POST /deploy`  (admin-gated; `--persist` survives a restart)
+
+Every urirun endpoint is the same object — a **URI Node** — be it a laptop, a VM, or a
+container. A containerised node is just a node with `runtime.type: docker` (a "capsule"),
+not a separate kind. See the README's *URI Node model* section.
 
 On a host, register nodes and ask for work in natural language:
 

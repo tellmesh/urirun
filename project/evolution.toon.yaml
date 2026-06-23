@@ -3,8 +3,8 @@
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 2052L, 3 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 41040
+      WHY: 2070L, 3 classes, max CC=20
+      EFFORT: ~4h  IMPACT: 41400
 
   [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
       WHY: 1967L, 1 classes, max CC=14
@@ -22,25 +22,25 @@ NEXT[10] (ranked by impact):
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 420
 
-  [6] !  SPLIT-FUNC      watch_command  CC=17  fan=19
+  [6] !  SPLIT-FUNC      serve_node  CC=17  fan=21
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 357
+
+  [7] !  SPLIT-FUNC      watch_command  CC=17  fan=19
       WHY: CC=17 exceeds 15
       EFFORT: ~1h  IMPACT: 323
 
-  [7] !  SPLIT-FUNC      NodeClient.ensure_scheme  CC=20  fan=16
+  [8] !  SPLIT-FUNC      NodeClient.ensure_scheme  CC=20  fan=16
       WHY: CC=20 exceeds 15
       EFFORT: ~1h  IMPACT: 320
-
-  [8] !  SPLIT-FUNC      serve_node  CC=15  fan=21
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 315
 
   [9] !  SPLIT-FUNC      _host_mesh_command  CC=18  fan=16
       WHY: CC=18 exceeds 15
       EFFORT: ~1h  IMPACT: 288
 
-  [10] !  SPLIT-FUNC      NodeClient.push_folder  CC=16  fan=16
+  [10] !  SPLIT-FUNC      NodeHandler._get  CC=16  fan=18
       WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 256
+      EFFORT: ~1h  IMPACT: 288
 
 
 RISKS[3]:
@@ -52,7 +52,7 @@ METRICS-TARGET:
   CC̄:          4.4 → ≤3.1
   max-CC:      20 → ≤10
   god-modules: 11 → 0
-  high-CC(≥15): 15 → ≤7
+  high-CC(≥15): 16 → ≤8
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

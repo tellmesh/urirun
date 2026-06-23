@@ -20,9 +20,10 @@ now live in `adapters/python/urirun/node/flow.py`; the next refactors should
 continue splitting responsibility boundaries without changing the URI protocol.
 
 See also [docs/HOST_NODE_COMMUNICATION.md](../docs/HOST_NODE_COMMUNICATION.md),
-which is now the operator-level contract for `/health`, `/routes`, `/run`,
+which is now the operator-level contract for `/health`, `/routes`, `/services`, `/run`,
 `/events`, `/deploy`, `/enroll`, key enrollment, route policy, screen/KVM/CDP/OCR
-capability selection and safe autonomous loops.
+capability selection and safe autonomous loops. Every endpoint is identical regardless of
+hosting — a URI Node is a URI Node whether laptop, VM, or container (`runtime.type: docker`).
 
 ## Current recommended work
 

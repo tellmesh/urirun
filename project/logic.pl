@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.67', 'javascript').
+project_metadata('urirun', '0.4.70', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -45,7 +45,7 @@ project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 343, 'python').
 project_file('adapters/python/tests/test_public_api.py', 175, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
-project_file('adapters/python/tests/test_routing.py', 55, 'python').
+project_file('adapters/python/tests/test_routing.py', 73, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
@@ -95,9 +95,9 @@ project_file('adapters/python/urirun/node/config.py', 186, 'python').
 project_file('adapters/python/urirun/node/flow.py', 432, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
 project_file('adapters/python/urirun/node/manage.py', 356, 'python').
-project_file('adapters/python/urirun/node/mesh.py', 2039, 'python').
+project_file('adapters/python/urirun/node/mesh.py', 2053, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
-project_file('adapters/python/urirun/node/routing.py', 145, 'python').
+project_file('adapters/python/urirun/node/routing.py', 144, 'python').
 project_file('adapters/python/urirun/node/transport.py', 436, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
@@ -318,6 +318,8 @@ python_function('adapters/python/tests/test_registry_portable.py', 'test_smoke_p
 python_function('adapters/python/tests/test_routing.py', 'test_arbitrary_command_verbs_are_unsafe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_fixed_and_dsl_commands_stay_safe', 0, 3, 1).
 python_function('adapters/python/tests/test_routing.py', 'test_explicit_safe_false_overrides', 0, 2, 1).
+python_function('adapters/python/tests/test_routing.py', 'test_route_is_safe_single_source_of_truth', 0, 8, 2).
+python_function('adapters/python/tests/test_routing.py', 'test_safe_route_and_route_is_safe_agree', 0, 3, 4).
 python_function('adapters/python/tests/test_routing.py', 'test_routes_from_registry_honors_author_declared_unsafe', 0, 4, 2).
 python_function('adapters/python/tests/test_secrets.py', 'test_secretstr_is_redacted', 0, 5, 6).
 python_function('adapters/python/tests/test_secrets.py', 'test_resolve_env', 1, 2, 3).
@@ -734,9 +736,9 @@ python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_env', 2, 4
 python_function('adapters/python/urirun/node/mesh.py', '_registry_to_bindings', 1, 5, 4).
 python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 2, 8, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'apply_deploy', 2, 20, 19).
-python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 14, 15, 21).
+python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 15, 15, 21).
 python_function('adapters/python/urirun/node/mesh.py', '_resolve_serve_opts', 2, 17, 10).
-python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 5).
+python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 6).
 python_function('adapters/python/urirun/node/mesh.py', 'node_list_command', 1, 7, 7).
 python_function('adapters/python/urirun/node/mesh.py', 'node_stop_command', 1, 14, 9).
 python_function('adapters/python/urirun/node/mesh.py', 'node_command', 1, 13, 13).
@@ -1524,7 +1526,7 @@ python_method('NodeHandler', '_handle_run_control', 1, 8, 5).
 python_method('NodeHandler', '_stream_events', 0, 19, 23).
 python_method('NodeHandler', '_admin_ok', 1, 5, 4).
 python_method('NodeHandler', '_run_ok', 1, 5, 4).
-python_method('NodeHandler', '_handle_deploy', 0, 8, 16).
+python_method('NodeHandler', '_handle_deploy', 0, 11, 20).
 python_method('NodeHandler', '_handle_enroll', 0, 11, 14).
 python_method('NodeHandler', 'log_message', 1, 1, 0).
 python_class('adapters/python/urirun/runtime/_runtime.py', 'PolicyError').
