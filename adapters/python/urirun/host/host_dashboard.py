@@ -163,7 +163,61 @@ INDEX_HTML = r"""<!doctype html>
     .status.in_progress, .pill.running { background: #fef3c7; color: var(--warn); }
     .stack { display: grid; gap: 14px; }
     .list { display: grid; gap: 8px; }
+    .chat-shell {
+      display: grid;
+      grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+      gap: 12px;
+      min-height: 640px;
+    }
+    .contacts-panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 8px;
+      min-height: 0;
+      padding-right: 12px;
+      border-right: 1px solid #eef1f6;
+    }
+    .contact-list {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      overflow: auto;
+      min-height: 0;
+    }
+    .contact-card {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px;
+      border: 1px solid #eef1f6;
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+    .contact-card input { margin-top: 2px; min-height: 0; }
+    .contact-title { font-weight: 700; overflow-wrap: anywhere; }
+    .contact-meta { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+    .chat-main {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      min-width: 0;
+      min-height: 0;
+    }
+    .chat-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
     .chat-form { display: grid; gap: 10px; }
+    .chat-composer {
+      display: grid;
+      gap: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eef1f6;
+    }
     .chat-options, .node-options {
       display: flex;
       align-items: center;
@@ -181,6 +235,7 @@ INDEX_HTML = r"""<!doctype html>
     .chat-result {
       display: grid;
       gap: 8px;
+      min-height: 360px;
       max-height: 620px;
       overflow: auto;
     }
@@ -259,7 +314,7 @@ INDEX_HTML = r"""<!doctype html>
       bottom: 0;
       z-index: 6;
       display: none;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       border-top: 1px solid var(--line);
       background: var(--surface);
     }
@@ -280,34 +335,30 @@ INDEX_HTML = r"""<!doctype html>
       height: 100vh;
       padding: 10px;
     }
-    body.chat-fullscreen .grid {
-      height: 100%;
-      display: block;
-    }
-    body.chat-fullscreen .grid > .stack {
+    body.chat-fullscreen .grid { height: 100%; display: block; }
+    body.chat-fullscreen .grid > .stack { height: 100%; display: block; }
+    body.chat-fullscreen .chat-panel {
       height: 100%;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr);
-      gap: 10px;
     }
-    body.chat-fullscreen .view-block[data-section="chat"] {
-      min-height: 0;
-    }
-    body.chat-fullscreen .view-block[data-section="chat"]:not(:nth-of-type(-n+2)) {
-      display: none !important;
-    }
+    body.chat-fullscreen .chat-panel .panel-body,
+    body.chat-fullscreen .chat-shell,
+    body.chat-fullscreen .chat-main { height: 100%; min-height: 0; }
+    body.chat-fullscreen .chat-shell { min-height: 0; }
     body.chat-fullscreen .chat-result {
       max-height: none;
-      height: calc(100vh - 286px);
+      min-height: 0;
     }
-    body.chat-fullscreen textarea {
-      min-height: 86px;
-    }
+    body.chat-fullscreen textarea { min-height: 86px; }
     @media (max-width: 920px) {
       .topbar { align-items: flex-start; flex-direction: column; }
       main { padding: 14px 12px 76px; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .grid { grid-template-columns: 1fr; }
+      .chat-shell { grid-template-columns: 1fr; min-height: 0; }
+      .contacts-panel { border-right: 0; border-bottom: 1px solid #eef1f6; padding-right: 0; padding-bottom: 10px; }
+      .contact-list { max-height: 260px; }
       .desktop-tabs { display: none; }
       .bottom-nav { display: grid; }
       table { min-width: 680px; }
@@ -324,6 +375,7 @@ INDEX_HTML = r"""<!doctype html>
       <div class="tabs desktop-tabs">
         <button data-view="overview">Overview</button>
         <button data-view="chat">Chat</button>
+        <button data-view="discovery">Discovery</button>
         <button data-view="tasks">Tasks</button>
         <button data-view="nodes">Nodes</button>
         <button data-view="activity">Activity</button>
@@ -337,35 +389,52 @@ INDEX_HTML = r"""<!doctype html>
     <section class="metrics" id="metrics"></section>
     <section class="grid">
       <div class="stack">
-        <article class="panel view-block" data-section="chat">
+        <article class="panel view-block chat-panel" data-section="chat">
           <div class="panel-head">
             <div>
-              <h2>Node Chat</h2>
-              <p class="subtle">Natural language to URI flow across selected nodes.</p>
+              <h2>Chat Result</h2>
+              <p class="subtle">Natural language to URI flow across host, nodes and services.</p>
             </div>
             <div class="actions">
+              <span class="subtle" id="chatStatus">idle</span>
               <span class="pill" id="chatMode">dry-run</span>
               <button id="chatFullscreenBtn" type="button">Full screen</button>
             </div>
           </div>
           <div class="panel-body">
-            <form class="chat-form" id="chatForm">
-              <textarea id="chatPrompt" placeholder="np. sprawdz health i procesy na wszystkich node'ach"></textarea>
-              <div>
-                <div class="subtle">Target nodes</div>
-                <div class="node-options" id="chatNodeList"></div>
+            <div class="chat-shell">
+              <div class="contacts-panel">
+                <div>
+                  <h3>Contacts</h3>
+                  <p class="subtle">Select one or more URI targets.</p>
+                </div>
+                <div class="contact-list" id="chatContactList"></div>
               </div>
-              <div class="chat-options">
-                <label class="check"><input type="checkbox" id="chatExecute"> Execute URI operations</label>
-                <label class="check"><input type="checkbox" id="chatNoLlm"> Heuristic planner only</label>
-                <button class="primary" type="submit" id="chatAskBtn">Run</button>
+              <div class="chat-main">
+                <div class="chat-toolbar">
+                  <div class="subtle" id="chatTargetSummary">urirun host</div>
+                  <button type="button" id="chatScrollBottomBtn">Latest</button>
+                </div>
+                <div class="chat-result" id="chatResult"></div>
+                <form class="chat-form chat-composer" id="chatForm">
+                  <textarea id="chatPrompt" placeholder="Napisz komendę NL do wybranych kontaktów URI..."></textarea>
+                  <div class="chat-options">
+                    <label class="check"><input type="checkbox" id="chatExecute"> Execute URI operations</label>
+                    <label class="check"><input type="checkbox" id="chatNoLlm"> Heuristic planner only</label>
+                    <button class="primary" type="submit" id="chatAskBtn">Send</button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </article>
-        <article class="panel view-block" data-section="chat">
-          <div class="panel-head"><h2>Chat Result</h2><span class="subtle" id="chatStatus">idle</span></div>
-          <div class="panel-body"><div class="chat-result" id="chatResult"></div></div>
+        <article class="panel view-block" data-section="discovery">
+          <div class="panel-head"><h2>Discovery</h2><span class="subtle" id="discoveryCount"></span></div>
+          <div class="panel-body"><div class="list" id="discoveryList"></div></div>
+        </article>
+        <article class="panel view-block" data-section="discovery">
+          <div class="panel-head"><h2>Discovered URI Routes</h2><span class="subtle" id="discoveryRouteCount"></span></div>
+          <div class="panel-body"><div class="list" id="discoveryRoutesList"></div></div>
         </article>
         <article class="panel view-block" data-section="tasks">
           <div class="panel-head">
@@ -419,16 +488,25 @@ INDEX_HTML = r"""<!doctype html>
   <nav class="bottom-nav">
     <button data-view="overview">Overview</button>
     <button data-view="chat">Chat</button>
+    <button data-view="discovery">Discovery</button>
     <button data-view="tasks">Tasks</button>
     <button data-view="nodes">Nodes</button>
     <button data-view="activity">Activity</button>
   </nav>
   <script>
-    const VALID_VIEWS = new Set(['overview', 'chat', 'tasks', 'nodes', 'activity']);
+    const VALID_VIEWS = new Set(['overview', 'chat', 'discovery', 'tasks', 'nodes', 'activity']);
     const params = new URLSearchParams(window.location.search);
     const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
     const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
-    const state = { summary: null, tasks: [], view: initialView, chatMessages: [], chatFullscreen: initialChatFull };
+    const initialTargets = (params.get('targets') || 'host').split(',').map((item) => item.trim()).filter(Boolean);
+    const state = {
+      summary: null,
+      tasks: [],
+      view: initialView,
+      chatMessages: [],
+      chatFullscreen: initialChatFull,
+      selectedTargets: initialTargets.length ? initialTargets : ['host']
+    };
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
@@ -469,7 +547,8 @@ INDEX_HTML = r"""<!doctype html>
         sprint: $('sprintFilter') ? $('sprintFilter').value : '',
         queue: $('queueFilter') ? $('queueFilter').value : '',
         execute: $('chatExecute') && $('chatExecute').checked ? '1' : '',
-        no_llm: $('chatNoLlm') && $('chatNoLlm').checked ? '1' : ''
+        no_llm: $('chatNoLlm') && $('chatNoLlm').checked ? '1' : '',
+        targets: state.selectedTargets.join(',')
       };
     }
 
@@ -490,6 +569,7 @@ INDEX_HTML = r"""<!doctype html>
       setParam(search, 'queue', controls.queue || '');
       setParam(search, 'execute', controls.execute);
       setParam(search, 'no_llm', controls.no_llm);
+      setParam(search, 'targets', controls.targets || 'host');
       Object.entries(changes).forEach(([key, value]) => setParam(search, key, value));
       const query = search.toString();
       const nextUrl = `${window.location.pathname}${query ? '?' + query : ''}${window.location.hash}`;
@@ -510,6 +590,8 @@ INDEX_HTML = r"""<!doctype html>
         $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
       }
       if ($('chatNoLlm')) $('chatNoLlm').checked = search.get('no_llm') === '1';
+      const targets = (search.get('targets') || 'host').split(',').map((item) => item.trim()).filter(Boolean);
+      state.selectedTargets = targets.length ? targets : ['host'];
     }
 
     function setChatFullscreen(enabled, options = {}) {
@@ -563,11 +645,82 @@ INDEX_HTML = r"""<!doctype html>
       </div>`).join('') || empty('No nodes configured');
     }
 
-    function renderChatNodes(nodes) {
-      $('chatNodeList').innerHTML = nodes.map((node) => `<label class="check">
-        <input type="checkbox" name="chatNode" value="${esc(node.name)}" ${node.reachable ? '' : 'disabled'}>
-        ${esc(node.name)} <span class="pill ${node.reachable ? 'up' : 'down'}">${node.reachable ? 'up' : 'down'}</span>
-      </label>`).join('') || '<span class="subtle">No nodes configured</span>';
+    function contactCard(contact) {
+      const checked = state.selectedTargets.includes(contact.id) ? 'checked' : '';
+      const disabled = contact.disabled ? 'disabled' : '';
+      const pillClass = contact.reachable === false ? 'down' : contact.status === 'running' || contact.reachable ? 'up' : '';
+      return `<label class="contact-card">
+        <input type="checkbox" name="chatTarget" value="${esc(contact.id)}" ${checked} ${disabled}>
+        <span>
+          <span class="contact-title">${esc(contact.label)}</span>
+          <span class="pill ${pillClass}">${esc(contact.status || contact.kind)}</span>
+          <span class="contact-meta">${esc(contact.url || contact.meta || '')}</span>
+        </span>
+      </label>`;
+    }
+
+    function chatContacts(summary) {
+      const nodes = summary.nodes || [];
+      const services = summary.services || [];
+      return [
+        { id: 'host', kind: 'host', label: 'urirun host', status: 'local', reachable: true, url: summary.project || '' },
+        ...nodes.map((node) => ({
+          id: `node:${node.name}`,
+          kind: 'node',
+          label: `urirun node: ${node.name}`,
+          status: node.reachable ? 'up' : 'down',
+          reachable: !!node.reachable,
+          disabled: !node.reachable,
+          url: node.url || '',
+        })),
+        ...services.map((service) => ({
+          id: service.id || `service:${service.name}`,
+          kind: 'service',
+          label: service.label || `urirun service: ${service.name}`,
+          status: service.status || (service.reachable ? 'running' : 'stopped'),
+          reachable: !!service.reachable,
+          url: service.url || '',
+        })),
+      ];
+    }
+
+    function selectedTargets() {
+      const values = [...document.querySelectorAll('input[name="chatTarget"]:checked')].map((item) => item.value);
+      return values.length ? values : ['host'];
+    }
+
+    function selectedNodeNames() {
+      return state.selectedTargets
+        .filter((target) => target.startsWith('node:'))
+        .map((target) => target.slice('node:'.length))
+        .filter(Boolean);
+    }
+
+    function updateTargetSummary() {
+      $('chatTargetSummary').textContent = `to: ${state.selectedTargets.join(', ') || 'host'}`;
+    }
+
+    function renderChatContacts(summary) {
+      if (!state.selectedTargets.length) state.selectedTargets = ['host'];
+      $('chatContactList').innerHTML = chatContacts(summary).map(contactCard).join('') || empty('No contacts');
+      updateTargetSummary();
+    }
+
+    function renderDiscovery(summary) {
+      const contacts = chatContacts(summary);
+      const routes = summary.routes || [];
+      $('discoveryCount').textContent = `${contacts.length} contacts`;
+      $('discoveryList').innerHTML = contacts.map((contact) => `<div class="item">
+        <div><strong>${esc(contact.label)}</strong> <span class="pill ${contact.reachable === false ? 'down' : 'up'}">${esc(contact.status || contact.kind)}</span></div>
+        <div class="mono">${esc(contact.id)}</div>
+        <div class="subtle">${esc(contact.url || '')}</div>
+        <div class="subtle">${esc(contact.kind || '')}</div>
+      </div>`).join('') || empty('No contacts discovered');
+      $('discoveryRouteCount').textContent = `${routes.length} routes`;
+      $('discoveryRoutesList').innerHTML = routes.map((route) => `<div class="item">
+        <div class="mono">${esc(route.uri)}</div>
+        <div class="subtle">node:${esc(route.node || 'host')} · ${esc(route.kind || '')} · ${esc(route.adapter || '')}</div>
+      </div>`).join('') || empty('No routes discovered');
     }
 
     function renderRoutes(routes) {
@@ -656,6 +809,50 @@ INDEX_HTML = r"""<!doctype html>
       </div>`;
     }
 
+    function addTargetsFromText(out, value) {
+      const raw = text(value).toLowerCase();
+      if (!raw) return;
+      if (raw.includes('phone-scanner') || raw.includes('scanner://') || raw.includes('/scanner') || raw.includes('camera') || raw.includes('qr-code')) {
+        out.add('service:phone-scanner');
+      }
+      if (raw.includes('dashboard://host') || raw.includes('host dashboard')) out.add('host');
+      const uriNode = raw.match(/[a-z][a-z0-9+.-]*:\/\/([a-z0-9_.-]+)/);
+      if (uriNode && uriNode[1] && !['host', 'local'].includes(uriNode[1])) out.add(`node:${uriNode[1]}`);
+    }
+
+    function messageTargets(message) {
+      const out = new Set();
+      const detail = message.detail || {};
+      (detail.selectedTargets || []).forEach((target) => out.add(target));
+      (detail.selectedNodes || []).forEach((node) => out.add(`node:${node}`));
+      const timeline = detail.timeline || [];
+      timeline.forEach((step) => {
+        if (step.target === 'host') out.add('host');
+        else if (step.target) out.add(`node:${step.target}`);
+        addTargetsFromText(out, step.uri);
+      });
+      addTargetsFromText(out, detail.uri);
+      addTargetsFromText(out, detail.scannerUrl);
+      addTargetsFromText(out, detail.href);
+      addTargetsFromText(out, message.content);
+      (message.attachments || []).forEach((att) => {
+        addTargetsFromText(out, att.uri);
+        addTargetsFromText(out, att.path);
+        addTargetsFromText(out, att.previewUrl);
+        addTargetsFromText(out, att.kind);
+      });
+      if (!out.size && message.role === 'user') out.add('host');
+      if (!out.size && /host|dashboard/i.test(JSON.stringify(detail))) out.add('host');
+      return out;
+    }
+
+    function messageMatchesTargets(message) {
+      const active = state.selectedTargets.length ? state.selectedTargets : ['host'];
+      const targets = messageTargets(message);
+      if (!targets.size) return active.includes('host');
+      return active.some((target) => targets.has(target));
+    }
+
     function renderChatHistory() {
       const seenQr = new Set();
       const visible = [...state.chatMessages].reverse().filter((message) => {
@@ -665,8 +862,9 @@ INDEX_HTML = r"""<!doctype html>
           seenQr.add(uri);
         }
         return true;
-      }).reverse();
+      }).reverse().filter(messageMatchesTargets);
       $('chatResult').innerHTML = visible.map(renderChatMessage).join('') || empty('No chat messages yet');
+      $('chatResult').scrollTop = $('chatResult').scrollHeight;
     }
 
     async function loadChatHistory() {
@@ -697,7 +895,8 @@ INDEX_HTML = r"""<!doctype html>
       renderMetrics(summary);
       renderTasks(state.tasks);
       renderNodes(summary.nodes || []);
-      renderChatNodes(summary.nodes || []);
+      renderChatContacts(summary);
+      renderDiscovery(summary);
       renderRoutes(summary.routes || []);
       renderChecks(summary.checks || []);
       renderLogs(summary.logs || []);
@@ -721,10 +920,11 @@ INDEX_HTML = r"""<!doctype html>
       event.preventDefault();
       const prompt = $('chatPrompt').value.trim();
       if (!prompt) return;
-      const nodes = [...document.querySelectorAll('input[name="chatNode"]:checked')].map((item) => item.value);
+      state.selectedTargets = selectedTargets();
+      const nodes = selectedNodeNames();
       const execute = $('chatExecute').checked;
       state.view = 'chat';
-      writeUrlState({ action: 'chat:run', prompt_len: prompt.length, nodes: nodes.join(',') });
+      writeUrlState({ action: 'chat:run', prompt_len: prompt.length, nodes: nodes.join(','), targets: state.selectedTargets.join(',') });
       $('chatMode').textContent = execute ? 'execute' : 'dry-run';
       $('chatStatus').textContent = 'running...';
       $('chatAskBtn').disabled = true;
@@ -734,6 +934,7 @@ INDEX_HTML = r"""<!doctype html>
           body: JSON.stringify({
             prompt,
             nodes,
+            targets: state.selectedTargets,
             execute,
             no_llm: $('chatNoLlm').checked,
           }),
@@ -759,6 +960,15 @@ INDEX_HTML = r"""<!doctype html>
         writeUrlState({ action: `tab:${view}` });
       }
     });
+    document.addEventListener('change', (event) => {
+      if (event.target && event.target.name === 'chatTarget') {
+        state.selectedTargets = selectedTargets();
+        if (!state.selectedTargets.length) state.selectedTargets = ['host'];
+        updateTargetSummary();
+        renderChatHistory();
+        writeUrlState({ action: 'contacts:select', targets: state.selectedTargets.join(',') }, { replace: true });
+      }
+    });
     $('refreshBtn').addEventListener('click', () => {
       writeUrlState({ action: 'refresh' });
       load().catch((error) => alert(error.message));
@@ -768,6 +978,10 @@ INDEX_HTML = r"""<!doctype html>
       window.open('/scanner', '_blank');
     });
     $('chatFullscreenBtn').addEventListener('click', () => setChatFullscreen(!state.chatFullscreen));
+    $('chatScrollBottomBtn').addEventListener('click', () => {
+      $('chatResult').scrollTop = $('chatResult').scrollHeight;
+      writeUrlState({ action: 'chat:latest' }, { replace: true });
+    });
     $('sprintFilter').addEventListener('change', () => {
       writeUrlState({ action: 'filter:sprint' }, { replace: true });
       load().catch((error) => alert(error.message));
@@ -1982,7 +2196,7 @@ def startup_phone_qr(project: str, db: str | None, *, scheme: str, host: str, po
     message = _chat_message(
         "system",
         content,
-        detail={"uri": uri, "url": scanner_url, "artifact": artifact, "metadata": meta},
+        detail={"uri": uri, "url": scanner_url, "selectedTargets": ["service:phone-scanner"], "artifact": artifact, "metadata": meta},
         attachments=[attachment] if attachment else [],
     )
     _add_chat_message(db, message)
@@ -2346,7 +2560,7 @@ def _register_scanner_result(
     message = _chat_message(
         "system",
         content,
-        detail={"artifact": artifact, "documentArtifact": document_artifact, "uri": uri, "ocr": ocr, "document": document},
+        detail={"artifact": artifact, "documentArtifact": document_artifact, "uri": uri, "selectedTargets": ["service:phone-scanner"], "ocr": ocr, "document": document},
         attachments=attachments,
     )
     _add_chat_message(db, message)
@@ -2566,6 +2780,7 @@ def scanner_session(db: str | None, payload: dict) -> dict:
     detail = {
         "uri": uri,
         "event": event,
+        "selectedTargets": ["service:phone-scanner"],
         "href": payload.get("href"),
         "width": payload.get("width"),
         "height": payload.get("height"),
@@ -2906,6 +3121,47 @@ def _task_counts(tickets: list[dict]) -> dict[str, int]:
     return counts
 
 
+def _service_contacts() -> list[dict]:
+    scanner_port = int(os.environ.get("URIRUN_PHONE_SCANNER_PORT", "8196"))
+    scanner_url = f"https://{_url_host(_lan_host())}:{scanner_port}/scanner"
+    phone_scanner = {
+        "id": "service:phone-scanner",
+        "kind": "service",
+        "name": "phone-scanner",
+        "label": "urirun service: photo scanner",
+        "url": scanner_url,
+        "status": "stopped",
+        "reachable": False,
+        "routes": [
+            "dashboard://host/phone-scanner/command/start",
+            "scanner://page/camera/command/scan",
+            "scanner://page/camera/command/best-pdf",
+        ],
+    }
+    contacts = [phone_scanner]
+    with _SERVICE_LOCK:
+        for service_id, server in _SERVICE_SERVERS.items():
+            thread = _SERVICE_THREADS.get(service_id)
+            parsed = urlparse(service_id)
+            port = int(parsed.port or scanner_port)
+            service_url = f"https://{_url_host(_lan_host())}:{port}/scanner"
+            name = "phone-scanner" if port == scanner_port else f"service-{port}"
+            item = {
+                **phone_scanner,
+                "id": f"service:{name}",
+                "name": name,
+                "label": f"urirun service: {name}",
+                "url": service_url,
+                "bindUrl": service_id,
+                "status": "running" if thread is not None and thread.is_alive() else "stopped",
+                "reachable": bool(thread is not None and thread.is_alive()),
+                "serverName": getattr(server, "server_name", ""),
+            }
+            contacts = [entry for entry in contacts if entry.get("id") != item["id"]]
+            contacts.append(item)
+    return contacts
+
+
 def summary(project: str, db: str | None, config: str | None, node_urls: list[str] | None = None) -> dict:
     tickets, task_error = _safe_tickets(project, sprint="all")
     host_db = _host_db()
@@ -2919,6 +3175,7 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     logs = host_db.recent_logs(db, limit=10)
     nodes = discovered.get("nodes") or []
     routes = discovered.get("routes") or []
+    services = _service_contacts()
     return {
         "ok": True,
         "project": str(Path(project).expanduser().resolve()),
@@ -2930,7 +3187,9 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
         "nodeCount": len(nodes),
         "nodesOnline": len([node for node in nodes if node.get("reachable")]),
         "routeCount": len(routes),
+        "serviceCount": len(services),
         "nodes": nodes,
+        "services": services,
         "routes": routes,
         "checks": checks,
         "artifacts": artifacts,
@@ -2960,12 +3219,15 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
     if not prompt:
         raise ValueError("prompt is required")
     selected_nodes = [str(item).strip() for item in (payload.get("nodes") or []) if str(item).strip()]
+    selected_targets = [str(item).strip() for item in (payload.get("targets") or []) if str(item).strip()]
+    if not selected_targets:
+        selected_targets = ["host", *[f"node:{name}" for name in selected_nodes]]
     execute = bool(payload.get("execute"))
     no_llm = bool(payload.get("no_llm") or payload.get("noLlm"))
     _add_chat_message(db, _chat_message(
         "user",
         prompt,
-        detail={"execute": execute, "selectedNodes": selected_nodes, "noLlm": no_llm},
+        detail={"execute": execute, "selectedNodes": selected_nodes, "selectedTargets": selected_targets, "noLlm": no_llm},
     ))
     if _is_phone_scanner_prompt(prompt):
         service = ensure_phone_scanner_service(
@@ -2995,6 +3257,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 "Camera start queued for the open scanner page. Open the scanner URL and accept the browser camera permission if prompted.",
                 detail={
                     "uri": camera_click_uri,
+                    "selectedTargets": ["service:phone-scanner"],
                     "queued": queued_camera,
                     "scannerUrl": service.get("url"),
                 },
@@ -3014,6 +3277,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 f"Camera light {'on' if torch_enabled else 'off'} queued for the open scanner page.",
                 detail={
                     "uri": torch_click_uri,
+                    "selectedTargets": ["service:phone-scanner"],
                     "enabled": bool(torch_enabled),
                     "queued": queued_torch,
                     "scannerUrl": service.get("url"),
@@ -3025,6 +3289,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "prompt": prompt,
             "execute": True,
             "selectedNodes": selected_nodes,
+            "selectedTargets": selected_targets,
             "generator": {"provider": "host-dashboard", "intent": "phone-scanner-service"},
             "flow": {
                 "task": {"id": "phone-scanner-service", "title": "Start phone scanner service"},
@@ -3082,6 +3347,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                     "execute": True,
                     "ok": result.get("ok"),
                     "selectedNodes": selected_nodes,
+                    "selectedTargets": selected_targets,
                     "generator": result.get("generator"),
                     "timeline": result.get("timeline") or [],
                 },
@@ -3117,6 +3383,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         "prompt": prompt,
         "execute": execute,
         "selectedNodes": selected_nodes,
+        "selectedTargets": selected_targets,
         "generator": generator,
         "nodeCount": len(discovered.get("nodes") or []),
         "routeCount": len(discovered.get("routes") or []),
@@ -3138,6 +3405,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "prompt": prompt,
             "execute": execute,
             "ok": result.get("ok"),
+            "selectedTargets": selected_targets,
             "generator": generator,
             "flow": flow,
             "timeline": timeline,
@@ -3156,6 +3424,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 "execute": execute,
                 "ok": result.get("ok"),
                 "selectedNodes": selected_nodes,
+                "selectedTargets": selected_targets,
                 "generator": generator,
                 "timeline": result.get("timeline") or [],
             },

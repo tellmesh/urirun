@@ -91,7 +91,17 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
 
     assert "chatFullscreenBtn" in html
     assert "chat-fullscreen" in html
+    assert "chatContactList" in html
+    assert "chatTargetSummary" in html
+    assert "discoveryList" in html
+    assert "discoveryRoutesList" in html
+    assert "messageMatchesTargets" in html
+    assert "messageTargets" in html
+    assert "data-view=\"discovery\"" in html
+    assert "name=\"chatTarget\"" in html
+    assert html.index("id=\"chatResult\"") < html.index("id=\"chatPrompt\"")
     assert "writeUrlState" in html
+    assert "selectedTargets" in html
     assert "tab:" in html
     assert "action:" in html
     assert "window.addEventListener('popstate'" in html
@@ -107,12 +117,13 @@ def test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch):
         ".",
         ":memory:",
         None,
-        {"prompt": "sprawdz health na laptop", "nodes": ["laptop"], "no_llm": True},
+        {"prompt": "sprawdz health na laptop", "nodes": ["laptop"], "targets": ["host", "node:laptop"], "no_llm": True},
     )
 
     assert result["ok"] is True
     assert result["execute"] is False
     assert result["selectedNodes"] == ["laptop"]
+    assert result["selectedTargets"] == ["host", "node:laptop"]
     assert result["flow"]["steps"][0]["uri"] == "env://laptop/runtime/query/health"
     assert fake_mesh.selected_nodes == ["laptop"]
     assert fake_mesh.use_llm is False
@@ -120,6 +131,7 @@ def test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch):
     assert fake_db.logs[0]["stream"] == "chat"
     assert fake_db.logs[0]["event"] == "message"
     assert fake_db.logs[0]["detail"]["role"] == "user"
+    assert fake_db.logs[0]["detail"]["detail"]["selectedTargets"] == ["host", "node:laptop"]
     assert fake_db.logs[1]["detail"]["role"] == "system"
     assert fake_db.logs[1]["detail"]["attachments"][0]["path"] == "/tmp/shot.jpg"
 
@@ -230,6 +242,7 @@ def test_startup_phone_qr_adds_chat_message(monkeypatch, tmp_path):
     assert fake_db.logs[-1]["detail"]["role"] == "system"
     assert fake_db.logs[-1]["detail"]["attachments"][0]["kind"] == "qr-code"
     assert fake_db.logs[-1]["detail"]["attachments"][0]["previewUrl"].startswith("/api/file?path=")
+    assert fake_db.logs[-1]["detail"]["detail"]["selectedTargets"] == ["service:phone-scanner"]
 
 
 def test_scanner_session_adds_chat_message(monkeypatch):
@@ -247,6 +260,7 @@ def test_scanner_session_adds_chat_message(monkeypatch):
     assert result["ok"] is True
     assert result["uri"].startswith("scanner://host/session/")
     assert fake_db.logs[-1]["detail"]["content"] == "Phone scanner opened"
+    assert fake_db.logs[-1]["detail"]["detail"]["selectedTargets"] == ["service:phone-scanner"]
     assert fake_db.logs[-1]["detail"]["detail"]["href"] == "https://host/scanner"
 
 
