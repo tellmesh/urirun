@@ -1686,6 +1686,30 @@ def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(mo
     assert scanned[1]["existingFileExists"] is True
 
 
+def test_write_document_pdf_orients_image_before_embedding(monkeypatch, tmp_path):
+    import urirun_connector_smart_crop
+
+    source = tmp_path / "sideways.jpg"
+    Image.new("RGB", (120, 60), (245, 244, 235)).save(source)
+    pdf = tmp_path / "document.pdf"
+
+    def fake_orient(image, *, auto_orient=True, prefer_portrait=True):
+        return image.rotate(90, expand=True), {"angle": 90, "rotated": True}
+
+    monkeypatch.setattr(urirun_connector_smart_crop, "orient_document_image", fake_orient)
+
+    host_dashboard._write_document_pdf(
+        source,
+        pdf,
+        metadata={"docId": "DOC-ORIENT", "type": "paragon"},
+        ocr_text="PARAGON FISKALNY",
+    )
+
+    data = pdf.read_bytes()
+    assert b"/Width 60" in data
+    assert b"/Height 120" in data
+
+
 def test_archive_scanned_document_duplicate_removes_staged_scan_and_crop(monkeypatch, tmp_path):
     """A docid duplicate must not leave its staged raw scan + crop on disk, or the
     scans folder fills up with duplicates. Files outside the scanner dir, and the

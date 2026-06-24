@@ -64,6 +64,20 @@ def test_crash_is_contained(tmp_path, monkeypatch):
     assert os.getpid() == pid                     # host survived
 
 
+def test_subprocess_route_dry_run_does_not_call_handler(tmp_path, monkeypatch):
+    env = _fixture_env(tmp_path)
+    monkeypatch.setenv("PYTHONPATH", env["PYTHONPATH"])
+    reg = _registry(tmp_path, "boom")
+    pol = _runtime.build_policy(None, ["iso://*"], None)
+
+    r = urirun.run("iso://host/x/query/boom", reg, {"msg": "x"}, mode="dry-run", policy=pol)
+
+    assert r["ok"] is True
+    assert r["result"]["simulated"] is True
+    assert r["result"]["ref"] == "isofix:boom"
+    assert "exitCode" not in r["result"]
+
+
 def test_handler_isolated_flag_sets_subprocess_adapter():
     import urirun
     c = urirun.connector("sugartest", scheme="sugt")

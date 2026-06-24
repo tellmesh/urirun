@@ -686,6 +686,14 @@ def run_local_function_subprocess(ctx: dict, policy: dict, execute: bool) -> dic
     if not module or not export:
         raise runtime.PolicyError("local-function-subprocess needs a python:{module,export} descriptor")
     ref = f"{module}:{export}"
+    if not execute:
+        return {
+            "simulated": True,
+            "type": "function-subprocess",
+            "ref": ref,
+            "isolated": True,
+            "args": ctx["args"],
+        }
     payload = ctx.get("payload") if isinstance(ctx.get("payload"), dict) else {}
     proc = subprocess.run([sys.executable, "-m", "urirun.exec", ref], input=json.dumps(payload),
                           capture_output=True, text=True, timeout=policy.get("timeout", 30))

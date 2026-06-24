@@ -4412,6 +4412,12 @@ def _write_document_pdf(image_path: str | Path, pdf_path: str | Path, *, metadat
     target.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(source) as opened:
         image = ImageOps.exif_transpose(opened).convert("RGB")
+        try:
+            from urirun_connector_smart_crop import orient_document_image
+
+            image, _orientation = orient_document_image(image, auto_orient=True, prefer_portrait=True)
+        except Exception:  # noqa: BLE001 - PDF generation must not fail when smart-crop is unavailable
+            pass
         image_bytes = io.BytesIO()
         image.save(image_bytes, format="JPEG", quality=92, optimize=True)
         jpeg = image_bytes.getvalue()
