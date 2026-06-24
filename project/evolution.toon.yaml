@@ -1,58 +1,58 @@
-# code2llm/evolution | 1125 func | 76f | 2026-06-23
-# generated in 0.00s
+# code2llm/evolution | 1285 func | 77f | 2026-06-24
+# generated in 0.01s
 
 NEXT[10] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 2692L, 0 classes, max CC=31
-      EFFORT: ~4h  IMPACT: 83452
+      WHY: 9405L, 0 classes, max CC=100
+      EFFORT: ~4h  IMPACT: 940500
 
   [2] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 1721L, 3 classes, max CC=20
-      EFFORT: ~4h  IMPACT: 34420
+      WHY: 1715L, 3 classes, max CC=20
+      EFFORT: ~4h  IMPACT: 34300
 
   [3] !! SPLIT           adapters/python/urirun/runtime/v2.py
-      WHY: 2005L, 1 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 28070
+      WHY: 2024L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 28336
 
-  [4] !! SPLIT-FUNC      scanner_best_finish  CC=31  fan=23
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 713
+  [4] !! SPLIT-FUNC      chat_ask  CC=100  fan=60
+      WHY: CC=100 exceeds 15
+      EFFORT: ~1h  IMPACT: 6000
 
-  [5] !! SPLIT-FUNC      chat_ask  CC=25  fan=28
-      WHY: CC=25 exceeds 15
-      EFFORT: ~1h  IMPACT: 700
+  [5] !! SPLIT-FUNC      sync_documents_to_node  CC=42  fan=46
+      WHY: CC=42 exceeds 15
+      EFFORT: ~1h  IMPACT: 1932
 
-  [6] !! SPLIT-FUNC      _document_frame_quality  CC=31  fan=18
-      WHY: CC=31 exceeds 15
-      EFFORT: ~1h  IMPACT: 558
+  [6] !! SPLIT-FUNC      _archive_scanned_document  CC=35  fan=51
+      WHY: CC=35 exceeds 15
+      EFFORT: ~1h  IMPACT: 1785
 
-  [7] !  SPLIT-FUNC      run_command  CC=16  fan=34
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 544
+  [7] !! SPLIT-FUNC      scanner_best_finish  CC=47  fan=34
+      WHY: CC=47 exceeds 15
+      EFFORT: ~1h  IMPACT: 1598
 
-  [8] !  SPLIT-FUNC      NodeHandler._stream_events  CC=19  fan=28
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 532
+  [8] !! SPLIT-FUNC      scanner_capture  CC=30  fan=37
+      WHY: CC=30 exceeds 15
+      EFFORT: ~1h  IMPACT: 1110
 
-  [9] !  SPLIT-FUNC      main  CC=17  fan=29
-      WHY: CC=17 exceeds 15
-      EFFORT: ~1h  IMPACT: 493
+  [9] !! SPLIT-FUNC      _llm_extract_metadata  CC=36  fan=24
+      WHY: CC=36 exceeds 15
+      EFFORT: ~1h  IMPACT: 864
 
-  [10] !  SPLIT-FUNC      scanner_capture  CC=16  fan=28
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 448
+  [10] !! SPLIT-FUNC      _document_frame_quality  CC=34  fan=18
+      WHY: CC=34 exceeds 15
+      EFFORT: ~1h  IMPACT: 612
 
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 74 import paths
+  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 211 import paths
   ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 125 import paths
-  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 65 import paths
+  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 64 import paths
 
 METRICS-TARGET:
-  CC̄:          4.6 → ≤3.2
-  max-CC:      31 → ≤15
-  god-modules: 11 → 0
-  high-CC(≥15): 25 → ≤12
+  CC̄:          5.2 → ≤3.6
+  max-CC:      100 → ≤20
+  god-modules: 14 → 0
+  high-CC(≥15): 52 → ≤26
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -80,4 +80,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.6 → now CC̄=4.6
+  prev CC̄=5.1 → now CC̄=5.2

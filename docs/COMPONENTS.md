@@ -20,7 +20,7 @@ Przykłady:
 ```text
 document://host/archive/command/sync-to-node
 service://host/phone-scanner/command/restart
-fs://lenovo/file/command/write-b64
+fs://host/file/command/write-b64
 widget://host/widget/query/render
 urifix://host/chain/command/repair
 ```
@@ -91,10 +91,10 @@ Node odpowiada za:
 Przykłady:
 
 ```text
-fs://lenovo/file/command/write-b64
-screen://laptop/portal/query/capture
-kvm://laptop/input/command/type
-proc://laptop/process/query/list
+fs://host/file/command/write-b64
+screen://host/portal/query/capture
+kvm://host/input/command/type
+proc://host/process/query/list
 ```
 
 Node nie powinien sam zgadywać intencji użytkownika. Dostaje konkretny URI,
@@ -301,10 +301,11 @@ Przykład synchronizacji PDF na Lenovo:
 
 ```text
 document://host/archive/command/sync-to-node
-  -> host wybiera node lenovo
-  -> fs://lenovo/file/command/write-b64
+  -> host wybiera node z konfiguracji lub node_url
+  -> fs://host/file/command/write-b64 na wybranym node
+  -> fs://host/file/query/read-b64 na wybranym node
   -> node zapisuje pliki w ~/Downloads/urirun-scans
-  -> host weryfikuje SHA-256
+  -> host weryfikuje kontrakt read-back SHA-256
   -> chat pokazuje copied/failed
 ```
 
@@ -353,4 +354,3 @@ Używaj konsekwentnie:
 - `Artifact` dla statycznego wyniku.
 - `Runtime` dla miejsca wykonania.
 - `Transport` dla kanału komunikacji.
-

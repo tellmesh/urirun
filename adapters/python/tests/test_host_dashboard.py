@@ -385,5 +385,25 @@ class DecisionLoopTests(unittest.TestCase):
         self.assertIsNone(loop["nextIntent"])
 
 
+class RemoteWriteErrorTests(unittest.TestCase):
+    """Document-sync failures must be actionable: a NOT_FOUND on the remote write route means
+    the node's fs connector is outdated, not a transient write error."""
+
+    def test_route_not_found_gives_actionable_remedy(self):
+        run = {"ok": False, "value": {},
+               "envelope": {"ok": False, "error": {"category": "NOT_FOUND",
+                                                   "message": "Route not found: fs.file.command"}}}
+        msg = host_dashboard._remote_write_error(run, {}, expected_sha="abc", remote_sha=None)
+        self.assertIn("update urirun-connector-fs", msg)
+        self.assertIn("fs://host/file/command/write-b64", msg)
+        self.assertIn("Route not found", msg)  # the node's own words are preserved
+
+    def test_sha_mismatch_message_unchanged(self):
+        run = {"ok": True, "envelope": {"ok": True}}
+        value = {"ok": True, "sha256": "deadbeef"}
+        msg = host_dashboard._remote_write_error(run, value, expected_sha="abc", remote_sha="deadbeef")
+        self.assertIn("sha256 mismatch", msg)
+
+
 if __name__ == "__main__":
     unittest.main()

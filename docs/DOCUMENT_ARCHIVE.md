@@ -178,8 +178,14 @@ The host reads local files from `URIRUN_DOCUMENT_DIR` and writes them on the nod
 with:
 
 ```text
-fs://<node>/file/command/write-b64
+fs://host/file/command/write-b64
+fs://host/file/query/read-b64
 ```
+
+The node is selected by the `node_url` transport. The `fs://host/...` target is
+intentional: it means "run the filesystem connector in that remote node
+process". Do not rewrite it to `fs://<node>/...` unless the remote node has
+explicitly exposed the connector under that target.
 
 Default target settings:
 
@@ -221,7 +227,35 @@ The sync is intentionally visible in two places:
 - `logs` stream `document-sync`, event `sync-to-node`
 - chat stream as a system message with copied/failed counts
 
-Each copied file is verified by SHA-256 after the node write result is returned.
+Each copied file is verified by a realization contract. By default the host
+writes the file, then reads it back from the node and compares SHA-256. The
+summary fields mean:
+
+- `total` — local PDFs selected from the archive
+- `uploaded` — remote write commands that returned the expected SHA-256
+- `copied` — files verified by the final read-back contract
+- `failed` — `total - copied`
+- `verification` — machine-readable contract result, currently
+  `document-sync.v1`
+
+Example successful contract:
+
+```json
+{
+  "verification": {
+    "contract": "document-sync.v1",
+    "mode": "read-back-sha256",
+    "expectedFiles": 11,
+    "uploadedFiles": 11,
+    "verifiedFiles": 11,
+    "failedFiles": 0,
+    "ok": true
+  }
+}
+```
+
+Set `verify: false` or `verify_read_back: false` in the payload only when the
+caller intentionally accepts write-ack verification instead of read-back.
 The destination layout mirrors the archive month folders:
 
 ```text

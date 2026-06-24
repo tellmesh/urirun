@@ -52,6 +52,22 @@ def test_executor_runs_in_subprocess(tmp_path, monkeypatch):
     assert r["ok"] is True and r["result"]["isolated"] is True and r["result"]["value"]["square"] == 81
 
 
+def test_subprocess_cwd_does_not_shadow_urirun_package(tmp_path, monkeypatch):
+    env = _fixture_env(tmp_path)
+    monkeypatch.setenv("PYTHONPATH", env["PYTHONPATH"])
+    shadow = tmp_path / "shadow"
+    (shadow / "urirun").mkdir(parents=True)
+    (shadow / "urirun" / "exec.py").write_text("raise SystemExit('shadowed urirun.exec')\n", encoding="utf-8")
+    monkeypatch.chdir(shadow)
+
+    reg = _registry(tmp_path, "square")
+    pol = _runtime.build_policy(None, ["iso://*"], None)
+    r = urirun.run("iso://host/x/query/square", reg, {"n": 7}, mode="execute", policy=pol)
+
+    assert r["ok"] is True
+    assert r["result"]["value"]["square"] == 49
+
+
 def test_crash_is_contained(tmp_path, monkeypatch):
     env = _fixture_env(tmp_path)
     monkeypatch.setenv("PYTHONPATH", env["PYTHONPATH"])

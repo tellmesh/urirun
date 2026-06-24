@@ -42,9 +42,12 @@ See also:
    `LLM_MODEL` unless the caller uses a no-LLM mode that can be planned
    heuristically.
 6. Each URI step is dry-run or executed according to `execute`.
-7. Results are written as a system chat message, a log row, and optionally
+7. Deterministic side-effecting actions attach a realization contract when they
+   can verify the final state. The contract lives under `verification` and makes
+   `ok` mean "the requested state was observed", not just "the command returned".
+8. Results are written as a system chat message, a log row, and optionally
    artifacts.
-8. On failure, recovery is attached before the result is returned.
+9. On failure, recovery is attached before the result is returned.
 
 The important rule is that chat is not a second protocol. It is an operator view
 over URI actions.
@@ -139,8 +142,34 @@ The host reads local PDFs from `URIRUN_DOCUMENT_DIR` and writes them to the node
 through:
 
 ```text
-fs://<node>/file/command/write-b64
+fs://host/file/command/write-b64
+fs://host/file/query/read-b64
 ```
+
+The URI target remains `host` because the `fs://` connector runs inside the
+selected node process. The node is selected by `node_url`, not by changing the
+URI target to the node name.
+
+The sync result is contract-verified. A file counts as copied only when the
+write result returns the expected SHA-256 and the final read-back query returns
+the same SHA-256:
+
+```json
+{
+  "verification": {
+    "contract": "document-sync.v1",
+    "mode": "read-back-sha256",
+    "expectedFiles": 11,
+    "uploadedFiles": 11,
+    "verifiedFiles": 11,
+    "failedFiles": 0,
+    "ok": true
+  }
+}
+```
+
+Set `verify: false` or `verify_read_back: false` only for a deliberate fast path.
+The default is read-back verification.
 
 If the selected node is not present in the host config and no transient
 `--node-url lenovo=http://...` was supplied, the sync step fails with a structured

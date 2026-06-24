@@ -845,8 +845,11 @@ INDEX_HTML = r"""<!doctype html>
                 <label class="stack"><span class="subtle">Nazwa node'a</span><input id="addNodeName" oninput="nodeAddSnippet()" placeholder="office-node"></label>
                 <label class="stack"><span class="subtle">URL node'a</span><input id="addNodeUrl" oninput="nodeAddSnippet()" placeholder="http://host-or-ip:8765"></label>
                 <div class="artifact-actions">
+                  <button type="button" onclick="saveNodeFromForm()">💾 Zapisz node</button>
                   <a id="addNodeHealth" href="#" target="_blank" rel="noreferrer">otwórz /health (sprawdź osiągalność)</a>
+                  <span id="addNodeStatus" class="subtle"></span>
                 </div>
+                <p class="subtle">„Zapisz" trwale dodaje node do host config (host go rozwiąże) i do ~/.urirun/nodes.json (urifix auto-naprawa). Albo wklej ręcznie jeden z poniższych:</p>
                 <pre id="addNodeSnippet" class="mono">— wpisz nazwę i URL powyżej —</pre>
               </div>
             </details>
@@ -1101,7 +1104,7 @@ INDEX_HTML = r"""<!doctype html>
         out.innerHTML = nodes.map((n) => `<div class="item">
           <div><strong>${esc(n.name || n.host)}</strong> <span class="pill up">node</span> <span class="subtle">v${esc(n.version || '?')}</span></div>
           <div class="mono">${esc(n.url)}</div>
-          <div class="artifact-actions"><button type="button" data-name="${esc(n.name || n.host)}" data-url="${esc(n.url)}" onclick="useScannedNode(this.dataset.name, this.dataset.url)">dodaj</button></div>
+          <div class="artifact-actions"><button type="button" data-name="${esc(n.name || n.host)}" data-url="${esc(n.url)}" onclick="saveNode(this.dataset.name, this.dataset.url)">dodaj</button></div>
         </div>`).join('') || empty('Brak węzłów urirun w tej podsieci na porcie 8765. Jeśli netscan nie jest zainstalowany: pip install urirun-connector-netscan.');
       } catch (error) {
         status.textContent = 'błąd skanu: ' + error.message;
@@ -1116,6 +1119,25 @@ INDEX_HTML = r"""<!doctype html>
       if ($('addNodeUrl')) $('addNodeUrl').value = url || '';
       nodeAddSnippet();
       const snip = $('addNodeSnippet'); if (snip && snip.scrollIntoView) snip.scrollIntoView({ block: 'nearest' });
+    }
+
+    // Persist a node to host config (+ urifix's nodes.json) and refresh the Nodes list.
+    async function saveNode(name, url) {
+      const status = $('addNodeStatus');
+      useScannedNode(name, url);  // reflect what we're saving in the form + snippet
+      name = (name || '').trim(); url = (url || '').trim();
+      if (!name || !url) { if (status) status.textContent = 'podaj nazwę i URL'; return; }
+      if (status) status.textContent = 'zapisuję…';
+      try {
+        const res = await api('/api/nodes/add', { method: 'POST', body: JSON.stringify({ name, url }) });
+        if (status) status.textContent = 'zapisano: ' + (res.node ? res.node.name + ' → ' + res.node.url : name);
+        if (typeof load === 'function') load().catch(() => {});  // refresh /health-checked node status
+      } catch (error) {
+        if (status) status.textContent = 'błąd zapisu: ' + error.message;
+      }
+    }
+    function saveNodeFromForm() {
+      saveNode(($('addNodeName') || {}).value || '', ($('addNodeUrl') || {}).value || '');
     }
 
 	    function contactCard(contact) {
@@ -1912,11 +1934,15 @@ INDEX_HTML = r"""<!doctype html>
       const checkbox = message.id ? `<input type="checkbox" name="chatMessageSelect" value="${esc(message.id)}" ${selected}>` : '';
       const deleteButton = message.id ? `<button type="button" class="danger" data-chat-delete="${esc(message.id)}">Delete</button>` : '';
       const copyMarkdownButton = message.id ? `<button type="button" data-chat-copy-md="${esc(message.id)}" title="Copy message as Markdown">Copy MD</button>` : '';
+      // Re-run the command: only on user messages that carry a prompt (the command text).
+      const repeatButton = (message.id && role === 'user' && (message.content || '').trim())
+        ? `<button type="button" data-chat-repeat="${esc(message.id)}" title="Powtorz komende">Repeat</button>` : '';
       return `<div class="message ${esc(role)}">
         <div class="message-head">
           <span class="message-title">${checkbox}<strong>${esc(role)}</strong></span>
           <span class="message-actions">
             <span class="subtle">${esc(message.created_at || '')}</span>
+            ${repeatButton}
             ${copyMarkdownButton}
             ${deleteButton}
           </span>
@@ -2325,6 +2351,34 @@ INDEX_HTML = r"""<!doctype html>
       }
     }
 
+    // Re-run a previous user command: resend its prompt with the same nodes/targets/execute
+    // captured in the message detail (falls back to the current composer selections).
+    async function repeatChatMessage(id) {
+      const msg = (state.chatMessages || []).find((m) => m.id === id);
+      if (!msg) return;
+      const prompt = (msg.content || '').trim();
+      if (!prompt) return;
+      const detail = msg.detail || {};
+      const nodes = detail.selectedNodes || detail.requestedNodes || selectedNodeNames();
+      const targets = detail.selectedTargets || detail.requestedTargets || selectedTargets();
+      const execute = detail.execute !== undefined ? !!detail.execute : $('chatExecute').checked;
+      if ($('chatPrompt')) $('chatPrompt').value = prompt;
+      state.view = 'chat';
+      writeUrlState({ action: 'chat:repeat', prompt, prompt_len: prompt.length, nodes: (nodes || []).join(','), targets: (targets || []).join(',') });
+      $('chatStatus').textContent = 'repeating...';
+      try {
+        const result = await api('/api/chat/ask', {
+          method: 'POST',
+          body: JSON.stringify({ prompt, nodes, targets, execute, no_llm: $('chatNoLlm') ? $('chatNoLlm').checked : false }),
+        });
+        await loadChatHistory();
+        $('chatStatus').textContent = result.ok ? 'ok' : 'failed';
+      } catch (error) {
+        $('chatStatus').textContent = error.message;
+        alert(error.message);
+      }
+    }
+
 	    document.addEventListener('click', (event) => {
 	      const contactButton = event.target && event.target.closest ? event.target.closest('[data-contact-action]') : null;
 	      if (contactButton) {
@@ -2346,6 +2400,13 @@ INDEX_HTML = r"""<!doctype html>
           $('chatStatus').textContent = error.message;
           alert(error.message);
         });
+        return;
+      }
+      const repeatButton = event.target && event.target.closest ? event.target.closest('[data-chat-repeat]') : null;
+      const repeatId = repeatButton ? repeatButton.dataset.chatRepeat : '';
+      if (repeatId) {
+        event.preventDefault();
+        repeatChatMessage(repeatId).catch((error) => alert(error.message));
         return;
       }
       const artifactDeleteId = event.target.dataset.artifactDelete;
@@ -4145,7 +4206,27 @@ def _compact_remote_run(run: dict) -> dict:
     return {k: v for k, v in compact.items() if v not in ({}, None, "")}
 
 
+def _route_not_found_remedy(error: Any) -> str:
+    """Actionable message when the remote node lacks the fs write route (its connector is
+    outdated): a NOT_FOUND / "route not found" on write-b64 means urirun-connector-fs on the
+    target node predates the route, so every file fails identically. Empty when not that case."""
+    if not isinstance(error, dict):
+        return ""
+    message = str(error.get("message") or "")
+    if str(error.get("category") or "") == "NOT_FOUND" or "route not found" in message.lower():
+        return ("remote node is missing the fs write route (fs://host/file/command/write-b64) — "
+                f"update urirun-connector-fs on the target node; node said: {message or error}")
+    return ""
+
+
 def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha: str | None) -> str:
+    envelope = run.get("envelope") if isinstance(run.get("envelope"), dict) else {}
+    # A route/transport NOT_FOUND means the call never reached the write handler, so `value` is
+    # empty and "no sha256" would be misleading — surface the connector-outdated remedy first.
+    remedy = _route_not_found_remedy(envelope.get("error")) or _route_not_found_remedy(
+        value.get("error") if isinstance(value, dict) else None)
+    if remedy:
+        return remedy
     if isinstance(value, dict):
         error = value.get("error")
         if isinstance(error, dict):
@@ -4158,7 +4239,6 @@ def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha:
             return "remote write returned no sha256"
         if remote_sha != expected_sha:
             return f"sha256 mismatch: expected {expected_sha}, got {remote_sha}"
-    envelope = run.get("envelope") if isinstance(run.get("envelope"), dict) else {}
     error = envelope.get("error")
     if isinstance(error, dict):
         return str(error.get("message") or error)
@@ -4167,6 +4247,72 @@ def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha:
     if value:
         return f"remote write returned non-object result: {_short_value(value)!r}"
     return "remote write failed without a result"
+
+
+def _remote_read_error(run: dict, value: Any, *, expected_sha: str, remote_sha: str | None) -> str:
+    if isinstance(value, dict):
+        error = value.get("error")
+        if isinstance(error, dict):
+            return str(error.get("message") or error)
+        if error:
+            return str(error)
+        if value.get("ok") is False:
+            return "remote read returned ok=false"
+        if not remote_sha:
+            return "remote read returned no sha256"
+        if remote_sha != expected_sha:
+            return f"read-back sha256 mismatch: expected {expected_sha}, got {remote_sha}"
+    envelope = run.get("envelope") if isinstance(run.get("envelope"), dict) else {}
+    error = envelope.get("error")
+    if isinstance(error, dict):
+        return str(error.get("message") or error)
+    if error:
+        return str(error)
+    if value:
+        return f"remote read returned non-object result: {_short_value(value)!r}"
+    return "remote read failed without a result"
+
+
+def _document_sync_verification(
+    files: list[Path],
+    results: list[dict],
+    *,
+    source_root: Path,
+    read_back: bool,
+) -> dict:
+    expected = [path.relative_to(source_root).as_posix() for path in files]
+    uploaded = [item["relativePath"] for item in results if item.get("writeOk")]
+    verified = [item["relativePath"] for item in results if item.get("verified")]
+    verified_set = set(verified)
+    missing = [rel for rel in expected if rel not in verified_set]
+    mode = "read-back-sha256" if read_back else "write-ack-sha256"
+    checks = [
+        {
+            "check": "write_ack_for_every_expected_file",
+            "ok": len(uploaded) == len(expected),
+            "expected": len(expected),
+            "actual": len(uploaded),
+        },
+        {
+            "check": "sha256_verified_for_every_expected_file",
+            "ok": len(verified) == len(expected),
+            "expected": len(expected),
+            "actual": len(verified),
+            "mode": mode,
+        },
+    ]
+    return {
+        "contract": "document-sync.v1",
+        "ok": all(check["ok"] for check in checks),
+        "mode": mode,
+        "expectedFiles": len(expected),
+        "uploadedFiles": len(uploaded),
+        "verifiedFiles": len(verified),
+        "failedFiles": len(missing),
+        "missing": missing[:50],
+        "truncatedMissing": max(0, len(missing) - 50),
+        "checks": checks,
+    }
 
 
 def _document_archive_pdfs(root: Path) -> list[Path]:
@@ -4202,13 +4348,21 @@ def sync_documents_to_node(
     overwrite = bool(payload.get("overwrite", True))
     make_dirs = bool(payload.get("make_dirs", payload.get("makeDirs", True)))
     timeout = float(payload.get("timeout", 120.0) or 120.0)
-    fs_target = str(payload.get("fs_target") or payload.get("fsTarget") or node).strip() or node
+    # The remote node runs its fs connector as target "host" (fs://host/...); the node itself
+    # is addressed by node_url, NOT by the URI target. Sending fs://<node>/... made the remote
+    # find no matching route -> empty value -> "remote write failed". Default to "host" (same
+    # pattern as ocr's fs://host/file/query/blob); override with fs_target only if a node truly
+    # exposes the connector under a different target.
+    fs_target = str(payload.get("fs_target") or payload.get("fsTarget") or "host").strip() or "host"
     fs_uri = f"fs://{fs_target}/file/command/write-b64"
+    fs_read_uri = f"fs://{fs_target}/file/query/read-b64"
+    read_back = _boolish(payload.get("verify_read_back", payload.get("verifyReadBack", payload.get("verify"))), True)
+    verify_max_bytes = int(payload.get("verify_max_bytes") or payload.get("verifyMaxBytes") or 25_000_000)
 
     files = _document_archive_pdfs(source_root)
     results: list[dict] = []
+    uploaded = 0
     copied = 0
-    failed = 0
     skipped = 0
     failed_reasons: dict[str, int] = {}
 
@@ -4240,40 +4394,96 @@ def sync_documents_to_node(
             )
             value = run.get("value") if isinstance(run.get("value"), dict) else {}
             remote_sha = value.get("sha256")
-            ok = bool(run.get("ok") and value.get("ok", True) and remote_sha == sha256)
+            write_ok = bool(run.get("ok") and value.get("ok", True) and remote_sha == sha256)
             item.update({
-                "ok": ok,
+                "ok": write_ok,
+                "writeOk": write_ok,
+                "verified": False,
                 "remotePath": value.get("path"),
                 "remoteSha256": remote_sha,
                 "overwritten": value.get("overwritten"),
                 "renamed": value.get("renamed"),
             })
-            if ok:
-                copied += 1
+            if write_ok:
+                uploaded += 1
             else:
-                failed += 1
                 item["remote"] = _compact_remote_run(run)
                 item["error"] = _remote_write_error(run, run.get("value"), expected_sha=sha256, remote_sha=remote_sha)
                 failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
         except Exception as exc:  # noqa: BLE001 - report per-file transfer failures.
-            failed += 1
-            item.update({"ok": False, "error": str(exc)})
+            item.update({"ok": False, "writeOk": False, "verified": False, "error": str(exc)})
             failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
         results.append(item)
 
+    for item in results:
+        if not item.get("writeOk"):
+            continue
+        if not read_back:
+            item["verified"] = True
+            copied += 1
+            continue
+        remote_path = str(item.get("remotePath") or item.get("dest") or "")
+        try:
+            run = _run_node_uri(
+                node_url,
+                fs_read_uri,
+                {
+                    "path": remote_path,
+                    "max_bytes": max(verify_max_bytes, int(item.get("bytes") or 0)),
+                },
+                token=token,
+                identity=identity,
+                timeout=timeout,
+            )
+            value = run.get("value") if isinstance(run.get("value"), dict) else {}
+            read_sha = value.get("sha256")
+            read_bytes = value.get("bytes")
+            verified = bool(
+                run.get("ok")
+                and value.get("ok", True)
+                and read_sha == item.get("sha256")
+                and (read_bytes in (None, item.get("bytes")))
+            )
+            item.update({
+                "ok": verified,
+                "verified": verified,
+                "readBackPath": value.get("path"),
+                "readBackSha256": read_sha,
+                "readBackBytes": read_bytes,
+            })
+            if verified:
+                copied += 1
+            else:
+                item["readBack"] = _compact_remote_run(run)
+                item["error"] = _remote_read_error(
+                    run,
+                    run.get("value"),
+                    expected_sha=str(item.get("sha256") or ""),
+                    remote_sha=read_sha,
+                )
+                failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
+        except Exception as exc:  # noqa: BLE001 - report per-file read-back failures.
+            item.update({"ok": False, "verified": False, "error": str(exc)})
+            failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
+
+    verification = _document_sync_verification(files, results, source_root=source_root, read_back=read_back)
+    failed = len(files) - copied
     report = {
-        "ok": failed == 0,
+        "ok": bool(verification.get("ok")),
         "uri": "document://host/archive/command/sync-to-node",
         "sourceRoot": str(source_root),
         "node": node,
         "nodeUrl": node_url,
         "fsUri": fs_uri,
+        "fsReadUri": fs_read_uri,
         "destRoot": dest_root,
         "total": len(files),
+        "uploaded": uploaded,
         "copied": copied,
         "failed": failed,
         "skipped": skipped,
         "failedReasons": failed_reasons,
+        "verification": verification,
         "results": results,
         "updatedAt": _utc_now(),
     }
@@ -4283,7 +4493,11 @@ def sync_documents_to_node(
         pass
 
     status = "completed" if report["ok"] else "finished with errors"
-    content = f"Document sync to {node} {status}: {copied}/{len(files)} PDFs -> {dest_root}"
+    top_reason = ""
+    if failed_reasons:
+        top_reason = max(failed_reasons.items(), key=lambda item: item[1])[0]
+    reason_suffix = f" ({top_reason})" if top_reason else ""
+    content = f"Document sync to {node} {status}: {copied}/{len(files)} PDFs -> {dest_root}{reason_suffix}"
     message = _chat_message(
         "system",
         content,
@@ -7596,6 +7810,42 @@ def _compact_chat_result(result: dict, payload: dict) -> dict:
 _DOCUMENT_SYNC_URI = "document://host/archive/command/sync-to-node"
 
 
+def node_add(config: str | None, payload: dict) -> dict:
+    """Persist a node (name + URL) to the host config so the host resolves it for real runs, and
+    mirror it to ~/.urirun/nodes.json so urifix can auto-repair node_url. Reuses the canonical
+    node/config.add_node helper (same path as `urirun host add-node`) — no bespoke writer."""
+    from urirun.node import config as node_config
+    payload = payload if isinstance(payload, dict) else {}
+    name = str(payload.get("name") or "").strip()
+    raw_url = str(payload.get("url") or "").strip()
+    if not name or not raw_url:
+        return {"ok": False, "error": "name and url are required"}
+    try:
+        url = node_config._coerce_node_url(raw_url)  # accepts URL or host[:port], defaults :8765
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    try:
+        updated = node_config.add_node(config, name, url)
+    except Exception as exc:  # noqa: BLE001 - report a persist failure, don't 500 the dashboard
+        return {"ok": False, "error": f"could not persist node: {exc}"}
+    try:  # best-effort mirror for urifix's node-URL discovery
+        nodes_path = os.environ.get("URIRUN_NODES_FILE") or os.path.expanduser("~/.urirun/nodes.json")
+        known: dict = {}
+        if os.path.exists(nodes_path):
+            with open(nodes_path, encoding="utf-8") as fh:
+                loaded = json.load(fh)
+            if isinstance(loaded, dict):
+                inner = loaded.get("nodes")
+                known = inner if isinstance(inner, dict) else loaded
+        known[name] = url
+        os.makedirs(os.path.dirname(nodes_path) or ".", exist_ok=True)
+        with open(nodes_path, "w", encoding="utf-8") as fh:
+            json.dump(known, fh, indent=2)
+    except Exception:  # noqa: BLE001 - the urifix mirror is optional
+        pass
+    return {"ok": True, "node": {"name": name, "url": url}, "nodes": updated.get("nodes", [])}
+
+
 def _try_urifix_repair(prompt: str, request: dict, result: dict, *, node_urls: list[str] | None = None,
                        host_config: dict | None = None, known_nodes: list[str] | dict | None = None,
                        apply: bool = False, registry: Any = None) -> dict | None:
@@ -8098,6 +8348,15 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                     "type": type(exc).__name__,
                     "message": str(exc),
                     "uri": _DOCUMENT_SYNC_URI,
+                }
+            if sync_result is not None and not sync_result.get("ok") and error is None:
+                failed_reasons = sync_result.get("failedReasons") if isinstance(sync_result.get("failedReasons"), dict) else {}
+                top_reason = max(failed_reasons.items(), key=lambda item: item[1])[0] if failed_reasons else "document sync contract failed"
+                error = {
+                    "type": "ContractError",
+                    "message": str(top_reason),
+                    "uri": _DOCUMENT_SYNC_URI,
+                    "verification": sync_result.get("verification"),
                 }
         ok = bool((sync_result or {}).get("ok")) if execute and not error else not bool(error)
         timeline = [{
@@ -8867,6 +9126,10 @@ def create_handler(
                 if parsed.path == "/api/documents/reconcile":
                     payload = _read_json(self)
                     _json_response(self, 200, documents_reconcile(project, db, payload))
+                    return
+                if parsed.path == "/api/nodes/add":
+                    payload = _read_json(self)
+                    _json_response(self, 200, node_add(config, payload))
                     return
                 if parsed.path == "/api/uri/invoke":
                     payload = _read_json(self)

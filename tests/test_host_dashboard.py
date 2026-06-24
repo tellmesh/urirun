@@ -463,6 +463,52 @@ def test_chat_ask_executes_document_sync_without_llm(monkeypatch):
     assert fake_db.logs[1]["detail"]["decisionLoop"]["execution"]["status"] == "done"
 
 
+def test_chat_ask_document_sync_blocks_when_contract_fails(monkeypatch):
+    fake_db = FakeHostDb()
+
+    def fake_sync(project, db, config, payload, **kwargs):
+        return {
+            "ok": False,
+            "copied": 0,
+            "failed": 1,
+            "node": payload["node"],
+            "failedReasons": {"read-back sha256 mismatch: expected a, got b": 1},
+            "verification": {
+                "contract": "document-sync.v1",
+                "ok": False,
+                "mode": "read-back-sha256",
+                "expectedFiles": 1,
+                "uploadedFiles": 1,
+                "verifiedFiles": 0,
+                "failedFiles": 1,
+            },
+        }
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
+    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", lambda *args, **kwargs: None)
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {
+            "prompt": "skopiuj dokumenty pdf na laptop",
+            "nodes": [],
+            "targets": ["host", "node:laptop"],
+            "execute": True,
+        },
+        node_urls=["laptop=http://laptop.local:8766"],
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["type"] == "ContractError"
+    assert result["error"]["verification"]["contract"] == "document-sync.v1"
+    assert result["timeline"][0]["status"] == "failed"
+    assert result["decisionLoop"]["execution"]["status"] == "blocked"
+    assert result["decisionLoop"]["observation"]["kind"] == "uri-step-failed"
+
+
 def test_chat_ask_document_sync_error_includes_urifix_recovery(monkeypatch):
     fake_db = FakeHostDb()
 
@@ -1648,8 +1694,20 @@ def test_sync_documents_to_node_copies_pdfs_and_logs_chat(monkeypatch, tmp_path)
     calls = []
 
     def fake_run_node_uri(node_url, uri, payload, **kwargs):
-        data = base64.b64decode(payload["bytes_b64"].encode("ascii"))
+        data = base64.b64decode(payload["bytes_b64"].encode("ascii")) if "bytes_b64" in payload else b""
         calls.append({"node_url": node_url, "uri": uri, "payload": payload, "bytes": data})
+        if uri.endswith("/file/query/read-b64"):
+            source = first if payload["path"].endswith(first.name) else second
+            data = source.read_bytes()
+            return {
+                "ok": True,
+                "value": {
+                    "ok": True,
+                    "path": payload["path"],
+                    "bytes": len(data),
+                    "sha256": host_dashboard.hashlib.sha256(data).hexdigest(),
+                },
+            }
         return {
             "ok": True,
             "value": {
@@ -1674,11 +1732,20 @@ def test_sync_documents_to_node_copies_pdfs_and_logs_chat(monkeypatch, tmp_path)
     })
 
     assert result["ok"] is True
+    assert result["verification"]["ok"] is True
+    assert result["verification"]["contract"] == "document-sync.v1"
+    assert result["verification"]["verifiedFiles"] == 2
+    assert result["uploaded"] == 2
     assert result["copied"] == 2
     assert result["failed"] == 0
-    assert len(calls) == 2
-    assert {call["uri"] for call in calls} == {"fs://laptop/file/command/write-b64"}
-    assert {call["payload"]["path"] for call in calls} == {
+    assert len(calls) == 4
+    write_calls = [call for call in calls if call["uri"].endswith("/file/command/write-b64")]
+    read_calls = [call for call in calls if call["uri"].endswith("/file/query/read-b64")]
+    assert len(write_calls) == 2
+    assert len(read_calls) == 2
+    assert {call["uri"] for call in write_calls} == {"fs://host/file/command/write-b64"}
+    assert {call["uri"] for call in read_calls} == {"fs://host/file/query/read-b64"}
+    assert {call["payload"]["path"] for call in write_calls} == {
         "~/Downloads/urirun-scans/2026-06/rachunek_doc-a.pdf",
         "~/Downloads/urirun-scans/2026-06/faktura_doc-b.pdf",
     }
@@ -1717,9 +1784,13 @@ def test_sync_documents_to_node_reports_remote_run_error(monkeypatch, tmp_path):
 
     assert result["ok"] is False
     assert result["failed"] == 1
+    assert result["verification"]["ok"] is False
+    assert result["verification"]["uploadedFiles"] == 0
+    assert result["verification"]["verifiedFiles"] == 0
     assert result["failedReasons"] == {"Route not found: fs.file.command.write-b64": 1}
     assert result["results"][0]["error"] == "Route not found: fs.file.command.write-b64"
     assert result["results"][0]["remote"]["error"]["message"] == "Route not found: fs.file.command.write-b64"
+    assert "Route not found: fs.file.command.write-b64" in fake_db.logs[-1]["detail"]["content"]
 
 
 def test_sync_documents_to_node_reports_sha256_mismatch(monkeypatch, tmp_path):
@@ -1744,6 +1815,52 @@ def test_sync_documents_to_node_reports_sha256_mismatch(monkeypatch, tmp_path):
     assert result["ok"] is False
     assert "sha256 mismatch" in result["results"][0]["error"]
     assert result["results"][0]["remoteSha256"] == "bad"
+    assert result["verification"]["ok"] is False
+    assert result["verification"]["verifiedFiles"] == 0
+
+
+def test_sync_documents_to_node_requires_read_back_verification(monkeypatch, tmp_path):
+    fake_db = FakeHostDb()
+    document_root = tmp_path / "documents"
+    month = document_root / "2026-06"
+    month.mkdir(parents=True)
+    invoice = month / "invoice.pdf"
+    invoice.write_bytes(b"pdf")
+
+    def fake_run_node_uri(node_url, uri, payload, **kwargs):
+        if uri.endswith("/file/command/write-b64"):
+            data = base64.b64decode(payload["bytes_b64"].encode("ascii"))
+            return {
+                "ok": True,
+                "value": {
+                    "ok": True,
+                    "path": payload["path"],
+                    "bytes": len(data),
+                    "sha256": host_dashboard.hashlib.sha256(data).hexdigest(),
+                },
+            }
+        return {
+            "ok": True,
+            "value": {"ok": True, "path": payload["path"], "bytes": 3, "sha256": "wrong"},
+        }
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "_run_node_uri", fake_run_node_uri)
+
+    result = host_dashboard.sync_documents_to_node(".", ":memory:", None, {
+        "source_root": str(document_root),
+        "node_url": "http://laptop.local:8766",
+        "node": "laptop",
+    })
+
+    assert result["ok"] is False
+    assert result["uploaded"] == 1
+    assert result["copied"] == 0
+    assert result["failed"] == 1
+    assert result["verification"]["mode"] == "read-back-sha256"
+    assert result["verification"]["uploadedFiles"] == 1
+    assert result["verification"]["verifiedFiles"] == 0
+    assert "read-back sha256 mismatch" in result["results"][0]["error"]
 
 
 def test_uri_invoke_page_action_queues_for_scanner(monkeypatch):

@@ -679,7 +679,9 @@ def run_local_function_subprocess(ctx: dict, policy: dict, execute: bool) -> dic
     ``python -m urirun.exec`` runner — for routes that want isolation (untrusted
     code, crash containment, a heavy import kept off the host). No per-connector
     ``_exec.py``: the handler is found from its ``python: {module, export}``."""
+    import os
     import subprocess
+    import tempfile
 
     py = ctx["routeEntry"].get("python") or {}
     module, export = py.get("module"), py.get("export")
@@ -695,8 +697,17 @@ def run_local_function_subprocess(ctx: dict, policy: dict, execute: bool) -> dic
             "args": ctx["args"],
         }
     payload = ctx.get("payload") if isinstance(ctx.get("payload"), dict) else {}
+    route_entry = ctx.get("routeEntry") if isinstance(ctx.get("routeEntry"), dict) else {}
+    config = route_entry.get("config") if isinstance(route_entry.get("config"), dict) else {}
+    runner_cwd = (
+        py.get("cwd")
+        or config.get("cwd")
+        or os.environ.get("URIRUN_EXEC_CWD")
+        or tempfile.gettempdir()
+    )
     proc = subprocess.run([sys.executable, "-m", "urirun.exec", ref], input=json.dumps(payload),
-                          capture_output=True, text=True, timeout=policy.get("timeout", 30))
+                          capture_output=True, text=True, timeout=policy.get("timeout", 30),
+                          cwd=str(runner_cwd))
     try:
         value = json.loads(proc.stdout) if proc.stdout.strip() else {}
     except json.JSONDecodeError:
