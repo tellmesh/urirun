@@ -7,7 +7,35 @@ import json
 
 import pytest
 
-from urirun.node import config, paths, transport
+from urirun.node import config, flow, paths, transport
+
+
+# --- flow: NL-planner route availability (templated routes) -------------------
+
+def test_uri_is_available_matches_concrete_against_templated_route():
+    allowed = {
+        "kvm://{host}/display/query/info",
+        "kvm://{host}/monitor/{monitor}/query/screenshot",
+        "fs://host/file/query/blob",
+    }
+    # A concrete host the LLM filled in matches the {host} template (node binds it at /run).
+    assert flow._uri_is_available("kvm://kvm/display/query/info", allowed)
+    assert flow._uri_is_available("kvm://localhost/display/query/info", allowed)
+    # Multiple params bind independently.
+    assert flow._uri_is_available("kvm://h/monitor/0/query/screenshot", allowed)
+    # Exact (non-templated) routes still match.
+    assert flow._uri_is_available("fs://host/file/query/blob", allowed)
+    # Wrong scheme / path / segment count are rejected.
+    assert not flow._uri_is_available("ssh://kvm/display/query/info", allowed)
+    assert not flow._uri_is_available("kvm://kvm/display/query/other", allowed)
+    assert not flow._uri_is_available("kvm://kvm/display/query", allowed)
+
+
+def test_normalize_flow_accepts_concrete_uri_for_templated_route():
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "s1", "uri": "kvm://kvm/display/query/info", "payload": {}}]}
+    out = flow.normalize_flow(flow_doc, {"kvm://{host}/display/query/info"})
+    assert out["steps"][0]["uri"] == "kvm://kvm/display/query/info"  # concrete kept; node binds {host}
 
 
 # --- config.node_url ---------------------------------------------------------

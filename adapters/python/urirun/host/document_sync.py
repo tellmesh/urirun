@@ -90,17 +90,29 @@ def _log_and_chat_report(
     return report
 
 
-def sync_documents_to_node(
-    project: str,
-    db: str | None,
-    config: str | None,
+@dataclass(frozen=True)
+class _SyncParams:
+    source_root: Path
+    node: str
+    node_url: str
+    dest_root: str
+    overwrite: bool
+    make_dirs: bool
+    timeout: float
+    fs_uri: str
+    fs_read_uri: str
+    read_back: bool
+    verify_max_bytes: int
+    ensure_routes: bool
+    connector_roots: Any
+
+
+def _parse_sync_params(
     payload: dict,
-    *,
+    config: str | None,
     deps: DocumentSyncDeps,
-    node_urls: list[str] | None = None,
-    token: str | None = None,
-    identity: str | None = None,
-) -> dict:
+    node_urls: list[str] | None,
+) -> _SyncParams:
     source_root = Path(
         payload.get("source_root") or payload.get("sourceRoot") or deps.document_archive_root()
     ).expanduser().resolve()
@@ -112,201 +124,258 @@ def sync_documents_to_node(
         node_url = deps.node_url_from_config(config, node_urls, node) or ""
     if not node_url:
         raise ValueError("node_url is required when the target node is not present in host config")
-    node_url = node_url.rstrip("/")
-    dest_root = str(payload.get("dest_root") or payload.get("destRoot") or deps.default_dest_root()).rstrip("/")
-    overwrite = bool(payload.get("overwrite", True))
-    make_dirs = bool(payload.get("make_dirs", payload.get("makeDirs", True)))
-    timeout = float(payload.get("timeout", 120.0) or 120.0)
     fs_target = str(payload.get("fs_target") or payload.get("fsTarget") or "host").strip() or "host"
-    fs_uri = f"fs://{fs_target}/file/command/write-b64"
-    fs_read_uri = f"fs://{fs_target}/file/query/read-b64"
-    read_back = boolish(payload.get("verify_read_back", payload.get("verifyReadBack", payload.get("verify"))), True)
-    verify_max_bytes = int(payload.get("verify_max_bytes") or payload.get("verifyMaxBytes") or 25_000_000)
-    ensure_routes = boolish(payload.get("ensure_routes", payload.get("ensureRoutes")), True)
-    connector_roots = payload.get("connector_roots", payload.get("connectorRoots", payload.get("roots")))
+    return _SyncParams(
+        source_root=source_root,
+        node=node,
+        node_url=node_url.rstrip("/"),
+        dest_root=str(payload.get("dest_root") or payload.get("destRoot") or deps.default_dest_root()).rstrip("/"),
+        overwrite=bool(payload.get("overwrite", True)),
+        make_dirs=bool(payload.get("make_dirs", payload.get("makeDirs", True))),
+        timeout=float(payload.get("timeout", 120.0) or 120.0),
+        fs_uri=f"fs://{fs_target}/file/command/write-b64",
+        fs_read_uri=f"fs://{fs_target}/file/query/read-b64",
+        read_back=boolish(payload.get("verify_read_back", payload.get("verifyReadBack", payload.get("verify"))), True),
+        verify_max_bytes=int(payload.get("verify_max_bytes") or payload.get("verifyMaxBytes") or 25_000_000),
+        ensure_routes=boolish(payload.get("ensure_routes", payload.get("ensureRoutes")), True),
+        connector_roots=payload.get("connector_roots", payload.get("connectorRoots", payload.get("roots"))),
+    )
 
-    files = deps.archive_pdfs(source_root)
+
+def _check_preflight(
+    params: _SyncParams,
+    files: list[Path],
+    deps: DocumentSyncDeps,
+    token: str | None,
+    identity: str | None,
+) -> tuple[dict | None, dict | None, str | None]:
+    """Check that the remote node exposes required fs routes before transferring files.
+
+    Returns (preflight, early_report, early_content). When early_report is not None
+    the caller should return _log_and_chat_report(early_report, content=early_content)
+    immediately.
+    """
+    if not params.ensure_routes or not files:
+        return None, None, None
+    required_routes = [params.fs_uri, params.fs_read_uri] if params.read_back else [params.fs_uri]
+    try:
+        preflight: dict = deps.ensure_node_uri_routes(
+            params.node_url,
+            required_routes,
+            node=params.node,
+            token=token,
+            identity=identity,
+            timeout=min(params.timeout, 30.0),
+            roots=params.connector_roots,
+        )
+    except Exception as exc:  # noqa: BLE001 - surface as a structured preflight failure.
+        preflight = {"ok": False, "error": str(exc), "requiredRoutes": required_routes}
+    if preflight.get("ok"):
+        return preflight, None, None
+    missing = preflight.get("missingAfter") or preflight.get("missingBefore") or required_routes
+    preflight_error = (
+        "remote node is missing required fs transfer route(s): "
+        f"{', '.join(str(r) for r in missing)}"
+    )
+    if preflight.get("error"):
+        preflight_error += f" ({preflight['error']})"
+    verification = deps.verification(files, [], params.source_root, params.read_back)
+    report = {
+        "ok": False,
+        "uri": "document://host/archive/command/sync-to-node",
+        "sourceRoot": str(params.source_root),
+        "node": params.node,
+        "nodeUrl": params.node_url,
+        "fsUri": params.fs_uri,
+        "fsReadUri": params.fs_read_uri,
+        "destRoot": params.dest_root,
+        "total": len(files),
+        "uploaded": 0,
+        "copied": 0,
+        "failed": len(files),
+        "skipped": 0,
+        "failedReasons": {preflight_error: len(files)},
+        "verification": verification,
+        "preflight": preflight,
+        "results": [],
+        "updatedAt": deps.utc_now(),
+    }
+    content = (
+        f"Document sync to {params.node} blocked: 0/{len(files)} PDFs"
+        f" -> {params.dest_root} ({preflight_error})"
+    )
+    return preflight, report, content
+
+
+def _upload_file(
+    source: Path,
+    params: _SyncParams,
+    deps: DocumentSyncDeps,
+    token: str | None,
+    identity: str | None,
+) -> dict:
+    """Upload one file to the remote node; returns a result item dict."""
+    rel = source.relative_to(params.source_root)
+    dest_path = f"{params.dest_root}/{rel.as_posix()}"
+    data = source.read_bytes()
+    sha256 = hashlib.sha256(data).hexdigest()
+    item: dict = {
+        "source": str(source),
+        "relativePath": rel.as_posix(),
+        "dest": dest_path,
+        "bytes": len(data),
+        "sha256": sha256,
+    }
+    try:
+        run = deps.run_node_uri(
+            params.node_url,
+            params.fs_uri,
+            {
+                "path": dest_path,
+                "bytes_b64": base64.b64encode(data).decode("ascii"),
+                "overwrite": params.overwrite,
+                "make_dirs": params.make_dirs,
+            },
+            token=token,
+            identity=identity,
+            timeout=params.timeout,
+        )
+        value = run.get("value") if isinstance(run.get("value"), dict) else {}
+        remote_sha = value.get("sha256")
+        write_ok = bool(run.get("ok") and value.get("ok", True) and remote_sha == sha256)
+        item.update({
+            "ok": write_ok,
+            "writeOk": write_ok,
+            "verified": False,
+            "remotePath": value.get("path"),
+            "remoteSha256": remote_sha,
+            "overwritten": value.get("overwritten"),
+            "renamed": value.get("renamed"),
+        })
+        if not write_ok:
+            item["remote"] = deps.compact_remote_run(run)
+            item["error"] = deps.remote_write_error(run, run.get("value"), expected_sha=sha256, remote_sha=remote_sha)
+    except Exception as exc:  # noqa: BLE001 - report per-file transfer failures.
+        item.update({"ok": False, "writeOk": False, "verified": False, "error": str(exc)})
+    return item
+
+
+def _read_back_file(
+    item: dict,
+    params: _SyncParams,
+    deps: DocumentSyncDeps,
+    token: str | None,
+    identity: str | None,
+) -> None:
+    """Verify one uploaded file by reading it back from the node. Mutates item in place."""
+    remote_path = str(item.get("remotePath") or item.get("dest") or "")
+    try:
+        run = deps.run_node_uri(
+            params.node_url,
+            params.fs_read_uri,
+            {
+                "path": remote_path,
+                "max_bytes": max(params.verify_max_bytes, int(item.get("bytes") or 0)),
+            },
+            token=token,
+            identity=identity,
+            timeout=params.timeout,
+        )
+        value = run.get("value") if isinstance(run.get("value"), dict) else {}
+        read_sha = value.get("sha256")
+        read_bytes = value.get("bytes")
+        verified = bool(
+            run.get("ok")
+            and value.get("ok", True)
+            and read_sha == item.get("sha256")
+            and (read_bytes in (None, item.get("bytes")))
+        )
+        item.update({
+            "ok": verified,
+            "verified": verified,
+            "readBackPath": value.get("path"),
+            "readBackSha256": read_sha,
+            "readBackBytes": read_bytes,
+        })
+        if not verified:
+            item["readBack"] = deps.compact_remote_run(run)
+            item["error"] = deps.remote_read_error(
+                run,
+                run.get("value"),
+                expected_sha=str(item.get("sha256") or ""),
+                remote_sha=read_sha,
+            )
+    except Exception as exc:  # noqa: BLE001 - report per-file read-back failures.
+        item.update({"ok": False, "verified": False, "error": str(exc)})
+
+
+def sync_documents_to_node(
+    project: str,
+    db: str | None,
+    config: str | None,
+    payload: dict,
+    *,
+    deps: DocumentSyncDeps,
+    node_urls: list[str] | None = None,
+    token: str | None = None,
+    identity: str | None = None,
+) -> dict:
+    params = _parse_sync_params(payload, config, deps, node_urls)
+    files = deps.archive_pdfs(params.source_root)
+
+    preflight, early_report, early_content = _check_preflight(params, files, deps, token, identity)
+    if early_report is not None:
+        return _log_and_chat_report(db, deps, early_report, node=params.node, content=early_content)  # type: ignore[arg-type]
+
     results: list[dict] = []
     uploaded = 0
-    copied = 0
-    skipped = 0
     failed_reasons: dict[str, int] = {}
-    preflight: dict | None = None
-
-    if ensure_routes and files:
-        required_routes = [fs_uri, fs_read_uri] if read_back else [fs_uri]
-        try:
-            preflight = deps.ensure_node_uri_routes(
-                node_url,
-                required_routes,
-                node=node,
-                token=token,
-                identity=identity,
-                timeout=min(timeout, 30.0),
-                roots=connector_roots,
-            )
-        except Exception as exc:  # noqa: BLE001 - fail before copying when route discovery cannot run.
-            preflight = {"ok": False, "error": str(exc), "requiredRoutes": required_routes}
-        if not preflight.get("ok"):
-            missing = preflight.get("missingAfter") or preflight.get("missingBefore") or required_routes
-            preflight_error = (
-                "remote node is missing required fs transfer route(s): "
-                f"{', '.join(str(item) for item in missing)}"
-            )
-            if preflight.get("error"):
-                preflight_error += f" ({preflight['error']})"
-            failed_reasons[preflight_error] = len(files)
-            verification = deps.verification(files, results, source_root, read_back)
-            report = {
-                "ok": False,
-                "uri": "document://host/archive/command/sync-to-node",
-                "sourceRoot": str(source_root),
-                "node": node,
-                "nodeUrl": node_url,
-                "fsUri": fs_uri,
-                "fsReadUri": fs_read_uri,
-                "destRoot": dest_root,
-                "total": len(files),
-                "uploaded": 0,
-                "copied": 0,
-                "failed": len(files),
-                "skipped": skipped,
-                "failedReasons": failed_reasons,
-                "verification": verification,
-                "preflight": preflight,
-                "results": results,
-                "updatedAt": deps.utc_now(),
-            }
-            content = f"Document sync to {node} blocked: 0/{len(files)} PDFs -> {dest_root} ({preflight_error})"
-            return _log_and_chat_report(db, deps, report, node=node, content=content)
-
     for source in files:
-        rel = source.relative_to(source_root)
-        dest_path = f"{dest_root}/{rel.as_posix()}"
-        data = source.read_bytes()
-        sha256 = hashlib.sha256(data).hexdigest()
-        item = {
-            "source": str(source),
-            "relativePath": rel.as_posix(),
-            "dest": dest_path,
-            "bytes": len(data),
-            "sha256": sha256,
-        }
-        try:
-            run = deps.run_node_uri(
-                node_url,
-                fs_uri,
-                {
-                    "path": dest_path,
-                    "bytes_b64": base64.b64encode(data).decode("ascii"),
-                    "overwrite": overwrite,
-                    "make_dirs": make_dirs,
-                },
-                token=token,
-                identity=identity,
-                timeout=timeout,
-            )
-            value = run.get("value") if isinstance(run.get("value"), dict) else {}
-            remote_sha = value.get("sha256")
-            write_ok = bool(run.get("ok") and value.get("ok", True) and remote_sha == sha256)
-            item.update({
-                "ok": write_ok,
-                "writeOk": write_ok,
-                "verified": False,
-                "remotePath": value.get("path"),
-                "remoteSha256": remote_sha,
-                "overwritten": value.get("overwritten"),
-                "renamed": value.get("renamed"),
-            })
-            if write_ok:
-                uploaded += 1
-            else:
-                item["remote"] = deps.compact_remote_run(run)
-                item["error"] = deps.remote_write_error(run, run.get("value"), expected_sha=sha256, remote_sha=remote_sha)
-                failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
-        except Exception as exc:  # noqa: BLE001 - report per-file transfer failures.
-            item.update({"ok": False, "writeOk": False, "verified": False, "error": str(exc)})
+        item = _upload_file(source, params, deps, token, identity)
+        if item.get("writeOk"):
+            uploaded += 1
+        elif "error" in item:
             failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
         results.append(item)
 
+    copied = 0
     for item in results:
         if not item.get("writeOk"):
             continue
-        if not read_back:
+        if not params.read_back:
             item["verified"] = True
             copied += 1
             continue
-        remote_path = str(item.get("remotePath") or item.get("dest") or "")
-        try:
-            run = deps.run_node_uri(
-                node_url,
-                fs_read_uri,
-                {
-                    "path": remote_path,
-                    "max_bytes": max(verify_max_bytes, int(item.get("bytes") or 0)),
-                },
-                token=token,
-                identity=identity,
-                timeout=timeout,
-            )
-            value = run.get("value") if isinstance(run.get("value"), dict) else {}
-            read_sha = value.get("sha256")
-            read_bytes = value.get("bytes")
-            verified = bool(
-                run.get("ok")
-                and value.get("ok", True)
-                and read_sha == item.get("sha256")
-                and (read_bytes in (None, item.get("bytes")))
-            )
-            item.update({
-                "ok": verified,
-                "verified": verified,
-                "readBackPath": value.get("path"),
-                "readBackSha256": read_sha,
-                "readBackBytes": read_bytes,
-            })
-            if verified:
-                copied += 1
-            else:
-                item["readBack"] = deps.compact_remote_run(run)
-                item["error"] = deps.remote_read_error(
-                    run,
-                    run.get("value"),
-                    expected_sha=str(item.get("sha256") or ""),
-                    remote_sha=read_sha,
-                )
-                failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
-        except Exception as exc:  # noqa: BLE001 - report per-file read-back failures.
-            item.update({"ok": False, "verified": False, "error": str(exc)})
+        _read_back_file(item, params, deps, token, identity)
+        if item.get("verified"):
+            copied += 1
+        elif "error" in item:
             failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
 
-    verification = deps.verification(files, results, source_root, read_back)
+    verification = deps.verification(files, results, params.source_root, params.read_back)
     failed = len(files) - copied
     report = {
         "ok": bool(verification.get("ok")),
         "uri": "document://host/archive/command/sync-to-node",
-        "sourceRoot": str(source_root),
-        "node": node,
-        "nodeUrl": node_url,
-        "fsUri": fs_uri,
-        "fsReadUri": fs_read_uri,
-        "destRoot": dest_root,
+        "sourceRoot": str(params.source_root),
+        "node": params.node,
+        "nodeUrl": params.node_url,
+        "fsUri": params.fs_uri,
+        "fsReadUri": params.fs_read_uri,
+        "destRoot": params.dest_root,
         "total": len(files),
         "uploaded": uploaded,
         "copied": copied,
         "failed": failed,
-        "skipped": skipped,
+        "skipped": 0,
         "failedReasons": failed_reasons,
         "verification": verification,
         "preflight": preflight,
         "results": results,
         "updatedAt": deps.utc_now(),
     }
-
     status = "completed" if report["ok"] else "finished with errors"
-    top_reason = ""
-    if failed_reasons:
-        top_reason = max(failed_reasons.items(), key=lambda item: item[1])[0]
+    top_reason = max(failed_reasons.items(), key=lambda kv: kv[1])[0] if failed_reasons else ""
     reason_suffix = f" ({top_reason})" if top_reason else ""
-    content = f"Document sync to {node} {status}: {copied}/{len(files)} PDFs -> {dest_root}{reason_suffix}"
-    return _log_and_chat_report(db, deps, report, node=node, content=content)
+    content = f"Document sync to {params.node} {status}: {copied}/{len(files)} PDFs -> {params.dest_root}{reason_suffix}"
+    return _log_and_chat_report(db, deps, report, node=params.node, content=content)

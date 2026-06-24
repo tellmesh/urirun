@@ -242,10 +242,33 @@ def json_from_text(text: str) -> dict:
     return json.loads(stripped)
 
 
+def _uri_segments(uri: str) -> tuple[str, list[str]]:
+    scheme, _, rest = str(uri).partition("://")
+    return scheme, rest.split("/")
+
+
+def _uri_matches_template(concrete: str, template: str) -> bool:
+    """True if ``concrete`` fits a templated allowed route, e.g. ``kvm://kvm/display/query/info``
+    matches ``kvm://{host}/display/query/info`` — a ``{param}`` segment binds any one segment."""
+    cs, cseg = _uri_segments(concrete)
+    ts, tseg = _uri_segments(template)
+    if cs != ts or len(cseg) != len(tseg):
+        return False
+    return all(t == c or (t.startswith("{") and t.endswith("}")) for t, c in zip(tseg, cseg))
+
+
+def _uri_is_available(uri: str, allowed_uris: set[str]) -> bool:
+    if uri in allowed_uris:
+        return True
+    # The planner's catalog lists parametrized routes with literal ``{host}``/``{id}`` segments;
+    # a concrete URI the LLM filled in (the node binds the param at /run) is still available.
+    return any(_uri_matches_template(uri, allowed) for allowed in allowed_uris if "{" in allowed)
+
+
 def _normalize_flow_step(step: dict, index: int, allowed_uris: set[str], used: set[str]) -> dict:
     """Validate and canonicalize one flow step; `used` tracks taken ids to keep them unique."""
     uri = str(step.get("uri", ""))
-    if uri not in allowed_uris:
+    if not _uri_is_available(uri, allowed_uris):
         raise ValueError(f"URI is not available: {uri}")
     step_id = slug(str(step.get("id") or f"step_{index}"))
     if step_id in used:
@@ -440,6 +463,60 @@ def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: 
     return entry
 
 
+def _run_step(
+    step: dict,
+    payload: dict,
+    registry: dict,
+    execute: bool,
+    routes: list[dict],
+    recover: bool,
+    max_retries: int,
+) -> tuple[dict, list[dict], list[dict], bool]:
+    """Execute one flow step with retry logic.
+
+    Returns (final_env, timeline_entries, recovery_entries, aborted).
+    When aborted=True the caller should halt the flow and return an error envelope.
+    """
+    timeline_entries: list[dict] = []
+    recovery_entries: list[dict] = []
+    attempt = 0
+    while True:
+        try:
+            env = v2_service.call(
+                step["uri"],
+                payload,
+                registry,
+                mode="execute" if execute else "dry-run",
+            )
+        except Exception as exc:  # noqa: BLE001 - normalize unexpected connector/runtime failures.
+            env = {"uri": step["uri"], "ok": False, "error": exception_error(exc, uri=step["uri"])}
+        entry = _flow_timeline_entry(step, env, routes, attempt=attempt)
+        timeline_entries.append(entry)
+        if env.get("ok"):
+            return env, timeline_entries, recovery_entries, False
+        recovery_entries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
+        if recover and can_retry_step(
+            entry["error"],
+            step=step,
+            routes=routes,
+            execute=execute,
+            attempt=attempt,
+            max_retries=max_retries,
+        ):
+            timeline_entries.append({
+                "id": f"{step['id']}:recovery:{attempt + 1}",
+                "uri": step["uri"],
+                "target": route_target(step["uri"]),
+                "ok": True,
+                "type": "recovery",
+                "action": "retry",
+                "reason": entry["error"].get("category"),
+            })
+            attempt += 1
+            continue
+        return env, timeline_entries, recovery_entries, True
+
+
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
                  max_retries: int = 1) -> dict:
     old_map = os.environ.get("URI_SERVICE_MAP")
@@ -463,48 +540,14 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
                 timeline.append(entry)
                 recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
                 return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
-
-            attempt = 0
-            while True:
-                try:
-                    env = v2_service.call(
-                        step["uri"],
-                        payload,
-                        registry,
-                        mode="execute" if execute else "dry-run",
-                    )
-                except Exception as exc:  # noqa: BLE001 - normalize unexpected connector/runtime failures.
-                    env = {
-                        "uri": step["uri"],
-                        "ok": False,
-                        "error": exception_error(exc, uri=step["uri"]),
-                    }
-                results[step["id"]] = env
-                entry = _flow_timeline_entry(step, env, routes, attempt=attempt)
-                timeline.append(entry)
-                if env.get("ok"):
-                    break
-                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
-                if recover and can_retry_step(
-                    entry["error"],
-                    step=step,
-                    routes=routes,
-                    execute=execute,
-                    attempt=attempt,
-                    max_retries=max_retries,
-                ):
-                    timeline.append({
-                        "id": f"{step['id']}:recovery:{attempt + 1}",
-                        "uri": step["uri"],
-                        "target": route_target(step["uri"]),
-                        "ok": True,
-                        "type": "recovery",
-                        "action": "retry",
-                        "reason": entry["error"].get("category"),
-                    })
-                    attempt += 1
-                    continue
-                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+            env, step_timeline, step_recoveries, aborted = _run_step(
+                step, payload, registry, execute, routes, recover, max_retries
+            )
+            timeline.extend(step_timeline)
+            recoveries.extend(step_recoveries)
+            results[step["id"]] = env
+            if aborted:
+                return {"ok": False, "timeline": timeline, "results": results, "error": step_timeline[-1]["error"], "recovery": recoveries}
         result = {"ok": True, "timeline": timeline, "results": results}
         if recoveries:
             result["recovery"] = recoveries

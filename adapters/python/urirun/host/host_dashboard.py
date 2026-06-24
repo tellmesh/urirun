@@ -204,6 +204,16 @@ INDEX_HTML = r"""<!doctype html>
     body[data-view="chat"] .grid > aside.stack {
       display: none;
     }
+    /* Nodes view goes full page width so the Nodes | URI Processes columns are roomy. */
+    body[data-view="nodes"] .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    body[data-view="nodes"] .grid > .stack:first-of-type {
+      grid-column: 1 / -1;
+    }
+    body[data-view="nodes"] .grid > aside.stack {
+      display: none;
+    }
     body[data-view="chat"] .chat-panel {
       min-height: inherit;
       display: grid;
@@ -459,6 +469,17 @@ INDEX_HTML = r"""<!doctype html>
       display: grid;
       gap: 14px;
     }
+    .nodes-layout {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .nodes-layout.hidden { display: none; }
+    .node-row { cursor: pointer; }
+    .node-row.node-row-active { border-color: var(--accent); background: var(--surface-3); }
+    @media (max-width: 920px) { .nodes-layout { grid-template-columns: 1fr; } }
     .artifact-file-grid {
       display: grid;
       gap: 8px;
@@ -871,7 +892,8 @@ INDEX_HTML = r"""<!doctype html>
             </table>
           </div>
         </article>
-        <article class="panel view-block" data-section="nodes">
+        <section class="nodes-layout view-block" data-section="nodes">
+        <article class="panel">
           <div class="panel-head"><h2>Nodes</h2><span class="subtle" id="nodeCount"></span></div>
           <div class="panel-body">
             <div class="list" id="nodesList"></div>
@@ -904,10 +926,11 @@ INDEX_HTML = r"""<!doctype html>
             </details>
           </div>
         </article>
-        <article class="panel view-block" data-section="nodes">
-          <div class="panel-head"><h2>URI Processes</h2><span class="subtle" id="routeCount"></span></div>
+        <article class="panel">
+          <div class="panel-head"><h2>URI Processes</h2><span class="subtle" id="routeCount"></span><span id="routesNodeFilter" class="subtle"></span></div>
           <div class="panel-body"><div class="list" id="routesList"></div></div>
         </article>
+        </section>
       </div>
       <aside class="stack">
         <article class="panel view-block" data-section="activity">
@@ -954,6 +977,7 @@ INDEX_HTML = r"""<!doctype html>
       serviceViews: [],
       widgetRender: null,
       dashboardWidgets: null,
+      selectedRoutesNode: null,
       visibleChatMessages: [],
       visibleChatMessageIds: [],
       selectedChatMessageIds: new Set(),
@@ -1114,10 +1138,10 @@ INDEX_HTML = r"""<!doctype html>
 
     function renderNodes(nodes) {
       $('nodeCount').textContent = `${nodes.length} configured`;
-      $('nodesList').innerHTML = nodes.map((node) => `<div class="item">
-        <div><strong>${node.name}</strong> <span class="pill ${node.reachable ? 'up' : 'down'}">${node.reachable ? 'up' : 'down'}</span></div>
-        <div class="mono">${node.url}</div>
-        <div class="subtle">${(node.routes || []).length} routes${node.error ? ` · ${node.error}` : ''}</div>
+      $('nodesList').innerHTML = nodes.map((node) => `<div class="item node-row${state.selectedRoutesNode === node.name ? ' node-row-active' : ''}" data-node="${esc(node.name)}" onclick="selectNodeRoutes(this.dataset.node)" title="Kliknij, aby pokazać procesy URI tego węzła">
+        <div><strong>${esc(node.name)}</strong> <span class="pill ${node.reachable ? 'up' : 'down'}">${node.reachable ? 'up' : 'down'}</span></div>
+        <div class="mono">${esc(node.url)}</div>
+        <div class="subtle">${(node.routes || []).length} routes${node.error ? ` · ${esc(node.error)}` : ''}</div>
       </div>`).join('') || empty('No nodes configured — use “➕ Jak dodać node” below to add one.');
       // Surface the how-to-add panel automatically when nothing is configured, so a missing
       // node (e.g. a sync target that failed with "node_url is required") is fixable in place.
@@ -1409,11 +1433,37 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function renderRoutes(routes) {
-      $('routeCount').textContent = `${routes.length} routes`;
-      $('routesList').innerHTML = routes.slice(0, 30).map((route) => `<div class="item">
-        <div class="mono">${route.uri}</div>
-        <div class="subtle">${text(route.node)} · ${text(route.kind)} · ${text(route.adapter)}</div>
-      </div>`).join('') || empty('No routes discovered');
+      // When a node is selected (clicked in the Nodes column), show only its URI processes.
+      const sel = state.selectedRoutesNode;
+      const filterEl = $('routesNodeFilter');
+      let list = routes || [];
+      if (sel) {
+        const node = (((state.summary || {}).nodes) || []).find((n) => n.name === sel) || { name: sel };
+        list = routesForNode(state.summary || {}, node);
+        if (filterEl) filterEl.innerHTML = ` · <strong>node:${esc(sel)}</strong> <a href="#" onclick="clearRoutesNodeFilter();return false;">(wszystkie)</a>`;
+      } else if (filterEl) {
+        filterEl.textContent = '';
+      }
+      $('routeCount').textContent = `${list.length} routes`;
+      $('routesList').innerHTML = list.slice(0, 30).map((route) => `<div class="item">
+        <div class="mono">${esc(route.uri)}</div>
+        <div class="subtle">${esc(text(route.node))} · ${esc(text(route.kind))} · ${esc(text(route.adapter))}</div>
+      </div>`).join('') || empty(sel ? `Brak procesów URI przypisanych do node:${sel}` : 'No routes discovered');
+    }
+
+    // Click a node -> filter the URI Processes column to that node (click again / "(wszystkie)" to clear).
+    function selectNodeRoutes(name) {
+      if (!name) return;
+      state.selectedRoutesNode = (state.selectedRoutesNode === name) ? null : name;
+      const summary = state.summary || {};
+      renderNodes(summary.nodes || []);
+      renderRoutes(summary.routes || []);
+    }
+    function clearRoutesNodeFilter() {
+      state.selectedRoutesNode = null;
+      const summary = state.summary || {};
+      renderNodes(summary.nodes || []);
+      renderRoutes(summary.routes || []);
     }
 
     function renderChecks(items) {
@@ -4151,27 +4201,36 @@ def _add_node_aliases(out: dict[str, str], name: str, aliases: Any = None) -> No
         out.setdefault(alias.casefold(), clean_name)
 
 
-def _node_alias_map_from_value(value: Any) -> dict[str, str]:
+_NODE_ALIAS_KEYS = ("alias", "aliases", "host", "hostname", "label", "labels", "tags")
+
+
+def _node_spec_aliases(spec: dict, fallback_name: str) -> tuple[str, list[str]]:
+    """The canonical name and collected alias values for one node spec dict."""
+    canonical = str(spec.get("name") or fallback_name).strip()
+    aliases: list[str] = []
+    for key in _NODE_ALIAS_KEYS:
+        aliases.extend(_iter_node_alias_values(spec.get(key)))
+    return canonical, aliases
+
+
+def _alias_map_from_dict(value: dict) -> dict[str, str]:
+    nodes = value.get("nodes")
+    if isinstance(nodes, (dict, list)):
+        return _node_alias_map_from_value(nodes)
     out: dict[str, str] = {}
-    if isinstance(value, dict):
-        nodes = value.get("nodes")
-        if isinstance(nodes, (dict, list)):
-            out.update(_node_alias_map_from_value(nodes))
-            return out
-        for name, spec in value.items():
-            if name == "nodes":
-                continue
-            if isinstance(spec, dict):
-                canonical = str(spec.get("name") or name).strip()
-                aliases: list[str] = []
-                for key in ("alias", "aliases", "host", "hostname", "label", "labels", "tags"):
-                    aliases.extend(_iter_node_alias_values(spec.get(key)))
-                _add_node_aliases(out, canonical, aliases)
-            else:
-                _add_node_aliases(out, str(name))
-        return out
-    if not isinstance(value, (list, tuple, set)):
-        return out
+    for name, spec in value.items():
+        if name == "nodes":
+            continue
+        if isinstance(spec, dict):
+            canonical, aliases = _node_spec_aliases(spec, name)
+            _add_node_aliases(out, canonical, aliases)
+        else:
+            _add_node_aliases(out, str(name))
+    return out
+
+
+def _alias_map_from_list(value: Any) -> dict[str, str]:
+    out: dict[str, str] = {}
     for item in value:
         if not isinstance(item, dict):
             text = str(item).strip()
@@ -4180,12 +4239,17 @@ def _node_alias_map_from_value(value: Any) -> dict[str, str]:
             name = text.split("=", 1)[0].strip() if "=" in text else text
             _add_node_aliases(out, name)
             continue
-        name = str(item.get("name") or "").strip()
-        aliases = [name]
-        for key in ("alias", "aliases", "host", "hostname", "label", "labels", "tags"):
-            aliases.extend(_iter_node_alias_values(item.get(key)))
-        _add_node_aliases(out, name, aliases)
+        name, aliases = _node_spec_aliases(item, "")
+        _add_node_aliases(out, name, [name] + aliases)
     return out
+
+
+def _node_alias_map_from_value(value: Any) -> dict[str, str]:
+    if isinstance(value, dict):
+        return _alias_map_from_dict(value)
+    if isinstance(value, (list, tuple, set)):
+        return _alias_map_from_list(value)
+    return {}
 
 
 def _normalize_known_node_url(raw: Any) -> str:
@@ -4197,27 +4261,27 @@ def _normalize_known_node_url(raw: Any) -> str:
     return value.rstrip("/")
 
 
-def _node_url_map_from_value(value: Any) -> dict[str, str]:
+def _url_map_from_dict(value: dict) -> dict[str, str]:
+    nodes = value.get("nodes")
+    if isinstance(nodes, (dict, list)):
+        return _node_url_map_from_value(nodes)
     out: dict[str, str] = {}
-    if isinstance(value, dict):
-        nodes = value.get("nodes")
-        if isinstance(nodes, (dict, list)):
-            out.update(_node_url_map_from_value(nodes))
-            return out
-        for name, spec in value.items():
-            if name == "nodes":
-                continue
-            if isinstance(spec, dict):
-                clean_name = str(spec.get("name") or name).strip()
-                url = _normalize_known_node_url(spec.get("url") or spec.get("nodeUrl") or spec.get("node_url"))
-            else:
-                clean_name = str(name).strip()
-                url = _normalize_known_node_url(spec)
-            if clean_name and url:
-                out[clean_name] = url
-        return out
-    if not isinstance(value, (list, tuple, set)):
-        return out
+    for name, spec in value.items():
+        if name == "nodes":
+            continue
+        if isinstance(spec, dict):
+            clean_name = str(spec.get("name") or name).strip()
+            url = _normalize_known_node_url(spec.get("url") or spec.get("nodeUrl") or spec.get("node_url"))
+        else:
+            clean_name = str(name).strip()
+            url = _normalize_known_node_url(spec)
+        if clean_name and url:
+            out[clean_name] = url
+    return out
+
+
+def _url_map_from_list(value: Any) -> dict[str, str]:
+    out: dict[str, str] = {}
     for item in value:
         if isinstance(item, dict):
             clean_name = str(item.get("name") or "").strip()
@@ -4231,6 +4295,14 @@ def _node_url_map_from_value(value: Any) -> dict[str, str]:
         if clean_name and url:
             out[clean_name] = url
     return out
+
+
+def _node_url_map_from_value(value: Any) -> dict[str, str]:
+    if isinstance(value, dict):
+        return _url_map_from_dict(value)
+    if isinstance(value, (list, tuple, set)):
+        return _url_map_from_list(value)
+    return {}
 
 
 def _node_dicts_from_url_map(nodes: dict[str, str], *, source: str) -> list[dict]:
@@ -4648,6 +4720,15 @@ def _route_not_found_remedy(error: Any) -> str:
     return ""
 
 
+def _envelope_error_message(error: Any) -> str | None:
+    """Render an error field to a message string, or None when there is no error."""
+    if isinstance(error, dict):
+        return str(error.get("message") or error)
+    if error:
+        return str(error)
+    return None
+
+
 def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha: str | None) -> str:
     envelope = run.get("envelope") if isinstance(run.get("envelope"), dict) else {}
     # A route/transport NOT_FOUND means the call never reached the write handler, so `value` is
@@ -4658,22 +4739,18 @@ def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha:
     if remedy:
         return remedy
     if isinstance(value, dict):
-        error = value.get("error")
-        if isinstance(error, dict):
-            return str(error.get("message") or error)
-        if error:
-            return str(error)
+        msg = _envelope_error_message(value.get("error"))
+        if msg is not None:
+            return msg
         if value.get("ok") is False:
             return "remote write returned ok=false"
         if not remote_sha:
             return "remote write returned no sha256"
         if remote_sha != expected_sha:
             return f"sha256 mismatch: expected {expected_sha}, got {remote_sha}"
-    error = envelope.get("error")
-    if isinstance(error, dict):
-        return str(error.get("message") or error)
-    if error:
-        return str(error)
+    msg = _envelope_error_message(envelope.get("error"))
+    if msg is not None:
+        return msg
     if value:
         return f"remote write returned non-object result: {_short_value(value)!r}"
     return "remote write failed without a result"
@@ -4684,11 +4761,9 @@ def _remote_read_error(run: dict, value: Any, *, expected_sha: str, remote_sha: 
     if remedy:
         return remedy
     if isinstance(value, dict):
-        error = value.get("error")
-        if isinstance(error, dict):
-            return str(error.get("message") or error)
-        if error:
-            return str(error)
+        msg = _envelope_error_message(value.get("error"))
+        if msg is not None:
+            return msg
         if value.get("ok") is False:
             return "remote read returned ok=false"
         if not remote_sha:
@@ -4696,11 +4771,9 @@ def _remote_read_error(run: dict, value: Any, *, expected_sha: str, remote_sha: 
         if remote_sha != expected_sha:
             return f"read-back sha256 mismatch: expected {expected_sha}, got {remote_sha}"
     envelope = run.get("envelope") if isinstance(run.get("envelope"), dict) else {}
-    error = envelope.get("error")
-    if isinstance(error, dict):
-        return str(error.get("message") or error)
-    if error:
-        return str(error)
+    msg = _envelope_error_message(envelope.get("error"))
+    if msg is not None:
+        return msg
     if value:
         return f"remote read returned non-object result: {_short_value(value)!r}"
     return "remote read failed without a result"
@@ -4898,54 +4971,60 @@ def _existing_scanned_id(*, doc_id: str, source_sha256: str, text_sha256: str) -
     return duplicate
 
 
+def _scanned_log_entry(item: dict) -> dict:
+    """Build a scanned-id-log entry from an existing document-index record."""
+    pdf_path = str(item.get("pdfPath") or item.get("path") or "")
+    return {
+        "version": 1,
+        "event": "indexed",
+        "scannedAt": item.get("createdAt") or _utc_now(),
+        "docId": str(item.get("docId") or "").strip(),
+        "docIdProvider": item.get("docIdProvider"),
+        "docIdSource": item.get("docIdSource"),
+        "duplicate": False,
+        "uri": item.get("uri"),
+        "pdfPath": pdf_path,
+        "jsonPath": item.get("jsonPath"),
+        "fileName": Path(pdf_path).name if pdf_path else "",
+        "originalPath": item.get("originalPath"),
+        "cropPath": item.get("cropPath"),
+        "sourceSha256": str(item.get("sourceSha256") or "").strip(),
+        "textSha256": str(item.get("textSha256") or "").strip(),
+        "ocrBackend": item.get("ocrBackend"),
+        "ocrChars": item.get("ocrChars"),
+        "metadata": {
+            "type": item.get("type"),
+            "date": item.get("date"),
+            "contractor": item.get("contractor"),
+            "amount": item.get("amount"),
+            "currency": item.get("currency"),
+        },
+    }
+
+
+def _scanned_entry_seen(entry: dict, seen: dict[str, set[str]]) -> bool:
+    """True when any of the entry's identity keys is already in the seen-bucket of that key."""
+    return any(entry[key] and entry[key] in bucket for key, bucket in seen.items())
+
+
 def _backfill_scanned_id_log(index: dict) -> None:
     docs = [item for item in index.get("documents", []) if isinstance(item, dict)]
     if not docs:
         return
     existing = _iter_scanned_id_log()
-    seen_doc_ids = {str(item.get("docId") or "") for item in existing if item.get("docId")}
-    seen_sources = {str(item.get("sourceSha256") or "") for item in existing if item.get("sourceSha256")}
-    seen_texts = {str(item.get("textSha256") or "") for item in existing if item.get("textSha256")}
+    seen: dict[str, set[str]] = {
+        "docId": {str(i.get("docId") or "") for i in existing if i.get("docId")},
+        "sourceSha256": {str(i.get("sourceSha256") or "") for i in existing if i.get("sourceSha256")},
+        "textSha256": {str(i.get("textSha256") or "") for i in existing if i.get("textSha256")},
+    }
     for item in docs:
-        doc_id = str(item.get("docId") or "").strip()
-        source_sha256 = str(item.get("sourceSha256") or "").strip()
-        text_sha256 = str(item.get("textSha256") or "").strip()
-        if (doc_id and doc_id in seen_doc_ids) or (source_sha256 and source_sha256 in seen_sources) or (text_sha256 and text_sha256 in seen_texts):
+        entry = _scanned_log_entry(item)
+        if _scanned_entry_seen(entry, seen):
             continue
-        pdf_path = str(item.get("pdfPath") or item.get("path") or "")
-        entry = {
-            "version": 1,
-            "event": "indexed",
-            "scannedAt": item.get("createdAt") or _utc_now(),
-            "docId": doc_id,
-            "docIdProvider": item.get("docIdProvider"),
-            "docIdSource": item.get("docIdSource"),
-            "duplicate": False,
-            "uri": item.get("uri"),
-            "pdfPath": pdf_path,
-            "jsonPath": item.get("jsonPath"),
-            "fileName": Path(pdf_path).name if pdf_path else "",
-            "originalPath": item.get("originalPath"),
-            "cropPath": item.get("cropPath"),
-            "sourceSha256": source_sha256,
-            "textSha256": text_sha256,
-            "ocrBackend": item.get("ocrBackend"),
-            "ocrChars": item.get("ocrChars"),
-            "metadata": {
-                "type": item.get("type"),
-                "date": item.get("date"),
-                "contractor": item.get("contractor"),
-                "amount": item.get("amount"),
-                "currency": item.get("currency"),
-            },
-        }
         _append_scanned_id_log(entry)
-        if doc_id:
-            seen_doc_ids.add(doc_id)
-        if source_sha256:
-            seen_sources.add(source_sha256)
-        if text_sha256:
-            seen_texts.add(text_sha256)
+        for key, bucket in seen.items():
+            if entry[key]:
+                bucket.add(entry[key])
 
 
 def _docid_for_file(path: str | Path, ocr_text: str) -> dict:
@@ -5231,40 +5310,49 @@ def _llm_extract_metadata(ocr_text: str, *, captured_at: str | None = None,
     key_ref = _llm_api_key_ref()
     if model.startswith("openrouter/") and not key_ref:
         return None
+    res = _llm_complete_metadata(model, key_ref, text, use_vision=use_vision, image_path=image_path)
+    data = _parse_llm_json_object(res)
+    if data is None:
+        return None
+    return _normalize_llm_doc_fields(data, model=model, use_vision=use_vision)
+
+
+def _llm_complete_metadata(model: str, key_ref: str | None, text: str, *,
+                           use_vision: bool, image_path: str | None) -> dict | None:
+    """Call the LLM connector (vision or text mode) and return its raw response envelope.
+
+    The API key travels as a reference (getv:// or secret://dotenv/...) and is resolved inside
+    the llm connector under a deny-by-default allow-list — never via os.environ here."""
     try:
         from urirun_connector_llm.core import complete  # type: ignore
     except Exception:  # noqa: BLE001
         return None
-
-    # The API key travels as a reference (getv:// or secret://dotenv/...) and is resolved
-    # inside the llm connector under a deny-by-default allow-list — never via os.environ here.
     if use_vision:
-        prompt = (
-            "Przeanalizuj zdjęcie polskiego paragonu lub faktury i wyciągnij dane. "
-            + _LLM_FIELDS_SPEC
-        )
+        prompt = "Przeanalizuj zdjęcie polskiego paragonu lub faktury i wyciągnij dane. " + _LLM_FIELDS_SPEC
         if text:
             prompt += "\nPomocniczy tekst z OCR (może zawierać błędy, zweryfikuj ze zdjęciem):\n" + text[:3000]
         try:
-            res = complete(prompt, model=model, image=str(image_path), api_key=key_ref, secret_allow=key_ref)
+            return complete(prompt, model=model, image=str(image_path), api_key=key_ref, secret_allow=key_ref)
         except Exception:  # noqa: BLE001
             return None
-    else:
-        prompt = (
-            "Jesteś ekstraktorem danych z polskich paragonów i faktur. Poniżej tekst z OCR "
-            "(zachowana kolejność linii). " + _LLM_FIELDS_SPEC
-            + "\nTEKST OCR:\n" + text[:6000]
-        )
-        try:
-            res = complete(prompt, model=model, api_key=key_ref, secret_allow=key_ref)
-        except Exception:  # noqa: BLE001
-            return None
+    prompt = (
+        "Jesteś ekstraktorem danych z polskich paragonów i faktur. Poniżej tekst z OCR "
+        "(zachowana kolejność linii). " + _LLM_FIELDS_SPEC
+        + "\nTEKST OCR:\n" + text[:6000]
+    )
+    try:
+        return complete(prompt, model=model, api_key=key_ref, secret_allow=key_ref)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _parse_llm_json_object(res: Any) -> dict | None:
+    """Pull the JSON object out of an LLM completion envelope (strips ```json fences)."""
     if not isinstance(res, dict) or not res.get("ok"):
         return None
     raw = str(res.get("response") or "").strip()
     if not raw:
         return None
-    # Strip ```json fences and isolate the JSON object.
     fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.S)
     if fenced:
         raw = fenced.group(1)
@@ -5276,9 +5364,11 @@ def _llm_extract_metadata(ocr_text: str, *, captured_at: str | None = None,
         data = json.loads(raw)
     except (ValueError, TypeError):
         return None
-    if not isinstance(data, dict):
-        return None
+    return data if isinstance(data, dict) else None
 
+
+def _normalize_llm_doc_fields(data: dict, *, model: str, use_vision: bool) -> dict:
+    """Coerce/validate the LLM's raw fields into the canonical document-metadata shape."""
     doc_type = str(data.get("type") or "").strip().lower()
     if doc_type not in _LLM_DOC_TYPES:
         doc_type = ""
@@ -6502,60 +6592,83 @@ def _frame_visual_metrics(path: str | Path) -> dict:
     }
 
 
-def _document_frame_quality(crop: dict, ocr: dict, metadata: dict, display_path: str | Path) -> dict:
-    visual = _frame_visual_metrics(display_path)
-    score = 0.0
-    reasons: list[str] = []
-    if crop.get("ok"):
-        score += 42.0
-        reasons.append("crop")
-        bbox_area = float(crop.get("bboxArea") or 0.0)
-        if bbox_area:
-            score += 18.0 * _bounded(1.0 - abs(bbox_area - 0.42) / 0.42)
-        width = int(crop.get("width") or crop.get("cropWidth") or 0)
-        height = int(crop.get("height") or crop.get("cropHeight") or 0)
-        if min(width, height) >= 220 and max(width, height) >= 420:
-            score += 12.0
-            reasons.append("size")
-        orientation = crop.get("orientation") if isinstance(crop.get("orientation"), dict) else {}
-        if orientation.get("enabled") and int(orientation.get("height") or height) >= int(orientation.get("width") or width):
-            score += 5.0
-            reasons.append("portrait")
-    else:
-        score -= 20.0
+def _crop_quality_score(crop: dict, reasons: list[str]) -> float:
+    if not crop.get("ok"):
         if crop.get("partialEdge"):
             reasons.append("partial-edge")
         elif crop.get("reason"):
             reasons.append("crop-rejected")
+        return -20.0
+    score = 42.0
+    reasons.append("crop")
+    bbox_area = float(crop.get("bboxArea") or 0.0)
+    if bbox_area:
+        score += 18.0 * _bounded(1.0 - abs(bbox_area - 0.42) / 0.42)
+    width = int(crop.get("width") or crop.get("cropWidth") or 0)
+    height = int(crop.get("height") or crop.get("cropHeight") or 0)
+    if min(width, height) >= 220 and max(width, height) >= 420:
+        score += 12.0
+        reasons.append("size")
+    orientation = crop.get("orientation") if isinstance(crop.get("orientation"), dict) else {}
+    if orientation.get("enabled") and int(orientation.get("height") or height) >= int(orientation.get("width") or width):
+        score += 5.0
+        reasons.append("portrait")
+    return score
 
-    doc_type = str(metadata.get("type") or "dokument")
+
+def _doctype_quality_score(doc_type: str, reasons: list[str]) -> float:
     if doc_type in {"paragon", "faktura"}:
-        score += 32.0
         reasons.append(doc_type)
-    elif doc_type in {"rachunek", "potwierdzenie"}:
-        score += 20.0
+        return 32.0
+    if doc_type in {"rachunek", "potwierdzenie"}:
         reasons.append(doc_type)
-    elif doc_type != "dokument":
-        score += 10.0
+        return 20.0
+    if doc_type != "dokument":
+        return 10.0
+    return 0.0
 
+
+def _metadata_quality_score(metadata: dict, reasons: list[str]) -> float:
+    score = 0.0
     if metadata.get("date"):
         score += 8.0
         reasons.append("date")
     if metadata.get("amount"):
         score += 10.0
         reasons.append("amount")
+    return score
 
-    chars = int(ocr.get("chars") or len(str(ocr.get("text") or "")))
+
+def _ocr_quality_score(ocr: dict, chars: int, reasons: list[str]) -> float:
     if ocr.get("ok") and chars:
-        score += min(36.0, chars / 4.0)
         reasons.append("ocr")
+        return min(36.0, chars / 4.0)
+    return 0.0
 
-    if visual.get("ok"):
-        score += 18.0 * float(visual.get("sharpnessScore") or 0.0)
-        score += 10.0 * float(visual.get("contrastScore") or 0.0)
-        score += 7.0 * float(visual.get("brightnessScore") or 0.0)
-        reasons.append("visual")
 
+def _visual_quality_score(visual: dict, reasons: list[str]) -> float:
+    if not visual.get("ok"):
+        return 0.0
+    reasons.append("visual")
+    return (
+        18.0 * float(visual.get("sharpnessScore") or 0.0)
+        + 10.0 * float(visual.get("contrastScore") or 0.0)
+        + 7.0 * float(visual.get("brightnessScore") or 0.0)
+    )
+
+
+def _document_frame_quality(crop: dict, ocr: dict, metadata: dict, display_path: str | Path) -> dict:
+    visual = _frame_visual_metrics(display_path)
+    reasons: list[str] = []
+    doc_type = str(metadata.get("type") or "dokument")
+    chars = int(ocr.get("chars") or len(str(ocr.get("text") or "")))
+    score = (
+        _crop_quality_score(crop, reasons)
+        + _doctype_quality_score(doc_type, reasons)
+        + _metadata_quality_score(metadata, reasons)
+        + _ocr_quality_score(ocr, chars, reasons)
+        + _visual_quality_score(visual, reasons)
+    )
     document_like = bool(crop.get("ok") and (doc_type in {"paragon", "faktura", "rachunek", "potwierdzenie"} or chars >= 36))
     return {
         "score": round(max(0.0, score), 3),
