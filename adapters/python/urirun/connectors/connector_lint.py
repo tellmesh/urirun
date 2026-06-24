@@ -31,14 +31,17 @@ MACHINE_FIELDS = ("routes", "uriSchemes", "adapterKinds")
 
 # Env-var names whose *value* is a credential rather than an identifier/host/path. Matched
 # case-insensitively against the literal read by os.getenv / os.environ[...] / os.environ.get.
-# Identifiers (USER, USERNAME, HOST, PORT, MODEL, DIR, PATH, IP, URL, PUBLIC_KEY, KEY_ID) are
-# deliberately NOT secrets, so they are excluded — only value-is-secret names are flagged.
+# Only *conventionally* secret names are flagged — the qualified ``*_API_KEY``/``*_SECRET_KEY``
+# forms, not a bare ``*_KEY`` (too often a TLS keyfile *path* like ``WEBCAM_KEY``, a partition
+# key, etc.). Identifiers (USER/USERNAME/HOST/PORT/MODEL/DIR/PATH/IP/URL) are never secrets.
 _SECRET_ENV_RE = re.compile(
-    r"(SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIAL|API[_-]?KEY|ACCESS[_-]?KEY|"
-    r"PRIVATE[_-]?KEY|AUTH[_-]?KEY|_KEY$|_PASS$)",
+    r"(SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIAL|"
+    r"API[_-]?KEY|ACCESS[_-]?KEY|PRIVATE[_-]?KEY|AUTH[_-]?KEY|SECRET[_-]?KEY|_PASS$)",
     re.IGNORECASE,
 )
-_SECRET_ENV_EXCLUDE = re.compile(r"(PUBLIC[_-]?KEY|KEY[_-]?ID|KEYWORD)", re.IGNORECASE)
+# Excluded: keyfile/cert *paths* (a filename, not the value) and ``*_ALLOW`` policy/allow-list
+# var names (which hold globs naming a secret, not the secret itself).
+_SECRET_ENV_EXCLUDE = re.compile(r"(KEY[_-]?ID|KEYWORD|KEY_?FILE|KEY_?PATH|CERT_?FILE|_ALLOW$)", re.IGNORECASE)
 
 # Each decorator kind binds to one runtime adapter. The manifest's ``adapterKinds``
 # advertises which adapters the connector uses; if it omits one a decorator route

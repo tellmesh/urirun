@@ -16,6 +16,7 @@ from typing import Any
 
 from urirun import v2_service
 from urirun.node._util import json_write, now_id, slug
+from urirun.node.recovery import can_retry_step, exception_error, normalize_error, recovery_plan, step_target
 from urirun.node.routing import (
     registry_from_routes,
     route_target,
@@ -406,27 +407,103 @@ def resolve_step_payload(payload: dict, results: dict) -> dict:
     return resolved
 
 
-def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool) -> dict:
+def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict]) -> dict:
+    error = exception_error(exc, uri=str(step.get("uri") or ""))
+    return {
+        "id": step.get("id"),
+        "uri": step.get("uri"),
+        "target": step_target(step),
+        "ok": False,
+        "error": error,
+        "recovery": recovery_plan(error, step=step, routes=routes),
+    }
+
+
+def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: int = 0) -> dict:
+    entry = {
+        "id": step["id"],
+        "uri": step["uri"],
+        "target": route_target(step["uri"]),
+        "ok": bool(env.get("ok")),
+    }
+    if attempt:
+        entry["attempt"] = attempt + 1
+    if not env.get("ok"):
+        error = exception_error(Exception("unknown URI error"), uri=step["uri"]) if not env.get("error") else normalize_error(env.get("error"), uri=step["uri"])
+        entry["error"] = error
+        entry["recovery"] = recovery_plan(error, step=step, routes=routes)
+    return entry
+
+
+def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
+                 max_retries: int = 1) -> dict:
     old_map = os.environ.get("URI_SERVICE_MAP")
-    os.environ["URI_SERVICE_MAP"] = json.dumps(mesh["serviceMap"])
+    os.environ["URI_SERVICE_MAP"] = json.dumps(mesh.get("serviceMap") or {})
     results = {}
     timeline = []
+    recoveries = []
+    routes = mesh.get("routes") or []
     try:
         for step in flow["steps"]:
             missing = [dep for dep in step.get("depends_on", []) if dep not in results]
             if missing:
-                raise RuntimeError(f"{step['id']} missing dependencies: {missing}")
-            env = v2_service.call(
-                step["uri"],
-                resolve_step_payload(step.get("payload") or {}, results),
-                registry,
-                mode="execute" if execute else "dry-run",
-            )
-            results[step["id"]] = env
-            timeline.append({"id": step["id"], "uri": step["uri"], "target": route_target(step["uri"]), "ok": bool(env.get("ok"))})
-            if not env.get("ok"):
-                return {"ok": False, "timeline": timeline, "results": results}
-        return {"ok": True, "timeline": timeline, "results": results}
+                entry = _flow_step_failure(step, RuntimeError(f"{step['id']} missing dependencies: {missing}"), routes)
+                timeline.append(entry)
+                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
+                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+            try:
+                payload = resolve_step_payload(step.get("payload") or {}, results)
+            except Exception as exc:  # noqa: BLE001 - surface as a structured step error.
+                entry = _flow_step_failure(step, exc, routes)
+                timeline.append(entry)
+                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
+                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+
+            attempt = 0
+            while True:
+                try:
+                    env = v2_service.call(
+                        step["uri"],
+                        payload,
+                        registry,
+                        mode="execute" if execute else "dry-run",
+                    )
+                except Exception as exc:  # noqa: BLE001 - normalize unexpected connector/runtime failures.
+                    env = {
+                        "uri": step["uri"],
+                        "ok": False,
+                        "error": exception_error(exc, uri=step["uri"]),
+                    }
+                results[step["id"]] = env
+                entry = _flow_timeline_entry(step, env, routes, attempt=attempt)
+                timeline.append(entry)
+                if env.get("ok"):
+                    break
+                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
+                if recover and can_retry_step(
+                    entry["error"],
+                    step=step,
+                    routes=routes,
+                    execute=execute,
+                    attempt=attempt,
+                    max_retries=max_retries,
+                ):
+                    timeline.append({
+                        "id": f"{step['id']}:recovery:{attempt + 1}",
+                        "uri": step["uri"],
+                        "target": route_target(step["uri"]),
+                        "ok": True,
+                        "type": "recovery",
+                        "action": "retry",
+                        "reason": entry["error"].get("category"),
+                    })
+                    attempt += 1
+                    continue
+                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+        result = {"ok": True, "timeline": timeline, "results": results}
+        if recoveries:
+            result["recovery"] = recoveries
+        return result
     finally:
         if old_map is None:
             os.environ.pop("URI_SERVICE_MAP", None)

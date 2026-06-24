@@ -358,6 +358,31 @@ def test_chat_ask_executes_document_sync_without_llm(monkeypatch):
     assert fake_db.logs[1]["detail"]["generator"]["intent"] == "document-sync"
 
 
+def test_chat_ask_returns_recovery_when_planner_fails(monkeypatch):
+    class FailingMesh(FakeMesh):
+        def make_flow(self, prompt, mesh, selected_nodes=None, use_llm=True):
+            raise RuntimeError("URIRUN_LLM_MODEL or LLM_MODEL is not set")
+
+    fake_mesh = FailingMesh()
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_mesh", lambda: fake_mesh)
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {"prompt": "wykonaj niestandardowa operacje na laptop", "nodes": [], "targets": ["host", "node:laptop"]},
+    )
+
+    assert result["ok"] is False
+    assert result["error"]["category"] == "FAILED_PRECONDITION"
+    assert result["generator"]["intent"] == "planner-recovery"
+    assert result["timeline"][0]["recovery"]["actions"][0]["id"] == "use-known-intent-or-configure-llm"
+    assert fake_db.logs[1]["detail"]["role"] == "system"
+    assert "recovery available" in fake_db.logs[1]["detail"]["content"]
+
+
 def test_chat_ask_execute_and_transient_node_urls(monkeypatch):
     fake_mesh = FakeMesh()
     fake_db = FakeHostDb()

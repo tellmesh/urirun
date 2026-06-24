@@ -7576,7 +7576,55 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             except Exception:
                 pass
             return result
-        flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes, use_llm=not no_llm)
+        try:
+            flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes, use_llm=not no_llm)
+        except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
+            from urirun.node.recovery import planner_failure
+
+            result = planner_failure(exc, prompt=prompt, selected_nodes=selected_nodes, selected_targets=selected_targets)
+            result["execute"] = execute
+            result["generator"] = {
+                "provider": "host-dashboard",
+                "intent": "planner-recovery",
+                "fallback": True,
+                "reason": str(exc),
+            }
+            _add_chat_message(db, _chat_message(
+                "system",
+                f"failed: planner error ({(result.get('error') or {}).get('category') or 'UNKNOWN'}); recovery available",
+                detail={
+                    "prompt": prompt,
+                    "execute": execute,
+                    "ok": False,
+                    "selectedTargets": selected_targets,
+                    "generator": result["generator"],
+                    "flow": result.get("flow") or {},
+                    "timeline": result.get("timeline") or [],
+                    "results": {},
+                    "error": result.get("error"),
+                    "recovery": result.get("recovery") or [],
+                },
+            ))
+            try:
+                _host_db().add_log(
+                    db,
+                    "chat",
+                    "ask",
+                    {
+                        "prompt": prompt,
+                        "execute": execute,
+                        "ok": False,
+                        "selectedNodes": selected_nodes,
+                        "selectedTargets": selected_targets,
+                        "generator": result["generator"],
+                        "timeline": result.get("timeline") or [],
+                        "error": result.get("error"),
+                        "recovery": result.get("recovery") or [],
+                    },
+                )
+            except Exception:
+                pass
+            return result
         registry = mesh.registry_from_routes(discovered.get("routes") or [])
         execution = mesh.execute_flow(flow, discovered, registry, execute=execute)
     finally:
@@ -7606,6 +7654,8 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
     timeline = result.get("timeline") or []
     status = "ok" if result.get("ok") else "failed"
     content = f"{status}: {len(timeline)} URI step(s)"
+    if result.get("recovery"):
+        content += f", {len(result.get('recovery') or [])} recovery action(s)"
     if attachments:
         content += f", {len(attachments)} attachment(s)"
     _add_chat_message(db, _chat_message(
@@ -7621,6 +7671,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "timeline": timeline,
             "results": result.get("results") or {},
             "error": result.get("error"),
+            "recovery": result.get("recovery") or [],
         },
         attachments=attachments,
     ))
@@ -7637,6 +7688,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 "selectedTargets": selected_targets,
                 "generator": generator,
                 "timeline": result.get("timeline") or [],
+                "recovery": result.get("recovery") or [],
             },
         )
     except Exception:
