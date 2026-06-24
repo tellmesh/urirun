@@ -155,8 +155,13 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "chatRenderKey" in html
     assert "artifact-thumb-pdf" in html
     assert "attachment-pdf-preview" in html
+    assert "attachment-pdf-frame" in html
     assert "artifactVisualPreviewUrl" in html
     assert "attachmentVisualPreviewUrl" in html
+    assert "function messageAttachments(message)" in html
+    assert "const attachments = message.attachments || [];" in html
+    assert "isScannerFrameAttachment" in html
+    assert "messageAttachments(message).map" in html
     assert "#toolbar=0&navpanes=0" not in html
     assert "submitServiceForm" in html
     assert "data-service-form" in html
@@ -205,6 +210,12 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "withActionTimeout" in host_dashboard.SCANNER_HTML
     assert "page action timed out after" in host_dashboard.SCANNER_HTML
     assert "accept camera permission" in host_dashboard.SCANNER_HTML
+    assert "function feedbackTone(kind)" in host_dashboard.SCANNER_HTML
+    assert "function unlockFeedbackAudio()" in host_dashboard.SCANNER_HTML
+    assert "window.addEventListener('pointerdown', unlockFeedbackAudio" in host_dashboard.SCANNER_HTML
+    assert "feedbackTone(kind)" in host_dashboard.SCANNER_HTML
+    assert "feedbackTone('error')" in host_dashboard.SCANNER_HTML
+    assert "truthyParam('beep', true)" in host_dashboard.SCANNER_HTML
 
 
 def test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch):
@@ -871,7 +882,7 @@ def test_chat_torch_prompt_starts_camera_and_queues_light(monkeypatch):
     assert polled["actions"][1]["payload"]["enabled"] is True
 
 
-def test_scanner_capture_registers_artifact_and_chat_message(monkeypatch, tmp_path):
+def test_scanner_capture_rejects_low_quality_without_chat_attachment(monkeypatch, tmp_path):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "_local_image_ocr", lambda path: {"ok": True, "backend": "mock", "text": "VAT", "chars": 3})
@@ -886,8 +897,9 @@ def test_scanner_capture_registers_artifact_and_chat_message(monkeypatch, tmp_pa
     })
 
     assert result["ok"] is True
-    assert fake_db.artifacts[0]["kind"] == "camera-scan"
-    assert fake_db.logs[-1]["detail"]["attachments"][0]["meta"]["ocr"]["text"] == "VAT"
+    assert result["rejected"] is True
+    assert fake_db.artifacts == []
+    assert fake_db.logs == []
 
 
 def test_scanner_capture_uses_receipt_crop_for_preview_and_ocr(monkeypatch, tmp_path):
@@ -916,13 +928,11 @@ def test_scanner_capture_uses_receipt_crop_for_preview_and_ocr(monkeypatch, tmp_
         "source": "phone",
     })
 
-    attachment = result["message"]["attachments"][0]
     assert result["ok"] is True
     assert seen_ocr_paths == [str(tmp_path / "cropped.jpg")]
     assert fake_db.artifacts[0]["path"] == str(tmp_path / "cropped.jpg")
-    assert attachment["kind"] == "receipt-crop"
-    assert attachment["previewUrl"].startswith("/api/file?path=")
-    assert attachment["meta"]["originalPath"] != attachment["path"]
+    assert result["message"]["attachments"] == []
+    assert result["message"]["detail"]["ocr"]["text"] == "PARAGON"
 
 
 def test_scanner_capture_candidate_scores_without_archiving(monkeypatch, tmp_path):
@@ -1038,7 +1048,7 @@ def test_scanner_best_finish_archives_best_candidate(monkeypatch, tmp_path):
     assert result["best"]["frameIndex"] == 2
     assert result["document"]["docId"] == "DOC-PAR-BEST"
     assert [item["kind"] for item in fake_db.artifacts] == ["camera-scan", "document-pdf"]
-    assert fake_db.logs[-1]["detail"]["attachments"][1]["kind"] == "document-pdf"
+    assert [item["kind"] for item in fake_db.logs[-1]["detail"]["attachments"]] == ["document-pdf"]
 
 
 def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(monkeypatch, tmp_path):
@@ -1263,6 +1273,40 @@ def test_archive_supersedes_incomplete_duplicate_when_better_scan_arrives(monkey
     assert index["documents"][0]["supersededOf"] == first["docId"]
 
 
+def test_merge_metadata_fields_backfills_gaps_best_of_both():
+    """Fusion keeps the heavier scan's values but fills its blanks from the other."""
+    archived = {"type": "rachunek", "date": "2026-06-19",
+                "contractor": "DUO CAFE HANNA GRUBA", "amount": "", "currency": ""}
+    rescan = {"type": "rachunek", "date": "2026-06-19",
+              "contractor": "", "amount": "30.26", "currency": "PLN"}
+    merged, filled = host_dashboard._merge_metadata_fields(
+        archived, rescan, old_weight=2.0, new_weight=4.0,
+    )
+    # Amount from the (heavier) re-scan, merchant backfilled from the archived scan.
+    assert merged["amount"] == "30.26"
+    assert merged["contractor"] == "DUO CAFE HANNA GRUBA"
+    assert "contractor" in filled
+
+
+def test_enrich_archived_record_updates_entry_and_sidecar(tmp_path):
+    """A re-scan's newly-recognized field is fused into the kept record + JSON."""
+    json_path = tmp_path / "doc.json"
+    json_path.write_text(
+        json.dumps({"docId": "DOC-1", "amount": "30.26", "contractor": ""}) + "\n",
+        encoding="utf-8",
+    )
+    existing = {"docId": "DOC-1", "amount": "30.26", "contractor": "", "jsonPath": str(json_path)}
+    fused = {"amount": "30.26", "contractor": "DUO CAFE HANNA GRUBA"}
+
+    host_dashboard._enrich_archived_record(existing, fused, ["contractor"])
+
+    assert existing["contractor"] == "DUO CAFE HANNA GRUBA"
+    assert "contractor" in existing["enrichedFields"]
+    sidecar = json.loads(json_path.read_text(encoding="utf-8"))
+    assert sidecar["contractor"] == "DUO CAFE HANNA GRUBA"
+    assert "enrichedAt" in sidecar
+
+
 def test_archive_skips_lower_quality_fingerprint_duplicate(monkeypatch, tmp_path):
     from PIL import Image
 
@@ -1462,3 +1506,69 @@ def test_free_port_noop_when_nothing_to_replace(monkeypatch):
     monkeypatch.setattr(host_dashboard.os, "kill", lambda pid, sig: killed.append(pid))
     host_dashboard._free_port_from_old_dashboard(8194)
     assert killed == []
+
+
+def _data_image_payload(color=(245, 244, 235)):
+    import base64 as _b64
+    import io as _io
+
+    from PIL import Image
+
+    buf = _io.BytesIO()
+    Image.new("RGB", (240, 360), color).save(buf, format="JPEG")
+    return "data:image/jpeg;base64," + _b64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def test_scanner_capture_rejects_low_quality_scan(monkeypatch, tmp_path):
+    """A low-confidence single capture is discarded, not archived or shown."""
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "_auto_crop_receipt",
+                        lambda path: {"ok": False, "reason": "no document", "originalPath": str(path)})
+    monkeypatch.setattr(host_dashboard, "_local_image_ocr",
+                        lambda p: {"ok": False, "text": "", "chars": 0})
+    archived = []
+    monkeypatch.setattr(host_dashboard, "_archive_scanned_document",
+                        lambda **kw: archived.append(kw) or {"ok": True})
+
+    result = host_dashboard.scanner_capture("proj", "db", {"image": _data_image_payload()})
+
+    assert result["ok"] is True
+    assert result["rejected"] is True
+    assert result["quality"]["score"] < result["minScore"]
+    assert archived == []           # never archived
+    assert fake_db.artifacts == []  # never shown as an artifact
+    assert list(scans.iterdir()) == []  # staged files cleaned up
+
+
+def test_scanner_capture_archives_when_quality_passes(monkeypatch, tmp_path):
+    """A confident capture is archived normally (not rejected)."""
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "_auto_crop_receipt",
+                        lambda path: {"ok": True, "path": str(path), "bboxArea": 0.42, "width": 240, "height": 360})
+    monkeypatch.setattr(host_dashboard, "_local_image_ocr",
+                        lambda p: {"ok": True, "backend": "mock", "chars": 90,
+                                   "text": "PARAGON FISKALNY\nALLEGRO\nRAZEM 12,00 PLN\nData 2026-06-19"})
+    monkeypatch.setattr(host_dashboard, "_document_frame_quality",
+                        lambda *a, **k: {"score": 88.0, "documentLike": True, "reasons": ["crop"], "visual": {}})
+    archived = []
+
+    def fake_archive(**kw):
+        archived.append(kw)
+        return {"ok": True, "duplicate": False, "superseded": False, "docId": "DOC-X",
+                "path": str(scans / "doc.pdf"), "metadata": {}}
+
+    monkeypatch.setattr(host_dashboard, "_archive_scanned_document", fake_archive)
+
+    result = host_dashboard.scanner_capture("proj", "db", {"image": _data_image_payload()})
+
+    assert result["ok"] is True
+    assert result.get("rejected") is not True
+    assert len(archived) == 1

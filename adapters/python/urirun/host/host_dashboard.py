@@ -518,10 +518,13 @@ INDEX_HTML = r"""<!doctype html>
     }
     .attachment iframe {
       width: 100%;
-      height: 360px;
+      height: 520px;
       border: 1px solid var(--line-soft);
       border-radius: 6px;
       background: var(--code-bg);
+    }
+    .attachment.attachment-pdf {
+      grid-column: span 2;
     }
     .attachment-pdf-preview {
       display: grid;
@@ -536,6 +539,10 @@ INDEX_HTML = r"""<!doctype html>
     .attachment.attachment-qr img {
       max-height: 340px;
       image-rendering: pixelated;
+    }
+    @media (max-width: 760px) {
+      .attachment.attachment-pdf { grid-column: auto; }
+      .attachment iframe { height: 420px; }
     }
     pre {
       margin: 0;
@@ -1247,17 +1254,44 @@ INDEX_HTML = r"""<!doctype html>
       return displayPath ? filePreviewUrl(displayPath) : '';
     }
 
+    function isPdfAttachment(att) {
+      return att && (att.kind === 'document-pdf' || /\.pdf$/i.test(text(att.path)));
+    }
+
+    function isScannerFrameAttachment(att) {
+      if (!att) return false;
+      const kind = text(att.kind);
+      const uri = text(att.uri);
+      return ['receipt-crop', 'image', 'camera-scan'].includes(kind) || uri.startsWith('scanner://host/capture/');
+    }
+
+    function messageAttachments(message) {
+      const detail = message.detail || {};
+      const document = detail.document || {};
+      const attachments = messageAttachments(message);
+      const hasPdf = attachments.some(isPdfAttachment);
+      return attachments.filter((att) => {
+        if (isPdfAttachment(att)) return true;
+        if (hasPdf && isScannerFrameAttachment(att)) return false;
+        if (isScannerFrameAttachment(att) && !(document.ok && document.path)) return false;
+        return true;
+      });
+    }
+
     function renderAttachment(att) {
       const meta = att.meta || {};
       const ocr = meta.ocr || {};
-      const qrClass = att.kind === 'qr-code' ? ' attachment-qr' : '';
-      const isPdf = /\.pdf$/i.test(text(att.path));
+      const isPdf = isPdfAttachment(att);
+      const kindClass = att.kind === 'qr-code' ? ' attachment-qr' : isPdf ? ' attachment-pdf' : '';
       const visualUrl = isPdf ? attachmentVisualPreviewUrl(att) : text(att.previewUrl || '');
-      const preview = visualUrl
-        ? `<img src="${esc(visualUrl)}" alt="${esc(basename(att.path))}" loading="lazy">`
-        : (isPdf
-          ? `<div class="attachment-pdf-preview"><span>PDF</span><small>${esc(basename(att.path))}</small></div>`
-          : `<div class="subtle">preview unavailable</div>`);
+      const pdfUrl = isPdf ? text(att.previewUrl || '') : '';
+      const preview = isPdf && pdfUrl
+        ? `<iframe class="attachment-pdf-frame" src="${esc(pdfUrl)}" title="${esc(basename(att.path))}" loading="lazy"></iframe>`
+        : (visualUrl
+          ? `<img src="${esc(visualUrl)}" alt="${esc(basename(att.path))}" loading="lazy">`
+          : (isPdf
+            ? `<div class="attachment-pdf-preview"><span>PDF</span><small>${esc(basename(att.path))}</small></div>`
+            : `<div class="subtle">preview unavailable</div>`));
       const open = att.previewUrl
         ? `<a href="${esc(att.previewUrl)}" target="_blank" rel="noreferrer">open</a>`
         : '';
@@ -1265,7 +1299,7 @@ INDEX_HTML = r"""<!doctype html>
       const ocrLine = ocr.ok
         ? `<div class="subtle">OCR ${esc(ocr.backend || '')}: ${esc(text(ocr.text).slice(0, 160))}</div>`
         : (ocr.error ? `<div class="subtle">OCR: ${esc(ocr.error)}</div>` : '');
-      return `<div class="attachment${qrClass}">
+      return `<div class="attachment${kindClass}">
         ${preview}
         <div class="mono">${esc(basename(att.path))}</div>
         <div class="subtle">${esc(att.kind || 'file')} ${meta.width && meta.height ? `· ${meta.width}x${meta.height}` : ''}</div>
@@ -1561,7 +1595,7 @@ INDEX_HTML = r"""<!doctype html>
       const detail = message.detail || {};
       const timeline = detail.timeline || [];
       const lines = timeline.map((step) => `${step.ok ? 'ok' : 'fail'} · ${step.target || ''} · ${step.uri}`).join('\n');
-      const attachments = message.attachments || [];
+      const attachments = messageAttachments(message);
       const role = message.role || 'system';
       const selected = message.id && state.selectedChatMessageIds.has(message.id) ? 'checked' : '';
       const checkbox = message.id ? `<input type="checkbox" name="chatMessageSelect" value="${esc(message.id)}" ${selected}>` : '';
@@ -1709,7 +1743,7 @@ INDEX_HTML = r"""<!doctype html>
           message.role,
           message.created_at,
           message.content,
-          (message.attachments || []).map((att) => [att.kind, att.path, att.previewUrl, att.uri, att.meta || null]),
+          messageAttachments(message).map((att) => [att.kind, att.path, att.previewUrl, att.uri, att.meta || null]),
           message.detail || null,
         ]),
       });
@@ -2202,17 +2236,34 @@ SCANNER_HTML = r"""<!doctype html>
     // 'ok' = new document saved, 'duplicate' = recognised as already archived,
     // 'superseded' = replaced a worse earlier scan, 'error' = processing failed.
     let feedbackAudioCtx = null;
+    function feedbackEnabled() {
+      return truthyParam('beep', true);
+    }
+
+    function unlockFeedbackAudio() {
+      if (!feedbackEnabled()) return Promise.resolve(null);
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return Promise.resolve(null);
+        feedbackAudioCtx = feedbackAudioCtx || new Ctx();
+        const resume = feedbackAudioCtx.state === 'suspended'
+          ? feedbackAudioCtx.resume().catch(() => null)
+          : Promise.resolve(feedbackAudioCtx);
+        return resume.then(() => feedbackAudioCtx);
+      } catch (_e) {
+        return Promise.resolve(null);
+      }
+    }
+
     function feedbackTone(kind) {
+      if (!feedbackEnabled()) return;
       try {
         if (navigator.vibrate) {
           navigator.vibrate(kind === 'error' ? [120, 60, 120] : kind === 'duplicate' ? [40, 40, 40] : 30);
         }
       } catch (_e) {}
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) return;
-        feedbackAudioCtx = feedbackAudioCtx || new Ctx();
-        if (feedbackAudioCtx.state === 'suspended') feedbackAudioCtx.resume();
+      unlockFeedbackAudio().then((ctx) => {
+        if (!ctx) return;
         // Each tone: [frequencyHz, startOffsetSec, durationSec].
         const tones = kind === 'error'
           ? [[220, 0, 0.32]]
@@ -2221,20 +2272,20 @@ SCANNER_HTML = r"""<!doctype html>
             : kind === 'superseded'
               ? [[660, 0, 0.09], [990, 0.11, 0.16]]
               : [[880, 0, 0.12], [1320, 0.12, 0.16]];
-        const now = feedbackAudioCtx.currentTime;
+        const now = ctx.currentTime;
         for (const [freq, at, dur] of tones) {
-          const osc = feedbackAudioCtx.createOscillator();
-          const gain = feedbackAudioCtx.createGain();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
           osc.type = 'sine';
           osc.frequency.value = freq;
           gain.gain.setValueAtTime(0.0001, now + at);
           gain.gain.exponentialRampToValueAtTime(0.25, now + at + 0.02);
           gain.gain.exponentialRampToValueAtTime(0.0001, now + at + dur);
-          osc.connect(gain).connect(feedbackAudioCtx.destination);
+          osc.connect(gain).connect(ctx.destination);
           osc.start(now + at);
           osc.stop(now + at + dur + 0.02);
         }
-      } catch (_e) {}
+      }).catch(() => {});
     }
 
     function captureFeedbackKind(data) {
@@ -2455,13 +2506,24 @@ SCANNER_HTML = r"""<!doctype html>
       const w = video.videoWidth || 1920;
       const h = video.videoHeight || 1080;
       setState(`uploading ${w}x${h}...`);
-      const data = await sendFrame({archive: true, ...options});
-      if (!data || data.ok === false) { feedbackTone('error'); throw new Error((data && data.error) || 'scan failed'); }
-      const kind = captureFeedbackKind(data);
-      const label = kind === 'duplicate' ? 'already saved' : kind === 'superseded' ? 'updated' : 'saved';
-      setState(`${label} ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
-      feedbackTone(kind);
-      return data;
+      try {
+        const data = await sendFrame({archive: true, ...options});
+        if (!data || data.ok === false) throw new Error((data && data.error) || 'scan failed');
+        if (data.rejected) {
+          const sc = data.quality && data.quality.score != null ? Number(data.quality.score).toFixed(0) : '?';
+          setState(`discarded — low quality (score ${sc} < ${data.minScore})`, true);
+          feedbackTone('error');
+          return data;
+        }
+        const kind = captureFeedbackKind(data);
+        const label = kind === 'duplicate' ? 'already saved' : kind === 'superseded' ? 'updated' : 'saved';
+        setState(`${label} ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
+        feedbackTone(kind);
+        return data;
+      } catch (err) {
+        feedbackTone('error');
+        throw err;
+      }
     }
 
     async function bestPdf(options={}) {
@@ -2491,12 +2553,15 @@ SCANNER_HTML = r"""<!doctype html>
         }
         const minScore = Number(Object.prototype.hasOwnProperty.call(options || {}, 'minScore') ? options.minScore : numericParam('minScore', 45));
         const finalData = await invokeURI('scanner://host/best/command/finish', {seriesId, minScore});
-        if (!finalData || finalData.ok === false) { feedbackTone('error'); throw new Error((finalData && finalData.error) || 'best scan failed'); }
+        if (!finalData || finalData.ok === false) throw new Error((finalData && finalData.error) || 'best scan failed');
         const kind = captureFeedbackKind(finalData);
         const label = kind === 'duplicate' ? 'already saved' : kind === 'superseded' ? 'updated best' : 'saved best';
         setState(`${label} ${finalData.document && finalData.document.path ? finalData.document.path : finalData.uri}`);
         feedbackTone(kind);
         return finalData;
+      } catch (err) {
+        feedbackTone('error');
+        throw err;
       } finally {
         bestRunning = false;
         bestBtn.disabled = !stream;
@@ -2660,7 +2725,16 @@ SCANNER_HTML = r"""<!doctype html>
     announce('open', {autostart: truthyParam('autostart', false), auto: auto.checked, startBest: startBest.checked});
     registerCameraActions();
     setInterval(() => pollPageActions().catch(() => {}), 1000);
-    startBtn.addEventListener('click', () => beginStartCamera().catch((err) => setState(err.message, true)));
+    window.addEventListener('pointerdown', unlockFeedbackAudio, {once: true, passive: true});
+    window.addEventListener('touchstart', unlockFeedbackAudio, {once: true, passive: true});
+    window.addEventListener('keydown', unlockFeedbackAudio, {once: true});
+    startBtn.addEventListener('click', () => {
+      unlockFeedbackAudio();
+      beginStartCamera().catch((err) => {
+        feedbackTone('error');
+        setState(err.message, true);
+      });
+    });
     torchBtn.addEventListener('click', () => {
       const requested = Object.prototype.hasOwnProperty.call(torchBtn.dataset, 'nextTorch') ? torchBtn.dataset.nextTorch === '1' : !torchOn;
       delete torchBtn.dataset.nextTorch;
@@ -2670,13 +2744,19 @@ SCANNER_HTML = r"""<!doctype html>
         if (torchClickPromise === promise) torchClickPromise = null;
       });
     });
-    captureBtn.addEventListener('click', () => capture().catch((err) => setState(err.message, true)));
-    bestBtn.addEventListener('click', () => bestPdf().catch((err) => {
-      bestRunning = false;
-      bestBtn.disabled = !stream;
-      captureBtn.disabled = !stream;
-      setState(err.message, true);
-    }));
+    captureBtn.addEventListener('click', () => {
+      unlockFeedbackAudio();
+      capture().catch((err) => setState(err.message, true));
+    });
+    bestBtn.addEventListener('click', () => {
+      unlockFeedbackAudio();
+      bestPdf().catch((err) => {
+        bestRunning = false;
+        bestBtn.disabled = !stream;
+        captureBtn.disabled = !stream;
+        setState(err.message, true);
+      });
+    });
     scanInterval.addEventListener('change', updateIntervalFromControl);
     scanInterval.addEventListener('blur', updateIntervalFromControl);
     auto.addEventListener('change', () => {
@@ -3496,13 +3576,20 @@ def _document_type(text: str) -> str:
 
 def _parse_contractor(text: str) -> str:
     ignored = re.compile(
-        r"^(faktura|paragon|rachunek|invoice|receipt|nip|vat|data|date|razem|suma|total|do zap|sprzedawca|nabywca|lp\.?|ilosc|ilość|cena|kwota)\b",
+        r"^(faktura|paragon|rachunek|invoice|receipt|nip|vat|data|date|razem|suma|total|do zap|sprzedawca|nabywca|lp\.?|ilosc|ilość|cena|kwota|sprzedaz|sprzedaż)\b",
+        re.I,
+    )
+    terminal_noise = re.compile(
+        r"\b(pos\s*id|mid|aid|wazna\s*do|ważna\s*do|contactless|visa|uisa|mastercard|"
+        r"polskie\s+e\s*p?[łl]atnosci|e\s*p?[łl]atnosci|podpis|autoryzacji|kod\s+autoryzacji)\b",
         re.I,
     )
     candidates: list[tuple[int, str]] = []
     for idx, raw in enumerate(text.splitlines()[:30]):
         line = re.sub(r"\s+", " ", raw.strip(" \t:-")).strip()
         if len(line) < 3 or len(line) > 70 or ignored.search(line):
+            continue
+        if terminal_noise.search(line):
             continue
         if not re.search(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]", line):
             continue
@@ -3833,6 +3920,96 @@ def _metadata_completeness(meta: dict | None) -> int:
     return score
 
 
+_MERGE_METADATA_FIELDS = ("type", "date", "contractor", "amount", "currency")
+_BLANK_METADATA_MARKERS = {"", "kwota-nieznana", "nieznana", "unknown", "n/a", "-", "kontrahent-nieznany"}
+
+
+def _is_blank_metadata(value: Any) -> bool:
+    return str(value or "").strip().lower() in _BLANK_METADATA_MARKERS
+
+
+def _merge_metadata_fields(old_meta: dict | None, new_meta: dict, *,
+                           old_weight: float, new_weight: float) -> tuple[dict, list[str]]:
+    """Fuse two scans of the same document into one best-of-both record.
+
+    Picks each field by weighted consensus, so a value one scan misread or left
+    blank ("amount unknown") is filled from the other scan -- together the
+    surviving record carries correct data for every field. Falls back to a
+    simple "prefer the more complete, non-blank value" when docid is absent.
+
+    Returns (merged_metadata, filled_field_names).
+    """
+    old_meta = old_meta or {}
+    try:
+        from docid.visual_fingerprint import FieldSource, merge_records  # type: ignore
+
+        result = merge_records(
+            [
+                FieldSource(fields={k: old_meta.get(k) for k in _MERGE_METADATA_FIELDS},
+                            weight=max(old_weight, 0.0001), label="archived"),
+                FieldSource(fields={k: new_meta.get(k) for k in _MERGE_METADATA_FIELDS},
+                            weight=max(new_weight, 0.0001), label="rescan"),
+            ],
+            fields=list(_MERGE_METADATA_FIELDS),
+        )
+        merged = dict(new_meta)
+        for key in _MERGE_METADATA_FIELDS:
+            value = result["fields"].get(key)
+            if not _is_blank_metadata(value):
+                merged[key] = value
+        return merged, list(result.get("filledGaps") or [])
+    except Exception:  # noqa: BLE001
+        # Fallback: keep the new scan, but backfill any field it left blank.
+        merged = dict(new_meta)
+        filled: list[str] = []
+        for key in _MERGE_METADATA_FIELDS:
+            if _is_blank_metadata(merged.get(key)) and not _is_blank_metadata(old_meta.get(key)):
+                merged[key] = old_meta.get(key)
+                filled.append(key)
+        return merged, filled
+
+
+def _enrich_archived_record(existing: dict, fused: dict, enriched_fields: list[str]) -> None:
+    """Backfill an already-archived record with fields a re-scan recognized.
+
+    Updates the in-memory index entry (``existing``) and its JSON sidecar in
+    place. The PDF/image of the kept (better) scan is left untouched -- only the
+    structured metadata grows. Best-effort; never raises.
+    """
+    for key in enriched_fields:
+        value = fused.get(key)
+        if not _is_blank_metadata(value):
+            existing[key] = value
+    existing["enrichedAt"] = _utc_now()
+    history = existing.get("enrichedFields")
+    history = list(history) if isinstance(history, list) else []
+    for key in enriched_fields:
+        if key not in history:
+            history.append(key)
+    existing["enrichedFields"] = history
+
+    json_path = existing.get("jsonPath")
+    if not json_path:
+        return
+    try:
+        jpath = Path(str(json_path)).expanduser()
+        data = json.loads(jpath.read_text(encoding="utf-8")) if jpath.is_file() else {}
+        if not isinstance(data, dict):
+            return
+        for key in enriched_fields:
+            value = fused.get(key)
+            if not _is_blank_metadata(value):
+                data[key] = value
+        data["enrichedAt"] = existing["enrichedAt"]
+        data["enrichedFields"] = history
+        jpath.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _document_matches(existing: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
                       fingerprint: dict, dhash: str) -> str:
     """Return a non-empty reason if ``existing`` is the same document, else ""."""
@@ -3865,6 +4042,25 @@ def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, te
             item = {**item, "_matchReason": reason}
             match = item  # last match wins, mirroring _existing_scanned_id
     return match
+
+
+# The document identity & dedup brain lives in the urirun-connector-docid connector
+# (docid://). When installed, delegate to it so there is a single source of truth;
+# the local definitions above are the fallback for environments without the connector.
+try:  # pragma: no cover - exercised via the connector in the normal venv
+    from urirun_connector_docid import core as _docid_conn
+
+    _transaction_fingerprint = _docid_conn.transaction_fingerprint
+    _fingerprint_match_count = _docid_conn.fingerprint_match_count
+    _image_dhash = _docid_conn.image_dhash
+    _dhash_distance = _docid_conn.dhash_distance
+    _metadata_completeness = _docid_conn.metadata_completeness
+    _document_matches = _docid_conn.document_matches
+    _docid_for_file = _docid_conn.document_id
+    _VISUAL_NEAR_DISTANCE = _docid_conn.VISUAL_NEAR_DISTANCE
+    _FINGERPRINT_DISTINCT_FIELDS = _docid_conn.FINGERPRINT_DISTINCT_FIELDS
+except Exception:  # noqa: BLE001
+    _docid_conn = None
 
 
 def _archive_scanned_document(
@@ -3901,6 +4097,7 @@ def _archive_scanned_document(
             doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
         )
         superseded_of = None
+        merged_fields: list[str] = []
         if duplicate:
             existing_meta = duplicate.get("metadata") if isinstance(duplicate.get("metadata"), dict) else {
                 key: duplicate.get(key) for key in ("type", "date", "contractor", "amount", "currency")
@@ -3910,6 +4107,19 @@ def _archive_scanned_document(
             can_supersede = index_match is not None and new_completeness > _metadata_completeness(existing_meta)
             if not can_supersede:
                 duplicate_path = duplicate.get("pdfPath") or duplicate.get("path")
+                # The kept document is the better scan, but this re-scan may still have
+                # recognized a field the archived record is missing. Fuse those in
+                # (best-of-both) instead of discarding the re-scan's data outright.
+                enriched_fields: list[str] = []
+                if index_match is not None:
+                    fused, enriched_fields = _merge_metadata_fields(
+                        existing_meta, extracted,
+                        old_weight=float(_metadata_completeness(existing_meta)) + 0.5,
+                        new_weight=float(new_completeness),
+                    )
+                    if enriched_fields:
+                        _enrich_archived_record(duplicate, fused, enriched_fields)
+                        _save_document_index(index)
                 # The document is already archived; drop the redundant staged scan + crop
                 # so duplicates stop accumulating in the scans folder.
                 removed_scan_files = _cleanup_duplicate_scan_files([original_path, display_path])
@@ -3923,6 +4133,7 @@ def _archive_scanned_document(
                     "duplicate": True,
                     "duplicateOf": duplicate.get("docId") or doc_id,
                     "matchReason": duplicate.get("_matchReason") or "exact",
+                    "enrichedFields": enriched_fields or None,
                     "pdfPath": duplicate_path,
                     "jsonPath": duplicate.get("jsonPath"),
                     "fileName": Path(str(duplicate_path)).name if duplicate_path else "",
@@ -3946,13 +4157,25 @@ def _archive_scanned_document(
                     "jsonPath": duplicate.get("jsonPath"),
                     "duplicateOf": duplicate.get("docId"),
                     "matchReason": duplicate_entry["matchReason"],
+                    "enrichedFields": enriched_fields or None,
                     "existingFileExists": duplicate_entry["existingFileExists"],
                     "removedScanFiles": removed_scan_files,
                     "metadata": extracted,
                     "indexPath": str(_document_index_path()),
                     "scannedIdLogPath": str(_scanned_id_log_path()),
                 }
-            # Supersede: remove the worse existing document (files + staged scans + index entry).
+            # Supersede: keep the better image, but FUSE fields so the surviving
+            # record carries the best-of-both -- anything the old scan read that the
+            # new one missed is backfilled, instead of being lost on replacement.
+            extracted, merged_fields = _merge_metadata_fields(
+                existing_meta, extracted,
+                old_weight=float(_metadata_completeness(existing_meta)),
+                new_weight=float(new_completeness),
+            )
+            # Recompute name/month from the fused metadata (it may now be richer).
+            month = str(extracted["date"])[:7] if re.match(r"^20\d{2}-\d{2}", str(extracted.get("date", ""))) else month
+            archive_dir = root / month
+            filename = _document_filename_with_id(_canonical_document_filename(extracted), doc_id)
             superseded_of = duplicate.get("docId")
             _cleanup_duplicate_scan_files([duplicate.get("originalPath"), duplicate.get("cropPath")])
             for stale in (duplicate.get("pdfPath") or duplicate.get("path"), duplicate.get("jsonPath")):
@@ -3992,6 +4215,7 @@ def _archive_scanned_document(
             "fingerprint": fingerprint,
             "dhash": dhash,
             "supersededOf": superseded_of,
+            "mergedFields": merged_fields or None,
             "ocrBackend": ocr.get("backend"),
             "ocrChars": ocr.get("chars"),
             "crop": crop,
@@ -4017,6 +4241,7 @@ def _archive_scanned_document(
             "docIdLog": docid_info.get("docidLog"),
             "duplicate": False,
             "supersededOf": superseded_of,
+            "mergedFields": merged_fields or None,
             "uri": entry["uri"],
             "pdfPath": str(pdf_path),
             "jsonPath": str(json_path),
@@ -4705,14 +4930,6 @@ def _register_scanner_result(
         primary_target = str(document.get("path"))
     artifact = _host_db().register_artifact(db, "camera-scan", uri, primary_target, meta)
     attachments = []
-    if display_exists:
-        attachments.append({
-            "kind": "receipt-crop" if crop.get("ok") else "image",
-            "path": str(display_path),
-            "uri": uri,
-            "previewUrl": _preview_url(str(display_path), project),
-            "meta": meta,
-        })
     document_artifact = None
     if document.get("ok") and document.get("path"):
         document_uri = str(document.get("uri") or f"document://host/{quote(str(document.get('docId') or meta.get('sha256') or ''), safe='')}")
@@ -4738,6 +4955,10 @@ def _register_scanner_result(
         content += " -> document PDF"
         if document.get("duplicate"):
             content += " (duplicate)"
+    elif document.get("error"):
+        content += " (document archive failed)"
+    else:
+        content += " (no document PDF)"
     if ocr.get("ok") and ocr.get("text"):
         content += f": {str(ocr.get('text'))[:180]}"
     elif ocr.get("error"):
@@ -4773,7 +4994,29 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     ocr = _local_image_ocr(str(display_path))
     detected_document = _extract_document_metadata(str(ocr.get("text") or ""), captured_at=payload.get("capturedAt"))
     quality = _document_frame_quality(crop, ocr, detected_document, display_path)
+    uri = f"scanner://host/capture/{digest[:16]}"
     document = {"ok": False, "reason": "analysis-only", "metadata": detected_document}
+    # Reject low-confidence single captures (blurry/partial/non-document frames) instead of
+    # archiving and showing them. Mirrors the best-frame gate so the manual "Scan" button no
+    # longer fills the archive with mis-scanned receipts. Pass force=true to override.
+    min_score = float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45"))
+    quality_ok = bool(payload.get("force")) or (
+        float(quality.get("score") or 0.0) >= min_score and bool(quality.get("documentLike"))
+    )
+    if archive and not quality_ok:
+        removed_scan_files = _cleanup_duplicate_scan_files([path, display_path])
+        return {
+            "ok": True,
+            "rejected": True,
+            "uri": uri,
+            "reason": "low-quality scan",
+            "minScore": min_score,
+            "quality": quality,
+            "ocr": ocr,
+            "crop": crop,
+            "detectedDocument": detected_document,
+            "removedScanFiles": removed_scan_files,
+        }
     if archive:
         try:
             document = _archive_scanned_document(
@@ -4803,7 +5046,6 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
         "quality": quality,
         "document": document,
     }
-    uri = f"scanner://host/capture/{digest[:16]}"
     if not archive:
         candidate = {
             "seriesId": str(payload.get("seriesId") or ""),
