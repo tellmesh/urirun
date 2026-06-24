@@ -27,6 +27,42 @@ from typing import Any
 from urllib.parse import parse_qs, parse_qsl, quote, unquote, urlencode, urlparse, urlsplit, urlunsplit
 
 
+try:
+    from docid.dedup import (
+        FINGERPRINT_DISTINCT_FIELDS as _DOCID_FINGERPRINT_DISTINCT_FIELDS,
+        VISUAL_NEAR_DISTANCE as _DOCID_VISUAL_NEAR_DISTANCE,
+        VISUAL_STRONG_DISTANCE as _DOCID_VISUAL_STRONG_DISTANCE,
+        dhash_distance as _dedup_dhash_distance,
+        document_id as _dedup_document_id,
+        document_matches as _dedup_document_matches,
+        fingerprint_match_count as _dedup_fingerprint_match_count,
+        image_dhash as _dedup_image_dhash,
+        image_phash as _dedup_image_phash,
+        metadata_completeness as _dedup_metadata_completeness,
+        normalize_text as _dedup_normalize_text,
+        transaction_fingerprint as _dedup_transaction_fingerprint,
+    )
+    from docid.visual_fingerprint import FieldSource as _DocidFieldSource
+    from docid.visual_fingerprint import merge_records as _docid_merge_records
+except Exception as _DOCID_DEDUP_IMPORT_ERROR:  # noqa: BLE001
+    _DOCID_FINGERPRINT_DISTINCT_FIELDS = ("number", "auth", "time", "card")
+    _DOCID_VISUAL_NEAR_DISTANCE = 10
+    _DOCID_VISUAL_STRONG_DISTANCE = 6
+    _DocidFieldSource = None
+    _dedup_dhash_distance = None
+    _dedup_document_id = None
+    _dedup_document_matches = None
+    _dedup_fingerprint_match_count = None
+    _dedup_image_dhash = None
+    _dedup_image_phash = None
+    _dedup_metadata_completeness = None
+    _dedup_normalize_text = None
+    _dedup_transaction_fingerprint = None
+    _docid_merge_records = None
+else:
+    _DOCID_DEDUP_IMPORT_ERROR = None
+
+
 _SERVICE_LOCK = threading.Lock()
 _SERVICE_SERVERS: dict[str, ThreadingHTTPServer] = {}
 _SERVICE_THREADS: dict[str, threading.Thread] = {}
@@ -242,10 +278,22 @@ INDEX_HTML = r"""<!doctype html>
       border-radius: 8px;
       background: var(--surface-2);
     }
-    .contact-card input { margin-top: 2px; min-height: 0; }
-    .contact-title { font-weight: 700; overflow-wrap: anywhere; }
-    .contact-meta { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
-    .chat-main {
+	    .contact-card input { margin-top: 2px; min-height: 0; }
+	    .contact-title { font-weight: 700; overflow-wrap: anywhere; }
+	    .contact-meta { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+	    .contact-body { display: grid; gap: 5px; min-width: 0; }
+	    .contact-actions {
+	      display: flex;
+	      flex-wrap: wrap;
+	      gap: 6px;
+	      padding-top: 2px;
+	    }
+	    .contact-actions button {
+	      min-height: 30px;
+	      padding: 0 9px;
+	      font-size: 12px;
+	    }
+	    .chat-main {
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
       gap: 10px;
@@ -975,19 +1023,27 @@ INDEX_HTML = r"""<!doctype html>
       </div>`).join('') || empty('No nodes configured');
     }
 
-    function contactCard(contact) {
-      const checked = state.selectedTargets.includes(contact.id) ? 'checked' : '';
-      const disabled = contact.disabled ? 'disabled' : '';
-      const pillClass = contact.reachable === false ? 'down' : contact.status === 'running' || contact.reachable ? 'up' : '';
-      return `<label class="contact-card">
-        <input type="checkbox" name="chatTarget" value="${esc(contact.id)}" ${checked} ${disabled}>
-        <span>
-          <span class="contact-title">${esc(contact.label)}</span>
-          <span class="pill ${pillClass}">${esc(contact.status || contact.kind)}</span>
-          <span class="contact-meta">${esc(contact.url || contact.meta || '')}</span>
-        </span>
-      </label>`;
-    }
+	    function contactCard(contact) {
+	      const checked = state.selectedTargets.includes(contact.id) ? 'checked' : '';
+	      const disabled = contact.disabled ? 'disabled' : '';
+	      const pillClass = contact.reachable === false ? 'down' : contact.status === 'running' || contact.reachable ? 'up' : '';
+	      const isPhoneScanner = contact.id === 'service:phone-scanner';
+	      const startUri = isPhoneScanner ? 'dashboard://host/phone-scanner/command/start' : '';
+	      const inputId = `chat-target-${String(contact.id || 'target').replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+	      const actions = [
+	        startUri ? `<button type="button" data-contact-action="invoke-uri" data-uri="${esc(startUri)}" data-target="${esc(contact.id)}">Start</button>` : '',
+	        contact.url ? `<button type="button" data-contact-action="open-url" data-url="${esc(contact.url)}" data-target="${esc(contact.id)}">Open</button>` : '',
+	      ].filter(Boolean).join('');
+	      return `<div class="contact-card">
+	        <input id="${esc(inputId)}" type="checkbox" name="chatTarget" value="${esc(contact.id)}" ${checked} ${disabled}>
+	        <span class="contact-body">
+	          <label class="contact-title" for="${esc(inputId)}">${esc(contact.label)}</label>
+	          <span class="pill ${pillClass}">${esc(contact.status || contact.kind)}</span>
+	          <span class="contact-meta">${esc(contact.url || contact.meta || '')}</span>
+	          ${actions ? `<span class="contact-actions">${actions}</span>` : ''}
+	        </span>
+	      </div>`;
+	    }
 
     function chatContacts(summary) {
       const nodes = summary.nodes || [];
@@ -1003,16 +1059,17 @@ INDEX_HTML = r"""<!doctype html>
           disabled: !node.reachable,
           url: node.url || '',
         })),
-        ...services.map((service) => ({
-          id: service.id || `service:${service.name}`,
-          kind: 'service',
-          label: service.label || `urirun service: ${service.name}`,
-          status: service.status || (service.reachable ? 'running' : 'stopped'),
-          reachable: !!service.reachable,
-          url: service.url || '',
-        })),
-      ];
-    }
+	        ...services.map((service) => ({
+	          id: service.id || `service:${service.name}`,
+	          kind: 'service',
+	          label: service.label || `urirun service: ${service.name}`,
+	          status: service.status || (service.reachable ? 'running' : 'stopped'),
+	          reachable: !!service.reachable,
+	          url: service.url || '',
+	          routes: service.routes || [],
+	        })),
+	      ];
+	    }
 
     function selectedTargets() {
       const values = [...document.querySelectorAll('input[name="chatTarget"]:checked')].map((item) => item.value);
@@ -1794,10 +1851,10 @@ INDEX_HTML = r"""<!doctype html>
       writeUrlState({ action: 'chat:delete', deleted: result.deleted || 0 }, { replace: true });
     }
 
-    async function submitServiceForm(form) {
-      const uri = form.dataset.actionUri || '';
-      if (!uri) return;
-      const payload = {};
+	    async function submitServiceForm(form) {
+	      const uri = form.dataset.actionUri || '';
+	      if (!uri) return;
+	      const payload = {};
       form.querySelectorAll('input, textarea, select').forEach((field) => {
         if (!field.name) return;
         if (field.type === 'checkbox') payload[field.name] = field.checked;
@@ -1816,12 +1873,52 @@ INDEX_HTML = r"""<!doctype html>
       await loadChatHistory();
       await loadServiceViews();
       $('chatStatus').textContent = 'ok';
-      writeUrlState({ action: 'service-form:submit', uri }, { replace: true });
-    }
+	      writeUrlState({ action: 'service-form:submit', uri }, { replace: true });
+	    }
 
-    function applyView(view) {
-      if (!VALID_VIEWS.has(view)) view = 'overview';
-      state.view = view;
+	    async function contactAction(button) {
+	      const action = button.dataset.contactAction || '';
+	      if (action === 'open-url') {
+	        const url = button.dataset.url || '';
+	        if (url) window.open(url, '_blank', 'noopener');
+	        writeUrlState({ action: 'contact:open', target: button.dataset.target || '' }, { replace: true });
+	        return;
+	      }
+	      if (action !== 'invoke-uri') return;
+	      const uri = button.dataset.uri || '';
+	      if (!uri) return;
+	      const target = button.dataset.target || 'host';
+	      const previous = button.textContent;
+	      button.disabled = true;
+	      button.textContent = 'Starting...';
+	      $('chatStatus').textContent = 'starting service...';
+	      try {
+	        await api('/api/uri/invoke', {
+	          method: 'POST',
+	          body: JSON.stringify({
+	            uri,
+	            mode: 'execute',
+	            payload: {},
+	            targets: [target],
+	            source: 'contact-card',
+	          }),
+	        });
+	        state.selectedTargets = [...new Set([...state.selectedTargets, target])];
+	        await loadServiceViews();
+	        await load();
+	        $('chatStatus').textContent = 'service running';
+	        writeUrlState({ action: 'contact:start', targets: state.selectedTargets.join(',') }, { replace: true });
+	      } catch (error) {
+	        button.disabled = false;
+	        button.textContent = previous;
+	        $('chatStatus').textContent = error.message;
+	        throw error;
+	      }
+	    }
+
+	    function applyView(view) {
+	      if (!VALID_VIEWS.has(view)) view = 'overview';
+	      state.view = view;
       document.body.dataset.view = view;
       document.querySelectorAll('.view-block').forEach((block) => {
         block.classList.toggle('hidden', view !== 'overview' && block.dataset.section !== view);
@@ -1900,10 +1997,17 @@ INDEX_HTML = r"""<!doctype html>
       }
     }
 
-    document.addEventListener('click', (event) => {
-      const deleteId = event.target.dataset.chatDelete;
-      if (deleteId) {
-        deleteChatMessages([deleteId]).catch((error) => alert(error.message));
+	    document.addEventListener('click', (event) => {
+	      const contactButton = event.target && event.target.closest ? event.target.closest('[data-contact-action]') : null;
+	      if (contactButton) {
+	        event.preventDefault();
+	        event.stopPropagation();
+	        contactAction(contactButton).catch((error) => alert(error.message));
+	        return;
+	      }
+	      const deleteId = event.target.dataset.chatDelete;
+	      if (deleteId) {
+	        deleteChatMessages([deleteId]).catch((error) => alert(error.message));
         return;
       }
       const artifactDeleteId = event.target.dataset.artifactDelete;
@@ -3363,6 +3467,8 @@ def sync_documents_to_node(
 
 
 def _normalized_document_text(text: str) -> str:
+    if _dedup_normalize_text is not None:
+        return _dedup_normalize_text(text)
     folded = unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode("ascii")
     folded = re.sub(r"[^a-zA-Z0-9.,:/@+\- ]+", " ", folded.lower())
     return re.sub(r"\s+", " ", folded).strip()
@@ -3482,6 +3588,9 @@ def _backfill_scanned_id_log(index: dict) -> None:
 
 
 def _docid_for_file(path: str | Path, ocr_text: str) -> dict:
+    if _dedup_document_id is not None:
+        return _dedup_document_id(path, ocr_text, normalized_text=_normalized_document_text(ocr_text))
+
     docid_error = ""
     docid_log = ""
     try:
@@ -3815,109 +3924,50 @@ def _cleanup_duplicate_scan_files(paths: list) -> list[str]:
 
 
 # --- Robust "same document" detection -----------------------------------------------
-# docid / sha / text hashes are exact-match only, so the same physical receipt
-# re-photographed (different framing, drifting OCR -> amount unknown, merchant
-# misread) becomes a brand-new document every time. We instead fingerprint the
-# transaction by its distinctive, OCR-stable tokens (receipt/invoice number,
-# authorization code, transaction time, card suffix) and corroborate with a
-# perceptual image hash. Terminal-constant tokens (POS ID / MID / AID) are the
-# same for every transaction at a terminal, so they are deliberately ignored.
+# The document identity brain lives in docid.dedup. The dashboard aliases it here
+# so scanner/archive code does not duplicate token extraction, perceptual hashes
+# or match thresholds.
 
-_FINGERPRINT_DISTINCT_FIELDS = ("number", "auth", "time", "card")
-_VISUAL_NEAR_DISTANCE = 10  # max dHash Hamming distance to treat images as near-identical
+_FINGERPRINT_DISTINCT_FIELDS = _DOCID_FINGERPRINT_DISTINCT_FIELDS
+_VISUAL_NEAR_DISTANCE = _DOCID_VISUAL_NEAR_DISTANCE
+_VISUAL_STRONG_DISTANCE = _DOCID_VISUAL_STRONG_DISTANCE
 
+if _dedup_transaction_fingerprint is not None:
+    _transaction_fingerprint = _dedup_transaction_fingerprint
+    _fingerprint_match_count = _dedup_fingerprint_match_count
+    _image_dhash = _dedup_image_dhash
+    _image_phash = _dedup_image_phash
+    _dhash_distance = _dedup_dhash_distance
+    _metadata_completeness = _dedup_metadata_completeness
+    _document_matches = _dedup_document_matches
+else:
+    def _transaction_fingerprint(text: str) -> dict:
+        return {}
 
-def _transaction_fingerprint(text: str) -> dict:
-    """Extract OCR-stable, transaction-distinctive tokens from receipt/invoice text."""
-    raw = text or ""
-    low = raw.lower()
-    fp = {"number": "", "auth": "", "time": "", "card": ""}
-
-    # Receipt / invoice number (RACHUNEK NR / PARAGON NR / FAKTURA NR / NR ...).
-    number = re.search(r"(?:rachunek|paragon|faktura)\s*nr\b[^0-9]{0,6}([0-9]{3,})", low)
-    if not number:
-        number = re.search(r"\bnr\b[^0-9]{0,4}([0-9]{4,})", low)
-    if number:
-        fp["number"] = number.group(1)
-
-    # Authorization code (AUTORYZACJI / ...RYZACJI / CJI: <digits>, often "<code> (1)").
-    auth = re.search(r"(?:autoryzacji|ryzacji|authoriz\w*|\bcji)\b[^0-9]{0,6}([0-9]{4,})", low)
-    if not auth:
-        auth = re.search(r"([0-9]{5,7})\s*\(\s*1\s*\)", low)
-    if auth:
-        fp["auth"] = auth.group(1)
-
-    # Transaction time HH:MM:SS -> digits only.
-    tmatch = re.search(r"\b([0-2]?\d):([0-5]\d):([0-5]\d)\b", raw)
-    if tmatch:
-        fp["time"] = f"{int(tmatch.group(1)):02d}{tmatch.group(2)}{tmatch.group(3)}"
-
-    # Masked card suffix (e.g. "1671 WAZNA DO" / "WA2NA DO").
-    card = re.search(r"\b(\d{4})\b\s*wa\w?zna\s*do", low)
-    if card:
-        fp["card"] = card.group(1)
-    return fp
-
-
-def _fingerprint_match_count(a: dict | None, b: dict | None) -> int:
-    """How many distinctive fields agree (both present and equal)."""
-    if not a or not b:
+    def _fingerprint_match_count(a: dict | None, b: dict | None) -> int:
         return 0
-    count = 0
-    for key in _FINGERPRINT_DISTINCT_FIELDS:
-        va, vb = str(a.get(key) or ""), str(b.get(key) or "")
-        if va and va == vb:
-            count += 1
-    return count
 
-
-def _image_dhash(path: str | Path, hash_size: int = 8) -> str:
-    """64-bit difference hash of an image as a hex string ("" on failure)."""
-    try:
-        from PIL import Image, ImageOps
-
-        with Image.open(Path(path).expanduser().resolve()) as opened:
-            gray = ImageOps.exif_transpose(opened).convert("L").resize(
-                (hash_size + 1, hash_size), Image.LANCZOS
-            )
-        px = list(gray.tobytes())  # mode "L": one byte per pixel, row-major
-        bits = 0
-        for row in range(hash_size):
-            base = row * (hash_size + 1)
-            for col in range(hash_size):
-                bits = (bits << 1) | (1 if px[base + col] > px[base + col + 1] else 0)
-        return f"{bits:0{hash_size * hash_size // 4}x}"
-    except Exception:  # noqa: BLE001
+    def _image_dhash(path: str | Path) -> str:
         return ""
 
+    def _image_phash(path: str | Path) -> str:
+        return ""
 
-def _dhash_distance(a: str, b: str) -> int:
-    """Hamming distance between two hex dHash strings; large sentinel if unusable."""
-    if not a or not b or len(a) != len(b):
-        return 999
-    try:
-        return bin(int(a, 16) ^ int(b, 16)).count("1")
-    except ValueError:
+    def _dhash_distance(a: str, b: str) -> int:
         return 999
 
-
-def _metadata_completeness(meta: dict | None) -> int:
-    """Score how complete the extracted metadata is (higher == better scan)."""
-    if not meta:
+    def _metadata_completeness(meta: dict | None) -> int:
         return 0
-    score = 0
-    amount = str(meta.get("amount") or "").strip().lower()
-    if amount and amount not in {"nieznana", "kwota-nieznana", "unknown"}:
-        score += 2
-    contractor = str(meta.get("contractor") or "").strip().lower()
-    if contractor and contractor not in {"", "kontrahent-nieznany", "ina-gruba"}:
-        score += 1
-    if str(meta.get("date") or "").strip():
-        score += 1
-    doc_type = str(meta.get("type") or "").strip().lower()
-    if doc_type and doc_type != "dokument":
-        score += 1
-    return score
+
+    def _document_matches(existing: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
+                          fingerprint: dict, dhash: str, phash: str = "") -> str:
+        if doc_id and existing.get("docId") == doc_id:
+            return "docId"
+        if source_sha256 and existing.get("sourceSha256") == source_sha256:
+            return "sourceSha256"
+        if text_sha256 and existing.get("textSha256") == text_sha256:
+            return "textSha256"
+        return ""
 
 
 _MERGE_METADATA_FIELDS = ("type", "date", "contractor", "amount", "currency")
@@ -3941,14 +3991,15 @@ def _merge_metadata_fields(old_meta: dict | None, new_meta: dict, *,
     """
     old_meta = old_meta or {}
     try:
-        from docid.visual_fingerprint import FieldSource, merge_records  # type: ignore
+        if _DocidFieldSource is None or _docid_merge_records is None:
+            raise RuntimeError("docid.visual_fingerprint unavailable")
 
-        result = merge_records(
+        result = _docid_merge_records(
             [
-                FieldSource(fields={k: old_meta.get(k) for k in _MERGE_METADATA_FIELDS},
-                            weight=max(old_weight, 0.0001), label="archived"),
-                FieldSource(fields={k: new_meta.get(k) for k in _MERGE_METADATA_FIELDS},
-                            weight=max(new_weight, 0.0001), label="rescan"),
+                _DocidFieldSource(fields={k: old_meta.get(k) for k in _MERGE_METADATA_FIELDS},
+                                  weight=max(old_weight, 0.0001), label="archived"),
+                _DocidFieldSource(fields={k: new_meta.get(k) for k in _MERGE_METADATA_FIELDS},
+                                  weight=max(new_weight, 0.0001), label="rescan"),
             ],
             fields=list(_MERGE_METADATA_FIELDS),
         )
@@ -4010,25 +4061,8 @@ def _enrich_archived_record(existing: dict, fused: dict, enriched_fields: list[s
         pass
 
 
-def _document_matches(existing: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
-                      fingerprint: dict, dhash: str) -> str:
-    """Return a non-empty reason if ``existing`` is the same document, else ""."""
-    if doc_id and existing.get("docId") == doc_id:
-        return "docId"
-    if source_sha256 and existing.get("sourceSha256") == source_sha256:
-        return "sourceSha256"
-    if text_sha256 and existing.get("textSha256") == text_sha256:
-        return "textSha256"
-    matches = _fingerprint_match_count(fingerprint, existing.get("fingerprint"))
-    if matches >= 2:
-        return f"fingerprint:{matches}"
-    if matches >= 1 and dhash and _dhash_distance(dhash, str(existing.get("dhash") or "")) <= _VISUAL_NEAR_DISTANCE:
-        return "fingerprint+visual"
-    return ""
-
-
 def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
-                             fingerprint: dict, dhash: str) -> dict | None:
+                             fingerprint: dict, dhash: str, phash: str = "") -> dict | None:
     """Find an already-archived document that is the same as the incoming scan."""
     match: dict | None = None
     for item in index.get("documents", []):
@@ -4036,31 +4070,12 @@ def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, te
             continue
         reason = _document_matches(
             item, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
-            fingerprint=fingerprint, dhash=dhash,
+            fingerprint=fingerprint, dhash=dhash, phash=phash,
         )
         if reason:
             item = {**item, "_matchReason": reason}
             match = item  # last match wins, mirroring _existing_scanned_id
     return match
-
-
-# The document identity & dedup brain lives in the urirun-connector-docid connector
-# (docid://). When installed, delegate to it so there is a single source of truth;
-# the local definitions above are the fallback for environments without the connector.
-try:  # pragma: no cover - exercised via the connector in the normal venv
-    from urirun_connector_docid import core as _docid_conn
-
-    _transaction_fingerprint = _docid_conn.transaction_fingerprint
-    _fingerprint_match_count = _docid_conn.fingerprint_match_count
-    _image_dhash = _docid_conn.image_dhash
-    _dhash_distance = _docid_conn.dhash_distance
-    _metadata_completeness = _docid_conn.metadata_completeness
-    _document_matches = _docid_conn.document_matches
-    _docid_for_file = _docid_conn.document_id
-    _VISUAL_NEAR_DISTANCE = _docid_conn.VISUAL_NEAR_DISTANCE
-    _FINGERPRINT_DISTINCT_FIELDS = _docid_conn.FINGERPRINT_DISTINCT_FIELDS
-except Exception:  # noqa: BLE001
-    _docid_conn = None
 
 
 def _archive_scanned_document(
@@ -4080,6 +4095,7 @@ def _archive_scanned_document(
     text_sha256 = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest() if normalized_text else ""
     fingerprint = _transaction_fingerprint(ocr_text)
     dhash = _image_dhash(display_path)
+    phash = _image_phash(display_path)
     new_completeness = _metadata_completeness(extracted)
     month = str(extracted["date"])[:7] if re.match(r"^20\d{2}-\d{2}", str(extracted.get("date", ""))) else time.strftime("%Y-%m", time.gmtime())
     root = _document_archive_root()
@@ -4091,7 +4107,7 @@ def _archive_scanned_document(
         _backfill_scanned_id_log(index)
         index_match = _find_duplicate_document(
             index, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
-            fingerprint=fingerprint, dhash=dhash,
+            fingerprint=fingerprint, dhash=dhash, phash=phash,
         )
         duplicate = index_match or _existing_scanned_id(
             doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
@@ -4145,6 +4161,7 @@ def _archive_scanned_document(
                     "textSha256": text_sha256,
                     "fingerprint": fingerprint,
                     "dhash": dhash,
+                    "phash": phash,
                     "metadata": extracted,
                 }
                 _append_scanned_id_log(duplicate_entry)
@@ -4214,6 +4231,7 @@ def _archive_scanned_document(
             "textSha256": text_sha256,
             "fingerprint": fingerprint,
             "dhash": dhash,
+            "phash": phash,
             "supersededOf": superseded_of,
             "mergedFields": merged_fields or None,
             "ocrBackend": ocr.get("backend"),
@@ -4252,6 +4270,7 @@ def _archive_scanned_document(
             "textSha256": text_sha256,
             "fingerprint": fingerprint,
             "dhash": dhash,
+            "phash": phash,
             "ocrBackend": ocr.get("backend"),
             "ocrChars": ocr.get("chars"),
             "metadata": extracted,

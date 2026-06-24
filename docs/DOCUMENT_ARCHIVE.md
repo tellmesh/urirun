@@ -15,6 +15,43 @@ export URIRUN_DOCUMENT_INDEX=~/.urirun/documents/index.json
 export URIRUN_SCANNED_ID_LOG=~/.urirun/documents/scanned.id.jsonl
 ```
 
+## Capture pipeline
+
+A single phone capture (`scanner://host/capture/command/run`) runs end to end:
+
+1. **Stage** — the raw frame is written to `URIRUN_SCANNER_DIR`
+   (`~/.urirun/host-dashboard/scans` by default) as `…-phone-scan-<sha>.jpg`.
+2. **Crop** — `smartcrop://host/document/query/crop` crops to the document. It
+   prefers a Tesseract **text-boundary** crop (the union of detected word boxes,
+   expanded to the background-contrast paper edge) and falls back to a geometric
+   cascade (OpenCV perspective, bright-sheet fill-ratio, connected components)
+   when no text is found. The crop is saved as `…-receipt-crop.jpg`.
+3. **OCR** — the crop is read by the local OCR engine (Tesseract).
+4. **Quality gate** — a low-confidence frame (blurry, partial, non-document) is
+   **rejected** rather than archived (see below).
+5. **Identify** — `docid://` extracts a transaction fingerprint + perceptual
+   hashes and assigns a `docId`.
+6. **Deduplicate / supersede** — the scan is matched against the archive; a
+   genuine new document is archived as a PDF, a re-scan is dropped or fuses into
+   the existing record (see *Identity & Deduplication*).
+7. **Feedback** — the scanner UI plays a short tone (and vibrates) so the user
+   knows the result without looking: distinct cues for *saved*, *already saved*
+   (duplicate), *updated* (superseded) and *error / discarded*.
+
+## Quality gate
+
+Single captures are gated so mis-scans never reach the archive or the UI. A frame
+is archived only when it is document-like and scores at least
+`URIRUN_PHONE_SCANNER_MIN_SCORE` (default `45`), matching the best-frame path:
+
+```bash
+export URIRUN_PHONE_SCANNER_MIN_SCORE=45
+```
+
+A rejected capture returns `{"ok": true, "rejected": true, "reason": "low-quality scan"}`,
+its staged scan + crop files are deleted, and no document/artifact/chat message is
+created. Pass `"force": true` in the capture payload to archive regardless of score.
+
 ## Files
 
 Final documents are stored by month:
@@ -42,7 +79,9 @@ the latest known state for each document:
 - `jsonPath`
 - source/crop paths
 - OCR backend and character count
-- content hashes
+- content hashes (`sourceSha256`, `textSha256`)
+- identity signals: `fingerprint` (transaction tokens), `dhash`, `phash`
+- `supersededOf` when this record replaced an earlier, less-complete scan
 - extracted type, date, contractor, amount and currency
 
 This file is optimized for reading the current document list.
@@ -53,17 +92,39 @@ This file is optimized for reading the current document list.
 per line. Events include:
 
 - `scan` for a newly archived document
-- `duplicate` for a rejected duplicate scan
+- `duplicate` for a re-scan dropped as already archived
+- `superseded` for a re-scan that replaced a less-complete existing document
 - `indexed` for documents backfilled from an existing `index.json`
 
-The ledger is used to detect duplicates by:
-
-- `docId`
-- source image SHA-256
-- normalized OCR text SHA-256
+Duplicate entries carry the `matchReason` and the `removedScanFiles` that were
+cleaned from the staging dir.
 
 Because it is append-only, it keeps duplicate history even if a PDF is renamed,
 moved, deleted, or a dashboard catalog entry is later edited.
+
+## Identity & Deduplication
+
+Identity and dedup live in the `docid://` connector (`urirun-connector-docid`).
+The same physical receipt photographed several times yields a different image and
+drifting OCR (`amount → nieznana`, merchant misread), so exact fingerprints alone
+treat every scan as new. A scan is considered the **same document** when any of
+these hold:
+
+- exact `docId`, source-image SHA-256, or normalized-OCR-text SHA-256, or
+- **transaction fingerprint** — at least two distinctive, OCR-stable tokens agree
+  (receipt/invoice number, authorization code, transaction time, card suffix).
+  Terminal-constant tokens (POS ID / MID / AID) are ignored, since they are the
+  same for every transaction at a terminal, or
+- **fingerprint + visual** — one token agrees and the difference hash (dHash) is
+  near, or
+- **visual-strong** — both perceptual channels agree (dHash *and* DCT pHash) even
+  with no usable OCR token, for badly garbled re-scans.
+
+On a match the more complete scan wins: if the new capture reads strictly more
+metadata than the archived one it **supersedes** it (old PDF/JSON removed, index
+entry replaced) and missing fields are fused from both scans; otherwise the new
+capture is dropped as a `duplicate` and its staged files are cleaned. See
+`docid://host/document/query/{identify,evaluate,reconcile}`.
 
 ## Why Two Files
 

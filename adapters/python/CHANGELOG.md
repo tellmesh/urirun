@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Phone scanner: reject low-confidence single captures (below
+  `URIRUN_PHONE_SCANNER_MIN_SCORE`, default 45, or not document-like) instead of
+  archiving them; staged files are cleaned and no artifact is shown. `force=true`
+  overrides.
+- Phone scanner: audible + vibration feedback after each capture, with distinct
+  cues for saved / duplicate / superseded / discarded.
+- Document archive: robust deduplication via the `docid://` connector — a
+  transaction fingerprint (receipt/invoice no., authorization code, time, card
+  suffix) plus perceptual hashes (dHash + pHash), so the same receipt re-scanned
+  with drifting OCR collapses onto one document.
+- Document archive: a more complete re-scan **supersedes** a less-complete
+  archived document and fuses missing fields from both scans; otherwise the
+  re-scan is dropped and its staged scan + crop files are removed.
+
+### Changed
+- Smart crop now crops to the detected text boundary first (Tesseract), falling
+  back to the geometric cascade; see `urirun-connector-smart-crop`.
+
 ## [0.3.14] - 2026-06-20
 
 ### Fixed

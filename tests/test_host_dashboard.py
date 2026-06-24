@@ -1307,6 +1307,59 @@ def test_enrich_archived_record_updates_entry_and_sidecar(tmp_path):
     assert "enrichedAt" in sidecar
 
 
+def _doc_like_image(path, seed, noise=0):
+    """A deterministic document-like image (header + text lines) for fingerprinting."""
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (300, 440), (245, 244, 235))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([20, 15, 280, 55], fill=(40, 40, 40))
+    rng = seed
+    y = 80
+    for _ in range(14):
+        rng = (rng * 1103515245 + 12345) & 0x7FFFFFFF
+        draw.rectangle([30, y, 30 + 90 + rng % 150, y + 10], fill=(30, 30, 30))
+        y += 24
+    if noise:
+        px = img.load()
+        for _ in range(noise):
+            rng = (rng * 1103515245 + 12345) & 0x7FFFFFFF
+            px[rng % 300, (rng >> 8) % 440] = (200, 200, 200)
+    img.save(path)
+
+
+def test_archive_visual_strong_dedups_tokenless_rescan(monkeypatch, tmp_path):
+    """Two garbled-OCR scans (no transaction tokens, distinct docId/text) are still
+    recognized as the same document via the standalone pHash+dHash match."""
+    document_root = tmp_path / "documents"
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    _archive_with_distinct_docids(monkeypatch, document_root)
+
+    first_img = scans / "first.jpg"
+    _doc_like_image(first_img, seed=12345)
+    first = host_dashboard._archive_scanned_document(
+        display_path=first_img, original_path=first_img,
+        ocr={"ok": True, "backend": "mock", "chars": 3, "text": "92 YWZOHVA VLOIZ"},
+        crop={"ok": True, "path": str(first_img)}, source_sha256="src-1", captured_at=None,
+    )
+    assert first["duplicate"] is False
+
+    # Same document re-scanned: a little image noise, totally different garbled OCR
+    # (so neither text nor token can match) -> only the visual fingerprint can.
+    second_img = scans / "second.jpg"
+    _doc_like_image(second_img, seed=12345, noise=120)
+    second = host_dashboard._archive_scanned_document(
+        display_path=second_img, original_path=second_img,
+        ocr={"ok": True, "backend": "mock", "chars": 3, "text": "ZZ QQ XYZW 0000"},
+        crop={"ok": True, "path": str(second_img)}, source_sha256="src-2", captured_at=None,
+    )
+    assert second["duplicate"] is True
+    assert second["matchReason"] == "visual-strong"
+    assert second["duplicateOf"] == first["docId"]
+
+
 def test_archive_skips_lower_quality_fingerprint_duplicate(monkeypatch, tmp_path):
     from PIL import Image
 
