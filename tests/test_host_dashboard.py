@@ -190,6 +190,12 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
 
     assert "scanner://page/camera/command/autonomous" in host_dashboard.SCANNER_HTML
     assert "beginAutonomousScanning" in host_dashboard.SCANNER_HTML
+    assert "applyDefaultScannerParams" in host_dashboard.SCANNER_HTML
+    assert "history.replaceState" in host_dashboard.SCANNER_HTML
+    assert "function scanIntervalMs" in host_dashboard.SCANNER_HTML
+    assert "scannerParams.has('interval')" in host_dashboard.SCANNER_HTML
+    assert "!scannerParams.has('interval') && !scannerParams.has('scanInterval') && !scannerParams.has('intervalMs')" in host_dashboard.SCANNER_HTML
+    assert "await sleep(intervalMs)" in host_dashboard.SCANNER_HTML
     assert "withActionTimeout" in host_dashboard.SCANNER_HTML
     assert "page action timed out after" in host_dashboard.SCANNER_HTML
     assert "accept camera permission" in host_dashboard.SCANNER_HTML

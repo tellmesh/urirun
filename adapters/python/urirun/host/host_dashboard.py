@@ -2098,6 +2098,32 @@ SCANNER_HTML = r"""<!doctype html>
     let startCameraClickPromise = null;
     let torchClickPromise = null;
     const scannerParams = new URLSearchParams(location.search);
+    const DEFAULT_SCANNER_PARAMS = {
+      autostart: '1',
+      auto: '1',
+      best: '1',
+      count: '6',
+      minScore: '45',
+    };
+
+    function applyDefaultScannerParams() {
+      let changed = false;
+      Object.entries(DEFAULT_SCANNER_PARAMS).forEach(([name, value]) => {
+        if (!scannerParams.has(name)) {
+          scannerParams.set(name, value);
+          changed = true;
+        }
+      });
+      if (!scannerParams.has('interval') && !scannerParams.has('scanInterval') && !scannerParams.has('intervalMs')) {
+        scannerParams.set('interval', '2');
+        changed = true;
+      }
+      if (!changed) return;
+      const query = scannerParams.toString();
+      history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash || ''}`);
+    }
+
+    applyDefaultScannerParams();
 
     function truthyParam(name, fallback=false) {
       if (!scannerParams.has(name)) return fallback;
@@ -2108,6 +2134,24 @@ SCANNER_HTML = r"""<!doctype html>
     function numericParam(name, fallback) {
       const raw = Number(scannerParams.get(name));
       return Number.isFinite(raw) && raw > 0 ? raw : fallback;
+    }
+
+    function scanIntervalMs(options={}) {
+      if (Object.prototype.hasOwnProperty.call(options || {}, 'interval')) {
+        const seconds = Number(options.interval);
+        if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+      }
+      if (Object.prototype.hasOwnProperty.call(options || {}, 'intervalSeconds')) {
+        const seconds = Number(options.intervalSeconds);
+        if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
+      }
+      if (Object.prototype.hasOwnProperty.call(options || {}, 'intervalMs')) {
+        const ms = Number(options.intervalMs);
+        if (Number.isFinite(ms) && ms > 0) return ms;
+      }
+      if (scannerParams.has('interval')) return numericParam('interval', 2) * 1000;
+      if (scannerParams.has('scanInterval')) return numericParam('scanInterval', 2) * 1000;
+      return numericParam('intervalMs', 2000);
     }
 
     function setState(text, error=false) {
@@ -2338,6 +2382,7 @@ SCANNER_HTML = r"""<!doctype html>
       bestBtn.disabled = true;
       captureBtn.disabled = true;
       const total = Number(options.count || document.getElementById('bestCount').value || '6');
+      const intervalMs = scanIntervalMs(options);
       const seriesId = `best-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       try {
         let best = null;
@@ -2354,7 +2399,7 @@ SCANNER_HTML = r"""<!doctype html>
           best = data.series && data.series.best ? data.series.best : data.candidate;
           const score = best && best.quality ? Number(best.quality.score || 0).toFixed(1) : '0.0';
           setState(`frame ${frame}/${total}, best score ${score}`);
-          if (frame < total) await sleep(1000);
+          if (frame < total) await sleep(intervalMs);
         }
         const minScore = Number(Object.prototype.hasOwnProperty.call(options || {}, 'minScore') ? options.minScore : numericParam('minScore', 45));
         const finalData = await invokeURI('scanner://host/best/command/finish', {seriesId, minScore});
@@ -2372,6 +2417,7 @@ SCANNER_HTML = r"""<!doctype html>
       return {
         count: Number(options.count || numericParam('count', Number(document.getElementById('bestCount').value || '6'))),
         minScore: Number(Object.prototype.hasOwnProperty.call(options || {}, 'minScore') ? options.minScore : numericParam('minScore', 45)),
+        intervalMs: scanIntervalMs(options),
       };
     }
 
@@ -2382,7 +2428,7 @@ SCANNER_HTML = r"""<!doctype html>
         if (!stream || bestRunning) return;
         bestPdf(bestOptions(options)).catch((err) => setState(err.message, true));
       };
-      timer = setInterval(run, Number(options.intervalMs || numericParam('intervalMs', 1000)));
+      timer = setInterval(run, scanIntervalMs(options));
       return timer;
     }
 
@@ -3423,6 +3469,7 @@ def _scanner_autonomy_params() -> dict[str, str]:
         "best": os.environ.get("URIRUN_PHONE_SCANNER_BEST", "1"),
         "count": os.environ.get("URIRUN_PHONE_SCANNER_BEST_COUNT", "6"),
         "minScore": os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45"),
+        "interval": os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "2"),
     }
 
 
@@ -4860,6 +4907,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "auto": bool(autonomous_scan),
             "count": int(os.environ.get("URIRUN_PHONE_SCANNER_BEST_COUNT", "6")),
             "minScore": float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45")),
+            "interval": float(os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "2")),
         }
         if autonomous_scan or _is_camera_start_prompt(prompt) or torch_enabled is not None:
             queued_camera = page_action_enqueue(
