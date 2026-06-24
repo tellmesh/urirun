@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 93, json: 13, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1417
+- **Total Functions**: 1436
 - **Total Classes**: 29
 - **Modules**: 152
 - **Entry Points**: 457
@@ -15,7 +15,7 @@
 ## Architecture by Module
 
 ### adapters.python.urirun.host.host_dashboard
-- **Functions**: 252
+- **Functions**: 269
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.runtime.v2
@@ -62,7 +62,7 @@
 - **File**: `flow.py`
 
 ### adapters.python.urirun.runtime._runtime
-- **Functions**: 27
+- **Functions**: 29
 - **Classes**: 1
 - **File**: `_runtime.py`
 
@@ -514,11 +514,6 @@ Supported forms:
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.runtime.v2._placeholders_in
 
-### recursion__fetch_render
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime._runtime._fetch_render
-
 ### recursion__resolve_refs
 - **Type**: recursion
 - **Confidence**: 0.90
@@ -544,6 +539,11 @@ Supported forms:
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
 
+### recursion__fetch_render
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.runtime._runtime._fetch_render
+
 ### state_machine_Urirun
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -564,18 +564,18 @@ Supported forms:
 Functions exposed as public API (no underscore prefix):
 
 - `adapters.python.urirun.host.host_dashboard.chat_ask` - 185 calls
-- `adapters.python.urirun.host.host_dashboard.scanner_best_finish` - 102 calls
 - `adapters.python.urirun.host.host_dashboard.create_handler` - 85 calls
-- `adapters.python.urirun.host.host_dashboard.scanner_capture` - 74 calls
 - `adapters.python.urirun.runtime._scan.main` - 59 calls
 - `adapters.python.urirun.runtime._registry.main` - 56 calls
+- `adapters.python.urirun.host.host_dashboard.scanner_best_finish` - 53 calls
+- `adapters.python.urirun.host.host_dashboard.scanner_capture` - 49 calls
 - `adapters.python.urirun.node.client.NodeClient.ensure_scheme` - 48 calls
 - `adapters.python.urirun.runtime.v1.main` - 44 calls
 - `adapters.python.urirun.runtime.daemon.serve` - 41 calls
 - `adapters.python.urirun.host.host_dashboard.uri_invoke` - 41 calls
-- `adapters.python.urirun.runtime._runtime.main` - 33 calls
 - `adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service` - 33 calls
 - `adapters.python.urirun.host.host_dashboard.summary` - 33 calls
+- `adapters.python.urirun.runtime._runtime.main` - 33 calls
 - `adapters.python.urirun.runtime.v2_adopt.main` - 31 calls
 - `adapters.python.urirun.host.host_dashboard.artifacts_cleanup_orphan_sidecars` - 31 calls
 - `adapters.python.urirun.node.recovery.normalize_error` - 30 calls
@@ -586,9 +586,9 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime.errors.info` - 27 calls
 - `adapters.python.urirun.connectors.connector_lint.verify_connector` - 27 calls
 - `adapters.python.urirun.runtime.codegen.proto_from_registry` - 25 calls
-- `adapters.python.urirun.runtime._runtime.run` - 25 calls
 - `adapters.python.urirun.runtime.v2_grpc.main` - 25 calls
 - `adapters.python.urirun.node.mesh.apply_deploy` - 25 calls
+- `adapters.python.urirun.runtime._runtime.run` - 25 calls
 - `adapters.python.urirun.runtime.v2.run_local_function_subprocess` - 24 calls
 - `adapters.python.urirun.runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls

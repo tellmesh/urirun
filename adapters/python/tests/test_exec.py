@@ -24,6 +24,39 @@ def _fixture_env(tmp_path):
     return dict(os.environ, PYTHONPATH=f"{tmp_path}{os.pathsep}{up}")
 
 
+def test_payload_context_handler_detection_and_args():
+    def tellmesh(payload, context):  # the tellmesh URI-pack convention
+        return payload, context
+
+    def normal(prompt, model="x"):  # ordinary urirun connector handler
+        return prompt
+
+    assert _runtime._is_payload_context_handler(tellmesh) is True
+    assert _runtime._is_payload_context_handler(normal) is False
+
+    payload, context = _runtime._payload_context_args("kvm", {"monitor": "0", "allow_real": True})
+    assert payload == {"monitor": "0", "allow_real": True}
+    # Path params (incl. host=target) under context['params']; flags promoted to context.
+    assert context == {"params": {"host": "kvm", "monitor": "0"}, "allow_real": True}
+
+
+def test_hydrated_payload_context_handler_is_called_positionally(tmp_path):
+    (tmp_path / "tmconv.py").write_text(
+        "def display_info(payload, context):\n"
+        "    return {'got_params': context.get('params'), 'payload': payload}\n"
+    )
+    sys.path.insert(0, str(tmp_path))
+    try:
+        route_entry = {"python": {"type": "python", "module": "tmconv", "export": "display_info"}}
+        fn = _runtime._hydrate_local_function(route_entry)
+        # _invoke(target, args, payload, descriptor) -> raw(payload, context)
+        result = fn("localhost", [], {"zoom": 2}, {})
+        assert result == {"got_params": {"host": "localhost", "zoom": 2}, "payload": {"zoom": 2}}
+    finally:
+        sys.path.remove(str(tmp_path))
+        sys.modules.pop("tmconv", None)
+
+
 def test_runner_reads_stdin_calls_handler(tmp_path):
     env = _fixture_env(tmp_path)
     out = subprocess.run([sys.executable, "-m", "urirun.exec", "isofix:square"],

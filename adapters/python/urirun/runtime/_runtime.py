@@ -288,11 +288,55 @@ def _hydrate_local_function(route_entry: dict):
         return None
     from urirun.runtime.v2 import _handler_kwargs  # deferred: v2 imports this module
 
+    use_payload_context = _is_payload_context_handler(raw)
+
     def _invoke(target, args, payload, descriptor):
+        if use_payload_context:
+            return raw(*_payload_context_args(target, payload))
         return raw(**_handler_kwargs(raw, payload))
 
     _invoke.__name__ = export
     return _invoke
+
+
+def _is_payload_context_handler(raw) -> bool:
+    """True for the tellmesh URI-pack handler convention ``def handler(payload, context)``.
+
+    urirun normally binds a handler's named params from the payload; tellmesh packs (urikvm,
+    uricontrol, uriwebrtc, …) instead expose exactly two positional params ``(payload, context)``.
+    Detecting that signature lets such packs run unmodified through ``adopt-pack`` → node /run,
+    instead of failing with ``TypeError: missing 'payload' and 'context'``.
+    """
+    import inspect
+
+    try:
+        params = [
+            p for p in inspect.signature(raw).parameters.values()
+            if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+        ]
+    except (ValueError, TypeError):
+        return False
+    return [p.name for p in params] == ["payload", "context"]
+
+
+def _payload_context_args(target, payload) -> tuple[dict, dict]:
+    """Build the ``(payload, context)`` arguments a tellmesh-convention handler expects.
+
+    ``context`` carries the URI path params under ``context['params']`` (the shape tellmesh
+    handlers read, e.g. ``context['params']['host'|'monitor']``) plus the standard
+    ``config``/``dry_run``/``allow_real``/``approved``/``state`` keys when the caller supplies
+    them. ``host`` defaults to the URI target so ``{host}`` routes resolve.
+    """
+    data = payload if isinstance(payload, dict) else {}
+    params = {"host": target, **{k: v for k, v in data.items() if k not in _CTX_FLAG_KEYS}}
+    context = {"params": params}
+    for key in _CTX_FLAG_KEYS:
+        if key in data:
+            context[key] = data[key]
+    return data, context
+
+
+_CTX_FLAG_KEYS = ("config", "dry_run", "allow_real", "approved", "state")
 
 
 def run_local_function(ctx: dict, policy: dict) -> dict:

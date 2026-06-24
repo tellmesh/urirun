@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.117', 'javascript').
+project_metadata('urirun', '0.4.118', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -80,7 +80,7 @@ project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/contracts.py', 63, 'python').
 project_file('adapters/python/urirun/host/document_sync.py', 382, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 486, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 9894, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 10004, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 541, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 356, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 280, 'python').
@@ -109,7 +109,7 @@ project_file('adapters/python/urirun/node/transport.py', 436, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
 project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/runtime/_registry.py', 719, 'python').
-project_file('adapters/python/urirun/runtime/_runtime.py', 541, 'python').
+project_file('adapters/python/urirun/runtime/_runtime.py', 585, 'python').
 project_file('adapters/python/urirun/runtime/_scan.py', 667, 'python').
 project_file('adapters/python/urirun/runtime/adopt_pack.py', 246, 'python').
 project_file('adapters/python/urirun/runtime/agent.py', 152, 'python').
@@ -709,10 +709,25 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_recent_scanne
 python_function('adapters/python/urirun/host/host_dashboard.py', 'service_live_views', 3, 12, 11).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_update', 2, 3, 9).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_take', 1, 3, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_register_scanner_result', 2, 24, 13).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_crop_overlay_attachment', 6, 1, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_register_document_artifact', 2, 7, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_result_content', 4, 9, 2).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_register_scanner_result', 2, 10, 13).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_orientation_summary', 1, 8, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_capture', 3, 30, 32).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_best_finish', 3, 47, 24).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_decode_capture_image', 1, 4, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_quality_ok', 3, 4, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_reject_result', 0, 5, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_candidate_result', 2, 3, 4).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_capture', 3, 18, 25).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_best_series_not_found', 1, 1, 1).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_resolve_best_candidate', 1, 7, 4).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_best_quality_rejected', 3, 4, 2).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_best_candidate_paths', 1, 3, 5).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_best_finish_store_failure', 2, 4, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_refresh_best_ocr', 3, 5, 5).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_ensure_best_overlay', 4, 8, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_store_best_finish', 5, 6, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_best_finish', 3, 20, 23).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_session', 2, 6, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'uri_event', 2, 5, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'page_action_enqueue', 1, 5, 11).
@@ -1180,7 +1195,9 @@ python_function('adapters/python/urirun/runtime/_runtime.py', '_make_secret_inje
 python_function('adapters/python/urirun/runtime/_runtime.py', '_build_fetch_body', 6, 4, 6).
 python_function('adapters/python/urirun/runtime/_runtime.py', '_send_fetch', 5, 2, 6).
 python_function('adapters/python/urirun/runtime/_runtime.py', 'run_fetch', 2, 5, 10).
-python_function('adapters/python/urirun/runtime/_runtime.py', '_hydrate_local_function', 1, 6, 6).
+python_function('adapters/python/urirun/runtime/_runtime.py', '_hydrate_local_function', 1, 6, 8).
+python_function('adapters/python/urirun/runtime/_runtime.py', '_is_payload_context_handler', 1, 5, 2).
+python_function('adapters/python/urirun/runtime/_runtime.py', '_payload_context_args', 2, 6, 2).
 python_function('adapters/python/urirun/runtime/_runtime.py', 'run_local_function', 2, 5, 8).
 python_function('adapters/python/urirun/runtime/_runtime.py', 'run_mqtt_publish', 2, 3, 2).
 python_function('adapters/python/urirun/runtime/_runtime.py', 'run', 7, 12, 13).

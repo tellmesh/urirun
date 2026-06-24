@@ -208,11 +208,22 @@ INDEX_HTML = r"""<!doctype html>
     body[data-view="nodes"] .grid {
       grid-template-columns: minmax(0, 1fr);
     }
-    body[data-view="nodes"] .grid > .stack:first-of-type {
+    body[data-view="nodes"] .grid > .stack:not(aside) {
       grid-column: 1 / -1;
     }
     body[data-view="nodes"] .grid > aside.stack {
       display: none;
+    }
+    /* Activity view is logs-only and full page width (its panels live in the aside). */
+    body[data-view="activity"] .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    body[data-view="activity"] .grid > .stack:not(aside) {
+      display: none;
+    }
+    body[data-view="activity"] .grid > aside.stack {
+      grid-column: 1 / -1;
+      display: grid;
     }
     body[data-view="chat"] .chat-panel {
       min-height: inherit;
@@ -934,16 +945,8 @@ INDEX_HTML = r"""<!doctype html>
       </div>
       <aside class="stack">
         <article class="panel view-block" data-section="activity">
-          <div class="panel-head"><h2>Checks</h2></div>
-          <div class="panel-body"><div class="list" id="checksList"></div></div>
-        </article>
-        <article class="panel view-block" data-section="activity">
-          <div class="panel-head"><h2>Logs</h2></div>
-          <div class="panel-body"><div class="list" id="logsList"></div></div>
-        </article>
-        <article class="panel view-block" data-section="activity">
-          <div class="panel-head"><h2>Artifacts</h2></div>
-          <div class="panel-body"><div class="list" id="artifactsList"></div></div>
+          <div class="panel-head"><h2>Logs</h2><span class="subtle" id="logCount"></span></div>
+          <div class="panel-body"><div id="logsList"></div></div>
         </article>
       </aside>
     </section>
@@ -1467,7 +1470,9 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function renderChecks(items) {
-      $('checksList').innerHTML = items.map((item) => `<div class="item">
+      const el = $('checksList');
+      if (!el) return;  // Checks panel removed from the activity view (logs-only)
+      el.innerHTML = items.map((item) => `<div class="item">
         <div><strong>${item.subject}</strong> <span class="status ${item.status}">${item.status}</span></div>
         <div class="mono">${item.check_uri}</div>
         <div class="subtle">${item.created_at}</div>
@@ -1475,11 +1480,19 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function renderLogs(items) {
-      $('logsList').innerHTML = items.map((item) => `<div class="item">
-        <div><strong>${item.event}</strong> <span class="pill">${item.stream}</span></div>
-        ${item.detail ? `<details><summary>URI / JSON</summary><pre>${esc(JSON.stringify(item.detail, null, 2))}</pre></details>` : ''}
-        <div class="subtle">${item.created_at}</div>
-      </div>`).join('') || empty('No logs recorded');
+      const el = $('logsList');
+      if (!el) return;
+      const cnt = $('logCount');
+      if (cnt) cnt.textContent = `${(items || []).length} entries`;
+      const rows = (items || []).map((item) => `<tr>
+        <td class="mono">${esc(item.created_at || '')}</td>
+        <td><span class="pill">${esc(item.stream || '')}</span></td>
+        <td><strong>${esc(item.event || '')}</strong></td>
+        <td>${item.detail ? `<details><summary>JSON</summary><pre>${esc(JSON.stringify(item.detail, null, 2))}</pre></details>` : ''}</td>
+      </tr>`).join('');
+      el.innerHTML = rows
+        ? `<div class="service-table-wrap"><table><thead><tr><th>Time</th><th>Stream</th><th>Event</th><th>Detail</th></tr></thead><tbody>${rows}</tbody></table></div>`
+        : empty('No logs recorded');
     }
 
     function filePreviewUrl(path) {
@@ -1639,7 +1652,8 @@ INDEX_HTML = r"""<!doctype html>
       }
       state.artifactRenderKey = renderKey;
       renderArtifactFileGrid(state.artifacts);
-      $('artifactsList').innerHTML = state.artifacts.map((item) => `<div class="item">
+      const artifactsListEl = $('artifactsList');  // removed from the activity view (logs-only)
+      if (artifactsListEl) artifactsListEl.innerHTML = state.artifacts.map((item) => `<div class="item">
         <div><strong>${item.kind}</strong></div>
         ${artifactPreview(item)}
         <div class="mono">${item.uri}</div>
@@ -5640,10 +5654,58 @@ def _cleanup_duplicate_scan_files(paths: list) -> list[str]:
     return removed
 
 
+def _draw_crop_box(draw: Any, canvas: Any, color: tuple, box: Any, scale: float,
+                   original_width: int, original_height: int) -> None:
+    """Draw the detected crop rectangle (4-pt box scaled to canvas), or a full-frame border."""
+    if box and len(box) == 4:
+        left, top, right, bottom = (float(value) for value in box)
+        scaled_box = (
+            int(max(0, min(original_width, left)) * scale),
+            int(max(0, min(original_height, top)) * scale),
+            int(max(0, min(original_width, right)) * scale),
+            int(max(0, min(original_height, bottom)) * scale),
+        )
+        for offset in range(4):
+            draw.rectangle(
+                (
+                    scaled_box[0] - offset,
+                    scaled_box[1] - offset,
+                    scaled_box[2] + offset,
+                    scaled_box[3] + offset,
+                ),
+                outline=color,
+            )
+    else:
+        draw.rectangle((3, 3, canvas.size[0] - 4, canvas.size[1] - 4), outline=color, width=4)
+
+
+def _draw_overlay_label(draw: Any, canvas: Any, crop: dict, quality: dict | None, ok: bool) -> None:
+    """Draw the crop status/score caption with a contrasting background box."""
+    from PIL import ImageFont
+
+    score = (quality or {}).get("score")
+    label_parts = [
+        "crop:ok" if ok else "crop:rejected",
+        str(crop.get("method") or crop.get("reason") or ""),
+        f"score={score}" if score is not None else "",
+    ]
+    label = " | ".join(part for part in label_parts if part)[:180]
+    font = ImageFont.load_default()
+    try:
+        text_box = draw.textbbox((0, 0), label, font=font)
+        text_width = text_box[2] - text_box[0]
+        text_height = text_box[3] - text_box[1]
+    except Exception:  # noqa: BLE001
+        text_width = min(canvas.size[0] - 16, max(80, len(label) * 6))
+        text_height = 12
+    draw.rectangle((6, 6, min(canvas.size[0] - 6, text_width + 18), text_height + 18), fill=(0, 0, 0))
+    draw.text((12, 10), label, fill=(255, 255, 255), font=font)
+
+
 def _scanner_crop_overlay(original_path: str | Path, crop: dict, quality: dict | None = None) -> dict:
     """Write a diagnostic image with the detected crop box drawn over the raw frame."""
     try:
-        from PIL import Image, ImageDraw, ImageFont, ImageOps
+        from PIL import Image, ImageDraw, ImageOps
 
         source = Path(original_path).expanduser().resolve()
         if not source.is_file():
@@ -5659,44 +5721,8 @@ def _scanner_crop_overlay(original_path: str | Path, crop: dict, quality: dict |
         partial = bool(crop.get("partialEdge"))
         color = (48, 214, 126) if ok else (239, 68, 68) if partial else (245, 158, 11)
         box = crop.get("box") if isinstance(crop.get("box"), (list, tuple)) else None
-        if box and len(box) == 4:
-            left, top, right, bottom = (float(value) for value in box)
-            scaled_box = (
-                int(max(0, min(original_width, left)) * scale),
-                int(max(0, min(original_height, top)) * scale),
-                int(max(0, min(original_width, right)) * scale),
-                int(max(0, min(original_height, bottom)) * scale),
-            )
-            for offset in range(4):
-                draw.rectangle(
-                    (
-                        scaled_box[0] - offset,
-                        scaled_box[1] - offset,
-                        scaled_box[2] + offset,
-                        scaled_box[3] + offset,
-                    ),
-                    outline=color,
-                )
-        else:
-            draw.rectangle((3, 3, canvas.size[0] - 4, canvas.size[1] - 4), outline=color, width=4)
-        quality = quality or {}
-        score = quality.get("score")
-        label_parts = [
-            "crop:ok" if ok else "crop:rejected",
-            str(crop.get("method") or crop.get("reason") or ""),
-            f"score={score}" if score is not None else "",
-        ]
-        label = " | ".join(part for part in label_parts if part)[:180]
-        font = ImageFont.load_default()
-        try:
-            text_box = draw.textbbox((0, 0), label, font=font)
-            text_width = text_box[2] - text_box[0]
-            text_height = text_box[3] - text_box[1]
-        except Exception:  # noqa: BLE001
-            text_width = min(canvas.size[0] - 16, max(80, len(label) * 6))
-            text_height = 12
-        draw.rectangle((6, 6, min(canvas.size[0] - 6, text_width + 18), text_height + 18), fill=(0, 0, 0))
-        draw.text((12, 10), label, fill=(255, 255, 255), font=font)
+        _draw_crop_box(draw, canvas, color, box, scale, original_width, original_height)
+        _draw_overlay_label(draw, canvas, crop, quality, ok)
         target = source.with_name(f"{source.stem}-crop-overlay.jpg")
         canvas.save(target, format="JPEG", quality=88, optimize=True)
         return {
@@ -5711,6 +5737,32 @@ def _scanner_crop_overlay(original_path: str | Path, crop: dict, quality: dict |
 
 
 _LAST_STAGING_PRUNE = 0.0
+
+
+def _staging_keep_paths() -> set[str]:
+    """Resolved paths that pruning must never remove: files of an archived document and of any
+    active (not-yet-finished) best-frame series. Best-effort; a read failure just keeps less."""
+    keep: set[str] = set()
+    try:
+        for doc in _load_document_index().get("documents", []):
+            if isinstance(doc, dict):
+                for key in ("originalPath", "cropPath"):
+                    if doc.get(key):
+                        keep.add(str(Path(str(doc[key])).expanduser().resolve()))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        with _SCANNER_BEST_LOCK:
+            sessions = list(_SCANNER_BEST_SESSIONS.values())
+        for session in sessions:
+            for cand in (session.get("candidates") or []):
+                if isinstance(cand, dict):
+                    for key in ("originalPath", "displayPath", "overlayPath"):
+                        if cand.get(key):
+                            keep.add(str(Path(str(cand[key])).expanduser().resolve()))
+    except Exception:  # noqa: BLE001
+        pass
+    return keep
 
 
 def _prune_scanner_staging(*, min_interval: float = 60.0) -> int:
@@ -5743,27 +5795,7 @@ def _prune_scanner_staging(*, min_interval: float = 60.0) -> int:
     if not staging.is_dir():
         return 0
 
-    keep: set[str] = set()
-    try:
-        for doc in _load_document_index().get("documents", []):
-            if isinstance(doc, dict):
-                for key in ("originalPath", "cropPath"):
-                    if doc.get(key):
-                        keep.add(str(Path(str(doc[key])).expanduser().resolve()))
-    except Exception:  # noqa: BLE001
-        pass
-    try:
-        with _SCANNER_BEST_LOCK:
-            sessions = list(_SCANNER_BEST_SESSIONS.values())
-        for session in sessions:
-            for cand in (session.get("candidates") or []):
-                if isinstance(cand, dict):
-                    for key in ("originalPath", "displayPath", "overlayPath"):
-                        if cand.get(key):
-                            keep.add(str(Path(str(cand[key])).expanduser().resolve()))
-    except Exception:  # noqa: BLE001
-        pass
-
+    keep = _staging_keep_paths()
     cutoff = now - keep_recent
     removed = 0
     try:
@@ -6620,6 +6652,26 @@ def _frame_visual_metrics(path: str | Path) -> dict:
     }
 
 
+def _crop_dimensions(crop: dict) -> tuple[int, int]:
+    return (
+        int(crop.get("width") or crop.get("cropWidth") or 0),
+        int(crop.get("height") or crop.get("cropHeight") or 0),
+    )
+
+
+def _crop_geometry_score(crop: dict, reasons: list[str]) -> float:
+    score = 0.0
+    width, height = _crop_dimensions(crop)
+    if min(width, height) >= 220 and max(width, height) >= 420:
+        score += 12.0
+        reasons.append("size")
+    orientation = crop.get("orientation") if isinstance(crop.get("orientation"), dict) else {}
+    if orientation.get("enabled") and int(orientation.get("height") or height) >= int(orientation.get("width") or width):
+        score += 5.0
+        reasons.append("portrait")
+    return score
+
+
 def _crop_quality_score(crop: dict, reasons: list[str]) -> float:
     if not crop.get("ok"):
         if crop.get("partialEdge"):
@@ -6632,15 +6684,7 @@ def _crop_quality_score(crop: dict, reasons: list[str]) -> float:
     bbox_area = float(crop.get("bboxArea") or 0.0)
     if bbox_area:
         score += 18.0 * _bounded(1.0 - abs(bbox_area - 0.42) / 0.42)
-    width = int(crop.get("width") or crop.get("cropWidth") or 0)
-    height = int(crop.get("height") or crop.get("cropHeight") or 0)
-    if min(width, height) >= 220 and max(width, height) >= 420:
-        score += 12.0
-        reasons.append("size")
-    orientation = crop.get("orientation") if isinstance(crop.get("orientation"), dict) else {}
-    if orientation.get("enabled") and int(orientation.get("height") or height) >= int(orientation.get("width") or width):
-        score += 5.0
-        reasons.append("portrait")
+    score += _crop_geometry_score(crop, reasons)
     return score
 
 
@@ -7105,11 +7149,8 @@ def _orientation_summary(crop: dict) -> dict:
     }
 
 
-def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
-    _prune_scanner_staging()
-    mode = str(payload.get("mode") or "").lower()
-    archive = not (payload.get("archive") is False or mode in {"candidate", "best-candidate", "analyze", "analysis"})
-    raw_image = str(payload.get("image") or "")
+def _decode_capture_image(raw_image: str) -> tuple[str, bytes, str, str]:
+    """Parse a ``data:image/*;base64`` payload into (mime, raw_bytes, sha256, file_ext)."""
     match = re.match(r"^data:(image/[a-zA-Z0-9.+-]+);base64,(.+)$", raw_image, re.S)
     if not match:
         raise ValueError("image must be a data:image/*;base64 payload")
@@ -7117,6 +7158,86 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     raw = base64.b64decode(encoded.encode("ascii"), validate=False)
     digest = hashlib.sha256(raw).hexdigest()
     ext = ".jpg" if mime in {"image/jpeg", "image/jpg"} else ".png" if mime == "image/png" else ".bin"
+    return mime, raw, digest, ext
+
+
+def _capture_quality_ok(payload: dict, quality: dict, min_score: float) -> bool:
+    """A capture passes the document gate when forced, or scored >= min and document-like."""
+    return bool(payload.get("force")) or (
+        float(quality.get("score") or 0.0) >= min_score and bool(quality.get("documentLike"))
+    )
+
+
+def _capture_reject_result(*, uri: str, min_score: float, quality: dict, ocr: dict, crop: dict,
+                           overlay: dict, detected_document: dict, paths: list) -> dict:
+    """Clean up a low-confidence capture's staged files and build the rejection response."""
+    removed_scan_files = _cleanup_duplicate_scan_files(paths)
+    reject_reason = str(quality.get("cropReason") or "")
+    if not reject_reason and not quality.get("documentLike"):
+        reject_reason = "not document-like"
+    if not reject_reason:
+        reject_reason = "low-quality scan"
+    return {
+        "ok": True,
+        "rejected": True,
+        "uri": uri,
+        "reason": reject_reason,
+        "minScore": min_score,
+        "quality": quality,
+        "ocr": ocr,
+        "crop": crop,
+        "overlay": overlay,
+        "detectedDocument": detected_document,
+        "removedScanFiles": removed_scan_files,
+    }
+
+
+def _capture_candidate_result(project: str, payload: dict, *, uri: str, mime: str, digest: str,
+                              raw_len: int, path: Path, display_path: Path, overlay_path: str,
+                              overlay: dict, crop: dict, ocr: dict, detected_document: dict,
+                              quality: dict) -> dict:
+    """Stage a transient best-frame candidate (no archive) and return the live-stream response."""
+    candidate = {
+        "seriesId": str(payload.get("seriesId") or ""),
+        "frameIndex": payload.get("frameIndex"),
+        "uri": uri,
+        "mime": mime,
+        "sha256": digest,
+        "bytes": raw_len,
+        "originalPath": str(path),
+        "displayPath": str(display_path),
+        "overlayPath": overlay_path,
+        "overlay": overlay,
+        "crop": crop,
+        "ocr": ocr,
+        "detectedDocument": detected_document,
+        "quality": quality,
+        "capturedAt": payload.get("capturedAt"),
+        "userAgent": payload.get("userAgent", ""),
+        "width": payload.get("width"),
+        "height": payload.get("height"),
+    }
+    series = None
+    if candidate["seriesId"]:
+        series = _scanner_best_update(candidate["seriesId"], candidate)
+    return {
+        "ok": True,
+        "uri": uri,
+        "candidate": _scanner_public_candidate_for_live(candidate, project),
+        "series": series,
+        "ocr": ocr,
+        "crop": crop,
+        "overlay": overlay,
+        "quality": quality,
+        "detectedDocument": detected_document,
+    }
+
+
+def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
+    _prune_scanner_staging()
+    mode = str(payload.get("mode") or "").lower()
+    archive = not (payload.get("archive") is False or mode in {"candidate", "best-candidate", "analyze", "analysis"})
+    mime, raw, digest, ext = _decode_capture_image(str(payload.get("image") or ""))
     root = _scanner_staging_dir()
     root.mkdir(parents=True, exist_ok=True)
     name = f"{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-phone-scan-{digest[:12]}{ext}"
@@ -7151,29 +7272,11 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     # archiving and showing them. Mirrors the best-frame gate so the manual "Scan" button no
     # longer fills the archive with mis-scanned receipts. Pass force=true to override.
     min_score = float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45"))
-    quality_ok = bool(payload.get("force")) or (
-        float(quality.get("score") or 0.0) >= min_score and bool(quality.get("documentLike"))
-    )
-    if archive and not quality_ok:
-        removed_scan_files = _cleanup_duplicate_scan_files([path, display_path, overlay_path])
-        reject_reason = str(quality.get("cropReason") or "")
-        if not reject_reason and not quality.get("documentLike"):
-            reject_reason = "not document-like"
-        if not reject_reason:
-            reject_reason = "low-quality scan"
-        return {
-            "ok": True,
-            "rejected": True,
-            "uri": uri,
-            "reason": reject_reason,
-            "minScore": min_score,
-            "quality": quality,
-            "ocr": ocr,
-            "crop": crop,
-            "overlay": overlay,
-            "detectedDocument": detected_document,
-            "removedScanFiles": removed_scan_files,
-        }
+    if archive and not _capture_quality_ok(payload, quality, min_score):
+        return _capture_reject_result(
+            uri=uri, min_score=min_score, quality=quality, ocr=ocr, crop=crop, overlay=overlay,
+            detected_document=detected_document, paths=[path, display_path, overlay_path],
+        )
     if archive:
         try:
             document = _archive_scanned_document(
@@ -7187,6 +7290,12 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
             )
         except Exception as exc:  # noqa: BLE001
             document = {"ok": False, "error": str(exc), "metadata": detected_document}
+    if not archive:
+        return _capture_candidate_result(
+            project, payload, uri=uri, mime=mime, digest=digest, raw_len=len(raw), path=path,
+            display_path=display_path, overlay_path=overlay_path, overlay=overlay, crop=crop,
+            ocr=ocr, detected_document=detected_document, quality=quality,
+        )
     meta = {
         "source": payload.get("source") or "phone",
         "width": payload.get("width"),
@@ -7206,42 +7315,6 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
         "quality": quality,
         "document": document,
     }
-    if not archive:
-        candidate = {
-            "seriesId": str(payload.get("seriesId") or ""),
-            "frameIndex": payload.get("frameIndex"),
-            "uri": uri,
-            "mime": mime,
-            "sha256": digest,
-            "bytes": len(raw),
-            "originalPath": str(path),
-            "displayPath": str(display_path),
-            "overlayPath": overlay_path,
-            "overlay": overlay,
-            "crop": crop,
-            "ocr": ocr,
-            "detectedDocument": detected_document,
-            "quality": quality,
-            "capturedAt": payload.get("capturedAt"),
-            "userAgent": payload.get("userAgent", ""),
-            "width": payload.get("width"),
-            "height": payload.get("height"),
-        }
-        series = None
-        if candidate["seriesId"]:
-            series = _scanner_best_update(candidate["seriesId"], candidate)
-        return {
-            "ok": True,
-            "uri": uri,
-            "candidate": _scanner_public_candidate_for_live(candidate, project),
-            "series": series,
-            "ocr": ocr,
-            "crop": crop,
-            "overlay": overlay,
-            "quality": quality,
-            "detectedDocument": detected_document,
-        }
-
     registered = _register_scanner_result(
         project,
         db,
@@ -7271,6 +7344,104 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     }
 
 
+def _best_series_not_found(series_id: str) -> dict:
+    """Record a 'series not found' live-stream entry and return its failure response."""
+    with _SCANNER_BEST_LOCK:
+        _SCANNER_LIVE_STREAMS[series_id] = {
+            "seriesId": series_id,
+            "createdAt": _utc_now(),
+            "updatedAt": _utc_now(),
+            "status": "failed",
+            "count": 0,
+            "best": None,
+            "candidates": [],
+            "error": "scanner best series not found",
+            "document": {},
+            "artifact": None,
+        }
+    return {"ok": False, "error": "scanner best series not found", "seriesId": series_id}
+
+
+def _resolve_best_candidate(series: dict) -> dict | None:
+    """The series' recorded best frame, or the highest-scoring candidate, or None."""
+    best = series.get("best")
+    if isinstance(best, dict):
+        return best
+    candidates = [item for item in series.get("candidates", []) if isinstance(item, dict)]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: float((item.get("quality") or {}).get("score") or 0.0))
+
+
+def _best_quality_rejected(payload: dict, quality: dict) -> tuple[bool, float]:
+    """Return (rejected, min_score). rejected is True when below threshold and force is not set."""
+    min_score = float(payload.get("minScore") if payload.get("minScore") is not None else 45.0)
+    rejected = not payload.get("force") and (
+        float(quality.get("score") or 0.0) < min_score or not quality.get("documentLike")
+    )
+    return rejected, min_score
+
+
+def _best_candidate_paths(best: dict) -> tuple[Path, Path]:
+    return (
+        Path(str(best.get("originalPath") or "")).expanduser().resolve(),
+        Path(str(best.get("displayPath") or "")).expanduser().resolve(),
+    )
+
+
+def _best_finish_store_failure(series_id: str, series: dict, *, status: str, error: str,
+                               best: dict | None = None, project: str = "",
+                               extra: dict | None = None) -> dict:
+    """Record a rejected/failed best-finish in the live stream and build its response dict."""
+    with _SCANNER_BEST_LOCK:
+        if best is not None:
+            series["best"] = best
+        _scanner_live_store_locked(series_id, series, status=status, error=error)
+    result = {"ok": False, "error": error, "seriesId": series_id}
+    if best is not None:
+        result["best"] = _scanner_public_candidate_for_live(best, project)
+    if extra:
+        result.update(extra)
+    return result
+
+
+def _refresh_best_ocr(fallback_ocr: dict, original_path: Path, display_path: Path) -> dict:
+    """Re-OCR the kept frame with the accurate full backend, falling back to the cheap read."""
+    ocr_source = original_path if _truthy_env("URIRUN_SCANNER_OCR_FULLFRAME", "1") else display_path
+    refreshed = _local_image_ocr(str(ocr_source))
+    if refreshed.get("ok") and str(refreshed.get("text") or "").strip():
+        return refreshed
+    return fallback_ocr
+
+
+def _ensure_best_overlay(best: dict, crop: dict, quality: dict, original_path: Path) -> tuple[dict, str]:
+    """Reuse the candidate's crop overlay if its file still exists, else render a fresh one."""
+    overlay = best.get("overlay") if isinstance(best.get("overlay"), dict) else {}
+    overlay_path = str(best.get("overlayPath") or overlay.get("path") or "")
+    if not overlay_path or not Path(overlay_path).expanduser().is_file():
+        overlay = _scanner_crop_overlay(original_path, crop, quality)
+        overlay_path = str(overlay.get("path") or "") if overlay.get("ok") else ""
+        best["overlay"] = overlay
+        best["overlayPath"] = overlay_path
+    return overlay, overlay_path
+
+
+def _store_best_finish(series: dict, series_id: str, best: dict, document: dict, registered: dict) -> None:
+    """Persist the accepted/failed best-finish outcome to the live stream under the lock."""
+    with _SCANNER_BEST_LOCK:
+        series["best"] = best
+        series["document"] = document
+        series["artifact"] = registered["documentArtifact"] or registered["artifact"]
+        _scanner_live_store_locked(
+            series_id,
+            series,
+            status="accepted" if document.get("ok") else "failed",
+            error=None if document.get("ok") else str(document.get("error") or "document archive failed"),
+            document=document,
+            artifact=registered["documentArtifact"] or registered["artifact"],
+        )
+
+
 def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
     _prune_scanner_staging()
     series_id = str(payload.get("seriesId") or "").strip()
@@ -7278,59 +7449,32 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
         raise ValueError("seriesId is required")
     series = _scanner_best_take(series_id, clear=payload.get("clear", True) is not False)
     if not series:
-        with _SCANNER_BEST_LOCK:
-            _SCANNER_LIVE_STREAMS[series_id] = {
-                "seriesId": series_id,
-                "createdAt": _utc_now(),
-                "updatedAt": _utc_now(),
-                "status": "failed",
-                "count": 0,
-                "best": None,
-                "candidates": [],
-                "error": "scanner best series not found",
-                "document": {},
-                "artifact": None,
-            }
-        return {"ok": False, "error": "scanner best series not found", "seriesId": series_id}
-    best = series.get("best")
+        return _best_series_not_found(series_id)
+    best = _resolve_best_candidate(series)
     if not isinstance(best, dict):
-        candidates = [item for item in series.get("candidates", []) if isinstance(item, dict)]
-        best = max(candidates, key=lambda item: float((item.get("quality") or {}).get("score") or 0.0)) if candidates else None
-    if not isinstance(best, dict):
-        with _SCANNER_BEST_LOCK:
-            _scanner_live_store_locked(series_id, series, status="failed", error="scanner best series has no candidates")
-        return {"ok": False, "error": "scanner best series has no candidates", "seriesId": series_id}
+        return _best_finish_store_failure(series_id, series, status="failed",
+                                          error="scanner best series has no candidates")
     quality = best.get("quality") if isinstance(best.get("quality"), dict) else {}
-    min_score = float(payload.get("minScore") if payload.get("minScore") is not None else 45.0)
-    if not payload.get("force") and (float(quality.get("score") or 0.0) < min_score or not quality.get("documentLike")):
-        with _SCANNER_BEST_LOCK:
-            series["best"] = best
-            _scanner_live_store_locked(series_id, series, status="rejected", error="no reliable receipt or invoice candidate found")
-        return {
-            "ok": False,
-            "error": "no reliable receipt or invoice candidate found",
-            "seriesId": series_id,
-            "best": _scanner_public_candidate_for_live(best, project),
-            "minScore": min_score,
-        }
-
-    original_path = Path(str(best.get("originalPath") or "")).expanduser().resolve()
-    display_path = Path(str(best.get("displayPath") or "")).expanduser().resolve()
+    quality_rejected, min_score = _best_quality_rejected(payload, quality)
+    if quality_rejected:
+        return _best_finish_store_failure(
+            series_id, series, status="rejected",
+            error="no reliable receipt or invoice candidate found",
+            best=best, project=project, extra={"minScore": min_score},
+        )
+    original_path, display_path = _best_candidate_paths(best)
     if not original_path.is_file() or not display_path.is_file():
-        with _SCANNER_BEST_LOCK:
-            series["best"] = best
-            _scanner_live_store_locked(series_id, series, status="failed", error="best candidate file is missing")
-        return {"ok": False, "error": "best candidate file is missing", "seriesId": series_id, "best": _scanner_public_candidate_for_live(best, project)}
+        return _best_finish_store_failure(series_id, series, status="failed",
+                                          error="best candidate file is missing",
+                                          best=best, project=project)
     crop = best.get("crop") if isinstance(best.get("crop"), dict) else {}
     ocr = best.get("ocr") if isinstance(best.get("ocr"), dict) else {}
     # Candidates were scored with the cheap OCR backend; pay for the accurate full read
     # (paddle full-frame) once, on the single frame we are about to keep. Falls back to the
     # candidate's OCR if the re-read fails.
-    ocr_source = original_path if _truthy_env("URIRUN_SCANNER_OCR_FULLFRAME", "1") else display_path
-    refreshed = _local_image_ocr(str(ocr_source))
-    if refreshed.get("ok") and str(refreshed.get("text") or "").strip():
-        ocr = refreshed
+    ocr = _refresh_best_ocr(ocr, original_path, display_path)
     digest = str(best.get("sha256") or _file_sha256(original_path))
+    detected_document = best.get("detectedDocument") or {}
     try:
         document = _archive_scanned_document(
             display_path=display_path,
@@ -7341,20 +7485,14 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
             captured_at=str(best.get("capturedAt") or ""),
         )
     except Exception as exc:  # noqa: BLE001
-        document = {"ok": False, "error": str(exc), "metadata": best.get("detectedDocument") or {}}
+        document = {"ok": False, "error": str(exc), "metadata": detected_document}
     uri = str(best.get("uri") or f"scanner://host/capture/{digest[:16]}")
-    overlay = best.get("overlay") if isinstance(best.get("overlay"), dict) else {}
-    overlay_path = str(best.get("overlayPath") or overlay.get("path") or "")
-    if not overlay_path or not Path(overlay_path).expanduser().is_file():
-        overlay = _scanner_crop_overlay(original_path, crop, quality)
-        overlay_path = str(overlay.get("path") or "") if overlay.get("ok") else ""
-        best["overlay"] = overlay
-        best["overlayPath"] = overlay_path
+    overlay, overlay_path = _ensure_best_overlay(best, crop, quality, original_path)
     meta = {
         "source": "phone-best",
         "seriesId": series_id,
         "frameIndex": best.get("frameIndex"),
-        "candidateCount": len(series.get("candidates", []) or []),
+        "candidateCount": len(series.get("candidates", [])),
         "width": best.get("width"),
         "height": best.get("height"),
         "mime": best.get("mime"),
@@ -7368,7 +7506,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
         "capturedAt": best.get("capturedAt"),
         "userAgent": best.get("userAgent", ""),
         "ocr": ocr,
-        "detectedDocument": best.get("detectedDocument") or {},
+        "detectedDocument": detected_document,
         "quality": quality,
         "document": document,
     }
@@ -7384,18 +7522,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
         document=document,
         content_prefix="Best phone scan saved",
     )
-    with _SCANNER_BEST_LOCK:
-        series["best"] = best
-        series["document"] = document
-        series["artifact"] = registered["documentArtifact"] or registered["artifact"]
-        _scanner_live_store_locked(
-            series_id,
-            series,
-            status="accepted" if document.get("ok") else "failed",
-            error=None if document.get("ok") else str(document.get("error") or "document archive failed"),
-            document=document,
-            artifact=registered["documentArtifact"] or registered["artifact"],
-        )
+    _store_best_finish(series, series_id, best, document, registered)
     return {
         "ok": True,
         "seriesId": series_id,
@@ -7406,7 +7533,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
         "documentArtifact": registered["documentArtifact"],
         "primaryArtifact": registered["primaryArtifact"],
         "ocr": ocr,
-        "detectedDocument": best.get("detectedDocument") or {},
+        "detectedDocument": detected_document,
         "orientation": _orientation_summary(crop),
         "quality": quality,
         "overlay": overlay,

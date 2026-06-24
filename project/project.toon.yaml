@@ -1,23 +1,23 @@
-# urirun | 1417 func | 85f | 34181L | python | 2026-06-24
+# urirun | 1436 func | 85f | 34351L | python | 2026-06-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.9  critical=188 (limit:10)  dup=2  cycles=0
+  CC̄=4.9  critical=187 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      chat_ask = 100 (limit:15)
   !!! high_fan_out     chat_ask = 60 (limit:10)
-  !!! cc_exceeded      scanner_best_finish = 47 (limit:15)
   !!! high_fan_out     _archive_scanned_document = 45 (limit:10)
   !!! high_fan_out     create_handler = 39 (limit:10)
-  !!! high_fan_out     scanner_capture = 37 (limit:10)
-  !!! high_fan_out     scanner_best_finish = 34 (limit:10)
   !!! cc_exceeded      NodeClient.ensure_scheme = 32 (limit:15)
   !!! high_fan_out     _write_document_pdf = 32 (limit:10)
-  !!! cc_exceeded      scanner_capture = 30 (limit:15)
+  !!! high_fan_out     serve = 30 (limit:10)
+  !!! high_fan_out     scanner_capture = 29 (limit:10)
+  !!! high_fan_out     _add_host_subparser = 27 (limit:10)
+  !!! cc_exceeded      uri_invoke = 26 (limit:15)
 
 MODULES[153] (top by size):
-  M[adapters/python/urirun/host/host_dashboard.py] 9914L C:0 F:252 CC↑100 D:0 (python)
+  M[adapters/python/urirun/host/host_dashboard.py] 10040L C:0 F:269 CC↑100 D:0 (python)
   M[adapters/python/urirun/runtime/v2.py] 2024L C:1 F:125 CC↑14 D:4 (python)
   M[adapters/python/urirun/node/mesh.py] 1829L C:3 F:96 CC↑14 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
@@ -27,8 +27,8 @@ MODULES[153] (top by size):
   M[adapters/python/urirun/runtime/_scan.py] 666L C:0 F:35 CC↑14 D:0 (python)
   M[adapters/python/urirun/node/flow.py] 606L C:0 F:30 CC↑14 D:2 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 600L C:0 F:34 CC↑14 D:1 (python)
+  M[adapters/python/urirun/runtime/_runtime.py] 584L C:1 F:29 CC↑13 D:2 (python)
   M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
-  M[adapters/python/urirun/runtime/_runtime.py] 540L C:1 F:27 CC↑13 D:2 (python)
   M[adapters/python/urirun/host/host_db.py] 540L C:0 F:32 CC↑11 D:0 (python)
   M[goal.yaml] 538L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/host/domain_monitor.py] 485L C:1 F:25 CC↑11 D:1 (python)
@@ -38,15 +38,15 @@ HOTSPOTS[10]:
   ★ chat_ask fan=60  // Orchestrates 60 calls
   ★ _archive_scanned_document fan=45  // Orchestrates 45 calls
   ★ create_handler fan=39  // Orchestrates 39 calls
-  ★ scanner_capture fan=37  // Orchestrates 37 calls
-  ★ scanner_best_finish fan=34  // Orchestrates 34 calls
+  ★ _write_document_pdf fan=32  // Orchestrates 32 calls
+  ★ serve fan=30  // Run the daemon: warm registry + worker pool, one Unix socket, one process.
 
 REFACTOR[15]:
   [1] H/L Split NodeClient._local_connector_deploy_payload (CC=25)
   [2] H/L Split NodeClient.ensure_scheme (CC=32)
-  [3] H/L Split scanner_capture (CC=30)
-  [4] H/L Split scanner_best_finish (CC=47)
-  [5] H/L Split uri_invoke (CC=26)
+  [3] H/L Split uri_invoke (CC=26)
+  [4] H/L Split _decision_loop_for_document_sync (CC=25)
+  [5] H/L Split chat_ask (CC=100)
 
 EVOLUTION:
-  2026-06-24 CC̄=4.9 crit=188 34181L // Automated analysis
+  2026-06-24 CC̄=4.9 crit=187 34351L // Automated analysis
