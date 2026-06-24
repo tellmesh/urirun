@@ -4175,6 +4175,58 @@ def _run_node_uri(
     }
 
 
+def _route_key(uri: str) -> tuple[str, str]:
+    try:
+        scheme, rest = str(uri).split("://", 1)
+        parts = rest.split("/", 1)
+        return scheme, parts[1] if len(parts) > 1 else ""
+    except Exception:
+        return str(uri), ""
+
+
+def _node_has_route(routes: list[dict], uri: str) -> bool:
+    want = _route_key(uri)
+    return any(_route_key(str(route.get("uri") or "")) == want for route in routes if isinstance(route, dict))
+
+
+def _ensure_node_uri_routes(
+    node_url: str,
+    required_uris: list[str],
+    *,
+    node: str,
+    token: str | None = None,
+    identity: str | None = None,
+    timeout: float = 120.0,
+    roots: Any = None,
+) -> dict:
+    """Preflight the exact URI routes a node-side workflow needs.
+
+    Scheme-level checks are insufficient for split connectors such as fs://:
+    a node may expose fs://duplicates/... while still missing fs://file/... .
+    """
+    client = _node_client(node_url, token=token, identity=identity)
+    before = client.routes()
+    missing = [uri for uri in required_uris if not _node_has_route(before, uri)]
+    ensured: list[dict] = []
+    for uri in missing:
+        scheme = uri.split("://", 1)[0] if "://" in uri else uri
+        ensured.append(client.ensure_scheme(scheme, roots=roots, install=True, route=uri))
+    after = client.routes() if missing else before
+    remaining = [uri for uri in required_uris if not _node_has_route(after, uri)]
+    return {
+        "ok": not remaining,
+        "node": node,
+        "nodeUrl": node_url,
+        "requiredRoutes": required_uris,
+        "missingBefore": missing,
+        "missingAfter": remaining,
+        "ensured": ensured,
+        "routeCountBefore": len(before),
+        "routeCountAfter": len(after),
+        "timeout": timeout,
+    }
+
+
 def _short_value(value: Any, *, limit: int = 600) -> Any:
     if isinstance(value, str):
         return value if len(value) <= limit else value[:limit] + "..."
@@ -4213,8 +4265,13 @@ def _route_not_found_remedy(error: Any) -> str:
     if not isinstance(error, dict):
         return ""
     message = str(error.get("message") or "")
-    if str(error.get("category") or "") == "NOT_FOUND" or "route not found" in message.lower():
-        return ("remote node is missing the fs write route (fs://host/file/command/write-b64) — "
+    if (
+        str(error.get("category") or "") == "NOT_FOUND"
+        or str(error.get("type") or "").casefold() == "route"
+        or "route not found" in message.lower()
+    ):
+        return ("remote node is missing an fs file-transfer route "
+                "(fs://host/file/command/write-b64 or fs://host/file/query/read-b64) — "
                 f"update urirun-connector-fs on the target node; node said: {message or error}")
     return ""
 
@@ -4224,7 +4281,8 @@ def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha:
     # A route/transport NOT_FOUND means the call never reached the write handler, so `value` is
     # empty and "no sha256" would be misleading — surface the connector-outdated remedy first.
     remedy = _route_not_found_remedy(envelope.get("error")) or _route_not_found_remedy(
-        value.get("error") if isinstance(value, dict) else None)
+        value.get("error") if isinstance(value, dict) else None) or _route_not_found_remedy(
+        value if isinstance(value, dict) else None)
     if remedy:
         return remedy
     if isinstance(value, dict):
@@ -4250,6 +4308,9 @@ def _remote_write_error(run: dict, value: Any, *, expected_sha: str, remote_sha:
 
 
 def _remote_read_error(run: dict, value: Any, *, expected_sha: str, remote_sha: str | None) -> str:
+    remedy = _route_not_found_remedy(value if isinstance(value, dict) else None)
+    if remedy:
+        return remedy
     if isinstance(value, dict):
         error = value.get("error")
         if isinstance(error, dict):
@@ -4358,6 +4419,8 @@ def sync_documents_to_node(
     fs_read_uri = f"fs://{fs_target}/file/query/read-b64"
     read_back = _boolish(payload.get("verify_read_back", payload.get("verifyReadBack", payload.get("verify"))), True)
     verify_max_bytes = int(payload.get("verify_max_bytes") or payload.get("verifyMaxBytes") or 25_000_000)
+    ensure_routes = _boolish(payload.get("ensure_routes", payload.get("ensureRoutes")), True)
+    connector_roots = payload.get("connector_roots", payload.get("connectorRoots", payload.get("roots")))
 
     files = _document_archive_pdfs(source_root)
     results: list[dict] = []
@@ -4365,6 +4428,68 @@ def sync_documents_to_node(
     copied = 0
     skipped = 0
     failed_reasons: dict[str, int] = {}
+    preflight: dict | None = None
+
+    if ensure_routes and files:
+        required_routes = [fs_uri, fs_read_uri] if read_back else [fs_uri]
+        try:
+            preflight = _ensure_node_uri_routes(
+                node_url,
+                required_routes,
+                node=node,
+                token=token,
+                identity=identity,
+                timeout=min(timeout, 30.0),
+                roots=connector_roots,
+            )
+        except Exception as exc:  # noqa: BLE001 - fail before copying when route discovery cannot run.
+            preflight = {"ok": False, "error": str(exc), "requiredRoutes": required_routes}
+        if not preflight.get("ok"):
+            missing = preflight.get("missingAfter") or preflight.get("missingBefore") or required_routes
+            preflight_error = (
+                "remote node is missing required fs transfer route(s): "
+                f"{', '.join(str(item) for item in missing)}"
+            )
+            if preflight.get("error"):
+                preflight_error += f" ({preflight['error']})"
+            failed_reasons[preflight_error] = len(files)
+            verification = _document_sync_verification(files, results, source_root=source_root, read_back=read_back)
+            report = {
+                "ok": False,
+                "uri": "document://host/archive/command/sync-to-node",
+                "sourceRoot": str(source_root),
+                "node": node,
+                "nodeUrl": node_url,
+                "fsUri": fs_uri,
+                "fsReadUri": fs_read_uri,
+                "destRoot": dest_root,
+                "total": len(files),
+                "uploaded": 0,
+                "copied": 0,
+                "failed": len(files),
+                "skipped": skipped,
+                "failedReasons": failed_reasons,
+                "verification": verification,
+                "preflight": preflight,
+                "results": results,
+                "updatedAt": _utc_now(),
+            }
+            try:
+                _host_db().add_log(db, "document-sync", "sync-to-node", report)
+            except Exception:
+                pass
+            content = f"Document sync to {node} blocked: 0/{len(files)} PDFs -> {dest_root} ({preflight_error})"
+            message = _chat_message(
+                "system",
+                content,
+                detail={
+                    **report,
+                    "selectedTargets": ["host", f"node:{node}"],
+                },
+            )
+            _add_chat_message(db, message)
+            report["message"] = message
+            return report
 
     for source in files:
         rel = source.relative_to(source_root)
@@ -4484,6 +4609,7 @@ def sync_documents_to_node(
         "skipped": skipped,
         "failedReasons": failed_reasons,
         "verification": verification,
+        "preflight": preflight,
         "results": results,
         "updatedAt": _utc_now(),
     }

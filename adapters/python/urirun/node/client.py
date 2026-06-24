@@ -151,12 +151,16 @@ class NodeClient:
         except Exception:  # noqa: BLE001
             return (str(uri), "")
 
+    def _has_route(self, uri: str) -> bool:
+        want = self._route_key(uri)
+        return any(self._route_key(str(route.get("uri", ""))) == want for route in self.routes())
+
     def ensure_scheme(self, scheme: str, roots=None, install: bool = True, route: str | None = None) -> dict:
         """Make `scheme://` live on the node, acquiring it if missing: adopt bindings already
         installed in the node venv, else discover a connector (catalog/local ~/github/git)
         via node:// management, install it, then adopt its routes. Older nodes fall back to
         host-side merge-deploy. Needs --manage + admin token."""
-        if scheme in self.schemes():
+        if scheme in self.schemes() and (not route or self._has_route(route)):
             return {"ok": True, "scheme": scheme, "already": True}
         mgmt = f"node://{self.name}"
         adopt_uri = f"{mgmt}/registry/command/adopt"
@@ -169,8 +173,13 @@ class NodeClient:
                 return {"ok": False, "error": "invalid adopt response"}
             if adopt.get("ok"):
                 live = self.schemes()
-                if scheme in live:
+                if scheme in live and (not route or self._has_route(route)):
                     return {"ok": True, "scheme": scheme, "acquired": True, "adopted": adopt.get("adopted")}
+                if scheme in live and route:
+                    return {"ok": False, "scheme": scheme,
+                            "error": "adopt completed but requested route is not live",
+                            "route": route,
+                            "adopted": adopt.get("adopted"), "schemes": sorted(live)}
                 return {"ok": False, "scheme": scheme,
                         "error": "adopt completed but scheme is not live",
                         "adopted": adopt.get("adopted"), "schemes": sorted(live)}
@@ -208,7 +217,9 @@ class NodeClient:
             return {"ok": False, "scheme": scheme, "error": "no installed bindings or local source for scheme"}
         dep = self.deploy(bindings={"version": inst.get("version", "urirun.bindings.v2"), "bindings": binds},
                           allow=[f"{scheme}://**"], merge=True)
-        return {"ok": scheme in self.schemes(), "scheme": scheme,
+        route_ok = self._has_route(route) if route else True
+        return {"ok": scheme in self.schemes() and route_ok, "scheme": scheme,
+                **({"route": route, "routeLive": route_ok} if route else {}),
                 "deployed": dep.get("routeCount"), "acquired": True}
 
     def run_ensuring(self, uri: str, payload: dict | None = None, roots=None, **kw) -> dict:
@@ -217,7 +228,7 @@ class NodeClient:
         for an autonomous agent whose action space repairs itself mid-task."""
         scheme = str(uri).split("://", 1)[0]
         ensured = None
-        if scheme not in ("run",) and scheme not in self.schemes():
+        if scheme not in ("run",) and (scheme not in self.schemes() or not self._has_route(str(uri))):
             ensured = self.ensure_scheme(scheme, roots=roots, route=str(uri))
         env = self.run(uri, payload, **kw)
         if ensured is not None:

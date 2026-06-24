@@ -150,6 +150,20 @@ The URI target remains `host` because the `fs://` connector runs inside the
 selected node process. The node is selected by `node_url`, not by changing the
 URI target to the node name.
 
+Before copying, the dashboard preflights the exact node-side routes it needs.
+This matters because a node may expose some `fs://` routes, for example duplicate
+search, while still missing file transfer routes. The preflight checks:
+
+```text
+fs://host/file/command/write-b64
+fs://host/file/query/read-b64
+```
+
+If a route is missing, the host asks the node client to ensure the concrete
+route, not just the `fs` scheme. If the route still is not live, the sync stops
+before the first file and writes one blocked chat message with `preflight` detail
+instead of failing every PDF with the same route error.
+
 The sync result is contract-verified. A file counts as copied only when the
 write result returns the expected SHA-256 and the final read-back query returns
 the same SHA-256:

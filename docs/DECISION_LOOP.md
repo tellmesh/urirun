@@ -155,6 +155,11 @@ The current `document://host/archive/command/sync-to-node` route still accepts
 resolve target -> run command -> observe result -> decide next intent
 ```
 
+For document sync, the command performs a route-level preflight before transfer.
+If the node has `fs://` but lacks `fs://host/file/command/write-b64` or
+`fs://host/file/query/read-b64`, the flow should treat that as a failed
+precondition and produce a repair/provision intent before retrying the sync.
+
 ## Recovery
 
 When a URI step fails, recovery should be represented as a next intent:

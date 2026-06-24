@@ -1728,6 +1728,7 @@ def test_sync_documents_to_node_copies_pdfs_and_logs_chat(monkeypatch, tmp_path)
             "node_url": "http://laptop.local:8766",
             "node": "laptop",
             "dest_root": "~/Downloads/urirun-scans",
+            "ensure_routes": False,
         },
     })
 
@@ -1780,6 +1781,7 @@ def test_sync_documents_to_node_reports_remote_run_error(monkeypatch, tmp_path):
         "source_root": str(document_root),
         "node_url": "http://laptop.local:8766",
         "node": "laptop",
+        "ensure_routes": False,
     })
 
     assert result["ok"] is False
@@ -1787,10 +1789,76 @@ def test_sync_documents_to_node_reports_remote_run_error(monkeypatch, tmp_path):
     assert result["verification"]["ok"] is False
     assert result["verification"]["uploadedFiles"] == 0
     assert result["verification"]["verifiedFiles"] == 0
-    assert result["failedReasons"] == {"Route not found: fs.file.command.write-b64": 1}
-    assert result["results"][0]["error"] == "Route not found: fs.file.command.write-b64"
+    assert len(result["failedReasons"]) == 1
+    error = result["results"][0]["error"]
+    assert "remote node is missing an fs file-transfer route" in error
+    assert "Route not found: fs.file.command.write-b64" in error
     assert result["results"][0]["remote"]["error"]["message"] == "Route not found: fs.file.command.write-b64"
     assert "Route not found: fs.file.command.write-b64" in fake_db.logs[-1]["detail"]["content"]
+
+
+def test_sync_documents_to_node_preflights_required_fs_routes(monkeypatch, tmp_path):
+    fake_db = FakeHostDb()
+    document_root = tmp_path / "documents"
+    month = document_root / "2026-06"
+    month.mkdir(parents=True)
+    (month / "invoice.pdf").write_bytes(b"pdf")
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("must not try per-file transfer when preflight fails")
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "_run_node_uri", fail_if_called)
+    monkeypatch.setattr(host_dashboard, "_ensure_node_uri_routes", lambda *a, **k: {
+        "ok": False,
+        "requiredRoutes": [
+            "fs://host/file/command/write-b64",
+            "fs://host/file/query/read-b64",
+        ],
+        "missingBefore": ["fs://host/file/command/write-b64"],
+        "missingAfter": ["fs://host/file/command/write-b64"],
+        "ensured": [{"ok": False, "error": "adopt not advertised"}],
+    })
+
+    result = host_dashboard.sync_documents_to_node(".", ":memory:", None, {
+        "source_root": str(document_root),
+        "node_url": "http://laptop.local:8766",
+        "node": "laptop",
+    })
+
+    assert result["ok"] is False
+    assert result["failed"] == 1
+    assert result["uploaded"] == 0
+    assert result["copied"] == 0
+    assert result["results"] == []
+    assert result["preflight"]["ok"] is False
+    assert result["verification"]["expectedFiles"] == 1
+    assert "missing required fs transfer route" in next(iter(result["failedReasons"]))
+    assert "blocked: 0/1 PDFs" in fake_db.logs[-1]["detail"]["content"]
+
+
+def test_remote_write_error_recognizes_node_error_value_without_error_key():
+    error = host_dashboard._remote_write_error(
+        {
+            "ok": False,
+            "envelope": {"ok": False},
+            "value": {
+                "category": "NOT_FOUND",
+                "message": "'Route not found: fs.file.command'",
+                "type": "route",
+            },
+        },
+        {
+            "category": "NOT_FOUND",
+            "message": "'Route not found: fs.file.command'",
+            "type": "route",
+        },
+        expected_sha="abc",
+        remote_sha=None,
+    )
+
+    assert "remote node is missing an fs file-transfer route" in error
+    assert "Route not found: fs.file.command" in error
 
 
 def test_sync_documents_to_node_reports_sha256_mismatch(monkeypatch, tmp_path):
@@ -1810,6 +1878,7 @@ def test_sync_documents_to_node_reports_sha256_mismatch(monkeypatch, tmp_path):
         "source_root": str(document_root),
         "node_url": "http://laptop.local:8766",
         "node": "laptop",
+        "ensure_routes": False,
     })
 
     assert result["ok"] is False
@@ -1851,6 +1920,7 @@ def test_sync_documents_to_node_requires_read_back_verification(monkeypatch, tmp
         "source_root": str(document_root),
         "node_url": "http://laptop.local:8766",
         "node": "laptop",
+        "ensure_routes": False,
     })
 
     assert result["ok"] is False

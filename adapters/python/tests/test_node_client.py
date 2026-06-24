@@ -108,6 +108,48 @@ class NodeClientTests(unittest.TestCase):
 
         self.assertEqual(client.ensure_scheme("browser"), {"ok": True, "scheme": "browser", "already": True})
 
+    def test_ensure_scheme_noops_when_requested_route_is_live_under_other_target(self):
+        client = NodeClient.__new__(NodeClient)
+        client.routes = lambda: [{"uri": "fs://host/file/command/write-b64"}]
+
+        self.assertEqual(
+            client.ensure_scheme("fs", route="fs://lenovo/file/command/write-b64"),
+            {"ok": True, "scheme": "fs", "already": True},
+        )
+
+    def test_ensure_scheme_repairs_missing_route_even_when_scheme_is_live(self):
+        client = NodeClient.__new__(NodeClient)
+        client.name = "lab"
+        routes = [{"uri": "fs://host/duplicates/query/find"}]
+        calls = []
+        bindings = {
+            "fs://host/file/command/write-b64": {"kind": "command"},
+            "fs://host/file/query/read-b64": {"kind": "query"},
+        }
+        client.routes = lambda: routes
+
+        def run(uri, payload=None):
+            calls.append((uri, payload))
+            if uri == "node://lab/registry/query/installed":
+                return {"ok": True, "result": {"value": {"version": "urirun.bindings.v2", "bindings": bindings}}}
+            raise AssertionError(uri)
+
+        def deploy(**kwargs):
+            calls.append(("deploy", kwargs))
+            routes.append({"uri": "fs://host/file/command/write-b64"})
+            routes.append({"uri": "fs://host/file/query/read-b64"})
+            return {"ok": True, "routeCount": 2}
+
+        client.run = run
+        client.deploy = deploy
+
+        out = client.ensure_scheme("fs", install=False, route="fs://host/file/command/write-b64")
+
+        self.assertTrue(out["ok"])
+        self.assertTrue(out["routeLive"])
+        self.assertIn(("node://lab/registry/query/installed", {"scheme": "fs"}), calls)
+        self.assertEqual(calls[-1][0], "deploy")
+
     def test_ensure_scheme_deploys_installed_bindings(self):
         client = NodeClient.__new__(NodeClient)
         client.name = "lab"

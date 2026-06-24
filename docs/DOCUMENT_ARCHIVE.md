@@ -187,6 +187,29 @@ intentional: it means "run the filesystem connector in that remote node
 process". Do not rewrite it to `fs://<node>/...` unless the remote node has
 explicitly exposed the connector under that target.
 
+Before copying, the host preflights the exact remote routes. This is route-level,
+not only scheme-level: `fs://host/duplicates/query/find` does not prove that
+`fs://host/file/command/write-b64` is available. When the node misses the file
+transfer route, the sync is blocked before per-file uploads and the result
+contains:
+
+```json
+{
+  "preflight": {
+    "ok": false,
+    "requiredRoutes": [
+      "fs://host/file/command/write-b64",
+      "fs://host/file/query/read-b64"
+    ],
+    "missingAfter": [
+      "fs://host/file/command/write-b64"
+    ]
+  }
+}
+```
+
+Set `ensure_routes: false` only for tests or for a deliberately unmanaged node.
+
 Default target settings:
 
 ```bash
