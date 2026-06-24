@@ -3,10 +3,10 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.83-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
-![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.66-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-63.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.84-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![AI Cost](https://img.shields.io/badge/AI%20Cost-$8.16-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-63.0h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
-- 🤖 **LLM usage:** $8.6576 (199 commits)
+- 🤖 **LLM usage:** $8.1638 (200 commits)
 - 👤 **Human dev:** ~$6304 (63.0h @ $100/h, 30min dedup)
 
 Generated on 2026-06-24 using [openrouter/qwen/qwen3-coder-next](https://openrouter.ai/qwen/qwen3-coder-next)
@@ -407,9 +407,25 @@ language prompt such as `uruchom skaner telefonu i pokaz QR`. Captured images
 are cropped by `urirun-connector-smart-crop`, OCR is run on the cropped image,
 and the host writes a canonical PDF document plus JSON sidecar. The default
 archive is `~/.urirun/documents/YYYY-MM/` with names like
-`paragon_2026-03-15_allegro-sp-z-o-o_123.45-pln.pdf`. The registry lives at
-`~/.urirun/documents/index.json` and stores the document URI, source paths,
-OCR metadata, hashes and duplicate status.
+`paragon_2026-03-15_allegro-sp-z-o-o_123.45-pln_doc-par-c6704d4790bb9cc4.pdf`.
+The document ID is part of the PDF and JSON sidecar filename so a moved file can
+still be matched back to its scan record.
+
+The document archive uses two metadata files:
+
+- `~/.urirun/documents/index.json` is the mutable dashboard catalog. It stores
+  the current document URI, PDF/JSON paths, source paths, OCR metadata, hashes
+  and extracted fields. The artifact list and dashboard views read this shape.
+- `~/.urirun/documents/scanned.id.jsonl` is an append-only identity ledger. Each
+  line records one scan/index/duplicate event with `docId`, filename, original
+  and cropped image paths, hashes and metadata. It is used to reject duplicates
+  even when the PDF was moved or deleted after scanning.
+
+Keep both files for now. `scanned.id.jsonl` is the durable audit trail for
+identity and duplicate detection; `index.json` is a compact materialized view for
+the UI and APIs. A future refactor can rebuild `index.json` from the JSONL
+ledger, but using only one mutable JSON file would make duplicate history easier
+to lose during manual edits or file moves. More detail: `docs/DOCUMENT_ARCHIVE.md`.
 
 `docid` is used when it is installed in the dashboard environment; otherwise
 urirun falls back to a deterministic `LOCAL-DOC-*` ID based on normalized OCR
@@ -418,12 +434,14 @@ text or the source file hash. The archive location can be changed with:
 ```bash
 export URIRUN_DOCUMENT_DIR=~/.urirun/documents
 export URIRUN_DOCUMENT_INDEX=~/.urirun/documents/index.json
+export URIRUN_SCANNED_ID_LOG=~/.urirun/documents/scanned.id.jsonl
 ```
 
 The scanner has a `Best PDF` mode for phone capture. It samples a short burst at
-1 frame per second, scores every candidate using crop confidence, OCR text,
-document type/date/amount and visual sharpness/contrast, and archives only the
-best receipt/invoice candidate as PDF.
+the configured interval, 3 seconds by default, scores every candidate using crop
+confidence, OCR text, document type/date/amount and visual sharpness/contrast,
+and archives only the best receipt/invoice candidate as PDF. The interval can be
+changed on the scanner page or by adding `?interval=5` to the scanner URL.
 
 Every scanner layer is addressable by URI. The browser page exposes local
 tam jactions such as `scanner://page/camera/command/start`; the host exposes

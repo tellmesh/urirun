@@ -2037,6 +2037,9 @@ SCANNER_HTML = r"""<!doctype html>
     button.primary { background:var(--accent); border-color:var(--accent); color:#042f2e; font-weight:700; }
     button.remote-click { outline:3px solid #fde68a; outline-offset:2px; }
     button:disabled { opacity:.55; }
+    .field { display:grid; gap:4px; color:var(--muted); font-size:13px; }
+    .inline-check { min-height:44px; display:flex; gap:8px; align-items:center; color:var(--muted); }
+    .inline-check input { min-height:auto; }
     .status { color:var(--muted); overflow-wrap:anywhere; }
     .error { color:var(--bad); }
   </style>
@@ -2055,17 +2058,18 @@ SCANNER_HTML = r"""<!doctype html>
       <button class="primary" id="capture" disabled>Scan now</button>
       <button class="primary" id="best" disabled>Best PDF</button>
       <select id="bestCount">
-        <option value="6">6 frames · 1s</option>
-        <option value="4">4 frames · 1s</option>
-        <option value="8">8 frames · 1s</option>
+        <option value="6">6 frames</option>
+        <option value="4">4 frames</option>
+        <option value="8">8 frames</option>
       </select>
       <select id="quality">
         <option value="0.92">JPEG 92%</option>
         <option value="0.82">JPEG 82%</option>
         <option value="0.70">JPEG 70%</option>
       </select>
-      <label><input type="checkbox" id="startBest" checked> best after start</label>
-      <label><input type="checkbox" id="auto"> auto every 1s</label>
+      <label class="field">Scan interval (s)<input type="number" id="scanInterval" min="1" max="60" step="0.5" inputmode="decimal"></label>
+      <label class="inline-check"><input type="checkbox" id="startBest" checked> best after start</label>
+      <label class="inline-check"><input type="checkbox" id="auto"> <span id="autoIntervalLabel">auto every 3s</span></label>
     </div>
     <p class="status">Use this page from the phone on the same LAN. Mobile browsers usually require HTTPS or a trusted local exception for camera access.</p>
   </main>
@@ -2088,6 +2092,8 @@ SCANNER_HTML = r"""<!doctype html>
     const bestBtn = document.getElementById('best');
     const bestCount = document.getElementById('bestCount');
     const quality = document.getElementById('quality');
+    const scanInterval = document.getElementById('scanInterval');
+    const autoIntervalLabel = document.getElementById('autoIntervalLabel');
     const startBest = document.getElementById('startBest');
     const auto = document.getElementById('auto');
     let stream = null;
@@ -2115,7 +2121,7 @@ SCANNER_HTML = r"""<!doctype html>
         }
       });
       if (!scannerParams.has('interval') && !scannerParams.has('scanInterval') && !scannerParams.has('intervalMs')) {
-        scannerParams.set('interval', '2');
+        scannerParams.set('interval', '3');
         changed = true;
       }
       if (!changed) return;
@@ -2149,9 +2155,42 @@ SCANNER_HTML = r"""<!doctype html>
         const ms = Number(options.intervalMs);
         if (Number.isFinite(ms) && ms > 0) return ms;
       }
-      if (scannerParams.has('interval')) return numericParam('interval', 2) * 1000;
-      if (scannerParams.has('scanInterval')) return numericParam('scanInterval', 2) * 1000;
-      return numericParam('intervalMs', 2000);
+      if (scannerParams.has('interval')) return numericParam('interval', 3) * 1000;
+      if (scannerParams.has('scanInterval')) return numericParam('scanInterval', 3) * 1000;
+      return numericParam('intervalMs', 3000);
+    }
+
+    function writeScannerUrlState() {
+      const query = scannerParams.toString();
+      history.replaceState(null, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash || ''}`);
+    }
+
+    function formatSeconds(value) {
+      const rounded = Math.round(Number(value) * 10) / 10;
+      return Number.isFinite(rounded) ? String(rounded).replace(/\.0$/, '') : '3';
+    }
+
+    function syncIntervalControl(options={}) {
+      const seconds = formatSeconds(scanIntervalMs(options) / 1000);
+      scanInterval.value = seconds;
+      autoIntervalLabel.textContent = `auto every ${seconds}s`;
+      return Number(seconds);
+    }
+
+    function updateIntervalFromControl() {
+      const seconds = Number(scanInterval.value);
+      if (!Number.isFinite(seconds) || seconds <= 0) {
+        syncIntervalControl();
+        return;
+      }
+      const normalized = formatSeconds(seconds);
+      scannerParams.set('interval', normalized);
+      scannerParams.delete('scanInterval');
+      scannerParams.delete('intervalMs');
+      writeScannerUrlState();
+      syncIntervalControl();
+      if (auto.checked) startAutoLoop();
+      announce('interval-changed', {interval: Number(normalized)}).catch(() => {});
     }
 
     function setState(text, error=false) {
@@ -2562,6 +2601,7 @@ SCANNER_HTML = r"""<!doctype html>
       if ([...bestCount.options].some((option) => option.value === count)) bestCount.value = count;
       const qualityValue = scannerParams.get('quality');
       if (qualityValue && [...quality.options].some((option) => option.value === qualityValue)) quality.value = qualityValue;
+      syncIntervalControl();
     }
 
     applyInitialScannerOptions();
@@ -2585,6 +2625,8 @@ SCANNER_HTML = r"""<!doctype html>
       captureBtn.disabled = !stream;
       setState(err.message, true);
     }));
+    scanInterval.addEventListener('change', updateIntervalFromControl);
+    scanInterval.addEventListener('blur', updateIntervalFromControl);
     auto.addEventListener('change', () => {
       if (auto.checked && !stream) {
         beginAutonomousScanning({auto: true, startBest: startBest.checked}).catch((err) => setState(err.message, true));
@@ -3009,6 +3051,11 @@ def _document_index_path() -> Path:
     return Path(configured).expanduser().resolve() if configured else _document_archive_root() / "index.json"
 
 
+def _scanned_id_log_path() -> Path:
+    configured = os.environ.get("URIRUN_SCANNED_ID_LOG")
+    return Path(configured).expanduser().resolve() if configured else _document_archive_root() / "scanned.id.jsonl"
+
+
 def _utc_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -3051,6 +3098,93 @@ def _save_document_index(index: dict) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     tmp.replace(path)
+
+
+def _iter_scanned_id_log() -> list[dict]:
+    path = _scanned_id_log_path()
+    if not path.is_file():
+        return []
+    out: list[dict] = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            item = json.loads(line)
+            if isinstance(item, dict):
+                out.append(item)
+    except Exception:  # noqa: BLE001
+        return out
+    return out
+
+
+def _append_scanned_id_log(entry: dict) -> None:
+    path = _scanned_id_log_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+
+
+def _existing_scanned_id(*, doc_id: str, source_sha256: str, text_sha256: str) -> dict | None:
+    duplicate: dict | None = None
+    for item in _iter_scanned_id_log():
+        same_doc = bool(doc_id and item.get("docId") == doc_id)
+        same_source = bool(source_sha256 and item.get("sourceSha256") == source_sha256)
+        same_text = bool(text_sha256 and item.get("textSha256") == text_sha256)
+        if same_doc or same_source or same_text:
+            duplicate = item
+    return duplicate
+
+
+def _backfill_scanned_id_log(index: dict) -> None:
+    docs = [item for item in index.get("documents", []) if isinstance(item, dict)]
+    if not docs:
+        return
+    existing = _iter_scanned_id_log()
+    seen_doc_ids = {str(item.get("docId") or "") for item in existing if item.get("docId")}
+    seen_sources = {str(item.get("sourceSha256") or "") for item in existing if item.get("sourceSha256")}
+    seen_texts = {str(item.get("textSha256") or "") for item in existing if item.get("textSha256")}
+    for item in docs:
+        doc_id = str(item.get("docId") or "").strip()
+        source_sha256 = str(item.get("sourceSha256") or "").strip()
+        text_sha256 = str(item.get("textSha256") or "").strip()
+        if (doc_id and doc_id in seen_doc_ids) or (source_sha256 and source_sha256 in seen_sources) or (text_sha256 and text_sha256 in seen_texts):
+            continue
+        pdf_path = str(item.get("pdfPath") or item.get("path") or "")
+        entry = {
+            "version": 1,
+            "event": "indexed",
+            "scannedAt": item.get("createdAt") or _utc_now(),
+            "docId": doc_id,
+            "docIdProvider": item.get("docIdProvider"),
+            "docIdSource": item.get("docIdSource"),
+            "duplicate": False,
+            "uri": item.get("uri"),
+            "pdfPath": pdf_path,
+            "jsonPath": item.get("jsonPath"),
+            "fileName": Path(pdf_path).name if pdf_path else "",
+            "originalPath": item.get("originalPath"),
+            "cropPath": item.get("cropPath"),
+            "sourceSha256": source_sha256,
+            "textSha256": text_sha256,
+            "ocrBackend": item.get("ocrBackend"),
+            "ocrChars": item.get("ocrChars"),
+            "metadata": {
+                "type": item.get("type"),
+                "date": item.get("date"),
+                "contractor": item.get("contractor"),
+                "amount": item.get("amount"),
+                "currency": item.get("currency"),
+            },
+        }
+        _append_scanned_id_log(entry)
+        if doc_id:
+            seen_doc_ids.add(doc_id)
+        if source_sha256:
+            seen_sources.add(source_sha256)
+        if text_sha256:
+            seen_texts.add(text_sha256)
 
 
 def _docid_for_file(path: str | Path, ocr_text: str) -> dict:
@@ -3201,6 +3335,14 @@ def _canonical_document_filename(meta: dict) -> str:
     return f"{doc_type}_{doc_date}_{contractor}_{amount_part}.pdf"
 
 
+def _document_filename_with_id(filename: str, doc_id: str) -> str:
+    path = Path(filename)
+    doc_part = _filename_part(doc_id, default="doc-id", max_len=36)
+    if doc_part and doc_part in path.stem:
+        return filename
+    return f"{path.stem}_{doc_part}{path.suffix or '.pdf'}"
+
+
 def _pdf_text(value: Any) -> str:
     text = unicodedata.normalize("NFKD", str(value or "")).encode("ascii", "ignore").decode("ascii")
     text = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
@@ -3324,10 +3466,191 @@ def _existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha
         same_source = bool(source_sha256 and item.get("sourceSha256") == source_sha256)
         same_text = bool(text_sha256 and item.get("textSha256") == text_sha256)
         if same_doc or same_source or same_text:
-            path = item.get("pdfPath") or item.get("path")
-            if path and Path(path).expanduser().is_file():
-                return item
+            return item
     return None
+
+
+def _scanner_staging_dir() -> Path:
+    """Resolved directory where raw captures + receipt crops are staged."""
+    return Path(os.environ.get("URIRUN_SCANNER_DIR", "~/.urirun/host-dashboard/scans")).expanduser().resolve()
+
+
+def _cleanup_duplicate_scan_files(paths: list) -> list[str]:
+    """Delete the transient capture files (raw scan + crop) of a detected duplicate.
+
+    A re-scan of an already-archived document is identified by docid before any
+    PDF is written, but the raw image and its ``-receipt-crop.jpg`` were already
+    staged on disk. Leaving them there is what makes duplicates pile up in the
+    scans folder, so remove them here. Only files inside the scanner staging dir
+    are touched -- caller-supplied paths elsewhere (e.g. tests) are left alone.
+    Best-effort; never raises.
+    """
+    try:
+        staging = _scanner_staging_dir()
+    except Exception:  # noqa: BLE001
+        return []
+    removed: list[str] = []
+    seen: set[str] = set()
+    for raw in paths:
+        if not raw:
+            continue
+        try:
+            target = Path(str(raw)).expanduser().resolve()
+        except Exception:  # noqa: BLE001
+            continue
+        key = str(target)
+        if key in seen:
+            continue
+        seen.add(key)
+        if staging not in target.parents:
+            continue
+        try:
+            if target.is_file():
+                target.unlink()
+                removed.append(key)
+        except OSError:
+            continue
+    return removed
+
+
+# --- Robust "same document" detection -----------------------------------------------
+# docid / sha / text hashes are exact-match only, so the same physical receipt
+# re-photographed (different framing, drifting OCR -> amount unknown, merchant
+# misread) becomes a brand-new document every time. We instead fingerprint the
+# transaction by its distinctive, OCR-stable tokens (receipt/invoice number,
+# authorization code, transaction time, card suffix) and corroborate with a
+# perceptual image hash. Terminal-constant tokens (POS ID / MID / AID) are the
+# same for every transaction at a terminal, so they are deliberately ignored.
+
+_FINGERPRINT_DISTINCT_FIELDS = ("number", "auth", "time", "card")
+_VISUAL_NEAR_DISTANCE = 10  # max dHash Hamming distance to treat images as near-identical
+
+
+def _transaction_fingerprint(text: str) -> dict:
+    """Extract OCR-stable, transaction-distinctive tokens from receipt/invoice text."""
+    raw = text or ""
+    low = raw.lower()
+    fp = {"number": "", "auth": "", "time": "", "card": ""}
+
+    # Receipt / invoice number (RACHUNEK NR / PARAGON NR / FAKTURA NR / NR ...).
+    number = re.search(r"(?:rachunek|paragon|faktura)\s*nr\b[^0-9]{0,6}([0-9]{3,})", low)
+    if not number:
+        number = re.search(r"\bnr\b[^0-9]{0,4}([0-9]{4,})", low)
+    if number:
+        fp["number"] = number.group(1)
+
+    # Authorization code (AUTORYZACJI / ...RYZACJI / CJI: <digits>, often "<code> (1)").
+    auth = re.search(r"(?:autoryzacji|ryzacji|authoriz\w*|\bcji)\b[^0-9]{0,6}([0-9]{4,})", low)
+    if not auth:
+        auth = re.search(r"([0-9]{5,7})\s*\(\s*1\s*\)", low)
+    if auth:
+        fp["auth"] = auth.group(1)
+
+    # Transaction time HH:MM:SS -> digits only.
+    tmatch = re.search(r"\b([0-2]?\d):([0-5]\d):([0-5]\d)\b", raw)
+    if tmatch:
+        fp["time"] = f"{int(tmatch.group(1)):02d}{tmatch.group(2)}{tmatch.group(3)}"
+
+    # Masked card suffix (e.g. "1671 WAZNA DO" / "WA2NA DO").
+    card = re.search(r"\b(\d{4})\b\s*wa\w?zna\s*do", low)
+    if card:
+        fp["card"] = card.group(1)
+    return fp
+
+
+def _fingerprint_match_count(a: dict | None, b: dict | None) -> int:
+    """How many distinctive fields agree (both present and equal)."""
+    if not a or not b:
+        return 0
+    count = 0
+    for key in _FINGERPRINT_DISTINCT_FIELDS:
+        va, vb = str(a.get(key) or ""), str(b.get(key) or "")
+        if va and va == vb:
+            count += 1
+    return count
+
+
+def _image_dhash(path: str | Path, hash_size: int = 8) -> str:
+    """64-bit difference hash of an image as a hex string ("" on failure)."""
+    try:
+        from PIL import Image, ImageOps
+
+        with Image.open(Path(path).expanduser().resolve()) as opened:
+            gray = ImageOps.exif_transpose(opened).convert("L").resize(
+                (hash_size + 1, hash_size), Image.LANCZOS
+            )
+        px = list(gray.tobytes())  # mode "L": one byte per pixel, row-major
+        bits = 0
+        for row in range(hash_size):
+            base = row * (hash_size + 1)
+            for col in range(hash_size):
+                bits = (bits << 1) | (1 if px[base + col] > px[base + col + 1] else 0)
+        return f"{bits:0{hash_size * hash_size // 4}x}"
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def _dhash_distance(a: str, b: str) -> int:
+    """Hamming distance between two hex dHash strings; large sentinel if unusable."""
+    if not a or not b or len(a) != len(b):
+        return 999
+    try:
+        return bin(int(a, 16) ^ int(b, 16)).count("1")
+    except ValueError:
+        return 999
+
+
+def _metadata_completeness(meta: dict | None) -> int:
+    """Score how complete the extracted metadata is (higher == better scan)."""
+    if not meta:
+        return 0
+    score = 0
+    amount = str(meta.get("amount") or "").strip().lower()
+    if amount and amount not in {"nieznana", "kwota-nieznana", "unknown"}:
+        score += 2
+    contractor = str(meta.get("contractor") or "").strip().lower()
+    if contractor and contractor not in {"", "kontrahent-nieznany", "ina-gruba"}:
+        score += 1
+    if str(meta.get("date") or "").strip():
+        score += 1
+    doc_type = str(meta.get("type") or "").strip().lower()
+    if doc_type and doc_type != "dokument":
+        score += 1
+    return score
+
+
+def _document_matches(existing: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
+                      fingerprint: dict, dhash: str) -> str:
+    """Return a non-empty reason if ``existing`` is the same document, else ""."""
+    if doc_id and existing.get("docId") == doc_id:
+        return "docId"
+    if source_sha256 and existing.get("sourceSha256") == source_sha256:
+        return "sourceSha256"
+    if text_sha256 and existing.get("textSha256") == text_sha256:
+        return "textSha256"
+    matches = _fingerprint_match_count(fingerprint, existing.get("fingerprint"))
+    if matches >= 2:
+        return f"fingerprint:{matches}"
+    if matches >= 1 and dhash and _dhash_distance(dhash, str(existing.get("dhash") or "")) <= _VISUAL_NEAR_DISTANCE:
+        return "fingerprint+visual"
+    return ""
+
+
+def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
+                             fingerprint: dict, dhash: str) -> dict | None:
+    """Find an already-archived document that is the same as the incoming scan."""
+    match: dict | None = None
+    for item in index.get("documents", []):
+        if not isinstance(item, dict):
+            continue
+        reason = _document_matches(
+            item, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
+            fingerprint=fingerprint, dhash=dhash,
+        )
+        if reason:
+            item = {**item, "_matchReason": reason}
+            match = item  # last match wins, mirroring _existing_scanned_id
+    return match
 
 
 def _archive_scanned_document(
@@ -3345,26 +3668,89 @@ def _archive_scanned_document(
     doc_id = str(docid_info["id"])
     normalized_text = _normalized_document_text(ocr_text)
     text_sha256 = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest() if normalized_text else ""
+    fingerprint = _transaction_fingerprint(ocr_text)
+    dhash = _image_dhash(display_path)
+    new_completeness = _metadata_completeness(extracted)
     month = str(extracted["date"])[:7] if re.match(r"^20\d{2}-\d{2}", str(extracted.get("date", ""))) else time.strftime("%Y-%m", time.gmtime())
     root = _document_archive_root()
     archive_dir = root / month
-    filename = _canonical_document_filename(extracted)
+    filename = _document_filename_with_id(_canonical_document_filename(extracted), doc_id)
 
     with _DOCUMENT_INDEX_LOCK:
         index = _load_document_index()
-        duplicate = _existing_document(index, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256)
+        _backfill_scanned_id_log(index)
+        index_match = _find_duplicate_document(
+            index, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
+            fingerprint=fingerprint, dhash=dhash,
+        )
+        duplicate = index_match or _existing_scanned_id(
+            doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
+        )
+        superseded_of = None
         if duplicate:
-            return {
-                "ok": True,
-                "duplicate": True,
-                "docId": doc_id,
-                "docIdProvider": docid_info.get("provider"),
-                "path": duplicate.get("pdfPath") or duplicate.get("path"),
-                "jsonPath": duplicate.get("jsonPath"),
-                "duplicateOf": duplicate.get("docId"),
-                "metadata": extracted,
-                "indexPath": str(_document_index_path()),
+            existing_meta = duplicate.get("metadata") if isinstance(duplicate.get("metadata"), dict) else {
+                key: duplicate.get(key) for key in ("type", "date", "contractor", "amount", "currency")
             }
+            # Supersede only an already-archived document (index_match), and only when the
+            # new scan reads strictly more complete metadata (e.g. amount known vs unknown).
+            can_supersede = index_match is not None and new_completeness > _metadata_completeness(existing_meta)
+            if not can_supersede:
+                duplicate_path = duplicate.get("pdfPath") or duplicate.get("path")
+                # The document is already archived; drop the redundant staged scan + crop
+                # so duplicates stop accumulating in the scans folder.
+                removed_scan_files = _cleanup_duplicate_scan_files([original_path, display_path])
+                duplicate_entry = {
+                    "version": 1,
+                    "event": "duplicate",
+                    "scannedAt": _utc_now(),
+                    "docId": doc_id,
+                    "docIdProvider": docid_info.get("provider"),
+                    "docIdSource": docid_info.get("source"),
+                    "duplicate": True,
+                    "duplicateOf": duplicate.get("docId") or doc_id,
+                    "matchReason": duplicate.get("_matchReason") or "exact",
+                    "pdfPath": duplicate_path,
+                    "jsonPath": duplicate.get("jsonPath"),
+                    "fileName": Path(str(duplicate_path)).name if duplicate_path else "",
+                    "existingFileExists": bool(duplicate_path and Path(str(duplicate_path)).expanduser().is_file()),
+                    "originalPath": str(original_path),
+                    "cropPath": str(display_path),
+                    "removedScanFiles": removed_scan_files,
+                    "sourceSha256": source_sha256,
+                    "textSha256": text_sha256,
+                    "fingerprint": fingerprint,
+                    "dhash": dhash,
+                    "metadata": extracted,
+                }
+                _append_scanned_id_log(duplicate_entry)
+                return {
+                    "ok": True,
+                    "duplicate": True,
+                    "docId": doc_id,
+                    "docIdProvider": docid_info.get("provider"),
+                    "path": duplicate_path,
+                    "jsonPath": duplicate.get("jsonPath"),
+                    "duplicateOf": duplicate.get("docId"),
+                    "matchReason": duplicate_entry["matchReason"],
+                    "existingFileExists": duplicate_entry["existingFileExists"],
+                    "removedScanFiles": removed_scan_files,
+                    "metadata": extracted,
+                    "indexPath": str(_document_index_path()),
+                    "scannedIdLogPath": str(_scanned_id_log_path()),
+                }
+            # Supersede: remove the worse existing document (files + staged scans + index entry).
+            superseded_of = duplicate.get("docId")
+            _cleanup_duplicate_scan_files([duplicate.get("originalPath"), duplicate.get("cropPath")])
+            for stale in (duplicate.get("pdfPath") or duplicate.get("path"), duplicate.get("jsonPath")):
+                try:
+                    if stale and Path(str(stale)).expanduser().is_file():
+                        Path(str(stale)).expanduser().unlink()
+                except OSError:
+                    pass
+            index["documents"] = [
+                item for item in index.get("documents", [])
+                if isinstance(item, dict) and item.get("docId") != superseded_of
+            ]
 
         archive_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = _unique_document_path(archive_dir, filename, doc_id)
@@ -3389,6 +3775,9 @@ def _archive_scanned_document(
             "cropPath": str(display_path),
             "sourceSha256": source_sha256,
             "textSha256": text_sha256,
+            "fingerprint": fingerprint,
+            "dhash": dhash,
+            "supersededOf": superseded_of,
             "ocrBackend": ocr.get("backend"),
             "ocrChars": ocr.get("chars"),
             "crop": crop,
@@ -3403,9 +3792,36 @@ def _archive_scanned_document(
         docs.append(entry)
         index["documents"] = docs
         _save_document_index(index)
+        _append_scanned_id_log({
+            "version": 1,
+            "event": "superseded" if superseded_of else "scan",
+            "scannedAt": entry["createdAt"],
+            "docId": doc_id,
+            "docIdProvider": docid_info.get("provider"),
+            "docIdSource": docid_info.get("source"),
+            "docIdError": docid_info.get("docidError"),
+            "docIdLog": docid_info.get("docidLog"),
+            "duplicate": False,
+            "supersededOf": superseded_of,
+            "uri": entry["uri"],
+            "pdfPath": str(pdf_path),
+            "jsonPath": str(json_path),
+            "fileName": pdf_path.name,
+            "originalPath": str(original_path),
+            "cropPath": str(display_path),
+            "sourceSha256": source_sha256,
+            "textSha256": text_sha256,
+            "fingerprint": fingerprint,
+            "dhash": dhash,
+            "ocrBackend": ocr.get("backend"),
+            "ocrChars": ocr.get("chars"),
+            "metadata": extracted,
+        })
     return {
         "ok": True,
         "duplicate": False,
+        "superseded": bool(superseded_of),
+        "supersededOf": superseded_of,
         "docId": doc_id,
         "docIdProvider": docid_info.get("provider"),
         "path": str(pdf_path),
@@ -3413,6 +3829,7 @@ def _archive_scanned_document(
         "uri": entry["uri"],
         "metadata": extracted,
         "indexPath": str(_document_index_path()),
+        "scannedIdLogPath": str(_scanned_id_log_path()),
     }
 
 
@@ -3469,7 +3886,7 @@ def _scanner_autonomy_params() -> dict[str, str]:
         "best": os.environ.get("URIRUN_PHONE_SCANNER_BEST", "1"),
         "count": os.environ.get("URIRUN_PHONE_SCANNER_BEST_COUNT", "6"),
         "minScore": os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45"),
-        "interval": os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "2"),
+        "interval": os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "3"),
     }
 
 
@@ -4065,14 +4482,23 @@ def _register_scanner_result(
     document: dict,
     content_prefix: str,
 ) -> dict:
-    artifact = _host_db().register_artifact(db, "camera-scan", uri, str(display_path), meta)
-    attachments = [{
-        "kind": "receipt-crop" if crop.get("ok") else "image",
-        "path": str(display_path),
-        "uri": uri,
-        "previewUrl": _preview_url(str(display_path), project),
-        "meta": meta,
-    }]
+    # The staged crop/image is gone when the capture was a docid duplicate (cleaned up
+    # so duplicates don't pile up). Point the artifact at the existing document instead
+    # and skip the image attachment so we never emit a dangling preview.
+    display_exists = Path(str(display_path)).expanduser().is_file()
+    primary_target = str(display_path)
+    if not display_exists and document.get("path"):
+        primary_target = str(document.get("path"))
+    artifact = _host_db().register_artifact(db, "camera-scan", uri, primary_target, meta)
+    attachments = []
+    if display_exists:
+        attachments.append({
+            "kind": "receipt-crop" if crop.get("ok") else "image",
+            "path": str(display_path),
+            "uri": uri,
+            "previewUrl": _preview_url(str(display_path), project),
+            "meta": meta,
+        })
     document_artifact = None
     if document.get("ok") and document.get("path"):
         document_uri = str(document.get("uri") or f"document://host/{quote(str(document.get('docId') or meta.get('sha256') or ''), safe='')}")
@@ -4123,7 +4549,7 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     raw = base64.b64decode(encoded.encode("ascii"), validate=False)
     digest = hashlib.sha256(raw).hexdigest()
     ext = ".jpg" if mime in {"image/jpeg", "image/jpg"} else ".png" if mime == "image/png" else ".bin"
-    root = Path(os.environ.get("URIRUN_SCANNER_DIR", "~/.urirun/host-dashboard/scans")).expanduser()
+    root = _scanner_staging_dir()
     root.mkdir(parents=True, exist_ok=True)
     name = f"{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}-phone-scan-{digest[:12]}{ext}"
     path = root / name
@@ -4907,7 +5333,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "auto": bool(autonomous_scan),
             "count": int(os.environ.get("URIRUN_PHONE_SCANNER_BEST_COUNT", "6")),
             "minScore": float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45")),
-            "interval": float(os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "2")),
+            "interval": float(os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "3")),
         }
         if autonomous_scan or _is_camera_start_prompt(prompt) or torch_enabled is not None:
             queued_camera = page_action_enqueue(

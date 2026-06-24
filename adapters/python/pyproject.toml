@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urirun"
-version = "0.4.83"
+version = "0.4.84"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,7 +20,7 @@ planfile = ["planfile>=0.1.103"]
 llm = ["litellm>=1.60"]
 keyauth = ["cryptography>=41"]  # SSH-key admin auth (uri-copy-id, signed /deploy)
 yaml = ["pyyaml>=6"]  # YAML manifests (adopt-pack) + `urirun tree --format yaml`
-host = ["planfile>=0.1.103", "litellm>=1.60", "qrcode[pil]>=7"]
+host = ["planfile>=0.1.103", "litellm>=1.60", "qrcode[pil]>=7", "docid>=0.1.9"]
 test = ["planfile>=0.1.103", "pytest>=7"]
 
 [project.scripts]

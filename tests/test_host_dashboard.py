@@ -194,6 +194,12 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "history.replaceState" in host_dashboard.SCANNER_HTML
     assert "function scanIntervalMs" in host_dashboard.SCANNER_HTML
     assert "scannerParams.has('interval')" in host_dashboard.SCANNER_HTML
+    assert "id=\"scanInterval\"" in host_dashboard.SCANNER_HTML
+    assert "auto every 3s" in host_dashboard.SCANNER_HTML
+    assert "scannerParams.set('interval', '3')" in host_dashboard.SCANNER_HTML
+    assert "numericParam('interval', 3)" in host_dashboard.SCANNER_HTML
+    assert "numericParam('intervalMs', 3000)" in host_dashboard.SCANNER_HTML
+    assert "updateIntervalFromControl" in host_dashboard.SCANNER_HTML
     assert "!scannerParams.has('interval') && !scannerParams.has('scanInterval') && !scannerParams.has('intervalMs')" in host_dashboard.SCANNER_HTML
     assert "await sleep(intervalMs)" in host_dashboard.SCANNER_HTML
     assert "withActionTimeout" in host_dashboard.SCANNER_HTML
@@ -985,6 +991,12 @@ def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(mo
     document_root = tmp_path / "documents"
     monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(document_root))
     monkeypatch.setenv("URIRUN_DOCUMENT_INDEX", str(document_root / "index.json"))
+    monkeypatch.setenv("URIRUN_SCANNED_ID_LOG", str(document_root / "scanned.id.jsonl"))
+    monkeypatch.setattr(
+        host_dashboard,
+        "_docid_for_file",
+        lambda path, text: {"id": "DOC-PAR-TEST123", "provider": "docid", "source": "test"},
+    )
     crop = tmp_path / "crop.jpg"
     original = tmp_path / "original.jpg"
     Image.new("RGB", (240, 360), (245, 244, 235)).save(crop)
@@ -1014,9 +1026,20 @@ def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(mo
     assert Path(result["path"]).is_file()
     assert Path(result["jsonPath"]).is_file()
     assert Path(result["path"]).name.startswith("paragon_2026-03-15_allegro")
+    assert "doc-par-test123" in Path(result["path"]).stem
+    assert result["docIdProvider"] == "docid"
+    assert result["scannedIdLogPath"] == str(document_root / "scanned.id.jsonl")
     index = json.loads((document_root / "index.json").read_text(encoding="utf-8"))
     assert index["documents"][0]["docId"] == result["docId"]
     assert index["documents"][0]["pdfPath"] == result["path"]
+    scanned = [
+        json.loads(line)
+        for line in (document_root / "scanned.id.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert scanned[0]["event"] == "scan"
+    assert scanned[0]["docId"] == "DOC-PAR-TEST123"
+    assert scanned[0]["fileName"] == Path(result["path"]).name
+    assert scanned[0]["duplicate"] is False
 
     duplicate = host_dashboard._archive_scanned_document(
         display_path=crop,
@@ -1030,6 +1053,305 @@ def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(mo
     assert duplicate["ok"] is True
     assert duplicate["duplicate"] is True
     assert duplicate["path"] == result["path"]
+    scanned = [
+        json.loads(line)
+        for line in (document_root / "scanned.id.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert [item["event"] for item in scanned] == ["scan", "duplicate"]
+    assert scanned[1]["docId"] == "DOC-PAR-TEST123"
+    assert scanned[1]["existingFileExists"] is True
+
+
+def test_archive_scanned_document_duplicate_removes_staged_scan_and_crop(monkeypatch, tmp_path):
+    """A docid duplicate must not leave its staged raw scan + crop on disk, or the
+    scans folder fills up with duplicates. Files outside the scanner dir, and the
+    first (non-duplicate) capture, are left untouched."""
+    from PIL import Image
+
+    document_root = tmp_path / "documents"
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(document_root))
+    monkeypatch.setenv("URIRUN_DOCUMENT_INDEX", str(document_root / "index.json"))
+    monkeypatch.setenv("URIRUN_SCANNED_ID_LOG", str(document_root / "scanned.id.jsonl"))
+    monkeypatch.setattr(
+        host_dashboard,
+        "_docid_for_file",
+        lambda path, text: {"id": "DOC-PAR-DUPE", "provider": "docid", "source": "test"},
+    )
+    ocr_text = "\n".join(["PARAGON FISKALNY", "ALLEGRO SP Z O O", "Data 2026-03-15", "RAZEM 9,99 PLN"])
+    ocr = {"ok": True, "backend": "mock", "text": ocr_text, "chars": len(ocr_text)}
+
+    def _stage(stem: str) -> tuple[Path, Path]:
+        original = scans / f"{stem}.jpg"
+        crop = scans / f"{stem}-receipt-crop.jpg"
+        Image.new("RGB", (240, 360), (245, 244, 235)).save(crop)
+        original.write_bytes(crop.read_bytes())
+        return original, crop
+
+    first_original, first_crop = _stage("20260315T100000Z-phone-scan-aaaaaaaaaaaa")
+    first = host_dashboard._archive_scanned_document(
+        display_path=first_crop, original_path=first_original, ocr=ocr,
+        crop={"ok": True, "path": str(first_crop)}, source_sha256="source-a", captured_at="2026-03-15T10:00:00Z",
+    )
+    assert first["duplicate"] is False
+    # The accepted document keeps its staged files (they are referenced by the index).
+    assert first_original.is_file() and first_crop.is_file()
+
+    dup_original, dup_crop = _stage("20260315T100500Z-phone-scan-bbbbbbbbbbbb")
+    duplicate = host_dashboard._archive_scanned_document(
+        display_path=dup_crop, original_path=dup_original, ocr=ocr,
+        crop={"ok": True, "path": str(dup_crop)}, source_sha256="source-b", captured_at="2026-03-15T10:00:00Z",
+    )
+    assert duplicate["duplicate"] is True
+    # The duplicate's staged scan + crop are gone; the original document's files remain.
+    assert not dup_original.exists() and not dup_crop.exists()
+    assert set(duplicate["removedScanFiles"]) == {str(dup_original.resolve()), str(dup_crop.resolve())}
+    assert first_original.is_file() and first_crop.is_file()
+
+
+def test_cleanup_duplicate_scan_files_ignores_paths_outside_staging_dir(monkeypatch, tmp_path):
+    """Only files inside the scanner staging dir may be deleted."""
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    inside = scans / "inside.jpg"
+    outside = tmp_path / "outside.jpg"
+    inside.write_bytes(b"x")
+    outside.write_bytes(b"y")
+
+    removed = host_dashboard._cleanup_duplicate_scan_files([str(inside), str(outside)])
+
+    assert removed == [str(inside.resolve())]
+    assert not inside.exists()
+    assert outside.is_file()
+
+
+_RECEIPT_TOKENS = "\n".join([
+    "Polskie ePlatnosci",
+    "POS ID: 00522425 RACHUNEK NR: 181149",
+    "1671 WAZNA DO: KK/KK",
+    "KOD AUTORYZACJI: 784683 (1)",
+    "DATA: 19.06.2026 GODZINA: 09:52:51",
+])
+
+
+def test_transaction_fingerprint_is_stable_across_ocr_noise():
+    good = "DUO CAFE HANNA GRUBA\nSPRZEDAZ\nKWOTA: 30,26 zl\n" + _RECEIPT_TOKENS
+    # Same physical receipt, badly OCR'd: merchant garbled, amount lost, auth one digit off.
+    noisy = "INA GRUBA\n2425 RACHUNEK NR: 181149\nih 1671 WAZNA DO: KX/KX\nCJI: 784663 (1)\nGODZINA: 09:52:51"
+    fp_good = host_dashboard._transaction_fingerprint(good)
+    fp_noisy = host_dashboard._transaction_fingerprint(noisy)
+    assert fp_good == {"number": "181149", "auth": "784683", "time": "095251", "card": "1671"}
+    assert fp_noisy["number"] == "181149" and fp_noisy["time"] == "095251" and fp_noisy["card"] == "1671"
+    # auth misread, but the other three still agree -> same document.
+    assert host_dashboard._fingerprint_match_count(fp_good, fp_noisy) == 3
+
+    other = host_dashboard._transaction_fingerprint(
+        "RACHUNEK NR: 999000\n4242 WAZNA DO: KK/KK\nKOD AUTORYZACJI: 111222 (1)\nGODZINA: 17:00:00"
+    )
+    assert host_dashboard._fingerprint_match_count(fp_good, other) == 0
+
+
+def _archive_with_distinct_docids(monkeypatch, document_root):
+    monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(document_root))
+    monkeypatch.setenv("URIRUN_DOCUMENT_INDEX", str(document_root / "index.json"))
+    monkeypatch.setenv("URIRUN_SCANNED_ID_LOG", str(document_root / "scanned.id.jsonl"))
+    # Distinct docid + distinct OCR text per scan, so dedup can only succeed via the
+    # transaction fingerprint, not via exact docId/sha/text matches.
+    counter = {"n": 0}
+
+    def fake_docid(path, text):
+        counter["n"] += 1
+        return {"id": f"DOC-{counter['n']:03d}", "provider": "docid", "source": "test"}
+
+    monkeypatch.setattr(host_dashboard, "_docid_for_file", fake_docid)
+
+
+def test_archive_supersedes_incomplete_duplicate_when_better_scan_arrives(monkeypatch, tmp_path):
+    from PIL import Image
+
+    document_root = tmp_path / "documents"
+    _archive_with_distinct_docids(monkeypatch, document_root)
+    img = tmp_path / "scan.jpg"
+    Image.new("RGB", (240, 360), (245, 244, 235)).save(img)
+
+    # First scan: amount unreadable -> kwota-nieznana (low completeness).
+    poor_ocr = {"ok": True, "backend": "mock", "chars": 1,
+                "text": "DUO CAFE\nSPRZEDAZ\n" + _RECEIPT_TOKENS}
+    first = host_dashboard._archive_scanned_document(
+        display_path=img, original_path=img, ocr=poor_ocr,
+        crop={"ok": True, "path": str(img)}, source_sha256="src-poor", captured_at=None,
+    )
+    assert first["duplicate"] is False and first["superseded"] is False
+    assert "kwota-nieznana" in Path(first["path"]).name
+    assert Path(first["path"]).is_file()
+
+    # Second scan of the SAME transaction, now with the amount read.
+    good_ocr = {"ok": True, "backend": "mock", "chars": 2,
+                "text": "DUO CAFE HANNA GRUBA\nKWOTA: 30,26 zl\n" + _RECEIPT_TOKENS}
+    second = host_dashboard._archive_scanned_document(
+        display_path=img, original_path=img, ocr=good_ocr,
+        crop={"ok": True, "path": str(img)}, source_sha256="src-good", captured_at=None,
+    )
+    assert second["duplicate"] is False
+    assert second["superseded"] is True
+    assert second["supersededOf"] == first["docId"]
+    assert "30.26" in Path(second["path"]).name
+    # Old (worse) document is gone, exactly one document remains, and it has the amount.
+    assert not Path(first["path"]).exists()
+    index = json.loads((document_root / "index.json").read_text(encoding="utf-8"))
+    assert len(index["documents"]) == 1
+    assert index["documents"][0]["amount"] == "30.26"
+    assert index["documents"][0]["supersededOf"] == first["docId"]
+
+
+def test_archive_skips_lower_quality_fingerprint_duplicate(monkeypatch, tmp_path):
+    from PIL import Image
+
+    document_root = tmp_path / "documents"
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    _archive_with_distinct_docids(monkeypatch, document_root)
+
+    good_ocr = {"ok": True, "backend": "mock", "chars": 2,
+                "text": "DUO CAFE HANNA GRUBA\nKWOTA: 30,26 zl\n" + _RECEIPT_TOKENS}
+    good_img = scans / "good.jpg"
+    Image.new("RGB", (240, 360), (245, 244, 235)).save(good_img)
+    first = host_dashboard._archive_scanned_document(
+        display_path=good_img, original_path=good_img, ocr=good_ocr,
+        crop={"ok": True, "path": str(good_img)}, source_sha256="src-good", captured_at=None,
+    )
+    assert first["superseded"] is False
+    keep_path = Path(first["path"])
+
+    # A later, worse scan of the same transaction must not replace the good one.
+    poor_original = scans / "poor.jpg"
+    poor_crop = scans / "poor-receipt-crop.jpg"
+    Image.new("RGB", (240, 360), (245, 244, 235)).save(poor_crop)
+    poor_original.write_bytes(poor_crop.read_bytes())
+    poor_ocr = {"ok": True, "backend": "mock", "chars": 1,
+                "text": "INA GRUBA\n" + _RECEIPT_TOKENS}
+    second = host_dashboard._archive_scanned_document(
+        display_path=poor_crop, original_path=poor_original, ocr=poor_ocr,
+        crop={"ok": True, "path": str(poor_crop)}, source_sha256="src-poor", captured_at=None,
+    )
+    assert second["duplicate"] is True
+    assert second["matchReason"].startswith("fingerprint")
+    assert second["path"] == str(keep_path)
+    # Good document untouched; worse staged scan + crop removed.
+    assert keep_path.is_file()
+    assert not poor_original.exists() and not poor_crop.exists()
+    index = json.loads((document_root / "index.json").read_text(encoding="utf-8"))
+    assert len(index["documents"]) == 1
+
+
+def test_archive_scanned_document_duplicate_survives_moved_pdf(monkeypatch, tmp_path):
+    from PIL import Image
+
+    document_root = tmp_path / "documents"
+    monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(document_root))
+    monkeypatch.setenv("URIRUN_DOCUMENT_INDEX", str(document_root / "index.json"))
+    monkeypatch.setenv("URIRUN_SCANNED_ID_LOG", str(document_root / "scanned.id.jsonl"))
+    monkeypatch.setattr(
+        host_dashboard,
+        "_docid_for_file",
+        lambda path, text: {"id": "DOC-FV-MOVED123", "provider": "docid", "source": "test"},
+    )
+    crop = tmp_path / "crop.jpg"
+    original = tmp_path / "original.jpg"
+    Image.new("RGB", (240, 360), (245, 244, 235)).save(crop)
+    original.write_bytes(crop.read_bytes())
+    ocr_text = "\n".join([
+        "FAKTURA VAT",
+        "Windsurf SaaS",
+        "Data 2026-05-05",
+        "RAZEM 42,00 PLN",
+    ])
+    ocr = {"ok": True, "backend": "mock", "text": ocr_text, "chars": len(ocr_text)}
+
+    first = host_dashboard._archive_scanned_document(
+        display_path=crop,
+        original_path=original,
+        ocr=ocr,
+        crop={"ok": True, "path": str(crop)},
+        source_sha256="source-moved",
+        captured_at="2026-05-05T10:00:00Z",
+    )
+    Path(first["path"]).unlink()
+
+    duplicate = host_dashboard._archive_scanned_document(
+        display_path=crop,
+        original_path=original,
+        ocr=ocr,
+        crop={"ok": True, "path": str(crop)},
+        source_sha256="source-moved-again",
+        captured_at="2026-05-05T10:00:00Z",
+    )
+
+    assert duplicate["ok"] is True
+    assert duplicate["duplicate"] is True
+    assert duplicate["path"] == first["path"]
+    assert duplicate["existingFileExists"] is False
+    scanned = [
+        json.loads(line)
+        for line in (document_root / "scanned.id.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert [item["event"] for item in scanned] == ["scan", "duplicate"]
+    assert scanned[1]["existingFileExists"] is False
+
+
+def test_scanned_id_log_backfills_existing_document_index(monkeypatch, tmp_path):
+    document_root = tmp_path / "documents"
+    monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(document_root))
+    monkeypatch.setenv("URIRUN_SCANNED_ID_LOG", str(document_root / "scanned.id.jsonl"))
+
+    host_dashboard._backfill_scanned_id_log({
+        "version": 1,
+        "documents": [
+            {
+                "docId": "DOC-FV-OLD123",
+                "docIdProvider": "docid",
+                "docIdSource": "get_document_id",
+                "uri": "document://host/DOC-FV-OLD123",
+                "pdfPath": str(document_root / "2026-03" / "faktura_doc-fv-old123.pdf"),
+                "jsonPath": str(document_root / "2026-03" / "faktura_doc-fv-old123.json"),
+                "sourceSha256": "old-source",
+                "textSha256": "old-text",
+                "ocrBackend": "tesseract",
+                "ocrChars": 123,
+                "createdAt": "2026-03-20T10:00:00Z",
+                "type": "faktura",
+                "date": "2026-03-20",
+                "contractor": "ALLEGRO",
+                "amount": "123.45",
+                "currency": "PLN",
+            }
+        ],
+    })
+    host_dashboard._backfill_scanned_id_log({
+        "version": 1,
+        "documents": [
+            {
+                "docId": "DOC-FV-OLD123",
+                "pdfPath": str(document_root / "2026-03" / "faktura_doc-fv-old123.pdf"),
+                "sourceSha256": "old-source",
+                "textSha256": "old-text",
+            }
+        ],
+    })
+
+    scanned = [
+        json.loads(line)
+        for line in (document_root / "scanned.id.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert len(scanned) == 1
+    assert scanned[0]["event"] == "indexed"
+    assert scanned[0]["docId"] == "DOC-FV-OLD123"
+    assert scanned[0]["fileName"] == "faktura_doc-fv-old123.pdf"
+    assert scanned[0]["metadata"]["contractor"] == "ALLEGRO"
 
 
 def test_document_metadata_does_not_parse_date_as_amount():

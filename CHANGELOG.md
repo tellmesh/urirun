@@ -179,6 +179,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
 
+## [0.4.84] - 2026-06-24
+
+### Docs
+- Update README.md
+- Update docs/DOCUMENT_ARCHIVE.md
+- Update examples/node-file-transfer/README.md
+
+### Test
+- Update tests/test_host_dashboard.py
+
+### Other
+- Update adapters/python/pyproject.toml
+- Update adapters/python/urirun/host/host_dashboard.py
+- Update examples/node-file-transfer/fs-transfer.bindings.json
+- Update examples/node-file-transfer/fs_transfer.py
+
 ## [0.4.83] - 2026-06-24
 
 ### Docs
