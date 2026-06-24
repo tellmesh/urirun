@@ -206,6 +206,18 @@ webpage://<id>/sensor/query/capabilities
 webpage://<id>/iframe/command/open
 ```
 
+Serwis page bridge na porcie `8195` mozna podmienic bez recznego szukania PID:
+
+```bash
+urirun-android-node restart --host 0.0.0.0 --port 8195 --force-replace
+```
+
+albo przez dashboard URI:
+
+```text
+dashboard://host/service/android-node/command/restart
+```
+
 Kompatybilnosc: stare `kind:browser` mapuje sie do `browser-debug`, a stare
 `kind:web` / `kind:webnode` do `webpage`.
 

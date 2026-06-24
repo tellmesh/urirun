@@ -14,6 +14,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+_MAX_SHORT_NAME_LEN = 72
+_SHORT_NAME_TRUNCATE_LEN = 69
+
 AMBIGUOUS_PHRASES = {
     "zrob cos",
     "cos zrob",
@@ -123,8 +126,8 @@ def _short_name(prompt: str, domains: list[str], daily: bool) -> str:
     if domains:
         return f"Check domain: {', '.join(domains[:2])}"
     cleaned = re.sub(r"\s+", " ", prompt.strip(" .")).strip()
-    if len(cleaned) > 72:
-        cleaned = f"{cleaned[:69].rstrip()}..."
+    if len(cleaned) > _MAX_SHORT_NAME_LEN:
+        cleaned = f"{cleaned[:_SHORT_NAME_TRUNCATE_LEN].rstrip()}..."
     return f"{cleaned[:1].upper()}{cleaned[1:]}" if cleaned else "Chat task"
 
 

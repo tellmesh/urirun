@@ -77,11 +77,14 @@ Implemented in this pass:
 - `urirun host add-node` supports `--kind`, `--api`, `--api-id`,
   `--api-kind`, `--auth-*` and `--capability`.
 - Example `48-api-device-node` shows CLI registration and URI flows.
-- Browser/web control is split into `browser-debug`, `browser-chrome-plugin`,
+- Browser control is split into `browser-debug`, `browser-chrome-plugin`,
   `browser-firefox-plugin` and `webpage`. The old `browser`/`web` names remain
   compatibility aliases.
 - The `8195` android/webpage service now exposes webpage relay endpoints that can
   behave like a small node after registration: `/health`, `/routes` and `/run`.
+- The same service can be restarted by URI
+  `dashboard://host/service/android-node/command/restart` or by
+  `urirun-android-node restart --host 0.0.0.0 --port 8195 --force-replace`.
 
 Verified local target set:
 

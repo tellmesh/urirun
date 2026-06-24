@@ -12,6 +12,8 @@ import argparse
 from urirun.node.config import DEFAULT_NODE_PORT
 from urirun.runtime.v2 import ENTRY_POINT_GROUP, _package_version
 
+_CLI_PAGE_SIZE = 20
+
 
 def _add_connectors_subparser(subparsers) -> None:
     """The `connectors` command tree (list/show/install/index/resolve/check/lint/
@@ -222,7 +224,7 @@ def _add_host_task_subparser(host_sub) -> None:
     task_schedule.add_argument("--kind", choices=["systemd", "cron"], default="systemd")
     task_schedule.add_argument("--name", default="urirun-daily")
     task_schedule.add_argument("--queue", default="daily")
-    task_schedule.add_argument("--max-tickets", type=int, default=20)
+    task_schedule.add_argument("--max-tickets", type=int, default=_CLI_PAGE_SIZE)
     task_schedule.add_argument("--time", default="09:00", help="HH:MM local time")
     task_schedule.add_argument("--run-execute", action="store_true", help="include --execute in the scheduled task loop")
     task_schedule.add_argument("--no-llm", action="store_true")
@@ -318,7 +320,7 @@ def _add_host_task_subparser(host_sub) -> None:
     task_loop.add_argument("--sprint", default="current")
     task_loop.add_argument("--queue")
     task_loop.add_argument("--label", action="append", default=[])
-    task_loop.add_argument("--max-tickets", type=int, default=20)
+    task_loop.add_argument("--max-tickets", type=int, default=_CLI_PAGE_SIZE)
     task_loop.add_argument("--node", action="append", default=[], help="restrict execution to a node name; repeatable")
     task_loop.add_argument("--execute", action="store_true", help="mutate tickets and execute on nodes; default is dry-run preview")
     task_loop.add_argument("--no-llm", action="store_true", help="use heuristic flow generation only")
@@ -360,7 +362,7 @@ def _add_host_data_subparser(host_sub) -> None:
     data_records = data_sub.add_parser("records", parents=[data_common], help="Search records")
     data_records.add_argument("--query", default="")
     data_records.add_argument("--dataset")
-    data_records.add_argument("--limit", type=int, default=20)
+    data_records.add_argument("--limit", type=int, default=_CLI_PAGE_SIZE)
 
     data_artifact_register = data_sub.add_parser("artifact-register", parents=[data_common], help="Register an artifact")
     data_artifact_register.add_argument("kind")
@@ -370,7 +372,7 @@ def _add_host_data_subparser(host_sub) -> None:
 
     data_artifacts = data_sub.add_parser("artifacts", parents=[data_common], help="List artifacts")
     data_artifacts.add_argument("--kind")
-    data_artifacts.add_argument("--limit", type=int, default=20)
+    data_artifacts.add_argument("--limit", type=int, default=_CLI_PAGE_SIZE)
 
     data_check_add = data_sub.add_parser("check-add", parents=[data_common], help="Store one check result")
     data_check_add.add_argument("subject")
@@ -380,7 +382,7 @@ def _add_host_data_subparser(host_sub) -> None:
 
     data_checks = data_sub.add_parser("checks", parents=[data_common], help="List recent checks")
     data_checks.add_argument("--subject")
-    data_checks.add_argument("--limit", type=int, default=20)
+    data_checks.add_argument("--limit", type=int, default=_CLI_PAGE_SIZE)
 
     data_sql = data_sub.add_parser("sql", parents=[data_common], help="Run read-only SQL")
     data_sql.add_argument("query")

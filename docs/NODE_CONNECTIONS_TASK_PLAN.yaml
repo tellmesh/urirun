@@ -70,6 +70,17 @@ landed:
       - /home/tom/github/if-uri/chrome-plugin
       - /home/tom/github/if-uri/firefox-plugin
       - /home/tom/github/if-uri/urirun-service-android-node
+  - id: android-node-restart-uri
+    status: done
+    summary: Android/webpage relay service can be restarted through a dashboard URI and service CLI restart command.
+    routes:
+      - dashboard://host/service/android-node/command/restart
+    commands:
+      - urirun-android-node restart --host 0.0.0.0 --port 8195 --force-replace
+    files:
+      - adapters/python/urirun/host/host_dashboard.py
+      - adapters/python/urirun/host/service_control.py
+      - /home/tom/github/if-uri/urirun-service-android-node/urirun_service_android_node/core.py
   - id: example-48-api-device-node
     status: done
     summary: Example for API node and device node registration and flow usage.

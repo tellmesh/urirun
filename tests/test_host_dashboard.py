@@ -1632,8 +1632,10 @@ def test_service_live_views_includes_scanner_status_without_stream(monkeypatch, 
 
 def test_service_contacts_marks_external_phone_scanner_running(monkeypatch):
     monkeypatch.setenv("URIRUN_PHONE_SCANNER_PORT", "8196")
-    monkeypatch.setattr(host_dashboard, "_lan_host", lambda: "192.168.188.212")
-    monkeypatch.setattr(host_dashboard, "_probe_scanner_url", lambda url, timeout=0.35: url.startswith("https://192.168.188.212:8196/"))
+    # status resolves via scanner_net._phone_scanner_external_status -> scanner_net._lan_host
+    # / _probe_scanner_url; patch them where they are called, not the host_dashboard re-exports.
+    monkeypatch.setattr("urirun.host.scanner_net._lan_host", lambda: "192.168.188.212")
+    monkeypatch.setattr("urirun.host.scanner_net._probe_scanner_url", lambda url, timeout=0.35: url.startswith("https://192.168.188.212:8196/"))
     with host_dashboard._SERVICE_LOCK:
         host_dashboard._SERVICE_SERVERS.clear()
         host_dashboard._SERVICE_THREADS.clear()
@@ -1694,7 +1696,9 @@ def test_service_widget_html_and_svg_render_live_view(tmp_path):
 def test_startup_phone_qr_adds_chat_message(monkeypatch, tmp_path):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
-    monkeypatch.setattr(host_dashboard, "_lan_host", lambda: "192.168.1.10")
+    # _public_base_url (scanner_net) resolves 0.0.0.0 -> LAN IP via scanner_net._lan_host;
+    # patch it there (where it is actually called), not the host_dashboard re-export.
+    monkeypatch.setattr("urirun.host.scanner_net._lan_host", lambda: "192.168.1.10")
     monkeypatch.setattr(host_dashboard, "_write_qr_png", lambda url, path: path.write_bytes(b"png"))
     monkeypatch.setenv("URIRUN_DASHBOARD_QR_DIR", str(tmp_path))
 

@@ -93,6 +93,7 @@ def append_if_available(steps: list[dict], route_uris: set[str], uri: str, paylo
 
 
 _DEFAULT_LOG_LIMIT = 20
+_PROCESS_LIST_LIMIT = 12
 
 _FLOW_INTENT_WORDS = {
     "browser": ("browser", "przeglad", "stron", "url", "otworz", "open"),
@@ -171,7 +172,7 @@ def _append_target_steps(steps: list[dict], route_uris: set, target: str, intent
         )
     if intents["processes"]:
         previous = ensure_health(previous)
-        previous = append_if_available(steps, route_uris, f"proc://{target}/process/query/list", {"limit": 12}, previous)
+        previous = append_if_available(steps, route_uris, f"proc://{target}/process/query/list", {"limit": _PROCESS_LIST_LIMIT}, previous)
     if intents["browser"]:
         previous = ensure_health(previous)
         previous = append_if_available(steps, route_uris, f"browser://{target}/page/command/open", {"url": url}, previous)

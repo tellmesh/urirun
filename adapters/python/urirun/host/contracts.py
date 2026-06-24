@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+_DEFAULT_MISSING_LIMIT = 50
+
 
 def verification_check(name: str, *, ok: bool, expected: int, actual: int, **meta: Any) -> dict[str, Any]:
     """Build one normalized verification check row for URI side-effect contracts."""
@@ -22,7 +24,7 @@ def file_transfer_verification(
     uploaded: list[str],
     verified: list[str],
     mode: str,
-    missing_limit: int = 50,
+    missing_limit: int = _DEFAULT_MISSING_LIMIT,
 ) -> dict[str, Any]:
     """Return the standard verification contract for file-copy style URI flows.
 

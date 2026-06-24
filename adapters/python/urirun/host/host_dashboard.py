@@ -1118,7 +1118,7 @@ INDEX_HTML = r"""<!doctype html>
                   <button type="button" class="node-kind-tab" data-kind="server" onclick="selectNodeKind('server')">🖥️ Server <span class="subtle">shell/SSH</span></button>
                   <button type="button" class="node-kind-tab" data-kind="pc" onclick="selectNodeKind('pc')">💻 PC <span class="subtle">app + shell</span></button>
                   <button type="button" class="node-kind-tab" data-kind="rdp" onclick="selectNodeKind('rdp')">🪟 RDP <span class="subtle">pulpit zdalny</span></button>
-	                  <button type="button" class="node-kind-tab" data-kind="smartphone" onclick="selectNodeKind('smartphone')">📱 Smartphone <span class="subtle">web → APK</span></button>
+	                  <button type="button" class="node-kind-tab" data-kind="smartphone" onclick="selectNodeKind('smartphone')">📱 Smartphone <span class="subtle">webpage → APK</span></button>
 	                  <button type="button" class="node-kind-tab" data-kind="browser-debug" onclick="selectNodeKind('browser-debug')">🌐 Browser Debug <span class="subtle">CDP</span></button>
 	                  <button type="button" class="node-kind-tab" data-kind="browser-chrome-plugin" onclick="selectNodeKind('browser-chrome-plugin')">🧩 Chrome Plugin <span class="subtle">extension</span></button>
 	                  <button type="button" class="node-kind-tab" data-kind="browser-firefox-plugin" onclick="selectNodeKind('browser-firefox-plugin')">🧩 Firefox Plugin <span class="subtle">extension</span></button>
@@ -1179,6 +1179,7 @@ INDEX_HTML = r"""<!doctype html>
                   <p class="subtle">📱 <strong>Smartphone</strong> — dwa etapy: <strong>(1) webpage node</strong> od razu po otwarciu strony w przeglądarce telefonu (sterowanie przez JS na stronie), <strong>(2) mobile node</strong> po instalacji APK/Termux (pełny węzeł: pliki, system). Wymaga: serwis android-node (port 8195) + telefon w tej samej sieci. <a href="/docs/nodes#smartphone" target="_blank" rel="noreferrer">instrukcja</a></p>
                   <div class="artifact-actions">
                     <button type="button" id="phoneSvcBtn" onclick="startPhoneService()">▶ Uruchom serwis android-node</button>
+                    <button type="button" onclick="restartPhoneService()">↻ Restart 8195</button>
                     <button type="button" id="addPhoneNodeBtn" onclick="showAddPhoneNodeQR()">📱 Pokaż QR</button>
                     <span id="addPhoneNodeStatus" class="subtle"></span>
                   </div>
@@ -2058,6 +2059,27 @@ INDEX_HTML = r"""<!doctype html>
         if (status) status.textContent = res.ok
           ? (res.alreadyRunning ? 'serwis już działał ✅' : 'serwis uruchomiony ✅') + ' (' + (res.url || '') + ')'
           : 'nie udało się: ' + (res.error || '');
+      } catch (error) {
+        if (status) status.textContent = 'błąd: ' + error.message;
+      }
+    }
+
+    async function restartPhoneService() {
+      const status = $('addPhoneNodeStatus');
+      if (status) status.textContent = 'restartuję serwis android-node…';
+      try {
+        const res = await api('/api/uri/invoke', {
+          method: 'POST',
+          body: JSON.stringify({
+            uri: 'dashboard://host/service/android-node/command/restart',
+            mode: 'execute',
+            payload: { forcePortKill: true }
+          })
+        });
+        const result = res.result || res;
+        if (status) status.textContent = res.ok && result.ok !== false
+          ? 'restart 8195 zaplanowany/wykonany ✅ ' + ((result.url || res.url || '') ? '(' + (result.url || res.url) + ')' : '')
+          : 'restart nieudany: ' + (result.error || res.error || result.reason || 'unknown error');
       } catch (error) {
         if (status) status.textContent = 'błąd: ' + error.message;
       }
@@ -3807,7 +3829,7 @@ ale różnią się <strong>transportem</strong> i tym, <strong>co</strong> potra
   <tr><td>🖥️ server</td><td>shell / SSH</td><td>SSH, instalacja zdalna</td><td>get-node + shell</td></tr>
   <tr><td>💻 pc</td><td>aplikacja + shell</td><td>pulpit, terminal</td><td>get-node + kvm</td></tr>
   <tr><td>🪟 rdp</td><td>pulpit zdalny (RDP)</td><td>RDP, login Windows</td><td>kvm / rdp</td></tr>
-  <tr><td>📱 smartphone</td><td>web → APK/Termux</td><td>instalacja apki, sieć LAN</td><td>android-node + adb</td></tr>
+  <tr><td>📱 smartphone</td><td>webpage → APK/Termux</td><td>instalacja apki, sieć LAN</td><td>android-node + adb</td></tr>
   <tr><td>🌐 browser-debug</td><td>DevTools (CDP)</td><td>uruchomienie z debug portem</td><td>webnode</td></tr>
   <tr><td>🧩 browser-chrome-plugin</td><td>Chrome Extension</td><td>Load unpacked, permissions</td><td>chrome-plugin</td></tr>
   <tr><td>🧩 browser-firefox-plugin</td><td>Firefox Extension</td><td>Temporary Add-on, permissions</td><td>firefox-plugin</td></tr>
@@ -8427,6 +8449,7 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     _annotate_node_tokens_impl(nodes, _node_token_for)
     _annotate_node_kinds(nodes)
     _annotate_node_types_impl(nodes)
+    _merge_live_webpage_nodes(nodes)
     routes = discovered.get("routes") or []
     services = _service_contacts()
     host_routes = _host_registry_routes()
@@ -9056,6 +9079,35 @@ def restart_android_node_service(payload: dict | None = None) -> dict:
         "restart": True,
         "replace": replaced,
     }
+
+
+def _merge_live_webpage_nodes(nodes: list) -> None:
+    """Append live webpage nodes (browsers/phones that opened the android-node page in webpage
+    mode) so they appear in the nodes list automatically — no manual save. They are transient:
+    present while online, gone when the page closes. Reuses the 8195 service web-node relay."""
+    try:
+        relay = phone_web_nodes({})
+    except Exception:  # noqa: BLE001 - service may be down; the list just won't include them
+        return
+    if not isinstance(relay, dict) or not relay.get("ok"):
+        return
+    existing = {n.get("name") for n in nodes if isinstance(n, dict)}
+    for dev in relay.get("devices") or []:
+        name = dev.get("name") or dev.get("id")
+        if not name or name in existing:
+            continue
+        raw_routes = dev.get("routes") or []
+        norm_routes = [r if isinstance(r, dict) else {"uri": str(r)} for r in raw_routes]
+        nodes.append({
+            "name": name,
+            "url": dev.get("nodeUrl") or "",
+            "reachable": bool(dev.get("online")),
+            "kind": "webpage",
+            "transient": True,
+            "live": True,
+            "routes": norm_routes,
+        })
+        existing.add(name)
 
 
 def phone_web_nodes(payload: dict) -> dict:
@@ -10405,6 +10457,15 @@ def _connector_install_node(node: str, payload: dict, *, config: str | None,
 _CONNECTOR_DOCKER_TIMEOUT = 600
 
 
+def _env_check_error(ok: bool, image: str, returncode: int, tail: str) -> str | None:
+    """The error message for a connector env-check result (None on success)."""
+    if ok:
+        return None
+    if returncode == 0:
+        return "no urirun.bindings registered in " + image
+    return tail or "docker check failed"
+
+
 def _docker_install_target(source: str, spec: str) -> tuple[list[str] | None, str | None, dict | None]:
     """Resolve (docker mounts, pip install target) for a connector env-check by source kind,
     or (None, None, error_dict) when the source/path is unusable."""
@@ -10467,7 +10528,10 @@ def connector_env_check(payload: dict) -> dict:
              "eps=list(md.entry_points(group='urirun.bindings')); "
              "print('BINDINGS:'+str(len(eps))+':'+','.join(sorted({e.name for e in eps})))")
     pip_flags = "--no-deps " if no_deps else ""
-    inner = "pip install --quiet " + pip_flags + install_target + " && python -c \"" + smoke + "\""
+    # bind-mounted folder is read-only; copy it to a writable dir so pip can build egg-info/wheel.
+    setup = "cp -r /conn /build && " if mounts else ""
+    build_target = "/build" if mounts else install_target
+    inner = setup + "pip install --quiet " + pip_flags + build_target + " && python -c \"" + smoke + "\""
     cmd = ["docker", "run", "--rm", *mounts, image, "sh", "-lc", inner]
     proc, error = _run_docker_check(cmd)
     if error:
@@ -10479,8 +10543,7 @@ def connector_env_check(payload: dict) -> dict:
     return {"ok": ok, "image": image, "source": source, "spec": spec,
             "returncode": proc.returncode, "bindings": bindings, "bindingCount": count,
             "command": " ".join(cmd), "log": tail,
-            "error": None if ok else ("no urirun.bindings registered in " + image
-                                      if proc.returncode == 0 else (tail or "docker check failed"))}
+            "error": _env_check_error(ok, image, proc.returncode, tail)}
 
 
 def _artifact_delete_roots(project: str) -> list[Path]:

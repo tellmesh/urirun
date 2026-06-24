@@ -30,6 +30,7 @@ from typing import Any
 
 MODES = ("dry-run", "execute")
 DEFAULT_MODE = "dry-run"
+_HTTP_BAD_REQUEST = 400
 
 REQUEST_SCHEMA: dict[str, Any] = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -177,7 +178,7 @@ def dispatch(request: dict | str, registry: dict, *, policy: dict | None = None,
     problems = validate_request(req)
     if problems:
         return {"ok": False, "uri": req.get("uri", ""), "mode": req.get("mode", DEFAULT_MODE),
-                "error": {"type": "request", "category": "INVALID_ARGUMENT", "status": 400,
+                "error": {"type": "request", "category": "INVALID_ARGUMENT", "status": _HTTP_BAD_REQUEST,
                           "message": "; ".join(problems)}}
     return v2.run(req["uri"], registry, payload=req["payload"],
                   mode=mode or req["mode"], policy=policy, executors=executors, confirm=confirm)
