@@ -80,10 +80,16 @@ from .scanner_bridge import (
     page_action_enqueue as _page_action_enqueue_impl,
     page_action_poll as _page_action_poll_impl,
     page_action_result as _page_action_result_impl,
+    is_scanner_artifact as _is_scanner_artifact_impl,
+    latest_scanner_page_status as _latest_scanner_page_status_impl,
     register_document_artifact as _register_document_artifact_impl,
     register_scanner_result as _register_scanner_result_impl,
+    scanner_artifact_item as _scanner_artifact_item_impl,
+    scanner_artifact_doc_meta as _scanner_artifact_doc_meta_impl,
+    scanner_status_from_log as _scanner_status_from_log_impl,
     scanner_session as _scanner_session_impl,
     scanner_result_content as _scanner_result_content_impl,
+    scanner_service_live_views as _scanner_service_live_views_impl,
     uri_event as _uri_event_impl,
 )
 from .service_control import (
@@ -98,6 +104,12 @@ from .service_control import (
     restart_chat_service as _restart_chat_service_impl,
     schedule_restart_command as _schedule_restart_command_impl,
     service_restart_argv as _service_restart_argv_impl,
+)
+from .widgets import (
+    query_value as _widget_query_value,
+    scanner_stream_summary as _scanner_stream_summary_impl,
+    select_service_view as _select_service_view_impl,
+    service_widget_summary as _service_widget_summary_impl,
 )
 
 
@@ -3816,51 +3828,18 @@ def _asset_response(handler: BaseHTTPRequestHandler, body: bytes, content_type: 
 
 
 def _service_view_from_query(project: str, query: dict[str, list[str]]) -> dict:
-    target = _first(query, "target") or _first(query, "service") or "service:phone-scanner"
-    view_id = _first(query, "id")
+    target = _widget_query_value(query, "target") or _widget_query_value(query, "service") or "service:phone-scanner"
+    view_id = _widget_query_value(query, "id")
     data = service_live_views(project, limit=int(_first(query, "limit", "8") or 8))
-    views = [item for item in data.get("views", []) if isinstance(item, dict)]
-    if view_id:
-        for view in views:
-            if view.get("id") == view_id:
-                return view
-    for view in views:
-        if view.get("target") == target or view.get("serviceId") == target:
-            return view
-    return {
-        "id": view_id or f"{target}/live",
-        "target": target,
-        "serviceId": target,
-        "title": target,
-        "kind": "stream",
-        "view": "json",
-        "status": "stopped",
-        "updatedAt": data.get("updatedAt") or _utc_now(),
-        "data": {},
-    }
+    return _select_service_view_impl(data, target=target, view_id=view_id, utc_now=_utc_now)
 
 
 def _scanner_stream_summary(title: str, status: str, stream: dict) -> dict[str, str]:
-    best = stream.get("best") if isinstance(stream.get("best"), dict) else {}
-    doc = best.get("detectedDocument") if isinstance(best.get("detectedDocument"), dict) else {}
-    parts = [doc.get("type"), doc.get("date"), doc.get("contractor") or doc.get("supplier") or doc.get("category"), doc.get("amount")]
-    subtitle = " · ".join(str(part) for part in parts if part) or str(stream.get("seriesId") or "")
-    detail = f"{stream.get('count') or 0} frame(s)"
-    return {"title": title, "status": status, "subtitle": subtitle, "detail": detail}
+    return _scanner_stream_summary_impl(title, status, stream)
 
 
 def _service_widget_summary(view: dict) -> dict[str, str]:
-    title = str(view.get("title") or view.get("id") or "service view")
-    status = str(view.get("status") or "unknown")
-    streams = ((view.get("data") or {}).get("streams") or []) if isinstance(view.get("data"), dict) else []
-    if streams and isinstance(streams[0], dict):
-        return _scanner_stream_summary(title, status, streams[0])
-    return {
-        "title": title,
-        "status": status,
-        "subtitle": str(view.get("target") or view.get("serviceId") or ""),
-        "detail": str(view.get("updatedAt") or ""),
-    }
+    return _service_widget_summary_impl(view)
 
 
 def _service_widget_html(project: str, query: dict[str, list[str]]) -> str:
@@ -6810,22 +6789,7 @@ def scanner_live_state(project: str, limit: int = 8) -> dict:
 
 
 def _scanner_status_from_log(item: dict) -> tuple[dict, str, dict] | None:
-    """Return (status_dict, action_uri, detail) for a scanner camera-status log entry, else None."""
-    detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
-    if item.get("event") != "result" or (detail.get("target") or "scanner") != "scanner":
-        return None
-    uri = str(detail.get("uri") or "")
-    if not (
-        uri.endswith("/camera/query/status")
-        or uri.endswith("/camera/command/start")
-        or uri.endswith("/ui/button/start-camera/command/click")
-    ):
-        return None
-    result = detail.get("result") if isinstance(detail.get("result"), dict) else {}
-    status = result.get("status") if isinstance(result.get("status"), dict) else result
-    if not isinstance(status, dict):
-        return None
-    return status, uri, detail
+    return _scanner_status_from_log_impl(item)
 
 
 def _latest_scanner_page_status(db: str | None) -> dict:
@@ -6833,54 +6797,29 @@ def _latest_scanner_page_status(db: str | None) -> dict:
         logs = _host_db().recent_logs(db, stream="page-action", limit=80)
     except Exception:  # noqa: BLE001
         return {}
-    for item in logs:
-        found = _scanner_status_from_log(item)
-        if found is None:
-            continue
-        status, uri, detail = found
-        public_status = {key: value for key, value in status.items() if key != "localActions"}
-        public_status.update({
-            "actionUri": uri,
-            "ok": detail.get("ok"),
-            "error": detail.get("error") or public_status.get("error"),
-            "at": detail.get("at") or item.get("created_at"),
-        })
-        return public_status
-    return {}
+    return _latest_scanner_page_status_impl(logs)
 
 
 def _scanner_artifact_doc_meta(artifact: dict) -> dict:
-    meta = artifact.get("meta") if isinstance(artifact.get("meta"), dict) else {}
-    document = meta.get("document") if isinstance(meta.get("document"), dict) else {}
-    document_meta = document.get("metadata") if isinstance(document.get("metadata"), dict) else {}
-    detected = meta.get("detectedDocument") if isinstance(meta.get("detectedDocument"), dict) else {}
-    return {**detected, **document_meta}
+    return _scanner_artifact_doc_meta_impl(artifact)
 
 
 def _is_scanner_artifact(kind: str, uri: str, meta: dict) -> bool:
-    """True when an artifact came from the phone-scanner pipeline (by kind + uri/source)."""
-    return (
-        kind in {"camera-scan", "document-pdf", "dashboard-qr"}
-        and (
-            uri.startswith(("scanner://", "document://host/", "dashboard://host/qr/"))
-            or str(meta.get("sourceCaptureUri") or "").startswith("scanner://")
-        )
-    )
+    return _is_scanner_artifact_impl(kind, uri, meta)
 
 
 def _scanner_artifact_item(artifact: dict, kind: str, uri: str, path: str,
                            display_path: str, doc: dict, project: str) -> dict:
-    return {
-        "id": artifact.get("id"),
-        "kind": kind,
-        "uri": uri,
-        "path": path,
-        "createdAt": artifact.get("created_at"),
-        "previewUrl": _preview_url(display_path, project) if display_path else "",
-        "filePreviewUrl": _preview_url(path, project) if path else "",
-        "label": Path(path).name if path else uri,
-        **{key: value for key, value in doc.items() if value},
-    }
+    return _scanner_artifact_item_impl(
+        artifact,
+        kind,
+        uri,
+        path,
+        display_path,
+        doc,
+        project,
+        preview_url=_preview_url,
+    )
 
 
 def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> list[dict]:
@@ -6908,47 +6847,16 @@ def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> l
 
 def service_live_views(project: str, db: str | None = None, limit: int = 8) -> dict:
     scanner = scanner_live_state(project, limit=limit)
-    views: list[dict] = []
-    streams = scanner.get("streams") or []
-    if streams:
-        status_order = {"accepted": 4, "running": 3, "rejected": 2, "failed": 1}
-        status = max((str(item.get("status") or "running") for item in streams), key=lambda item: status_order.get(item, 0), default="running")
-        views.append({
-            "id": "service:phone-scanner/live",
-            "target": "service:phone-scanner",
-            "serviceId": "service:phone-scanner",
-            "title": "phone scanner stream",
-            "kind": "stream",
-            "view": "scanner-stream",
-            "status": status,
-            "updatedAt": scanner.get("updatedAt"),
-            "refreshMs": 1000,
-            "data": {"streams": streams},
-            "supportedViews": ["scanner-stream", "scanner-status", "table", "image-list", "video", "iframe", "form", "graph", "json"],
-        })
     service = next((item for item in _service_contacts() if item.get("id") == "service:phone-scanner"), {})
     recent_artifacts = _recent_scanner_artifacts(db, project, limit=6)
     camera_status = _latest_scanner_page_status(db)
-    if service or recent_artifacts or camera_status:
-        views.append({
-            "id": "service:phone-scanner/status",
-            "target": "service:phone-scanner",
-            "serviceId": "service:phone-scanner",
-            "title": "phone scanner status",
-            "kind": "status",
-            "view": "scanner-status",
-            "status": "running" if service.get("reachable") else "stopped",
-            "updatedAt": camera_status.get("at") or scanner.get("updatedAt"),
-            "refreshMs": 1000,
-            "data": {
-                "service": service,
-                "cameraStatus": camera_status,
-                "recentArtifacts": recent_artifacts,
-                "streamCount": len(streams),
-            },
-            "supportedViews": ["scanner-status", "scanner-stream", "image-list", "iframe", "json"],
-        })
-    return {"ok": True, "updatedAt": _utc_now(), "views": views}
+    return _scanner_service_live_views_impl(
+        scanner,
+        service,
+        recent_artifacts,
+        camera_status,
+        utc_now=_utc_now,
+    )
 
 
 def _scanner_best_update(series_id: str, candidate: dict) -> dict:
@@ -8052,8 +7960,7 @@ def uri_invoke(
 
 
 def _first(query: dict[str, list[str]], name: str, default: str | None = None) -> str | None:
-    values = query.get(name)
-    return values[0] if values else default
+    return _widget_query_value(query, name, default)
 
 
 def _host_db():

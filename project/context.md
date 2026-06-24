@@ -1,16 +1,16 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.00s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 98, json: 13, shell: 10, yaml: 4, csharp: 4
+- **Languages**: python: 99, json: 13, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1564
+- **Total Functions**: 1574
 - **Total Classes**: 30
-- **Modules**: 157
-- **Entry Points**: 526
+- **Modules**: 158
+- **Entry Points**: 539
 
 ## Architecture by Module
 
@@ -45,14 +45,14 @@
 - **Functions**: 35
 - **File**: `_scan.py`
 
+### adapters.python.urirun.node.client
+- **Functions**: 35
+- **Classes**: 1
+- **File**: `client.py`
+
 ### adapters.python.urirun.connectors.connector_lint
 - **Functions**: 34
 - **File**: `connector_lint.py`
-
-### adapters.python.urirun.node.client
-- **Functions**: 34
-- **Classes**: 1
-- **File**: `client.py`
 
 ### adapters.python.urirun.host.host_db
 - **Functions**: 32
@@ -286,7 +286,7 @@ run_local_function_subprocess [adapters.python.urirun.runtime.v2]
 
 ### adapters.python.urirun.node.client.NodeClient
 > Drive one urirun node: ``c = NodeClient("http://host:8765"); c.run(uri, payload)``.
-- **Methods**: 32
+- **Methods**: 33
 - **Key Methods**: adapters.python.urirun.node.client.NodeClient.__init__, adapters.python.urirun.node.client.NodeClient._auth, adapters.python.urirun.node.client.NodeClient.routes, adapters.python.urirun.node.client.NodeClient.get, adapters.python.urirun.node.client.NodeClient.concretize, adapters.python.urirun.node.client.NodeClient.run, adapters.python.urirun.node.client.NodeClient.run_async, adapters.python.urirun.node.client.NodeClient.cancel, adapters.python.urirun.node.client.NodeClient.status, adapters.python.urirun.node.client.NodeClient.deploy
 
 ### adapters.python.urirun.node.mesh.NodeHandler
@@ -396,8 +396,12 @@ Key functions that process and transform data:
 ### adapters.js.parseUri
 - **Output to**: adapters.js.String, adapters.js.match, adapters.js.Error, adapters.js.split, adapters.js.filter
 
+### adapters.c.urirun.parse_target
+- **Output to**: adapters.c.urirun.copy_token
+
+### adapters.c.urirun.parse_segments
+
 ### adapters.c.urirun.urirun_parse
-- **Output to**: adapters.c.urirun.memset, adapters.c.urirun.sizeof, adapters.c.urirun.strstr, adapters.c.urirun.copy_token, adapters.c.urirun.parse_target
 
 ### adapters.python.urirun.parse_uri
 - **Output to**: URI_RE.match, str, ValueError, m.group, unquote
@@ -468,14 +472,6 @@ verify/new/smoke/from-spe
 
 ### adapters.python.urirun.runtime.v2.validate_input
 - **Output to**: adapters.python.urirun.runtime.v2._input_values, adapters.python.urirun.runtime.v2._schema_for, Draft202012Validator.check_schema, set, adapters.python.urirun.runtime.v2._apply_defaults
-
-### adapters.python.urirun.runtime.v2.run_local_function_subprocess
-> Run a ``local-function`` handler in a fresh process via the shared
-``python -m urirun.exec`` runner 
-- **Output to**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError
-
-### adapters.python.urirun.runtime.v2._run_parse
-- **Output to**: reglib.parse_uri, reglib.translate, _RunAbort, str, str
 
 ## Behavioral Patterns
 

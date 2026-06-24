@@ -1,6 +1,14 @@
 """Shared pytest fixtures for the urirun host test suite."""
 
+import sys
+from pathlib import Path
+
 import pytest
+
+
+_ADAPTER_ROOT = Path(__file__).resolve().parents[1] / "adapters" / "python"
+if (_ADAPTER_ROOT / "urirun").is_dir() and str(_ADAPTER_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ADAPTER_ROOT))
 
 
 @pytest.fixture(autouse=True)

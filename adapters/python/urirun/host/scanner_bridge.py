@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import quote
 
+from .widgets import query_value
+
 
 PAGE_ACTION_LOCK = threading.Lock()
 PAGE_ACTION_QUEUES: dict[str, list[dict]] = {}
@@ -100,6 +102,81 @@ def scanner_result_content(content_prefix: str, crop: dict, document: dict, ocr:
     elif ocr.get("error"):
         content += f" (OCR: {ocr.get('error')})"
     return content
+
+
+def public_scanner_candidate(candidate: dict) -> dict:
+    ocr = candidate.get("ocr") if isinstance(candidate.get("ocr"), dict) else {}
+    return {
+        "seriesId": candidate.get("seriesId"),
+        "frameIndex": candidate.get("frameIndex"),
+        "uri": candidate.get("uri"),
+        "path": candidate.get("displayPath"),
+        "originalPath": candidate.get("originalPath"),
+        "overlayPath": candidate.get("overlayPath"),
+        "overlay": candidate.get("overlay"),
+        "sha256": candidate.get("sha256"),
+        "quality": candidate.get("quality"),
+        "detectedDocument": candidate.get("detectedDocument"),
+        "crop": candidate.get("crop"),
+        "ocr": {key: value for key, value in ocr.items() if key != "text"},
+    }
+
+
+def scanner_public_candidate_for_live(
+    candidate: dict | None,
+    project: str,
+    *,
+    preview_url: Callable[[str, str], str | None],
+) -> dict | None:
+    if not isinstance(candidate, dict):
+        return None
+    public = public_scanner_candidate(candidate)
+    path = public.get("path")
+    if path:
+        public["previewUrl"] = preview_url(str(path), project)
+    original = public.get("originalPath")
+    if original:
+        public["originalPreviewUrl"] = preview_url(str(original), project)
+    overlay = public.get("overlayPath")
+    if overlay:
+        public["overlayPreviewUrl"] = preview_url(str(overlay), project)
+    return public
+
+
+def scanner_live_state_from_streams(
+    streams: list[dict],
+    project: str,
+    *,
+    limit: int = 8,
+    preview_url: Callable[[str, str], str | None],
+    utc_now: Callable[[], str],
+) -> dict:
+    selected = sorted(
+        [dict(item) for item in streams],
+        key=lambda item: str(item.get("updatedAt") or ""),
+        reverse=True,
+    )[: max(1, min(20, int(limit or 8)))]
+    public_streams = []
+    for stream in selected:
+        candidates = [
+            item
+            for item in (
+                scanner_public_candidate_for_live(candidate, project, preview_url=preview_url)
+                for candidate in stream.get("candidates", [])
+            )
+            if item
+        ]
+        best = scanner_public_candidate_for_live(stream.get("best"), project, preview_url=preview_url)
+        document = stream.get("document") if isinstance(stream.get("document"), dict) else {}
+        if document.get("path"):
+            document = {**document, "previewUrl": preview_url(str(document["path"]), project)}
+        public_streams.append({
+            **{key: value for key, value in stream.items() if key not in {"best", "candidates", "document"}},
+            "best": best,
+            "candidates": candidates,
+            "document": document,
+        })
+    return {"ok": True, "updatedAt": utc_now(), "streams": public_streams}
 
 
 def register_scanner_result(
@@ -231,21 +308,16 @@ def scanner_session(deps: ScannerBridgeDeps, db: str | None, payload: dict) -> d
     return {"ok": True, "uri": uri, "message": message}
 
 
-def _first(query: dict[str, list[str]], name: str, default: str | None = None) -> str | None:
-    values = query.get(name)
-    return values[0] if values else default
-
-
 def uri_event(deps: ScannerBridgeDeps, db: str | None, query: dict[str, list[str]]) -> dict:
-    event = _first(query, "e", "event") or "event"
+    event = query_value(query, "e", "event") or "event"
     detail = {
-        "site": _first(query, "s", ""),
+        "site": query_value(query, "s", ""),
         "event": event,
-        "path": _first(query, "p", ""),
-        "url": _first(query, "u", ""),
-        "referrer": _first(query, "r", ""),
-        "label": _first(query, "l", ""),
-        "value": _first(query, "v", ""),
+        "path": query_value(query, "p", ""),
+        "url": query_value(query, "u", ""),
+        "referrer": query_value(query, "r", ""),
+        "label": query_value(query, "l", ""),
+        "value": query_value(query, "v", ""),
         "raw": {
             key: values[0] if len(values) == 1 else values
             for key, values in query.items()
@@ -316,3 +388,148 @@ def page_action_result(
     }
     _add_log(deps, db, "page-action", "result", detail)
     return {"ok": True, "result": detail}
+
+
+def scanner_status_from_log(item: dict) -> tuple[dict, str, dict] | None:
+    """Return (status_dict, action_uri, detail) for a scanner camera-status log entry."""
+    detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
+    if item.get("event") != "result" or (detail.get("target") or "scanner") != "scanner":
+        return None
+    uri = str(detail.get("uri") or "")
+    if not (
+        uri.endswith("/camera/query/status")
+        or uri.endswith("/camera/command/start")
+        or uri.endswith("/ui/button/start-camera/command/click")
+    ):
+        return None
+    result = detail.get("result") if isinstance(detail.get("result"), dict) else {}
+    status = result.get("status") if isinstance(result.get("status"), dict) else result
+    if not isinstance(status, dict):
+        return None
+    return status, uri, detail
+
+
+def latest_scanner_page_status(logs: list[dict] | tuple[dict, ...]) -> dict:
+    """Build the public scanner page status from recent page-action logs."""
+    for item in logs:
+        found = scanner_status_from_log(item)
+        if found is None:
+            continue
+        status, uri, detail = found
+        public_status = {key: value for key, value in status.items() if key != "localActions"}
+        public_status.update({
+            "actionUri": uri,
+            "ok": detail.get("ok"),
+            "error": detail.get("error") or public_status.get("error"),
+            "at": detail.get("at") or item.get("created_at"),
+        })
+        return public_status
+    return {}
+
+
+def scanner_artifact_doc_meta(artifact: dict) -> dict:
+    """Return merged detected/document metadata used by scanner artifact views."""
+    meta = artifact.get("meta") if isinstance(artifact.get("meta"), dict) else {}
+    document = meta.get("document") if isinstance(meta.get("document"), dict) else {}
+    document_meta = document.get("metadata") if isinstance(document.get("metadata"), dict) else {}
+    detected = meta.get("detectedDocument") if isinstance(meta.get("detectedDocument"), dict) else {}
+    return {**detected, **document_meta}
+
+
+def is_scanner_artifact(kind: str, uri: str, meta: dict) -> bool:
+    """True when an artifact came from the phone-scanner pipeline."""
+    return (
+        kind in {"camera-scan", "document-pdf", "dashboard-qr"}
+        and (
+            uri.startswith(("scanner://", "document://host/", "dashboard://host/qr/"))
+            or str(meta.get("sourceCaptureUri") or "").startswith("scanner://")
+        )
+    )
+
+
+def scanner_artifact_item(
+    artifact: dict,
+    kind: str,
+    uri: str,
+    path: str,
+    display_path: str,
+    doc: dict,
+    project: str,
+    *,
+    preview_url: Callable[[str, str], str | None],
+) -> dict:
+    """Build the public artifact item used by scanner status widgets."""
+    return {
+        "id": artifact.get("id"),
+        "kind": kind,
+        "uri": uri,
+        "path": path,
+        "createdAt": artifact.get("created_at"),
+        "previewUrl": preview_url(display_path, project) if display_path else "",
+        "filePreviewUrl": preview_url(path, project) if path else "",
+        "label": Path(path).name if path else uri,
+        **{key: value for key, value in doc.items() if value},
+    }
+
+
+def scanner_service_live_views(
+    scanner: dict,
+    service: dict,
+    recent_artifacts: list[dict],
+    camera_status: dict,
+    *,
+    utc_now: Callable[[], str],
+) -> dict:
+    """Build host-dashboard live/status views for the phone scanner service."""
+    views: list[dict] = []
+    streams = scanner.get("streams") or []
+    if streams:
+        status_order = {"accepted": 4, "running": 3, "rejected": 2, "failed": 1}
+        status = max(
+            (str(item.get("status") or "running") for item in streams),
+            key=lambda item: status_order.get(item, 0),
+            default="running",
+        )
+        views.append({
+            "id": "service:phone-scanner/live",
+            "target": "service:phone-scanner",
+            "serviceId": "service:phone-scanner",
+            "title": "phone scanner stream",
+            "kind": "stream",
+            "view": "scanner-stream",
+            "status": status,
+            "updatedAt": scanner.get("updatedAt"),
+            "refreshMs": 1000,
+            "data": {"streams": streams},
+            "supportedViews": [
+                "scanner-stream",
+                "scanner-status",
+                "table",
+                "image-list",
+                "video",
+                "iframe",
+                "form",
+                "graph",
+                "json",
+            ],
+        })
+    if service or recent_artifacts or camera_status:
+        views.append({
+            "id": "service:phone-scanner/status",
+            "target": "service:phone-scanner",
+            "serviceId": "service:phone-scanner",
+            "title": "phone scanner status",
+            "kind": "status",
+            "view": "scanner-status",
+            "status": "running" if service.get("reachable") else "stopped",
+            "updatedAt": camera_status.get("at") or scanner.get("updatedAt"),
+            "refreshMs": 1000,
+            "data": {
+                "service": service,
+                "cameraStatus": camera_status,
+                "recentArtifacts": recent_artifacts,
+                "streamCount": len(streams),
+            },
+            "supportedViews": ["scanner-status", "scanner-stream", "image-list", "iframe", "json"],
+        })
+    return {"ok": True, "updatedAt": utc_now(), "views": views}

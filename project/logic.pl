@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.123', 'javascript').
+project_metadata('urirun', '0.4.124', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -82,12 +82,12 @@ project_file('adapters/python/urirun/host/discovery.py', 361, 'python').
 project_file('adapters/python/urirun/host/document_sync.py', 400, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 486, 'python').
 project_file('adapters/python/urirun/host/fs_transfer.py', 207, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 9978, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 9913, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 541, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 356, 'python').
 project_file('adapters/python/urirun/host/object_registry.py', 108, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 280, 'python').
-project_file('adapters/python/urirun/host/scanner_bridge.py', 319, 'python').
+project_file('adapters/python/urirun/host/scanner_bridge.py', 439, 'python').
 project_file('adapters/python/urirun/host/scheduler.py', 134, 'python').
 project_file('adapters/python/urirun/host/service_control.py', 365, 'python').
 project_file('adapters/python/urirun/host/task_planner.py', 372, 'python').
@@ -99,7 +99,7 @@ project_file('adapters/python/urirun/node/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/node/_artifacts.py', 111, 'python').
 project_file('adapters/python/urirun/node/_util.py', 38, 'python').
 project_file('adapters/python/urirun/node/_version.py', 75, 'python').
-project_file('adapters/python/urirun/node/client.py', 532, 'python').
+project_file('adapters/python/urirun/node/client.py', 535, 'python').
 project_file('adapters/python/urirun/node/config.py', 194, 'python').
 project_file('adapters/python/urirun/node/flow.py', 607, 'python').
 project_file('adapters/python/urirun/node/formatting.py', 79, 'python').
@@ -165,14 +165,14 @@ project_file('scripts/repin_connectors.py', 177, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
-project_file('tests/conftest.py', 22, 'python').
+project_file('tests/conftest.py', 30, 'python').
 project_file('tests/test_host_contracts.py', 49, 'python').
 project_file('tests/test_host_dashboard.py', 3214, 'python').
 project_file('tests/test_host_db.py', 39, 'python').
 project_file('tests/test_host_discovery.py', 82, 'python').
 project_file('tests/test_host_fs_transfer.py', 33, 'python').
 project_file('tests/test_host_object_registry.py', 90, 'python').
-project_file('tests/test_host_scanner_bridge.py', 164, 'python').
+project_file('tests/test_host_scanner_bridge.py', 250, 'python').
 project_file('tests/test_host_service_control.py', 145, 'python').
 project_file('tests/test_node_flow_recovery.py', 90, 'python').
 project_file('tests/test_urirun.py', 12, 'python').
@@ -762,13 +762,13 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_public_scanne
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_live_store_locked', 2, 10, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_public_candidate_for_live', 2, 5, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_live_state', 2, 12, 14).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_status_from_log', 1, 12, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_latest_scanner_page_status', 1, 8, 6).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_artifact_doc_meta', 1, 5, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_is_scanner_artifact', 3, 4, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_status_from_log', 1, 1, 1).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_latest_scanner_page_status', 1, 2, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_artifact_doc_meta', 1, 1, 1).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_is_scanner_artifact', 3, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_artifact_item', 7, 6, 4).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_recent_scanner_artifacts', 3, 14, 13).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'service_live_views', 3, 12, 11).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'service_live_views', 3, 3, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_update', 2, 3, 9).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_take', 1, 3, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_bridge_deps', 0, 1, 4).
@@ -988,6 +988,11 @@ python_function('adapters/python/urirun/host/scanner_bridge.py', 'uri_event', 3,
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'page_action_enqueue', 2, 4, 10).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'page_action_poll', 2, 4, 6).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'page_action_result', 3, 3, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_status_from_log', 1, 12, 4).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'latest_scanner_page_status', 1, 7, 4).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_artifact_doc_meta', 1, 5, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'is_scanner_artifact', 3, 4, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_service_live_views', 4, 10, 6).
 python_function('adapters/python/urirun/host/scheduler.py', 'build_loop_command', 0, 4, 3).
 python_function('adapters/python/urirun/host/scheduler.py', 'shell_join', 1, 2, 2).
 python_function('adapters/python/urirun/host/scheduler.py', 'systemd_units', 0, 2, 1).
@@ -1851,6 +1856,11 @@ python_function('tests/test_host_scanner_bridge.py', 'test_register_scanner_resu
 python_function('tests/test_host_scanner_bridge.py', 'test_scanner_session_logs_and_adds_chat_message', 0, 7, 4).
 python_function('tests/test_host_scanner_bridge.py', 'test_uri_event_logs_js_event', 0, 5, 3).
 python_function('tests/test_host_scanner_bridge.py', 'test_page_action_queue_round_trip', 0, 5, 5).
+python_function('tests/test_host_scanner_bridge.py', 'test_latest_scanner_page_status_returns_public_status', 0, 8, 1).
+python_function('tests/test_host_scanner_bridge.py', 'test_latest_scanner_page_status_ignores_non_scanner_logs', 0, 2, 1).
+python_function('tests/test_host_scanner_bridge.py', 'test_scanner_artifact_helpers_merge_document_metadata', 0, 2, 1).
+python_function('tests/test_host_scanner_bridge.py', 'test_is_scanner_artifact_accepts_scanner_sources_only', 0, 5, 1).
+python_function('tests/test_host_scanner_bridge.py', 'test_scanner_service_live_views_builds_stream_and_status_views', 0, 11, 1).
 python_function('tests/test_host_service_control.py', 'test_service_restart_argv_systemd_payload_unit', 0, 3, 1).
 python_function('tests/test_host_service_control.py', 'test_service_restart_argv_env_command', 1, 3, 2).
 python_function('tests/test_host_service_control.py', 'test_chat_service_restart_argv_builds_port_replace_command', 2, 6, 4).
@@ -2199,7 +2209,8 @@ python_method('NodeClient', '_load_module_source', 1, 6, 5).
 python_method('NodeClient', '_local_connector_deploy_payload', 2, 8, 10).
 python_method('NodeClient', '_ensure_via_host_deploy', 3, 9, 6).
 python_method('NodeClient', '_try_adopt_scheme', 3, 10, 9).
-python_method('NodeClient', '_ensure_via_discovery_install', 5, 15, 8).
+python_method('NodeClient', '_rank_candidates_by_route', 2, 5, 4).
+python_method('NodeClient', '_ensure_via_discovery_install', 5, 11, 6).
 python_method('NodeClient', '_ensure_via_node_bindings', 5, 8, 5).
 python_method('NodeClient', 'ensure_scheme', 4, 12, 9).
 python_method('NodeClient', 'run_ensuring', 3, 5, 6).

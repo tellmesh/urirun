@@ -69,8 +69,16 @@ Near-term extraction targets:
   token annotations moved behind dashboard wrappers.
 - `host/scanner_bridge.py` for dashboard-to-scanner API glue. First split
   landed: scanner result registration, document-pdf/camera-scan artifact
-  selection, chat attachments, scanner session logging and page-action queues
-  moved behind dashboard wrappers.
+  selection, chat attachments, scanner session logging, page-action queues,
+  camera page-status parsing, scanner artifact metadata/item helpers and phone
+  scanner live/status view assembly moved behind dashboard wrappers.
+- `host/widgets.py` for service widget selection and summaries. First split
+  landed: query selection, fallback view construction and scanner stream
+  summaries moved out of `host_dashboard.py`; HTML/SVG rendering still lives in
+  the dashboard until the widget surface becomes a standalone service module.
+- `tests/conftest.py` now prepends `adapters/python` when tests run from the
+  `urirun/` subdirectory, so local refactor tests do not accidentally import an
+  older installed package from the virtualenv.
 
 ## Landed (2026-06-23)
 

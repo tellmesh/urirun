@@ -295,6 +295,14 @@ class NodeClient:
                     "adopted": adopt.get("adopted"), "schemes": sorted(live)}
         return adopt
 
+    def _rank_candidates_by_route(self, candidates: list, route: str | None) -> list:
+        """Order connector candidates so those whose routes cover `route` come first."""
+        if not route:
+            return candidates
+        want = self._route_key(route)
+        return sorted(candidates,
+                      key=lambda c: 0 if any(self._route_key(r) == want for r in (c.get("routes") or [])) else 1)
+
     def _ensure_via_discovery_install(
         self, scheme: str, roots, route: str | None, mgmt: str, adopt_uri: str,
     ) -> dict | None:
@@ -305,12 +313,7 @@ class NodeClient:
         locals_ = [c for c in disc.get("local", []) if c.get("source")]
         # prefer connectors that explicitly declare this scheme; try each until one adopts
         declared = [c for c in locals_ if scheme in (c.get("schemes") or [])]
-        candidates = declared or locals_
-        # route-granular: prefer connectors whose routes cover the requested route
-        if route:
-            want = self._route_key(route)
-            candidates = sorted(candidates,
-                                key=lambda c: 0 if any(self._route_key(r) == want for r in (c.get("routes") or [])) else 1)
+        candidates = self._rank_candidates_by_route(declared or locals_, route)
         for c in candidates:
             self.run(f"{mgmt}/connector/command/install", {"source": c["source"], "editable": True})
             adopted = self._try_adopt_scheme(adopt_uri, scheme, route)

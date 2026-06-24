@@ -161,3 +161,142 @@ def test_page_action_queue_round_trip() -> None:
     assert polled["count"] == 1
     assert polled["actions"][0]["payload"] == {"x": 1}
     assert scanner_bridge.page_action_poll("scanner")["count"] == 0
+
+
+def test_latest_scanner_page_status_returns_public_status() -> None:
+    logs = [
+        {
+            "event": "result",
+            "created_at": "2026-06-24T00:00:00Z",
+            "detail": {
+                "target": "scanner",
+                "uri": "scanner://page/ui/button/start-camera/command/click",
+                "ok": True,
+                "result": {
+                    "status": {
+                        "ok": True,
+                        "ready": True,
+                        "width": 1440,
+                        "height": 1920,
+                        "localActions": [{"uri": "scanner://page/camera/query/status"}],
+                    }
+                },
+                "at": "2026-06-24T00:00:01Z",
+            },
+        }
+    ]
+
+    status = scanner_bridge.latest_scanner_page_status(logs)
+
+    assert status["ok"] is True
+    assert status["ready"] is True
+    assert status["width"] == 1440
+    assert status["height"] == 1920
+    assert status["actionUri"] == "scanner://page/ui/button/start-camera/command/click"
+    assert status["at"] == "2026-06-24T00:00:01Z"
+    assert "localActions" not in status
+
+
+def test_latest_scanner_page_status_ignores_non_scanner_logs() -> None:
+    logs = [
+        {"event": "queued", "detail": {"target": "scanner", "uri": "scanner://page/camera/query/status"}},
+        {
+            "event": "result",
+            "detail": {
+                "target": "other",
+                "uri": "scanner://page/camera/query/status",
+                "result": {"status": {"ready": True}},
+            },
+        },
+    ]
+
+    assert scanner_bridge.latest_scanner_page_status(logs) == {}
+
+
+def test_scanner_artifact_helpers_merge_document_metadata() -> None:
+    artifact = {
+        "meta": {
+            "detectedDocument": {
+                "type": "paragon",
+                "contractor": "OLD",
+                "amount": "12.50 PLN",
+            },
+            "document": {
+                "metadata": {
+                    "contractor": "QUO CAFE",
+                    "date": "2026-06-19",
+                }
+            },
+        }
+    }
+
+    assert scanner_bridge.scanner_artifact_doc_meta(artifact) == {
+        "type": "paragon",
+        "contractor": "QUO CAFE",
+        "amount": "12.50 PLN",
+        "date": "2026-06-19",
+    }
+
+
+def test_is_scanner_artifact_accepts_scanner_sources_only() -> None:
+    assert scanner_bridge.is_scanner_artifact("camera-scan", "scanner://host/capture/a", {})
+    assert scanner_bridge.is_scanner_artifact(
+        "document-pdf",
+        "document://host/doc-1",
+        {"sourceCaptureUri": "scanner://host/capture/a"},
+    )
+    assert not scanner_bridge.is_scanner_artifact("document-pdf", "file://host/tmp/a.pdf", {})
+    assert not scanner_bridge.is_scanner_artifact("other", "scanner://host/capture/a", {})
+
+
+def test_scanner_artifact_item_formats_public_view_data() -> None:
+    item = scanner_bridge.scanner_artifact_item(
+        {"id": "art-1", "created_at": "2026-06-24T00:00:00Z"},
+        "document-pdf",
+        "document://host/doc-1",
+        "/tmp/faktura.pdf",
+        "/tmp/faktura-preview.jpg",
+        {"type": "faktura", "contractor": "ACME", "amount": ""},
+        "/project",
+        preview_url=lambda path, project: f"/api/file?project={project}&path={path}",
+    )
+
+    assert item == {
+        "id": "art-1",
+        "kind": "document-pdf",
+        "uri": "document://host/doc-1",
+        "path": "/tmp/faktura.pdf",
+        "createdAt": "2026-06-24T00:00:00Z",
+        "previewUrl": "/api/file?project=/project&path=/tmp/faktura-preview.jpg",
+        "filePreviewUrl": "/api/file?project=/project&path=/tmp/faktura.pdf",
+        "label": "faktura.pdf",
+        "type": "faktura",
+        "contractor": "ACME",
+    }
+
+
+def test_scanner_service_live_views_builds_stream_and_status_views() -> None:
+    result = scanner_bridge.scanner_service_live_views(
+        {
+            "updatedAt": "2026-06-24T00:00:00Z",
+            "streams": [
+                {"seriesId": "s1", "status": "failed"},
+                {"seriesId": "s2", "status": "accepted"},
+            ],
+        },
+        {"id": "service:phone-scanner", "reachable": True},
+        [{"id": "artifact-1", "type": "paragon"}],
+        {"ready": True, "at": "2026-06-24T00:00:01Z"},
+        utc_now=lambda: "2026-06-24T00:00:02Z",
+    )
+
+    assert result["ok"] is True
+    assert result["updatedAt"] == "2026-06-24T00:00:02Z"
+    assert [view["view"] for view in result["views"]] == ["scanner-stream", "scanner-status"]
+    assert result["views"][0]["status"] == "accepted"
+    assert result["views"][0]["data"]["streams"][1]["seriesId"] == "s2"
+    assert "table" in result["views"][0]["supportedViews"]
+    assert result["views"][1]["status"] == "running"
+    assert result["views"][1]["updatedAt"] == "2026-06-24T00:00:01Z"
+    assert result["views"][1]["data"]["streamCount"] == 2
+    assert result["views"][1]["data"]["recentArtifacts"][0]["type"] == "paragon"

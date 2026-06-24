@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.25s
-# nodes: 407 | edges: 500 | modules: 38
+# generated in 0.23s
+# nodes: 406 | edges: 500 | modules: 38
 # CC̄=4.6
 
 HUBS[20]:
@@ -14,44 +14,43 @@ HUBS[20]:
     CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
+  adapters.python.urirun.runtime.codegen.proto_from_registry
+    CC=13  in:2  out:25  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.discovery.node_alias_map_from_env
     CC=14  in:1  out:26  total:27
-  adapters.python.urirun.runtime.codegen.proto_from_registry
-    CC=13  in:2  out:25  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.testing.smoke
     CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
-  adapters.python.urirun.host.document_sync.sync_documents_to_node
-    CC=13  in:0  out:23  total:23
   adapters.python.urirun.host.host_db.init_db
     CC=2  in:17  out:6  total:23
-  adapters.python.urirun.runtime.errors.problem
-    CC=10  in:0  out:22  total:22
+  adapters.python.urirun.host.document_sync.sync_documents_to_node
+    CC=13  in:0  out:23  total:23
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
-  adapters.python.urirun.runtime.v1._run_process_streaming
-    CC=7  in:1  out:20  total:21
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
   adapters.python.urirun.host.contracts.file_transfer_verification
     CC=4  in:1  out:20  total:21
+  adapters.python.urirun.runtime.v1._run_process_streaming
+    CC=7  in:1  out:20  total:21
   adapters.python.urirun.host.host_db.connection
     CC=1  in:18  out:3  total:21
 
 MODULES:
-  adapters.c.urirun  [5 funcs]
+  adapters.c.urirun  [4 funcs]
     copy_token  CC=2  out:1
-    memset  CC=2  out:0
-    parse_segments  CC=1  out:0
+    is_path_end  CC=3  out:0
+    memcpy  CC=1  out:1
     parse_target  CC=7  out:1
-    urirun_parse  CC=8  out:6
   adapters.c.urirun_test  [2 funcs]
     assert  CC=1  out:0
     main  CC=2  out:3
@@ -326,10 +325,9 @@ EDGES:
   adapters.ts.urirun.Connector.toJSON → adapters.ts.urirun.Connector.document
   adapters.php.Urirun.Urirun.Connector.bindingsJson → adapters.php.Urirun.Urirun.Connector.bindings
   adapters.c.urirun_test.main → adapters.c.urirun_test.assert
-  adapters.c.urirun.urirun_parse → adapters.c.urirun.memset
-  adapters.c.urirun.urirun_parse → adapters.c.urirun.copy_token
-  adapters.c.urirun.urirun_parse → adapters.c.urirun.parse_target
-  adapters.c.urirun.urirun_parse → adapters.c.urirun.parse_segments
+  adapters.c.urirun.copy_token → adapters.c.urirun.memcpy
+  adapters.c.urirun.memcpy → adapters.c.urirun.is_path_end
+  adapters.c.urirun.parse_target → adapters.c.urirun.copy_token
   adapters.python.urirun.exec.main → adapters.python.urirun.exec._resolve
   adapters.python.urirun.dispatch → adapters.python.urirun.parse_uri
   adapters.python.urirun.dispatch → adapters.python.urirun.build_invocation
@@ -347,3 +345,4 @@ EDGES:
   adapters.python.urirun.Connector.registry → adapters.python.urirun.runtime.v2.decorated_bindings
   adapters.python.urirun.Connector._live_bindings → adapters.python.urirun.runtime.v2.decorated_bindings
   adapters.python.urirun.Connector.manifest → adapters.python.urirun._example_payload
+  adapters.python.urirun.connector → adapters.java.Urirun.Urirun.Connector

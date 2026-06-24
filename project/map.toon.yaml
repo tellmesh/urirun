@@ -1,15 +1,15 @@
-# urirun | 157f 35825L | yaml:4,txt:3,shell:10,python:98,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:2,csharp:4,ruby:2 | 2026-06-24
-# generated in 0.04s
-# stats: 1564 func | 0 cls | 157 mod | CC̄=4.6 | critical:1 | cycles:0
+# urirun | 158f 35888L | yaml:4,txt:3,shell:10,json:13,python:99,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-24
+# generated in 0.03s
+# stats: 1574 func | 0 cls | 158 mod | CC̄=4.6 | critical:0 | cycles:0
 # alerts[5]: fan-out _archive_scanned_document=43; fan-out create_handler=40; fan-out _write_document_pdf=32; fan-out serve=30; fan-out _add_host_subparser=27
 # hotspots[5]: _archive_scanned_document fan=43; create_handler fan=40; _write_document_pdf fan=32; serve fan=30; _add_host_subparser fan=27
 # evolution: CC̄ 4.6→4.6 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[157]:
+M[158]:
   Makefile,134
   adapters/bash/example/hash-connector.sh,9
   adapters/bash/urirun.sh,17
-  adapters/c/urirun.c,66
+  adapters/c/urirun.h,13
   adapters/c/urirun_test.c,18
   adapters/conformance.py,167
   adapters/csharp/Program.cs,7
@@ -61,15 +61,16 @@ M[157]:
   adapters/python/urirun/host/document_sync.py,399
   adapters/python/urirun/host/domain_monitor.py,485
   adapters/python/urirun/host/fs_transfer.py,206
-  adapters/python/urirun/host/host_dashboard.py,9977
+  adapters/python/urirun/host/host_dashboard.py,9884
   adapters/python/urirun/host/host_db.py,540
   adapters/python/urirun/host/host_integrations.py,355
   adapters/python/urirun/host/object_registry.py,107
   adapters/python/urirun/host/planfile_adapter.py,279
-  adapters/python/urirun/host/scanner_bridge.py,318
+  adapters/python/urirun/host/scanner_bridge.py,460
   adapters/python/urirun/host/scheduler.py,133
   adapters/python/urirun/host/service_control.py,364
   adapters/python/urirun/host/task_planner.py,371
+  adapters/python/urirun/host/widgets.py,64
   adapters/python/urirun/host_dashboard.py,5
   adapters/python/urirun/host_db.py,5
   adapters/python/urirun/host_integrations.py,5
@@ -78,7 +79,7 @@ M[157]:
   adapters/python/urirun/node/_artifacts.py,110
   adapters/python/urirun/node/_util.py,37
   adapters/python/urirun/node/_version.py,74
-  adapters/python/urirun/node/client.py,531
+  adapters/python/urirun/node/client.py,534
   adapters/python/urirun/node/config.py,193
   adapters/python/urirun/node/flow.py,606
   adapters/python/urirun/node/formatting.py,78
@@ -164,11 +165,6 @@ M[157]:
   tree.sh,4
   v1/js/urirun-v1.js,343
 D:
-  adapters/python/urirun/node/client.py:
-    e: NodeClient,_get,_post
-    NodeClient: __init__(3),_auth(1),routes(0),get(1),concretize(2),run(6),run_async(3),cancel(1),status(1),deploy(6),schemes(0),_route_key(0),_has_route(1),_collect_scheme_specs(0),_narrow_specs_to_route(2),_load_module_source(0),_local_connector_deploy_payload(1),_ensure_via_host_deploy(3),_try_adopt_scheme(3),_ensure_via_discovery_install(5),_ensure_via_node_bindings(5),ensure_scheme(4),run_ensuring(3),request_capability(2),_read_folder_files(1),push_folder(3),value(0),resolve_refs(1),recent_log(1),_watch_query_params(2),watch(5),stream_run(3)  # Drive one urirun node: ``c = NodeClient("http://host:8765");...
-    _get(url;timeout;headers)
-    _post(url;body;headers;timeout;raw)
   adapters/python/urirun/__init__.py:
     e: Connector,parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,tag,policy,resolve_secret,action_space,result_data,result_degraded,run_steps,tool_binding,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command
     Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(2),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
@@ -1144,6 +1140,11 @@ Connector a...
     _roots_from_args(args)
     index_command(args)
     resolve_command(args)
+  adapters/python/urirun/node/client.py:
+    e: NodeClient,_get,_post
+    NodeClient: __init__(3),_auth(1),routes(0),get(1),concretize(2),run(6),run_async(3),cancel(1),status(1),deploy(6),schemes(0),_route_key(0),_has_route(1),_collect_scheme_specs(0),_narrow_specs_to_route(2),_load_module_source(0),_local_connector_deploy_payload(1),_ensure_via_host_deploy(3),_try_adopt_scheme(3),_rank_candidates_by_route(2),_ensure_via_discovery_install(5),_ensure_via_node_bindings(5),ensure_scheme(4),run_ensuring(3),request_capability(2),_read_folder_files(1),push_folder(3),value(0),resolve_refs(1),recent_log(1),_watch_query_params(2),watch(5),stream_run(3)  # Drive one urirun node: ``c = NodeClient("http://host:8765");...
+    _get(url;timeout;headers)
+    _post(url;body;headers;timeout;raw)
   adapters/python/urirun/host/object_registry.py:
     e: host_registry_routes,host_object,phone_scanner_contact,service_contacts,annotate_node_tokens
     host_registry_routes(actions)
@@ -1291,6 +1292,31 @@ Connector a...
     expandBinding()
     expandBindings()
     compileRegistry()
+  adapters/python/urirun/host/widgets.py:
+    e: query_value,select_service_view,scanner_stream_summary,service_widget_summary
+    query_value(query;name;default)
+    select_service_view(data)
+    scanner_stream_summary(title;status;stream)
+    service_widget_summary(view)
+  adapters/python/urirun/host/scanner_bridge.py:
+    e: ScannerBridgeDeps,crop_overlay_attachment,register_document_artifact,scanner_result_content,register_scanner_result,_add_log,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,scanner_status_from_log,latest_scanner_page_status,scanner_artifact_doc_meta,is_scanner_artifact,scanner_artifact_item,scanner_service_live_views
+    ScannerBridgeDeps:
+    crop_overlay_attachment(deps)
+    register_document_artifact(deps;db;project)
+    scanner_result_content(content_prefix;crop;document;ocr)
+    register_scanner_result(deps;project;db)
+    _add_log(deps;db;stream;event;detail)
+    scanner_session(deps;db;payload)
+    uri_event(deps;db;query)
+    page_action_enqueue(deps;db)
+    page_action_poll(target;limit)
+    page_action_result(deps;db;payload)
+    scanner_status_from_log(item)
+    latest_scanner_page_status(logs)
+    scanner_artifact_doc_meta(artifact)
+    is_scanner_artifact(kind;uri;meta)
+    scanner_artifact_item(artifact;kind;uri;path;display_path;doc;project)
+    scanner_service_live_views(scanner;service;recent_artifacts;camera_status)
   scripts/repin_connectors.py:
     e: find_root,pypi_has,repin_text,classify,_pypi_write_guard,_repin_one,main
     find_root(explicit)
@@ -1444,20 +1470,6 @@ Connector a...
     report()
     _print_table(modules)
     main(argv)
-  adapters/python/urirun/host/scanner_bridge.py:
-    e: ScannerBridgeDeps,crop_overlay_attachment,register_document_artifact,scanner_result_content,register_scanner_result,_add_log,scanner_session,_first,uri_event,page_action_enqueue,page_action_poll,page_action_result
-    ScannerBridgeDeps:
-    crop_overlay_attachment(deps)
-    register_document_artifact(deps;db;project)
-    scanner_result_content(content_prefix;crop;document;ocr)
-    register_scanner_result(deps;project;db)
-    _add_log(deps;db;stream;event;detail)
-    scanner_session(deps;db;payload)
-    _first(query;name;default)
-    uri_event(deps;db;query)
-    page_action_enqueue(deps;db)
-    page_action_poll(target;limit)
-    page_action_result(deps;db;payload)
   examples/matrix/verify.py:
     e: essential,main
     essential(doc)
@@ -1610,17 +1622,6 @@ Connector a...
     invocation()
     mod()
     fn()
-  adapters/c/urirun.c:
-    i: string.h,urirun.h
-    e: copy_token,memcpy,is_path_end,parse_target,parse_segments,urirun_parse,memset,parse_segments
-    copy_token()
-    memcpy()
-    is_path_end()
-    parse_target()
-    parse_segments()
-    urirun_parse()
-    memset()
-    parse_segments()
   adapters/python/urirun/host/host_integrations.py:
     e: planfile_task_bindings,_list_param,_ticket_id,_planfile_action,_planfile_project,_simulate_planfile,_read_planfile_action,_planfile_update,_planfile_dsl,_write_planfile_action,run_planfile_task,host_data_bindings,run_host_data,domain_monitor_bindings,run_domain_monitor
     planfile_task_bindings(target;project)
@@ -1813,6 +1814,10 @@ Connector a...
   adapters/rust/src/lib.rs:
     e: Connector
     Connector:
+  adapters/c/urirun.h:
+    i: stddef.h
+    e: urirun_parse
+    urirun_parse()
   adapters/python/urirun/runtime/cli.py:
     e: _add_connectors_subparser,_add_node_subparser,_add_host_task_subparser,_add_host_data_subparser,_add_host_monitor_subparser,_add_host_subparser,_build_parser
     _add_connectors_subparser(subparsers)
@@ -1831,6 +1836,7 @@ Connector a...
   Makefile:
   requirements.txt:
   tree.sh:
+  package.json:
   prefact.yaml:
   project.sh:
   security/mesh-probe/docker-compose.yml:
@@ -1858,6 +1864,7 @@ Connector a...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
+  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1907,6 +1914,4 @@ Connector a...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
-  package.json:
-  adapters/js/package.json:
   adapters/python/pyproject.toml:

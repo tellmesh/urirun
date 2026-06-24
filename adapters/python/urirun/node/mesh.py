@@ -979,6 +979,9 @@ def resolve_admin_token(explicit: str | None, config_token: str | None, generate
 _ENV_DENY = {"PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "PYTHONPATH", "PYTHONSTARTUP", "BASH_ENV", "IFS"}
 
 
+_PROTECTED_NODE_FILENAMES = frozenset({"authorized_keys", "admin-token"})
+
+
 def _write_pushed_code(code: dict, summary: dict) -> list[str]:
     """Write pushed handler files to the deploy dir, dropping any stale module + .pyc so
     the next import is the new code. Returns the module names to (re)import."""
@@ -988,6 +991,11 @@ def _write_pushed_code(code: dict, summary: dict) -> list[str]:
     pushed: list[str] = []
     for fname, source in code.items():
         safe = os.path.basename(str(fname))  # no path traversal
+        if safe in _PROTECTED_NODE_FILENAMES:
+            summary.setdefault("codeWarnings", []).append(
+                f"{safe}: refused — protected node state file"
+            )
+            continue
         path = ddir / safe
         path.write_text(str(source), encoding="utf-8")
         summary["code"].append(safe)
