@@ -423,6 +423,7 @@ def test_chat_ask_document_sync_error_includes_urifix_recovery(monkeypatch):
             "nodes": [],
             "targets": ["host", "service:phone-scanner"],
             "execute": True,
+            "autoRetry": False,
         },
         node_urls=["lenovo=http://laptop.local:8766"],
     )
@@ -432,11 +433,144 @@ def test_chat_ask_document_sync_error_includes_urifix_recovery(monkeypatch):
     assert result["decisionLoop"]["execution"]["status"] == "retryable"
     assert result["decisionLoop"]["observation"]["kind"] == "uri-step-failed"
     assert result["decisionLoop"]["nextIntent"]["id"] == "repair-uri-chain"
-    assert result["decisionLoop"]["nextIntent"]["automatic"] is True
+    assert result["decisionLoop"]["nextIntent"]["automatic"] is False
+    assert result["decisionLoop"]["nextIntent"]["policy"]["autoRetry"] is False
     assert result["decisionLoop"]["nextIntent"]["retry"]["payload"]["node_url"] == "http://laptop.local:8766"
     assert result["timeline"][0]["recoverable"] is True
     assert fake_db.logs[1]["detail"]["detail"]["decisionLoop"]["nextIntent"]["retry"]["uri"] == "document://host/archive/command/sync-to-node"
     assert fake_db.logs[1]["detail"]["detail"]["decisionLoop"]["nextIntent"]["uri"] == "urifix://host/chain/command/repair"
+
+
+def test_chat_ask_document_sync_auto_retries_urifix_node_url(monkeypatch):
+    fake_db = FakeHostDb()
+    calls = []
+
+    def fake_sync(project, db, config, payload, **kwargs):
+        calls.append({"payload": payload, "kwargs": kwargs})
+        if len(calls) == 1:
+            raise ValueError("node_url is required when the target node is not present in host config")
+        return {"ok": True, "copied": 3, "failed": 0, "node": payload["node"], "nodeUrl": payload["node_url"]}
+
+    def fake_urifix(prompt, request, result, **kwargs):
+        return {
+            "ok": True,
+            "repaired": True,
+            "patch": {"stepPayload": {"node": "lenovo", "node_url": "http://laptop.local:8766"}},
+            "retry": {
+                "uri": "document://host/archive/command/sync-to-node",
+                "mode": "execute",
+                "payload": {"node": "lenovo", "node_url": "http://laptop.local:8766", "dest_root": "~/Downloads/urirun-scans"},
+            },
+            "recovery": [{"id": "retry-with-node-url", "automatic": True}],
+        }
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
+    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {
+            "prompt": "wyślij dokumenty do lenovo",
+            "nodes": [],
+            "targets": ["host", "service:phone-scanner"],
+            "execute": True,
+        },
+        node_urls=["lenovo=http://laptop.local:8766"],
+    )
+
+    assert result["ok"] is True
+    assert result["recovered"] is True
+    assert len(calls) == 2
+    assert calls[0]["payload"] == {"node": "lenovo", "dest_root": "~/Downloads/urirun-scans"}
+    assert calls[1]["payload"]["node_url"] == "http://laptop.local:8766"
+    assert result["timeline"][0]["status"] == "failed"
+    assert result["timeline"][1]["id"] == "sync-documents-to-node.retry"
+    assert result["timeline"][1]["status"] == "done"
+    assert result["decisionLoop"]["execution"]["status"] == "done"
+    assert result["decisionLoop"]["observation"]["kind"] == "uri-flow-recovered"
+    assert result["decisionLoop"]["observation"]["initialError"]["type"] == "ValueError"
+    assert result["decisionLoop"]["nextIntent"] is None
+    assert fake_db.logs[1]["detail"]["content"] == "recovered: document sync URI step"
+    assert fake_db.logs[1]["detail"]["detail"]["decisionLoop"]["observation"]["kind"] == "uri-flow-recovered"
+
+
+def test_document_sync_urifix_retry_guard_rejects_unsafe_contracts():
+    good = {
+        "repaired": True,
+        "retry": {
+            "uri": "document://host/archive/command/sync-to-node",
+            "mode": "execute",
+            "payload": {"node": "office-node", "node_url": "http://node.local:8766"},
+        },
+    }
+
+    assert host_dashboard._document_sync_retry_payload_from_urifix(good, sync_node="office-node") == {
+        "node": "office-node",
+        "node_url": "http://node.local:8766",
+    }
+    assert host_dashboard._document_sync_retry_payload_from_urifix(
+        {**good, "retry": {**good["retry"], "uri": "shell://host/run/command/exec"}},
+        sync_node="office-node",
+    ) is None
+    assert host_dashboard._document_sync_retry_payload_from_urifix(
+        {**good, "retry": {**good["retry"], "payload": {"node": "other-node", "node_url": "http://node.local:8766"}}},
+        sync_node="office-node",
+    ) is None
+    assert host_dashboard._document_sync_retry_payload_from_urifix(
+        {**good, "retry": {**good["retry"], "payload": {"node": "office-node"}}},
+        sync_node="office-node",
+    ) is None
+
+
+def test_chat_ask_document_sync_retry_failure_does_not_loop(monkeypatch):
+    fake_db = FakeHostDb()
+
+    def fake_sync(project, db, config, payload, **kwargs):
+        if payload.get("node_url"):
+            raise TimeoutError("node did not accept file writes")
+        raise ValueError("node_url is required when the target node is not present in host config")
+
+    def fake_urifix(prompt, request, result, **kwargs):
+        return {
+            "ok": True,
+            "repaired": True,
+            "retry": {
+                "uri": "document://host/archive/command/sync-to-node",
+                "mode": "execute",
+                "payload": {"node": "lenovo", "node_url": "http://laptop.local:8766"},
+            },
+            "recovery": [{"id": "retry-with-node-url", "automatic": True}],
+        }
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
+    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {
+            "prompt": "wyślij dokumenty do lenovo",
+            "nodes": [],
+            "targets": ["host", "service:phone-scanner"],
+            "execute": True,
+        },
+        node_urls=["lenovo=http://laptop.local:8766"],
+    )
+
+    assert result["ok"] is False
+    assert result["timeline"][1]["id"] == "sync-documents-to-node.retry"
+    assert result["timeline"][1]["status"] == "failed"
+    assert result["decisionLoop"]["execution"]["status"] == "blocked"
+    assert result["decisionLoop"]["nextIntent"]["automatic"] is False
+    assert result["decisionLoop"]["nextIntent"]["policy"]["retryAttempted"] is True
+    assert result["decisionLoop"]["observation"]["error"]["type"] == "TimeoutError"
 
 
 def test_chat_ask_document_sync_decision_loop_blocks_without_node_url(monkeypatch):

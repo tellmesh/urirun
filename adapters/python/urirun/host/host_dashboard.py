@@ -830,7 +830,21 @@ INDEX_HTML = r"""<!doctype html>
         </article>
         <article class="panel view-block" data-section="nodes">
           <div class="panel-head"><h2>Nodes</h2><span class="subtle" id="nodeCount"></span></div>
-          <div class="panel-body"><div class="list" id="nodesList"></div></div>
+          <div class="panel-body">
+            <div class="list" id="nodesList"></div>
+            <details class="add-node-help" style="margin-top:10px">
+              <summary>➕ Jak dodać node (gdy nie ma go na liście)</summary>
+              <div class="stack" style="margin-top:8px">
+                <p class="subtle">Node to nazwa + URL usługi urirun (port węzła). Wpisz dane, a poniżej dostaniesz gotowy wpis do wklejenia — host i urifix wtedy rozwiążą ten node.</p>
+                <label class="stack"><span class="subtle">Nazwa node'a</span><input id="addNodeName" oninput="nodeAddSnippet()" placeholder="office-node"></label>
+                <label class="stack"><span class="subtle">URL node'a</span><input id="addNodeUrl" oninput="nodeAddSnippet()" placeholder="http://host-or-ip:8765"></label>
+                <div class="artifact-actions">
+                  <a id="addNodeHealth" href="#" target="_blank" rel="noreferrer">otwórz /health (sprawdź osiągalność)</a>
+                </div>
+                <pre id="addNodeSnippet" class="mono">— wpisz nazwę i URL powyżej —</pre>
+              </div>
+            </details>
+          </div>
         </article>
         <article class="panel view-block" data-section="nodes">
           <div class="panel-head"><h2>URI Processes</h2><span class="subtle" id="routeCount"></span></div>
@@ -1040,7 +1054,28 @@ INDEX_HTML = r"""<!doctype html>
         <div><strong>${node.name}</strong> <span class="pill ${node.reachable ? 'up' : 'down'}">${node.reachable ? 'up' : 'down'}</span></div>
         <div class="mono">${node.url}</div>
         <div class="subtle">${(node.routes || []).length} routes${node.error ? ` · ${node.error}` : ''}</div>
-      </div>`).join('') || empty('No nodes configured');
+      </div>`).join('') || empty('No nodes configured — use “➕ Jak dodać node” below to add one.');
+      // Surface the how-to-add panel automatically when nothing is configured, so a missing
+      // node (e.g. a sync target that failed with "node_url is required") is fixable in place.
+      const help = document.querySelector('.add-node-help');
+      if (help && nodes.length === 0) help.open = true;
+      nodeAddSnippet();
+    }
+
+    // Build the ready-to-paste config for adding a node by name + URL (host + urifix resolve it).
+    function nodeAddSnippet() {
+      const nameEl = $('addNodeName'); if (!nameEl) return;
+      const name = (nameEl.value || '').trim() || 'office-node';
+      const url = ($('addNodeUrl').value || '').trim().replace(/\/+$/, '') || 'http://HOST:PORT';
+      const health = $('addNodeHealth'); if (health) health.href = url + '/health';
+      const entry = {}; entry[name] = url;
+      $('addNodeSnippet').textContent =
+        '1) ~/.urirun/nodes.json  (czyta to urifix do auto-naprawy node_url):\n' +
+        JSON.stringify(entry, null, 2) + '\n\n' +
+        '2) zmienna srodowiskowa hosta:\n' +
+        'URIRUN_NODES="' + name + '=' + url + '"\n\n' +
+        '3) jednorazowo w wywolaniu URI (np. document://host/archive/command/sync-to-node):\n' +
+        'node_urls=["' + name + '=' + url + '"]';
     }
 
 	    function contactCard(contact) {
@@ -7341,14 +7376,16 @@ def _compact_chat_result(result: dict, payload: dict) -> dict:
     return compacted
 
 
+_DOCUMENT_SYNC_URI = "document://host/archive/command/sync-to-node"
+
+
 def _try_urifix_repair(prompt: str, request: dict, result: dict, *, node_urls: list[str] | None = None,
                        host_config: dict | None = None, known_nodes: list[str] | dict | None = None,
                        apply: bool = False, registry: Any = None) -> dict | None:
     """Diagnose (and, when apply=True + a registry are given, resolve) a failed URI chain via the
     urifix connector. `known_nodes` lets urifix resolve a missing node URL from the host's known
-    set; urifix also reads ~/.urirun/nodes.json on its own. apply is left False here so a recovery
-    that has side effects (e.g. a document transfer) stays an explicit, surfaced retry, not an
-    automatic one."""
+    set; urifix also reads ~/.urirun/nodes.json on its own. apply is left False here: callers that
+    want automatic recovery must validate the returned retry contract before doing side effects."""
     try:
         from urirun_connector_urifix.core import repair_chain  # type: ignore
     except Exception:  # noqa: BLE001 - urifix is optional.
@@ -7374,6 +7411,52 @@ def _try_urifix_repair(prompt: str, request: dict, result: dict, *, node_urls: l
     except Exception as exc:  # noqa: BLE001 - never mask the original URI failure.
         return {"ok": False, "error": str(exc)}
     return fixed if isinstance(fixed, dict) else None
+
+
+def _boolish(value: Any, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().casefold() not in {"", "0", "false", "no", "off"}
+
+
+def _document_sync_auto_retry_enabled(payload: dict) -> bool:
+    for key in ("autoRetry", "auto_retry", "autoRepair", "auto_repair"):
+        if key in payload:
+            return _boolish(payload.get(key), default=True)
+    return _truthy_env("URIRUN_DOCUMENT_SYNC_AUTO_RETRY", "1")
+
+
+def _document_sync_retry_payload_from_urifix(urifix: dict | None, *, sync_node: str) -> dict | None:
+    if not isinstance(urifix, dict):
+        return None
+    diagnosis = urifix.get("diagnosis")
+    if not isinstance(diagnosis, dict):
+        diagnosis = {}
+    automatic = bool(urifix.get("repaired") or diagnosis.get("canAutoRetry"))
+    automatic = automatic or any(
+        bool(item.get("automatic")) for item in (urifix.get("recovery") or []) if isinstance(item, dict)
+    )
+    if not automatic:
+        return None
+    retry = urifix.get("retry")
+    if not isinstance(retry, dict):
+        return None
+    if str(retry.get("uri") or "") != _DOCUMENT_SYNC_URI:
+        return None
+    if str(retry.get("mode") or "").casefold() != "execute":
+        return None
+    retry_payload = retry.get("payload")
+    if not isinstance(retry_payload, dict):
+        return None
+    node_url = str(retry_payload.get("node_url") or retry_payload.get("nodeUrl") or "").strip()
+    if not node_url:
+        return None
+    retry_node = str(retry_payload.get("node") or retry_payload.get("targetNode") or sync_node).strip()
+    if sync_node and retry_node and retry_node != sync_node:
+        return None
+    return dict(retry_payload)
 
 
 def _needs_screen_document_capture(prompt: str) -> bool:
@@ -7507,19 +7590,30 @@ def _selected_nodes_from_targets(selected_nodes: list[str], selected_targets: li
 def _decision_loop_for_document_sync(prompt: str, *, execute: bool, sync_node: str, selected_nodes: list[str],
                                      selected_targets: list[str], flow: dict, timeline: list[dict],
                                      error: dict | None = None, urifix: dict | None = None,
-                                     sync_result: dict | None = None) -> dict:
+                                     sync_result: dict | None = None, initial_error: dict | None = None,
+                                     recovered: bool = False, retry_attempted: bool = False,
+                                     auto_retry_enabled: bool = True) -> dict:
     recovery = (urifix or {}).get("recovery") or []
-    can_auto_retry = bool((urifix or {}).get("diagnosis", {}).get("canAutoRetry") or (urifix or {}).get("repaired"))
-    status = "done" if execute and not error else (("retryable" if can_auto_retry else "blocked") if error else "dry-run")
+    diagnosis = (urifix or {}).get("diagnosis") or {}
+    if not isinstance(diagnosis, dict):
+        diagnosis = {}
+    can_auto_retry = bool(diagnosis.get("canAutoRetry") or (urifix or {}).get("repaired"))
+    retry_available = can_auto_retry and not retry_attempted
+    can_auto_execute_retry = retry_available and auto_retry_enabled
+    status = "done" if execute and not error else (("retryable" if retry_available else "blocked") if error else "dry-run")
     next_intent = None
     if error:
         next_intent = {
             "id": "repair-uri-chain",
             "uri": "urifix://host/chain/command/repair",
-            "automatic": can_auto_retry,
-            "status": "ready" if can_auto_retry else "needs-input",
+            "automatic": can_auto_execute_retry,
+            "status": "ready" if retry_available else "needs-input",
             "actions": recovery,
             "retry": (urifix or {}).get("retry"),
+            "policy": {
+                "autoRetry": auto_retry_enabled,
+                "retryAttempted": retry_attempted,
+            },
         }
     elif not execute:
         next_intent = {
@@ -7546,9 +7640,13 @@ def _decision_loop_for_document_sync(prompt: str, *, execute: bool, sync_node: s
             "results": {"sync-documents-to-node": sync_result} if sync_result else {},
         },
         "observation": {
-            "kind": "uri-step-failed" if error else ("dry-run" if not execute else "uri-flow-complete"),
-            "failedStep": "sync-documents-to-node" if error else None,
+            "kind": (
+                "uri-step-failed" if error
+                else ("dry-run" if not execute else ("uri-flow-recovered" if recovered else "uri-flow-complete"))
+            ),
+            "failedStep": "sync-documents-to-node" if error or recovered else None,
             "error": error,
+            **({"initialError": initial_error, "recoveredBy": "urifix://host/chain/command/repair"} if recovered else {}),
         },
         "nextIntent": next_intent,
     }
@@ -7764,6 +7862,9 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         generator = {"provider": "host-dashboard", "intent": "document-sync", "fallback": True}
         sync_result: dict | None = None
         error: dict | None = None
+        initial_error: dict | None = None
+        recovered = False
+        retry_attempted = False
         if execute:
             try:
                 sync_result = sync_documents_to_node(
@@ -7779,12 +7880,12 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 error = {
                     "type": type(exc).__name__,
                     "message": str(exc),
-                    "uri": "document://host/archive/command/sync-to-node",
+                    "uri": _DOCUMENT_SYNC_URI,
                 }
         ok = bool((sync_result or {}).get("ok")) if execute and not error else not bool(error)
         timeline = [{
             "id": "sync-documents-to-node",
-            "uri": "document://host/archive/command/sync-to-node",
+            "uri": _DOCUMENT_SYNC_URI,
             "target": sync_node,
             "ok": ok,
             "status": "done" if execute and ok else ("failed" if error else "dry-run"),
@@ -7802,6 +7903,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             "error": error,
         }
         if error:
+            initial_error = dict(error)
             host_config_snapshot = None
             try:
                 host_config_snapshot = _host_config(config, node_urls)
@@ -7826,6 +7928,61 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                 # the result/timeline/chat detail (that was the 4x-duplication).
                 result["urifix"] = urifix
                 timeline[0]["recoverable"] = bool(urifix.get("recovery"))
+                retry_payload = (
+                    _document_sync_retry_payload_from_urifix(urifix, sync_node=sync_node)
+                    if execute and _document_sync_auto_retry_enabled(payload) else None
+                )
+                if retry_payload:
+                    retry_attempted = True
+                    retry_step = {
+                        "id": "sync-documents-to-node.retry",
+                        "uri": _DOCUMENT_SYNC_URI,
+                        "target": retry_payload.get("node") or sync_node,
+                        "ok": False,
+                        "status": "failed",
+                        "recoveredFrom": "sync-documents-to-node",
+                        "generatedBy": "urifix://host/chain/command/repair",
+                    }
+                    try:
+                        retry_result = sync_documents_to_node(
+                            project,
+                            db,
+                            config,
+                            retry_payload,
+                            node_urls=node_urls,
+                            token=token,
+                            identity=identity,
+                        )
+                        retry_ok = bool(retry_result.get("ok"))
+                        sync_result = retry_result
+                        retry_step["ok"] = retry_ok
+                        retry_step["status"] = "done" if retry_ok else "failed"
+                        if retry_ok:
+                            recovered = True
+                            error = None
+                            result["initialError"] = initial_error
+                            result["recovered"] = True
+                            result["recoveredBy"] = "urifix://host/chain/command/repair"
+                        else:
+                            error = {
+                                "type": "RecoveryError",
+                                "message": "document sync retry returned ok=false",
+                                "uri": _DOCUMENT_SYNC_URI,
+                                "initialError": initial_error,
+                            }
+                    except Exception as exc:  # noqa: BLE001 - show the retry failure without looping.
+                        error = {
+                            "type": type(exc).__name__,
+                            "message": str(exc),
+                            "uri": _DOCUMENT_SYNC_URI,
+                            "initialError": initial_error,
+                        }
+                    timeline.append(retry_step)
+                    ok = bool((sync_result or {}).get("ok")) if execute and not error else False
+                    result["ok"] = ok
+                    result["timeline"] = timeline
+                    result["results"] = {"sync-documents-to-node": sync_result} if sync_result else {}
+                    result["error"] = error
         result["decisionLoop"] = _decision_loop_for_document_sync(
             prompt,
             execute=execute,
@@ -7837,8 +7994,22 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
             error=error,
             urifix=result.get("urifix"),
             sync_result=sync_result,
+            initial_error=initial_error,
+            recovered=recovered,
+            retry_attempted=retry_attempted,
+            auto_retry_enabled=_document_sync_auto_retry_enabled(payload),
         )
-        if not execute or error:
+        if recovered:
+            _add_chat_message(db, _chat_message(
+                "system",
+                "recovered: document sync URI step",
+                detail={
+                    "schema": "urirun.decision-loop.v1",
+                    "ok": ok,
+                    "decisionLoop": result.get("decisionLoop"),
+                },
+            ))
+        elif not execute or error:
             _add_chat_message(db, _chat_message(
                 "system",
                 ("failed: document sync URI step" if error else "dry-run: document sync URI step"),

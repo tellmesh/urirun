@@ -198,6 +198,26 @@ If no node URL is known, `urifix://` returns a human action such as
 `provide-node-url`. This prevents the system from inventing a target and causing
 uncontrolled side effects.
 
+For document sync, the host can apply that retry immediately when all of these
+conditions are true:
+
+- the original chat request used `execute: true`,
+- auto retry is enabled (`URIRUN_DOCUMENT_SYNC_AUTO_RETRY=1`, default, or
+  request `autoRetry: true`),
+- the retry URI is still `document://host/archive/command/sync-to-node`,
+- the retry mode is `execute`,
+- the retry payload supplies a concrete `node_url`,
+- the retry does not switch to a different node.
+
+This does not require a different generated JSON flow. The first flow still
+captures the user's intent; `urifix://` supplies the next safe `retry` contract.
+When the retry succeeds, the returned `decisionLoop.execution.status` is `done`,
+the observation kind is `uri-flow-recovered`, and the timeline contains both the
+failed first step and `sync-documents-to-node.retry`. Set `autoRetry: false` in
+the chat payload, or `URIRUN_DOCUMENT_SYNC_AUTO_RETRY=0`, to keep the older
+manual `retryable` behavior. In that manual mode, `decisionLoop.nextIntent.retry`
+is still present, but `decisionLoop.nextIntent.automatic` is `false`.
+
 Current recovery classes include:
 
 - missing node URL,

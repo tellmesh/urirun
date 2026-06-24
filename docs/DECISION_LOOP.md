@@ -92,9 +92,13 @@ and actually used to build the flow.
 | `retryable` | Flow failed but can be retried automatically with a patch. |
 | `failed` | Flow failed and no known recovery exists. |
 
-The current dashboard emits `done`, `dry-run` and `blocked` for deterministic
-document sync. `retryable` should be used when recovery can be applied without
-user input.
+The dashboard emits `retryable` when recovery can be applied without user input
+but the caller or policy has not applied it yet. Deterministic document sync can
+also auto-apply a safe `urifix://` retry when the original request used
+`execute: true` and the retry only adds a known `node_url` for the same
+`document://host/archive/command/sync-to-node` step. In that case the final
+status is `done`, the timeline contains both the failed first attempt and the
+retry step, and the observation kind is `uri-flow-recovered`.
 
 ## Relation To Other JSON Blocks
 
