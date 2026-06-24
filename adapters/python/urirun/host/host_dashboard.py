@@ -3923,6 +3923,81 @@ def _cleanup_duplicate_scan_files(paths: list) -> list[str]:
     return removed
 
 
+_LAST_STAGING_PRUNE = 0.0
+
+
+def _prune_scanner_staging(*, min_interval: float = 60.0) -> int:
+    """Drop stale candidate frames from the staging dir, keeping a safety window.
+
+    The autonomous/best-frame scanner stages ~6 frames per capture and archives
+    only the chosen one, so the staging dir grows unboundedly. This prunes
+    orphaned frames, but NEVER touches:
+
+    - files of an archived document (referenced by the index),
+    - files of an active, not-yet-finished best series,
+    - any file younger than ``URIRUN_SCANNER_KEEP_RECENT`` seconds (default 90).
+
+    The recent-file window matters during scanning: a frame may still be needed
+    if image manipulation/capture errors and the user retries within the minute.
+    Throttled to once per ``min_interval`` seconds; best-effort, never raises.
+    """
+    global _LAST_STAGING_PRUNE
+    now = time.time()
+    if now - _LAST_STAGING_PRUNE < min_interval:
+        return 0
+    _LAST_STAGING_PRUNE = now
+    keep_recent = float(os.environ.get("URIRUN_SCANNER_KEEP_RECENT", "90"))
+    if keep_recent <= 0:
+        return 0
+    try:
+        staging = _scanner_staging_dir()
+    except Exception:  # noqa: BLE001
+        return 0
+    if not staging.is_dir():
+        return 0
+
+    keep: set[str] = set()
+    try:
+        for doc in _load_document_index().get("documents", []):
+            if isinstance(doc, dict):
+                for key in ("originalPath", "cropPath"):
+                    if doc.get(key):
+                        keep.add(str(Path(str(doc[key])).expanduser().resolve()))
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        with _SCANNER_BEST_LOCK:
+            sessions = list(_SCANNER_BEST_SESSIONS.values())
+        for session in sessions:
+            for cand in (session.get("candidates") or []):
+                if isinstance(cand, dict):
+                    for key in ("originalPath", "displayPath"):
+                        if cand.get(key):
+                            keep.add(str(Path(str(cand[key])).expanduser().resolve()))
+    except Exception:  # noqa: BLE001
+        pass
+
+    cutoff = now - keep_recent
+    removed = 0
+    try:
+        entries = list(staging.iterdir())
+    except OSError:
+        return 0
+    for entry in entries:
+        try:
+            if not entry.is_file():
+                continue
+            if str(entry.resolve()) in keep:
+                continue
+            if entry.stat().st_mtime > cutoff:  # safety window for in-progress scans
+                continue
+            entry.unlink()
+            removed += 1
+        except OSError:
+            continue
+    return removed
+
+
 # --- Robust "same document" detection -----------------------------------------------
 # The document identity brain lives in docid.dedup. The dashboard aliases it here
 # so scanner/archive code does not duplicate token extraction, perceptual hashes
@@ -4993,6 +5068,7 @@ def _register_scanner_result(
 
 
 def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
+    _prune_scanner_staging()
     mode = str(payload.get("mode") or "").lower()
     archive = not (payload.get("archive") is False or mode in {"candidate", "best-candidate", "analyze", "analysis"})
     raw_image = str(payload.get("image") or "")
@@ -5124,6 +5200,7 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
 
 
 def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
+    _prune_scanner_staging()
     series_id = str(payload.get("seriesId") or "").strip()
     if not series_id:
         raise ValueError("seriesId is required")

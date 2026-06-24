@@ -1625,3 +1625,59 @@ def test_scanner_capture_archives_when_quality_passes(monkeypatch, tmp_path):
     assert result["ok"] is True
     assert result.get("rejected") is not True
     assert len(archived) == 1
+
+
+def test_prune_scanner_staging_keeps_recent_referenced_and_active(monkeypatch, tmp_path):
+    """Prune removes stale orphan frames but never recent / referenced / in-progress ones."""
+    import os, time
+
+    scans = tmp_path / "scans"
+    scans.mkdir()
+    docroot = tmp_path / "documents"
+    docroot.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    monkeypatch.setenv("URIRUN_DOCUMENT_DIR", str(docroot))
+    monkeypatch.setenv("URIRUN_DOCUMENT_INDEX", str(docroot / "index.json"))
+    monkeypatch.setenv("URIRUN_SCANNER_KEEP_RECENT", "30")
+
+    old = time.time() - 3600
+    def mk(name, age_old=True):
+        p = scans / name
+        p.write_bytes(b"x")
+        if age_old:
+            os.utime(p, (old, old))
+        return p
+
+    stale = mk("20260624T000000Z-phone-scan-stale.jpg")          # old + orphan -> delete
+    recent = mk("20260624T000001Z-phone-scan-recent.jpg", age_old=False)  # young -> keep
+    referenced = mk("20260624T000002Z-phone-scan-ref.jpg")        # old but archived -> keep
+    active = mk("20260624T000003Z-phone-scan-active.jpg")         # old but in-progress series -> keep
+
+    # archived document references one file
+    (docroot / "index.json").write_text(json.dumps({"documents": [
+        {"docId": "DOC-1", "originalPath": str(referenced), "cropPath": ""}
+    ]}), encoding="utf-8")
+    # an active (not-yet-finished) best series holds another
+    host_dashboard._SCANNER_BEST_SESSIONS["series-x"] = {
+        "candidates": [{"originalPath": str(active), "displayPath": ""}]
+    }
+    monkeypatch.setattr(host_dashboard, "_LAST_STAGING_PRUNE", 0.0)
+    try:
+        removed = host_dashboard._prune_scanner_staging()
+    finally:
+        host_dashboard._SCANNER_BEST_SESSIONS.pop("series-x", None)
+
+    assert removed == 1
+    assert not stale.exists()
+    assert recent.is_file() and referenced.is_file() and active.is_file()
+
+
+def test_prune_scanner_staging_throttles(monkeypatch, tmp_path):
+    scans = tmp_path / "scans"; scans.mkdir()
+    monkeypatch.setenv("URIRUN_SCANNER_DIR", str(scans))
+    monkeypatch.setenv("URIRUN_SCANNER_KEEP_RECENT", "1")
+    import os, time
+    p = scans / "old.jpg"; p.write_bytes(b"x"); os.utime(p, (time.time() - 999, time.time() - 999))
+    monkeypatch.setattr(host_dashboard, "_LAST_STAGING_PRUNE", time.time())  # just ran
+    assert host_dashboard._prune_scanner_staging(min_interval=60.0) == 0
+    assert p.is_file()  # throttled, not touched
