@@ -290,6 +290,74 @@ def test_chat_ask_derives_nodes_from_node_targets(monkeypatch):
     assert fake_db.logs[0]["detail"]["detail"]["selectedNodes"] == ["laptop"]
 
 
+def test_chat_ask_plans_document_sync_without_llm(monkeypatch):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {
+            "prompt": "wyślij wszystkie foldery z artifacts z /home/tom/.urirun/documents/* do lenovo laptop do folderu downloads usera",
+            "nodes": [],
+            "targets": ["host", "service:phone-scanner"],
+            "execute": False,
+        },
+    )
+
+    assert result["ok"] is True
+    assert result["execute"] is False
+    assert result["selectedNodes"] == ["lenovo"]
+    assert "node:lenovo" in result["selectedTargets"]
+    assert result["generator"] == {"provider": "host-dashboard", "intent": "document-sync", "fallback": True}
+    assert result["flow"]["steps"] == [{
+        "id": "sync-documents-to-node",
+        "uri": "document://host/archive/command/sync-to-node",
+        "payload": {"node": "lenovo", "dest_root": "~/Downloads/urirun-scans"},
+        "depends_on": [],
+    }]
+    assert result["timeline"][0]["status"] == "dry-run"
+    assert fake_db.logs[0]["detail"]["role"] == "user"
+    assert fake_db.logs[1]["detail"]["content"] == "dry-run: document sync URI step"
+    assert fake_db.logs[2]["detail"]["generator"]["intent"] == "document-sync"
+
+
+def test_chat_ask_executes_document_sync_without_llm(monkeypatch):
+    fake_db = FakeHostDb()
+    calls = []
+
+    def fake_sync(project, db, config, payload, **kwargs):
+        calls.append({"project": project, "db": db, "config": config, "payload": payload, "kwargs": kwargs})
+        return {"ok": True, "copied": 2, "failed": 0, "node": payload["node"]}
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
+
+    result = host_dashboard.chat_ask(
+        ".",
+        ":memory:",
+        None,
+        {
+            "prompt": "skopiuj dokumenty pdf na laptop",
+            "nodes": [],
+            "targets": ["host", "node:laptop"],
+            "execute": True,
+        },
+        node_urls=["laptop=http://laptop.local:8766"],
+    )
+
+    assert result["ok"] is True
+    assert result["execute"] is True
+    assert result["selectedNodes"] == ["laptop"]
+    assert result["results"]["sync-documents-to-node"]["copied"] == 2
+    assert calls[0]["payload"] == {"node": "laptop", "dest_root": "~/Downloads/urirun-scans"}
+    assert calls[0]["kwargs"]["node_urls"] == ["laptop=http://laptop.local:8766"]
+    assert fake_db.logs[0]["detail"]["role"] == "user"
+    assert fake_db.logs[1]["event"] == "ask"
+    assert fake_db.logs[1]["detail"]["generator"]["intent"] == "document-sync"
+
+
 def test_chat_ask_execute_and_transient_node_urls(monkeypatch):
     fake_mesh = FakeMesh()
     fake_db = FakeHostDb()

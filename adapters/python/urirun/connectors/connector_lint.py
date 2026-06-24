@@ -45,6 +45,18 @@ _SECRET_ENV_EXCLUDE = re.compile(r"(PUBLIC[_-]?KEY|KEY[_-]?ID|KEYWORD)", re.IGNO
 # actually binds to, the manifest is lying about how the route executes.
 KIND_TO_ADAPTER = {"command": "argv-template", "shell": "shell-template", "handler": "local-function"}
 
+# Vendored / generated trees that aren't the connector's own source — skipped so the lint
+# stays fast and correct on a real checkout (a local .venv holds thousands of .py files).
+_SKIP_DIRS = {"__pycache__", ".venv", "venv", "env", ".git", "node_modules",
+              "build", "dist", "site-packages", ".tox", ".mypy_cache", ".pytest_cache"}
+
+
+def _connector_py_files(root: Path) -> list[Path]:
+    return [
+        p for p in root.rglob("*.py")
+        if not (_SKIP_DIRS & set(p.parts)) and not any(part.endswith(".egg-info") for part in p.parts)
+    ]
+
 
 def _connector_call_target(call: ast.Call) -> tuple[str | None, str]:
     """Read the (scheme, target) keyword pair from a ``connector(...)`` call."""
@@ -280,18 +292,19 @@ def _scan_secret_env_reads(py_files: list[Path]) -> list[dict]:
 
 
 def _uses_resolve_secret(py_files: list[Path]) -> bool:
-    """True if any module references ``resolve_secret`` (the connector routes credentials
-    through the secrets layer, so a secret-env read is likely a deliberate fallback)."""
+    """True if the connector routes credentials through the secrets layer at all — either the
+    ``resolve_secret`` function (local-function connectors) OR a declarative reference
+    (``{getv:..}`` / ``{secret:..}`` placeholder, or a bare ``getv://`` / ``secret://`` URI)
+    consumed by the ``fetch`` adapter, as ksef does. A secret-env read alongside either is a
+    deliberate fallback/CLI convenience, not a layer bypass."""
     for path in py_files:
         try:
-            tree = ast.parse(path.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError):
+            text = path.read_text(encoding="utf-8")
+        except OSError:
             continue
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Attribute) and node.attr == "resolve_secret":
-                return True
-            if isinstance(node, ast.Name) and node.id == "resolve_secret":
-                return True
+        if "resolve_secret" in text or "{getv:" in text or "{secret:" in text \
+                or "getv://" in text or "secret://" in text:
+            return True
     return False
 
 
@@ -299,7 +312,7 @@ def lint_connector(pkg_dir: str | Path) -> dict:
     """Analyse a connector package directory and return a structured lint report."""
     root = Path(pkg_dir)
     manifests = list(root.rglob("connector.manifest.json"))
-    py_files = [p for p in root.rglob("*.py") if "__pycache__" not in p.parts]
+    py_files = _connector_py_files(root)
 
     objs, code_routes = _scan_code_routes(py_files)
     manifest, manifest_routes = _load_manifest_routes(manifests)
@@ -354,7 +367,7 @@ def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
     if not manifests:
         return {"ok": False, "error": "no connector.manifest.json under " + str(root)}
     mpath = manifests[0]
-    py_files = [p for p in root.rglob("*.py") if "__pycache__" not in p.parts]
+    py_files = _connector_py_files(root)
     _objs, code_routes = _scan_code_routes(py_files)
     if not code_routes:
         return {"ok": False, "error": "no @decorator routes found (declarative or non-Python connector)",

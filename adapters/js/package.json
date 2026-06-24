@@ -1,6 +1,6 @@
 {
   "name": "urirun-js",
-  "version": "0.4.101",
+  "version": "0.4.102",
   "type": "module",
   "main": "index.js",
   "exports": {

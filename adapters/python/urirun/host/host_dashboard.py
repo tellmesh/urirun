@@ -7151,6 +7151,38 @@ def _needs_screen_document_capture(prompt: str) -> bool:
     return wants_screen and wants_document
 
 
+def _is_document_sync_prompt(prompt: str) -> bool:
+    text_value = prompt.casefold()
+    wants_transfer = any(word in text_value for word in (
+        "wyślij", "wyslij", "prześlij", "przeslij", "skopiuj", "kopiuj",
+        "przenieś", "przenies", "sync", "synchroniz",
+    ))
+    wants_documents = any(word in text_value for word in (
+        "artifact", "artefakt", "documents", "dokument", "pdf",
+        "faktur", "rachunek", "paragon", "scan", "skan",
+    ))
+    wants_node = any(word in text_value for word in ("node", "laptop", "lenovo"))
+    return wants_transfer and wants_documents and wants_node
+
+
+def _document_sync_node_from_prompt(prompt: str, selected_nodes: list[str]) -> str:
+    if selected_nodes:
+        return selected_nodes[0]
+    text_value = prompt.casefold()
+    if "lenovo" in text_value:
+        return "lenovo"
+    if "laptop" in text_value:
+        return "laptop"
+    return _document_sync_default_node()
+
+
+def _document_sync_dest_from_prompt(prompt: str) -> str:
+    text_value = prompt.casefold()
+    if "download" in text_value or "pobrane" in text_value:
+        return os.environ.get("URIRUN_DOCUMENT_SYNC_DEST", "~/Downloads/urirun-scans")
+    return _document_sync_default_dest_root()
+
+
 def _route_in_selected_targets(route: dict, selected_nodes: list[str], selected_targets: list[str]) -> bool:
     if not selected_nodes and not selected_targets:
         return True
@@ -7381,6 +7413,103 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
                     "selectedTargets": selected_targets,
                     "generator": result.get("generator"),
                     "timeline": result.get("timeline") or [],
+                },
+            )
+        except Exception:
+            pass
+        return result
+    if _is_document_sync_prompt(prompt):
+        sync_node = _document_sync_node_from_prompt(prompt, selected_nodes)
+        sync_selected_nodes = _selected_nodes_from_targets([*selected_nodes, sync_node], selected_targets)
+        sync_selected_targets = list(selected_targets)
+        node_target = f"node:{sync_node}"
+        if node_target not in sync_selected_targets:
+            sync_selected_targets.append(node_target)
+        sync_payload = {
+            "node": sync_node,
+            "dest_root": _document_sync_dest_from_prompt(prompt),
+        }
+        step = {
+            "id": "sync-documents-to-node",
+            "uri": "document://host/archive/command/sync-to-node",
+            "payload": sync_payload,
+            "depends_on": [],
+        }
+        flow = {
+            "task": {"id": "document-sync-to-node", "title": "Copy archived document PDFs to URI node"},
+            "steps": [step],
+        }
+        generator = {"provider": "host-dashboard", "intent": "document-sync", "fallback": True}
+        sync_result: dict | None = None
+        error: dict | None = None
+        if execute:
+            try:
+                sync_result = sync_documents_to_node(
+                    project,
+                    db,
+                    config,
+                    sync_payload,
+                    node_urls=node_urls,
+                    token=token,
+                    identity=identity,
+                )
+            except Exception as exc:  # noqa: BLE001 - report the URI action failure to chat.
+                error = {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                    "uri": "document://host/archive/command/sync-to-node",
+                }
+        ok = bool((sync_result or {}).get("ok")) if execute and not error else not bool(error)
+        timeline = [{
+            "id": "sync-documents-to-node",
+            "uri": "document://host/archive/command/sync-to-node",
+            "target": sync_node,
+            "ok": ok,
+            "status": "done" if execute and ok else ("failed" if error else "dry-run"),
+        }]
+        result = {
+            "ok": ok,
+            "prompt": prompt,
+            "execute": execute,
+            "selectedNodes": sync_selected_nodes,
+            "selectedTargets": sync_selected_targets,
+            "generator": generator,
+            "flow": flow,
+            "timeline": timeline,
+            "results": {"sync-documents-to-node": sync_result} if sync_result else {},
+            "error": error,
+        }
+        if not execute or error:
+            _add_chat_message(db, _chat_message(
+                "system",
+                ("failed: document sync URI step" if error else "dry-run: document sync URI step"),
+                detail={
+                    "prompt": prompt,
+                    "execute": execute,
+                    "ok": ok,
+                    "selectedNodes": sync_selected_nodes,
+                    "selectedTargets": sync_selected_targets,
+                    "generator": generator,
+                    "flow": flow,
+                    "timeline": timeline,
+                    "results": result.get("results") or {},
+                    "error": error,
+                },
+            ))
+        try:
+            _host_db().add_log(
+                db,
+                "chat",
+                "ask",
+                {
+                    "prompt": prompt,
+                    "execute": execute,
+                    "ok": ok,
+                    "selectedNodes": sync_selected_nodes,
+                    "selectedTargets": sync_selected_targets,
+                    "generator": generator,
+                    "timeline": timeline,
+                    "error": error,
                 },
             )
         except Exception:
