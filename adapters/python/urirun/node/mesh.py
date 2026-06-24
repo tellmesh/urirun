@@ -1635,22 +1635,55 @@ def _warn_unauthenticated_node(name: str, host: str, port: int, execute: bool, r
         sys.stderr.flush()
 
 
+# The enrollment PIN is valid only this long, then it rotates and a fresh one is printed.
+# Short-lived so a leaked PIN cannot enroll a key indefinitely (key-auth, not /run, is gated).
+ENROLL_TOKEN_TTL = 600  # seconds (10 min)
+
+
+def _start_enroll_token_rotation(ctx: "NodeContext", public_url: str, *,
+                                 interval: int = ENROLL_TOKEN_TTL,
+                                 stop: "threading.Event | None" = None) -> "threading.Event":
+    """Rotate the in-memory enrollment PIN every ``interval`` seconds and reprint it to stdout.
+
+    Validation reads ``ctx.enroll_token`` live, so reassigning it instantly invalidates the
+    previous PIN. Runs on a daemon thread (dies with the process); returns a ``stop`` Event so
+    a caller/test can halt it. ``stop.wait(interval)`` is an interruptible sleep.
+    """
+    stop = stop or threading.Event()
+
+    def _rotate() -> None:
+        while not stop.wait(interval):  # waits `interval`; True only when stopped
+            new = keyauth.new_enroll_token()
+            ctx.enroll_token = new  # old PIN stops working immediately
+            print(f"\033[1;31mTOKEN: {new}\033[0m  (rotacja · poprzedni wygasł · ważny {interval // 60} min)"
+                  f"  →  uri-copy-id {public_url} --enroll-token {new}", flush=True)
+
+    threading.Thread(target=_rotate, name="urirun-enroll-rotate", daemon=True).start()
+    return stop
+
+
 def _announce_node_started(name: str, host: str, port: int, state: dict, execute: bool, *,
                            deploy_enabled: bool, key_auth: bool,
                            enroll_token: str | None, public_url: str) -> None:
     """Emit the human startup banner (version, update hint, enroll PIN) and the machine
     ``urirun.node.started`` event."""
     vstatus = version_status()  # cached PyPI check; best-effort
-    sys.stderr.write(f"[urirun] {version_line()} starting node '{name}' on {host}:{port}\n")
+    # Line 1: version. Line 2: the short (≤7-char) enrollment TOKEN — or how to get the
+    # credential when there is no rotating PIN. Both on stdout so the token is captured there.
+    print(f"[urirun] {version_line()} · node '{name}' · {public_url}", flush=True)
+    if enroll_token:
+        # Bold red, isolated, so it stands out in the console scrollback.
+        print(f"\033[1;31mTOKEN: {enroll_token}\033[0m  (≤7 znaków · ważny {ENROLL_TOKEN_TTL // 60} min, "
+              f"potem rotacja i nowy TOKEN tutaj)  →  uri-copy-id {public_url} --enroll-token {enroll_token}",
+              flush=True)
+    else:
+        print("[urirun] TOKEN: " + ("admin token w ~/.urirun-node/admin-token (odczytaj: cat ~/.urirun-node/admin-token)"
+                                    if deploy_enabled else "brak auth — uruchom z --key-auth (PIN) lub --admin-token"),
+              flush=True)
     if vstatus["status"] == "update-available":
         sys.stderr.write(f"[urirun] a newer version is available: {vstatus['latest']} "
                          f"(pip install -U 'urirun[keyauth]')\n")
-    if enroll_token:
-        # red, bold, and isolated on its own line so it stands out in the console scrollback.
-        sys.stderr.write(f"\033[1;31mTOKEN: {enroll_token}\033[0m"
-                         f"  — quote this to authorize enrollment: uri-copy-id {public_url} "
-                         f"--enroll-token {enroll_token}\n")
-    sys.stderr.flush()
+        sys.stderr.flush()
     print(json.dumps({"event": "urirun.node.started", "name": name, "host": host, "port": port,
                       "execute": execute, "routes": len(state["routes"]),
                       "deploy": deploy_enabled, "keyAuth": key_auth,
@@ -1705,6 +1738,8 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
     _announce_node_started(name, host, port, state, execute,
                            deploy_enabled=deploy_enabled, key_auth=key_auth,
                            enroll_token=enroll_token, public_url=public_url)
+    if enroll_token:  # PIN valid 10 min, then auto-rotate + reprint a fresh one
+        _start_enroll_token_rotation(ctx, public_url)
     return server
 
 

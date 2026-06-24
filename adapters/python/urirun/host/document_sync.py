@@ -107,6 +107,24 @@ class _SyncParams:
     connector_roots: Any
 
 
+def _resolve_node_params(
+    payload: dict,
+    config: str | None,
+    deps: DocumentSyncDeps,
+    node_urls: list[str] | None,
+) -> tuple[str, str]:
+    """Resolve and validate the (node, node_url) pair from payload + host config."""
+    node = str(payload.get("node") or payload.get("targetNode") or deps.default_node()).strip()
+    if not node:
+        raise ValueError("node is required: pass payload.node, select a node target, or set URIRUN_DOCUMENT_SYNC_NODE")
+    node_url = str(payload.get("node_url") or payload.get("nodeUrl") or "").strip()
+    if not node_url:
+        node_url = deps.node_url_from_config(config, node_urls, node) or ""
+    if not node_url:
+        raise ValueError("node_url is required when the target node is not present in host config")
+    return node, node_url
+
+
 def _parse_sync_params(
     payload: dict,
     config: str | None,
@@ -116,15 +134,15 @@ def _parse_sync_params(
     source_root = Path(
         payload.get("source_root") or payload.get("sourceRoot") or deps.document_archive_root()
     ).expanduser().resolve()
-    node = str(payload.get("node") or payload.get("targetNode") or deps.default_node()).strip()
-    if not node:
-        raise ValueError("node is required: pass payload.node, select a node target, or set URIRUN_DOCUMENT_SYNC_NODE")
-    node_url = str(payload.get("node_url") or payload.get("nodeUrl") or "").strip()
-    if not node_url:
-        node_url = deps.node_url_from_config(config, node_urls, node) or ""
-    if not node_url:
-        raise ValueError("node_url is required when the target node is not present in host config")
+    node, node_url = _resolve_node_params(payload, config, deps, node_urls)
     fs_target = str(payload.get("fs_target") or payload.get("fsTarget") or "host").strip() or "host"
+    return _build_sync_params(payload, deps, source_root=source_root, node=node,
+                              node_url=node_url, fs_target=fs_target)
+
+
+def _build_sync_params(payload: dict, deps: DocumentSyncDeps, *, source_root: Path, node: str,
+                       node_url: str, fs_target: str) -> _SyncParams:
+    """Assemble the _SyncParams from the resolved required fields plus optional payload settings."""
     return _SyncParams(
         source_root=source_root,
         node=node,

@@ -1,8 +1,8 @@
-# urirun | 1527 func | 88f | 35322L | python | 2026-06-24
+# urirun | 1552 func | 90f | 35680L | python | 2026-06-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.7  critical=195 (limit:10)  dup=2  cycles=0
+  CC̄=4.6  critical=192 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _archive_scanned_document = 43 (limit:10)
@@ -12,14 +12,14 @@ ALERTS[20]:
   !!! high_fan_out     _add_host_subparser = 27 (limit:10)
   !!! high_fan_out     main = 26 (limit:10)
   !!! high_fan_out     scanner_best_finish = 26 (limit:10)
-  !!! cc_exceeded      _decision_loop_for_document_sync = 25 (limit:15)
   !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
+  !!! high_fan_out     scanner_capture = 25 (limit:10)
 
-MODULES[156] (top by size):
-  M[adapters/python/urirun/host/host_dashboard.py] 10062L C:0 F:307 CC↑25 D:0 (python)
+MODULES[158] (top by size):
+  M[adapters/python/urirun/host/host_dashboard.py] 10039L C:0 F:313 CC↑14 D:0 (python)
   M[adapters/python/urirun/runtime/v2.py] 2024L C:1 F:125 CC↑14 D:4 (python)
-  M[adapters/python/urirun/node/mesh.py] 1829L C:3 F:96 CC↑14 D:2 (python)
+  M[adapters/python/urirun/node/mesh.py] 1864L C:3 F:97 CC↑14 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/__init__.py] 737L C:1 F:51 CC↑14 D:12 (python)
   M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
@@ -31,8 +31,8 @@ MODULES[156] (top by size):
   M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
   M[adapters/python/urirun/host/host_db.py] 540L C:0 F:32 CC↑11 D:0 (python)
   M[goal.yaml] 538L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/node/client.py] 531L C:1 F:33 CC↑15 D:0 (python)
-  LANGS: python:96/json:13/shell:10/csharp:4/yaml:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
+  M[adapters/python/urirun/node/client.py] 531L C:1 F:34 CC↑15 D:0 (python)
+  LANGS: python:98/json:13/shell:10/csharp:4/yaml:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ _archive_scanned_document fan=43  // Orchestrates 43 calls
@@ -42,11 +42,11 @@ HOTSPOTS[10]:
   ★ _add_host_subparser fan=27  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
 
 REFACTOR[15]:
-  [1] H/L Split _decision_loop_for_document_sync (CC=25)
-  [2] H/H Split god module adapters/python/urirun/host/host_dashboard.py (10062L, 0 classes)
-  [3] H/H Split god module adapters/python/urirun/node/client.py (531L, 1 classes)
-  [4] H/H Split god module adapters/python/urirun/__init__.py (737L, 1 classes)
-  [5] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (600L, 0 classes)
+  [1] H/H Split god module adapters/python/urirun/node/client.py (531L, 1 classes)
+  [2] H/H Split god module adapters/python/urirun/__init__.py (737L, 1 classes)
+  [3] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (600L, 0 classes)
+  [4] H/H Split god module adapters/python/urirun/host/host_dashboard.py (10039L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/node/flow.py (606L, 0 classes)
 
 EVOLUTION:
-  2026-06-24 CC̄=4.7 crit=195 35322L // Automated analysis
+  2026-06-24 CC̄=4.6 crit=192 35680L // Automated analysis

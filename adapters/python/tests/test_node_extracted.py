@@ -10,6 +10,35 @@ import pytest
 from urirun.node import config, flow, paths, transport
 
 
+# --- node enrollment PIN: short, ≤7 chars, rotates every 10 min -----------------
+
+def test_enroll_token_is_short_and_console_safe():
+    from urirun.node import keyauth
+    pin = keyauth.new_enroll_token()
+    assert 1 <= len(pin) <= 7
+    assert pin.isalnum()
+
+
+def test_enroll_token_rotation_replaces_pin_and_reprints(capsys):
+    import time
+    import types
+    from urirun.node import mesh, keyauth
+
+    assert mesh.ENROLL_TOKEN_TTL == 600  # 10 minutes in production
+    ctx = types.SimpleNamespace(enroll_token=keyauth.new_enroll_token())
+    first = ctx.enroll_token
+
+    stop = mesh._start_enroll_token_rotation(ctx, "http://h:8765", interval=1)
+    try:
+        time.sleep(2.3)
+        out = capsys.readouterr().out
+        assert out.count("TOKEN:") >= 1            # a fresh PIN was reprinted to stdout
+        assert ctx.enroll_token != first           # old PIN replaced (validation reads it live -> invalidated)
+        assert len(ctx.enroll_token) <= 7
+    finally:
+        stop.set()  # halt the rotation thread so it doesn't spam later test output
+
+
 # --- flow: NL-planner route availability (templated routes) -------------------
 
 def test_uri_is_available_matches_concrete_against_templated_route():

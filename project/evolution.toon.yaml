@@ -1,46 +1,30 @@
-# code2llm/evolution | 1506 func | 82f | 2026-06-24
-# generated in 0.01s
+# code2llm/evolution | 1531 func | 84f | 2026-06-24
+# generated in 0.20s
 
-NEXT[7] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 10033L, 0 classes, max CC=25
-      EFFORT: ~4h  IMPACT: 250825
+      WHY: 10039L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 140546
 
   [2] !! SPLIT           adapters/python/urirun/runtime/v2.py
       WHY: 2024L, 1 classes, max CC=14
       EFFORT: ~4h  IMPACT: 28336
 
   [3] !! SPLIT           adapters/python/urirun/node/mesh.py
-      WHY: 1829L, 3 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 25606
-
-  [4] !  SPLIT-FUNC      _parse_sync_params  CC=19  fan=18
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 342
-
-  [5] !  SPLIT-FUNC      free_port_from_matching_processes  CC=19  fan=15
-      WHY: CC=19 exceeds 15
-      EFFORT: ~1h  IMPACT: 285
-
-  [6] !  SPLIT-FUNC      _document_sync_retry_payload_from_urifix  CC=23  fan=12
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 276
-
-  [7] !  SPLIT-FUNC      chat_service_restart_argv  CC=18  fan=14
-      WHY: CC=18 exceeds 15
-      EFFORT: ~1h  IMPACT: 252
+      WHY: 1864L, 3 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26096
 
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 307 import paths
+  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 313 import paths
   ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 125 import paths
-  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 96 import paths
+  ⚠ Splitting adapters/python/urirun/node/mesh.py may break 97 import paths
 
 METRICS-TARGET:
-  CC̄:          4.7 → ≤3.3
-  max-CC:      25 → ≤12
+  CC̄:          4.6 → ≤3.2
+  max-CC:      19 → ≤9
   god-modules: 15 → 0
-  high-CC(≥15): 10 → ≤5
+  high-CC(≥15): 3 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -68,4 +52,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.8 → now CC̄=4.7
+  prev CC̄=4.7 → now CC̄=4.6

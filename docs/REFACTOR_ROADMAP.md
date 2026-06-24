@@ -64,7 +64,12 @@ Near-term extraction targets:
 - `host/discovery.py` for URI object registry normalization. First split
   landed: node alias resolution, known-node file merge, host-config enrichment
   and node route probing moved out of `host_dashboard.py`.
-- `host/scanner_bridge.py` for dashboard-to-scanner API glue.
+- `host/object_registry.py` for canonical host/service/node object shapes.
+  First split landed: host route rows, host object, service contacts and node
+  token annotations moved behind dashboard wrappers.
+- `host/scanner_bridge.py` for dashboard-to-scanner API glue. First split
+  landed: scanner result registration, document-pdf/camera-scan artifact
+  selection and chat attachments moved behind dashboard wrappers.
 
 ## Landed (2026-06-23)
 

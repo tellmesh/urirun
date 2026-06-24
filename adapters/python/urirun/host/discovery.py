@@ -264,13 +264,21 @@ def route_inputs_example(route: dict) -> dict:
         return {}
 
 
-def classify_route_run(envelope: Any, value: Any) -> tuple[str, str]:
-    """Classify one route probe result."""
-    err = (envelope.get("error") if isinstance(envelope, dict) else None) or {}
+def _classify_not_found(err: Any) -> tuple[str, str] | None:
+    """Detect a NOT_FOUND / 'route not found' envelope error, returning its classification."""
     if isinstance(err, dict):
         msg = str(err.get("message") or "")
         if str(err.get("category") or "") == "NOT_FOUND" or "route not found" in msg.lower():
             return "not-found", msg or "route not found"
+    return None
+
+
+def classify_route_run(envelope: Any, value: Any) -> tuple[str, str]:
+    """Classify one route probe result."""
+    err = (envelope.get("error") if isinstance(envelope, dict) else None) or {}
+    not_found = _classify_not_found(err)
+    if not_found is not None:
+        return not_found
     if isinstance(value, dict):
         if value.get("ok") is False:
             return "handler-error", str(value.get("error") or "")[:200]
@@ -305,6 +313,22 @@ def _probe_route(client: Any, uri: str, route: dict, missing_sel: set[str]) -> d
     }
 
 
+def _node_test_summary(node: str, node_url: str, mode: str, results: list[dict]) -> dict:
+    """Tally a node's route-probe results into the response summary."""
+    reachable = sum(1 for r in results if r["status"] in ("ok", "handler-error"))
+    return {
+        "ok": True,
+        "node": node,
+        "nodeUrl": node_url,
+        "mode": mode,
+        "tested": len(results),
+        "okCount": sum(1 for r in results if r["ok"]),
+        "reachable": reachable,
+        "broken": len(results) - reachable,
+        "results": results,
+    }
+
+
 def node_test_routes(
     payload: dict,
     *,
@@ -333,15 +357,4 @@ def node_test_routes(
         _probe_route(client, uri, routemap.get(uri, {}), missing_sel)
         for uri in targets
     ]
-    reachable = sum(1 for r in results if r["status"] in ("ok", "handler-error"))
-    return {
-        "ok": True,
-        "node": node,
-        "nodeUrl": node_url,
-        "mode": mode,
-        "tested": len(results),
-        "okCount": sum(1 for r in results if r["ok"]),
-        "reachable": reachable,
-        "broken": len(results) - reachable,
-        "results": results,
-    }
+    return _node_test_summary(node, node_url, mode, results)

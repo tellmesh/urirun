@@ -66,6 +66,19 @@ from .fs_transfer import (
     node_has_route as _node_has_route_impl,
     route_key as _route_key_impl,
 )
+from .object_registry import (
+    annotate_node_tokens as _annotate_node_tokens_impl,
+    host_object as _host_object_impl,
+    host_registry_routes as _host_registry_routes_impl,
+    service_contacts as _service_contacts_impl,
+)
+from .scanner_bridge import (
+    ScannerBridgeDeps,
+    crop_overlay_attachment as _crop_overlay_attachment_impl,
+    register_document_artifact as _register_document_artifact_impl,
+    register_scanner_result as _register_scanner_result_impl,
+    scanner_result_content as _scanner_result_content_impl,
+)
 from .service_control import (
     chat_service_restart_argv as _chat_service_restart_argv_impl,
     free_port_from_matching_processes as _free_port_from_matching_processes_impl,
@@ -809,6 +822,7 @@ INDEX_HTML = r"""<!doctype html>
         <button data-view="artifacts">Artifacts</button>
         <button data-view="widgets">Widgets</button>
         <button data-view="tasks">Tasks</button>
+        <button data-view="host">Host</button>
         <button data-view="nodes">Nodes</button>
         <button data-view="activity">Activity</button>
       </div>
@@ -873,6 +887,22 @@ INDEX_HTML = r"""<!doctype html>
             </div>
           </div>
           <div class="panel-body"><div class="widget-grid" id="widgetGrid"></div></div>
+        </article>
+      </section>
+      <section class="nodes-layout view-block" data-section="host">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Konfiguracja hosta</h2>
+              <p class="subtle">Tożsamość, ścieżki i status lokalnego hosta urirun.</p>
+            </div>
+            <span class="pill" id="hostStatusPill"></span>
+          </div>
+          <div class="panel-body"><div class="list" id="hostConfigList"></div></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><h2>Możliwości hosta (URI)</h2><span class="subtle" id="hostRouteCount"></span></div>
+          <div class="panel-body"><div class="list" id="hostRoutesList"></div></div>
         </article>
       </section>
       <div class="stack">
@@ -1003,11 +1033,12 @@ INDEX_HTML = r"""<!doctype html>
     <button data-view="artifacts">Artifacts</button>
     <button data-view="widgets">Widgets</button>
     <button data-view="tasks">Tasks</button>
+    <button data-view="host">Host</button>
     <button data-view="nodes">Nodes</button>
     <button data-view="activity">Activity</button>
   </nav>
   <script>
-    const VALID_VIEWS = new Set(['overview', 'chat', 'discovery', 'artifacts', 'widgets', 'tasks', 'nodes', 'activity']);
+    const VALID_VIEWS = new Set(['overview', 'chat', 'discovery', 'artifacts', 'widgets', 'tasks', 'host', 'nodes', 'activity']);
     const params = new URLSearchParams(window.location.search);
     const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
     const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
@@ -1210,6 +1241,51 @@ INDEX_HTML = r"""<!doctype html>
       const help = document.querySelector('.add-node-help');
       if (help && nodes.length === 0) help.open = true;
       nodeAddSnippet();
+    }
+
+    // Copy a value (config path, host URL) to the clipboard with light visual feedback.
+    async function copyHostValue(btn, value) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(value || '');
+        if (btn) { const prev = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = prev; }, 1200); }
+      } catch (error) { /* clipboard unavailable — value is still visible inline */ }
+    }
+
+    // Render the dedicated Host menu: identity, on-disk paths and mesh counts for the local host,
+    // plus the URI routes the host itself exposes. Data comes straight from /api/summary (no extra
+    // endpoint) — this is the host counterpart to the Nodes view, split out into its own tab.
+    function renderHost(summary) {
+      summary = summary || {};
+      const host = summary.host || {};
+      const pill = $('hostStatusPill');
+      if (pill) {
+        pill.textContent = host.status || (host.reachable ? 'up' : 'local');
+        pill.className = 'pill ' + (host.reachable === false ? 'down' : 'up');
+      }
+      const rows = [
+        { label: 'Host', value: host.label || 'urirun host' },
+        { label: 'Katalog projektu', value: summary.project || host.url || '', mono: true, copy: true },
+        { label: 'Baza danych (db)', value: summary.db || '', mono: true, copy: true },
+        { label: 'Plik konfiguracji', value: summary.config || '', mono: true, copy: true },
+        { label: 'Węzły (nodes)', value: `${summary.nodesOnline || 0} online · ${summary.nodeCount || 0} skonfigurowanych` },
+        { label: 'Procesy URI hosta', value: `${(summary.hostRoutes || []).length}` },
+        { label: 'Usługi (services)', value: `${summary.serviceCount || 0}` },
+      ];
+      $('hostConfigList').innerHTML = rows.map((row) => `<div class="item">
+        <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+          <span class="subtle">${esc(row.label)}</span>
+          ${row.copy && row.value ? `<button type="button" title="Kopiuj" onclick="copyHostValue(this, ${JSON.stringify(row.value).replace(/"/g, '&quot;')})">⧉</button>` : ''}
+        </div>
+        <div class="${row.mono ? 'mono' : ''}">${esc(row.value) || '<span class="subtle">—</span>'}</div>
+      </div>`).join('');
+
+      const hostRoutes = summary.hostRoutes || [];
+      $('hostRouteCount').textContent = `${hostRoutes.length} routes`;
+      $('hostRoutesList').innerHTML = hostRoutes.slice(0, 80).map((route) => `<div class="item">
+        <div class="route-title"><span class="mono">${esc(route.uri)}</span>${route.safe === false ? '<span class="pill down">unsafe</span>' : ''}</div>
+        ${route.title ? `<div>${esc(route.title)}</div>` : ''}
+        <div class="subtle">${esc(text(route.kind, 'route'))} · ${esc(text(route.layer, 'host'))}${route.source ? ` · ${esc(route.source)}` : ''}</div>
+      </div>`).join('') || empty('Host nie udostępnia żadnych procesów URI.');
     }
 
     // Build the ready-to-paste config for adding a node by name + URL (host + urifix resolve it).
@@ -2679,6 +2755,7 @@ INDEX_HTML = r"""<!doctype html>
       renderMetrics(summary);
       renderTasks(state.tasks);
       renderNodes(summary.nodes || []);
+      renderHost(summary);
       renderChatContacts(summary);
       renderDiscovery(summary);
       renderServiceViews();
@@ -6893,63 +6970,47 @@ def _scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
         return dict(series)
 
 
+def _scanner_bridge_deps() -> ScannerBridgeDeps:
+    return ScannerBridgeDeps(
+        preview_url=_preview_url,
+        register_artifact=lambda db, kind, uri, path, meta: _host_db().register_artifact(
+            db, kind, uri, path, meta
+        ),
+        chat_message=_chat_message,
+        add_chat_message=_add_chat_message,
+    )
+
+
 def _crop_overlay_attachment(uri: str, project: str, overlay_path: str, crop: dict,
                              meta: dict, original_path: Path) -> dict:
-    return {
-        "kind": "crop-overlay",
-        "path": overlay_path,
-        "uri": f"{uri}/crop-overlay",
-        "previewUrl": _preview_url(overlay_path, project),
-        "meta": {
-            "crop": crop,
-            "quality": meta.get("quality"),
-            "sourceCaptureUri": uri,
-            "sourceImage": str(original_path),
-        },
-    }
+    return _crop_overlay_attachment_impl(
+        _scanner_bridge_deps(),
+        uri=uri,
+        project=project,
+        overlay_path=overlay_path,
+        crop=crop,
+        meta=meta,
+        original_path=original_path,
+    )
 
 
 def _register_document_artifact(db: str | None, project: str, *, uri: str, display_path: Path,
                                 original_path: Path, meta: dict, ocr: dict, document: dict) -> tuple[Any, dict]:
-    """Register the canonical document-pdf artifact; return (artifact_row, chat_attachment)."""
-    document_id = str(document.get("duplicateOf") or document.get("docId") or meta.get("sha256") or "")
-    document_uri = str(document.get("uri") or f"document://host/{quote(document_id, safe='')}")
-    document_meta = {
-        "document": document,
-        "ocr": {key: value for key, value in ocr.items() if key != "text"},
-        "sourceCaptureUri": uri,
-        "sourceImage": str(original_path),
-        "displayImage": str(display_path),
-    }
-    artifact = _host_db().register_artifact(db, "document-pdf", document_uri, str(document["path"]), document_meta)
-    attachment = {
-        "kind": "document-pdf",
-        "path": str(document["path"]),
-        "uri": document_uri,
-        "previewUrl": _preview_url(str(document["path"]), project),
-        "meta": document_meta,
-    }
-    return artifact, attachment
+    return _register_document_artifact_impl(
+        _scanner_bridge_deps(),
+        db,
+        project,
+        uri=uri,
+        display_path=display_path,
+        original_path=original_path,
+        meta=meta,
+        ocr=ocr,
+        document=document,
+    )
 
 
 def _scanner_result_content(content_prefix: str, crop: dict, document: dict, ocr: dict) -> str:
-    """Human chat line summarizing one scan: crop / document-PDF / OCR outcome."""
-    content = content_prefix
-    if crop.get("ok"):
-        content += " (cropped to receipt)"
-    if document.get("ok") and document.get("path"):
-        content += " -> document PDF"
-        if document.get("duplicate"):
-            content += " (duplicate)"
-    elif document.get("error"):
-        content += " (document archive failed)"
-    else:
-        content += " (no document PDF)"
-    if ocr.get("ok") and ocr.get("text"):
-        content += f": {str(ocr.get('text'))[:180]}"
-    elif ocr.get("error"):
-        content += f" (OCR: {ocr.get('error')})"
-    return content
+    return _scanner_result_content_impl(content_prefix, crop, document, ocr)
 
 
 def _register_scanner_result(
@@ -6965,57 +7026,19 @@ def _register_scanner_result(
     document: dict,
     content_prefix: str,
 ) -> dict:
-    # The staged crop/image can be gone when docid recognized a duplicate and cleaned
-    # staging. In that case do not register a second artifact row that points at the
-    # existing document PDF; the document-pdf artifact below is the canonical record.
-    display_exists = Path(str(display_path)).expanduser().is_file()
-    attachments = []
-    document_artifact = None
-    overlay_path = str(meta.get("overlayPath") or "")
-    if overlay_path and Path(overlay_path).expanduser().is_file():
-        attachments.append(_crop_overlay_attachment(uri, project, overlay_path, crop, meta, original_path))
-    if document.get("ok") and document.get("path"):
-        document_artifact, document_attachment = _register_document_artifact(
-            db, project, uri=uri, display_path=display_path, original_path=original_path,
-            meta=meta, ocr=ocr, document=document,
-        )
-        attachments.append(document_attachment)
-    if document_artifact is None and display_exists:
-        scan_artifact = _host_db().register_artifact(db, "camera-scan", uri, str(display_path), meta)
-    else:
-        scan_artifact = {
-            "kind": "camera-scan",
-            "uri": uri,
-            "path": None,
-            "meta": meta,
-            "skipped": True,
-            "reason": "document-pdf artifact is canonical" if document_artifact else "staged display image is not available",
-        }
-    primary_artifact = document_artifact or scan_artifact
-    content = _scanner_result_content(content_prefix, crop, document, ocr)
-    message = _chat_message(
-        "system",
-        content,
-        detail={
-            "artifact": primary_artifact,
-            "scanArtifact": scan_artifact,
-            "documentArtifact": document_artifact,
-            "primaryArtifact": primary_artifact,
-            "uri": uri,
-            "selectedTargets": ["service:phone-scanner"],
-            "ocr": ocr,
-            "document": document,
-        },
-        attachments=attachments,
+    return _register_scanner_result_impl(
+        _scanner_bridge_deps(),
+        project,
+        db,
+        uri=uri,
+        display_path=display_path,
+        original_path=original_path,
+        meta=meta,
+        crop=crop,
+        ocr=ocr,
+        document=document,
+        content_prefix=content_prefix,
     )
-    _add_chat_message(db, message)
-    return {
-        "artifact": primary_artifact,
-        "scanArtifact": scan_artifact,
-        "documentArtifact": document_artifact,
-        "primaryArtifact": primary_artifact,
-        "message": message,
-    }
 
 
 def _orientation_summary(crop: dict) -> dict:
@@ -8135,63 +8158,26 @@ def _task_counts(tickets: list[dict]) -> dict[str, int]:
 def _service_contacts() -> list[dict]:
     scanner_port = int(os.environ.get("URIRUN_PHONE_SCANNER_PORT", "8196"))
     scanner_state = _phone_scanner_external_status(scanner_port)
-    phone_scanner = {
-        "id": "service:phone-scanner",
-        "kind": "service",
-        "name": "phone-scanner",
-        "label": "urirun service: photo scanner",
-        "url": scanner_state["url"],
-        "status": scanner_state["status"],
-        "reachable": scanner_state["reachable"],
-        "routes": [
-            "dashboard://host/phone-scanner/command/start",
-            "dashboard://host/service/phone-scanner/command/restart",
-            "service://host/phone-scanner/command/restart",
-            "service://phone-scanner/command/restart",
-            "scanner://page/camera/command/scan",
-            "scanner://page/camera/command/best-pdf",
-            "scanner://page/camera/command/autonomous",
-        ],
-    }
-    contacts = [phone_scanner]
+    service_entries: list[dict] = []
     with _SERVICE_LOCK:
         for service_id, server in _SERVICE_SERVERS.items():
             thread = _SERVICE_THREADS.get(service_id)
-            parsed = urlparse(service_id)
-            port = int(parsed.port or scanner_port)
-            service_url = _phone_scanner_url(port)
-            name = "phone-scanner" if port == scanner_port else f"service-{port}"
-            alive = bool(thread is not None and thread.is_alive())
-            external = {"status": "stopped", "reachable": False, "url": service_url} if alive else _phone_scanner_external_status(port)
-            item = {
-                **phone_scanner,
-                "id": f"service:{name}",
-                "name": name,
-                "label": f"urirun service: {name}",
-                "url": service_url if alive else external["url"],
-                "bindUrl": service_id,
-                "status": "running" if alive else external["status"],
-                "reachable": alive or bool(external["reachable"]),
-                "serverName": getattr(server, "server_name", ""),
-            }
-            contacts = [entry for entry in contacts if entry.get("id") != item["id"]]
-            contacts.append(item)
-    return contacts
+            service_entries.append({
+                "service_id": service_id,
+                "alive": bool(thread is not None and thread.is_alive()),
+                "server_name": getattr(server, "server_name", ""),
+            })
+    return _service_contacts_impl(
+        scanner_port=scanner_port,
+        scanner_state=scanner_state,
+        service_entries=service_entries,
+        phone_scanner_url=_phone_scanner_url,
+        phone_scanner_status=_phone_scanner_external_status,
+    )
 
 
 def _host_registry_routes() -> list[dict]:
-    routes = []
-    for action in _uri_action_catalog():
-        if action.get("layer") in {"host", "dashboard", "connector"}:
-            routes.append({
-                "uri": action.get("uri"),
-                "kind": action.get("kind"),
-                "title": action.get("label"),
-                "source": action.get("where"),
-                "safe": not bool(action.get("sideEffects")),
-                "layer": action.get("layer"),
-            })
-    return routes
+    return _host_registry_routes_impl(_uri_action_catalog())
 
 
 def summary(project: str, db: str | None, config: str | None, node_urls: list[str] | None = None) -> dict:
@@ -8206,28 +8192,11 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     artifacts = _public_artifacts(host_db.list_artifacts(db, limit=10), project)
     logs = host_db.recent_logs(db, limit=10)
     nodes = discovered.get("nodes") or []
-    # Annotate each node with whether a management token (X-Urirun-Token) is on file in the
-    # keyring, so the Nodes view can show per-node token status / a "set token" affordance
-    # without ever exposing the value.
-    for node in nodes:
-        node_name = node.get("name")
-        if node_name:
-            try:
-                node["hasToken"] = bool(_node_token_for(node_name))
-            except Exception:  # noqa: BLE001 - keyring probe must never break the summary
-                node["hasToken"] = False
+    _annotate_node_tokens_impl(nodes, _node_token_for)
     routes = discovered.get("routes") or []
     services = _service_contacts()
     host_routes = _host_registry_routes()
-    host = {
-        "id": "host",
-        "kind": "host",
-        "label": "urirun host",
-        "status": "local",
-        "reachable": True,
-        "url": str(Path(project).expanduser().resolve()),
-        "routes": host_routes,
-    }
+    host = _host_object_impl(project, host_routes)
     return {
         "ok": True,
         "project": str(Path(project).expanduser().resolve()),

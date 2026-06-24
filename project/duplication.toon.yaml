@@ -1,12 +1,12 @@
-# redup/duplication | 22 groups | 87f 30265L | 2026-06-24
+# redup/duplication | 22 groups | 89f 30623L | 2026-06-24
 
 SUMMARY:
-  files_scanned: 87
-  total_lines:   30265
+  files_scanned: 89
+  total_lines:   30623
   dup_groups:    22
   dup_fragments: 51
   saved_lines:   190
-  scan_ms:       1704
+  scan_ms:       1024
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=78L  groups=7  frags=13  (0.3%)
@@ -33,12 +33,12 @@ DUPLICATES[22] (ranked by impact):
       runtime/v2.py:1871-1874  (_cmd_host)
       runtime/v2.py:1877-1880  (_cmd_node)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=2 saved=13 sim=1.00
-      host/host_dashboard.py:9958-9970  (_free_port_from_old_scanner)
-      host/host_dashboard.py:9973-9981  (_free_port_from_old_chat)
+      host/host_dashboard.py:9935-9947  (_free_port_from_old_scanner)
+      host/host_dashboard.py:9950-9958  (_free_port_from_old_chat)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:8098-8101  (_host_db)
-      host/host_dashboard.py:8104-8107  (_mesh)
-      host/host_dashboard.py:8110-8113  (_planfile_adapter)
+      host/host_dashboard.py:8121-8124  (_host_db)
+      host/host_dashboard.py:8127-8130  (_mesh)
+      host/host_dashboard.py:8133-8136  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
   [60d4dcb768819ab9]   EXAC  _binding_pairs  L=11 N=2 saved=11 sim=1.00
       runtime/v1.py:362-372  (_binding_pairs)
@@ -47,17 +47,17 @@ DUPLICATES[22] (ranked by impact):
       host/task_planner.py:82-92  (_json_from_text)
       node/flow.py:232-242  (json_from_text)
   [926b8a3d766222d9]   STRU  _chat_document_sync_response  L=9 N=2 saved=9 sim=1.00
-      host/host_dashboard.py:9282-9290  (_chat_document_sync_response)
-      host/host_dashboard.py:9293-9301  (_chat_generic_response)
+      host/host_dashboard.py:9259-9267  (_chat_document_sync_response)
+      host/host_dashboard.py:9270-9278  (_chat_generic_response)
   [f4f8c5ba3175290d]   EXAC  _short_value  L=8 N=2 saved=8 sim=1.00
       host/fs_transfer.py:128-135  (_short_value)
-      host/host_dashboard.py:4557-4564  (_short_value)
+      host/host_dashboard.py:4634-4641  (_short_value)
   [9b8d8dffe6b88b09]   STRU  node_alias_map_from_value  L=6 N=2 saved=6 sim=1.00
       host/discovery.py:72-77  (node_alias_map_from_value)
       host/discovery.py:129-134  (node_url_map_from_value)
   [61cba34717c9d3dc]   STRU  boolish  L=6 N=2 saved=6 sim=1.00
       host/document_sync.py:31-36  (boolish)
-      host/host_dashboard.py:8374-8379  (_boolish)
+      host/host_dashboard.py:8343-8348  (_boolish)
   [e0131d32b5db30ac]   STRU  _emit_json  L=6 N=2 saved=6 sim=1.00
       runtime/_registry.py:618-623  (_emit_json)
       runtime/_scan.py:54-59  (emit_json)
@@ -74,11 +74,11 @@ DUPLICATES[22] (ranked by impact):
       runtime/worker.py:156-159  (close)
       runtime/worker.py:187-190  (close)
   [cdb2ba2d3a97a0f6]   STRU  _document_index_path  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:4327-4329  (_document_index_path)
-      host/host_dashboard.py:4428-4430  (_scanned_id_log_path)
+      host/host_dashboard.py:4404-4406  (_document_index_path)
+      host/host_dashboard.py:4505-4507  (_scanned_id_log_path)
   [bed22d936aabe8e2]   STRU  _api_checks  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:9689-9691  (_api_checks)
-      host/host_dashboard.py:9694-9696  (_api_logs)
+      host/host_dashboard.py:9666-9668  (_api_checks)
+      host/host_dashboard.py:9671-9673  (_api_logs)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
