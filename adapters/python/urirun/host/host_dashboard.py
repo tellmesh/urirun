@@ -730,6 +730,7 @@ INDEX_HTML = r"""<!doctype html>
               <button type="button" id="artifactClearSelectionBtn">Clear</button>
               <button type="button" class="danger" id="artifactDeleteSelectedBtn">Delete selected</button>
               <button type="button" class="danger" id="artifactDeleteVisibleBtn">Delete visible</button>
+              <button type="button" id="artifactDedupeRowsBtn">Dedupe rows</button>
               <button type="button" id="artifactCleanupOrphansBtn">Cleanup orphan JSON</button>
               <button type="button" id="documentReconcileBtn">Reconcile docs index</button>
               <button type="button" id="artifactCopyJsonBtn">Copy JSON</button>
@@ -1334,6 +1335,15 @@ INDEX_HTML = r"""<!doctype html>
       });
       await loadArtifacts();
       writeUrlState({ action: 'artifacts:cleanup-orphans', deleted: result.filesDeleted || 0 }, { replace: true });
+    }
+
+    async function dedupeArtifactRows() {
+      const result = await api('/api/artifacts/dedupe', {
+        method: 'POST',
+        body: JSON.stringify({ deleteRows: true }),
+      });
+      await loadArtifacts();
+      writeUrlState({ action: 'artifacts:dedupe', deleted: result.deleted || 0 }, { replace: true });
     }
 
     async function reconcileDocumentsIndex() {
@@ -2215,6 +2225,9 @@ INDEX_HTML = r"""<!doctype html>
     });
     $('artifactDeleteVisibleBtn').addEventListener('click', () => {
       deleteArtifacts(visibleArtifactIds()).catch((error) => alert(error.message));
+    });
+    $('artifactDedupeRowsBtn').addEventListener('click', () => {
+      dedupeArtifactRows().catch((error) => alert(error.message));
     });
     $('artifactCleanupOrphansBtn').addEventListener('click', () => {
       cleanupArtifactOrphans().catch((error) => alert(error.message));
@@ -7470,6 +7483,64 @@ def artifacts_delete(project: str, db: str | None, payload: dict) -> dict:
     return result
 
 
+def artifacts_dedupe_rows(project: str, db: str | None, payload: dict) -> dict:
+    """Remove duplicate artifact DB rows that point at the same physical output.
+
+    This is intentionally DB-only: it never removes files. It keeps the same
+    canonical row the UI would display, so historical `camera-scan` + `document-pdf`
+    duplicates can be compacted without changing the artifact grid semantics.
+    """
+    limit = int(payload.get("limit") or 10_000)
+    limit = max(1, min(limit, 50_000))
+    delete_rows = _payload_bool(payload, "deleteRows", True)
+    host_db = _host_db()
+    public = _public_artifacts(host_db.list_artifacts(db, limit=limit), project)
+    groups: dict[tuple[str, str], list[dict]] = {}
+    for item in public:
+        key = _artifact_dedupe_key(item)
+        if not key[1]:
+            continue
+        groups.setdefault(key, []).append(item)
+
+    duplicate_groups: list[dict] = []
+    delete_ids: list[str] = []
+    for key, group in groups.items():
+        if len(group) < 2:
+            continue
+        keep = sorted(group, key=_artifact_dedupe_rank)[0]
+        keep_id = str(keep.get("id") or "")
+        duplicate_ids = [
+            str(item.get("id"))
+            for item in group
+            if item.get("id") and str(item.get("id")) != keep_id
+        ]
+        if not duplicate_ids:
+            continue
+        delete_ids.extend(duplicate_ids)
+        duplicate_groups.append({
+            "key": {"type": key[0], "value": key[1]},
+            "keepId": keep_id,
+            "keepKind": keep.get("kind"),
+            "deleteIds": duplicate_ids,
+            "count": len(group),
+        })
+
+    deleted = host_db.delete_artifacts(db, delete_ids) if delete_rows and delete_ids else 0
+    result = {
+        "ok": True,
+        "scanned": len(public),
+        "groups": duplicate_groups,
+        "duplicateRows": len(delete_ids),
+        "deleted": deleted,
+        "dryRun": not delete_rows,
+    }
+    try:
+        host_db.add_log(db, "artifacts", "dedupe", result)
+    except Exception:  # noqa: BLE001
+        pass
+    return result
+
+
 def artifacts_cleanup_orphan_sidecars(project: str, db: str | None, payload: dict) -> dict:
     delete_files = _payload_bool(payload, "deleteFiles", True)
     include_artifact_dir = _payload_bool(payload, "includeArtifactDir", False)
@@ -7671,6 +7742,10 @@ def create_handler(
                 if parsed.path == "/api/artifacts/delete":
                     payload = _read_json(self)
                     _json_response(self, 200, artifacts_delete(project, db, payload))
+                    return
+                if parsed.path == "/api/artifacts/dedupe":
+                    payload = _read_json(self)
+                    _json_response(self, 200, artifacts_dedupe_rows(project, db, payload))
                     return
                 if parsed.path == "/api/artifacts/cleanup-orphans":
                     payload = _read_json(self)

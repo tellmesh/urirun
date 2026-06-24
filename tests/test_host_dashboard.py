@@ -146,10 +146,12 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "data-view=\"artifacts\"" in html
     assert "/api/artifacts?limit=80" in html
     assert "/api/artifacts/delete" in html
+    assert "/api/artifacts/dedupe" in html
     assert "/api/artifacts/cleanup-orphans" in html
     assert "artifactSelectVisibleBtn" in html
     assert "artifactDeleteSelectedBtn" in html
     assert "artifactDeleteVisibleBtn" in html
+    assert "artifactDedupeRowsBtn" in html
     assert "artifactCleanupOrphansBtn" in html
     assert "artifactCopyJsonBtn" in html
     assert "artifactClearSelectionBtn" in html
@@ -159,6 +161,7 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "data-artifact-delete" in html
     assert "selectedArtifactIds" in html
     assert "deleteArtifacts" in html
+    assert "dedupeArtifactRows" in html
     assert "copyArtifactsJson" in html
     assert "artifactTableJsonRow" in html
     assert "__urirunLastCopiedArtifactsJson" in html
@@ -387,6 +390,27 @@ def test_artifacts_delete_respects_delete_files_false_string(monkeypatch, tmp_pa
     assert result["filesDeleted"] == 0
     assert safe.exists() is True
     assert fake_db.artifacts == []
+
+
+def test_artifacts_dedupe_rows_keeps_document_pdf_without_deleting_file(monkeypatch, tmp_path):
+    fake_db = FakeHostDb()
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    pdf = tmp_path / "document.pdf"
+    pdf.write_bytes(b"%PDF-1.4\n")
+    scan = fake_db.register_artifact(str(tmp_path), "camera-scan", "scanner://host/capture/dup", str(pdf))
+    doc = fake_db.register_artifact(str(tmp_path), "document-pdf", "document://host/DOC-DUP", str(pdf))
+
+    result = host_dashboard.artifacts_dedupe_rows(str(tmp_path), str(tmp_path), {"deleteRows": True})
+
+    assert result["ok"] is True
+    assert result["deleted"] == 1
+    assert result["duplicateRows"] == 1
+    assert result["groups"][0]["keepId"] == doc["id"]
+    assert result["groups"][0]["deleteIds"] == [scan["id"]]
+    assert pdf.exists() is True
+    assert [item["id"] for item in fake_db.artifacts] == [doc["id"]]
+    assert fake_db.logs[-1]["stream"] == "artifacts"
+    assert fake_db.logs[-1]["event"] == "dedupe"
 
 
 def test_artifacts_cleanup_orphan_sidecars_removes_json_without_document(monkeypatch, tmp_path):
