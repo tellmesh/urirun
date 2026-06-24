@@ -1,12 +1,12 @@
-# redup/duplication | 16 groups | 82f 27839L | 2026-06-24
+# redup/duplication | 16 groups | 82f 28306L | 2026-06-24
 
 SUMMARY:
   files_scanned: 82
-  total_lines:   27839
+  total_lines:   28306
   dup_groups:    16
   dup_fragments: 39
   saved_lines:   155
-  scan_ms:       1227
+  scan_ms:       1601
 
 HOTSPOTS[7] (files with most duplication):
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.2%)
@@ -33,12 +33,12 @@ DUPLICATES[16] (ranked by impact):
       runtime/v2.py:1871-1874  (_cmd_host)
       runtime/v2.py:1877-1880  (_cmd_node)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=2 saved=13 sim=1.00
-      host/host_dashboard.py:9284-9296  (_free_port_from_old_scanner)
-      host/host_dashboard.py:9299-9307  (_free_port_from_old_chat)
+      host/host_dashboard.py:9740-9752  (_free_port_from_old_scanner)
+      host/host_dashboard.py:9755-9763  (_free_port_from_old_chat)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:7672-7675  (_host_db)
-      host/host_dashboard.py:7678-7681  (_mesh)
-      host/host_dashboard.py:7684-7687  (_planfile_adapter)
+      host/host_dashboard.py:8101-8104  (_host_db)
+      host/host_dashboard.py:8107-8110  (_mesh)
+      host/host_dashboard.py:8113-8116  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
   [60d4dcb768819ab9]   EXAC  _binding_pairs  L=11 N=2 saved=11 sim=1.00
       runtime/v1.py:362-372  (_binding_pairs)
@@ -62,8 +62,8 @@ DUPLICATES[16] (ranked by impact):
       runtime/worker.py:156-159  (close)
       runtime/worker.py:187-190  (close)
   [cdb2ba2d3a97a0f6]   STRU  _document_index_path  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:3906-3908  (_document_index_path)
-      host/host_dashboard.py:4128-4130  (_scanned_id_log_path)
+      host/host_dashboard.py:4061-4063  (_document_index_path)
+      host/host_dashboard.py:4283-4285  (_scanned_id_log_path)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)

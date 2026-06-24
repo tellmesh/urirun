@@ -248,6 +248,29 @@ def _const_str(node: ast.AST | None) -> str | None:
     return None
 
 
+def _env_read_from_subscript(node: ast.Subscript) -> str | None:
+    """``os.environ["X"]`` → ``"X"``."""
+    target = node.value
+    if isinstance(target, ast.Attribute) and target.attr == "environ" and _is_os_name(target.value):
+        return _const_str(node.slice)
+    return None
+
+
+def _env_read_from_call(node: ast.Call) -> str | None:
+    """``os.getenv("X")`` / ``os.environ.get("X")`` / bare ``getenv("X")`` → ``"X"``."""
+    fn = node.func
+    first = node.args[0] if node.args else None
+    if isinstance(fn, ast.Attribute):
+        if fn.attr == "getenv" and _is_os_name(fn.value):
+            return _const_str(first)
+        if (fn.attr == "get" and isinstance(fn.value, ast.Attribute)
+                and fn.value.attr == "environ" and _is_os_name(fn.value.value)):
+            return _const_str(first)
+    elif isinstance(fn, ast.Name) and fn.id == "getenv":
+        return _const_str(first)
+    return None
+
+
 def _env_read_name(node: ast.AST) -> str | None:
     """Return the env-var name if ``node`` reads the process env, else ``None``.
 
@@ -255,21 +278,9 @@ def _env_read_name(node: ast.AST) -> str | None:
     ``getenv("X")`` (``from os import getenv``).
     """
     if isinstance(node, ast.Subscript):
-        target = node.value
-        if isinstance(target, ast.Attribute) and target.attr == "environ" and _is_os_name(target.value):
-            return _const_str(node.slice)
-        return None
+        return _env_read_from_subscript(node)
     if isinstance(node, ast.Call):
-        fn = node.func
-        first = node.args[0] if node.args else None
-        if isinstance(fn, ast.Attribute):
-            if fn.attr == "getenv" and _is_os_name(fn.value):
-                return _const_str(first)
-            if (fn.attr == "get" and isinstance(fn.value, ast.Attribute)
-                    and fn.value.attr == "environ" and _is_os_name(fn.value.value)):
-                return _const_str(first)
-        elif isinstance(fn, ast.Name) and fn.id == "getenv":
-            return _const_str(first)
+        return _env_read_from_call(node)
     return None
 
 
@@ -359,6 +370,24 @@ def lint_connector(pkg_dir: str | Path) -> dict:
     }
 
 
+def _desired_machine_fields(code_routes: list[dict]) -> dict:
+    """The manifest machine fields a connector's decorator routes should project to."""
+    routes = sorted({r["uri"] for r in code_routes})
+    return {
+        "routes": routes,
+        "uriSchemes": sorted({u.split("://", 1)[0] for u in routes if "://" in u}),
+        "adapterKinds": sorted({KIND_TO_ADAPTER[r["kind"]] for r in code_routes if r["kind"] in KIND_TO_ADAPTER}),
+    }
+
+
+def _changed_machine_fields(manifest: dict, desired: dict) -> list[str]:
+    """Machine fields whose manifest value differs from the desired projection.
+
+    A field already absent and desired-empty is left alone; everything else that drifts is
+    reported (and, when writing, overwritten)."""
+    return [f for f in MACHINE_FIELDS if manifest.get(f) != desired[f] and (desired[f] or f in manifest)]
+
+
 def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
     """Make the manifest's machine fields a PROJECTION of the code: derive ``routes``,
     ``uriSchemes`` and ``adapterKinds`` from the ``@handler``/``.command``/``.shell``
@@ -375,14 +404,9 @@ def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
     if not code_routes:
         return {"ok": False, "error": "no @decorator routes found (declarative or non-Python connector)",
                 "manifest": str(mpath)}
-    routes = sorted({r["uri"] for r in code_routes})
-    desired = {
-        "routes": routes,
-        "uriSchemes": sorted({u.split("://", 1)[0] for u in routes if "://" in u}),
-        "adapterKinds": sorted({KIND_TO_ADAPTER[r["kind"]] for r in code_routes if r["kind"] in KIND_TO_ADAPTER}),
-    }
+    desired = _desired_machine_fields(code_routes)
     manifest = json.loads(mpath.read_text(encoding="utf-8"))
-    changed = [f for f in MACHINE_FIELDS if manifest.get(f) != desired[f] and (desired[f] or f in manifest)]
+    changed = _changed_machine_fields(manifest, desired)
     if write and changed:
         for f in changed:
             manifest[f] = desired[f]
@@ -390,26 +414,18 @@ def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
     return {"ok": True, "manifest": str(mpath), "changed": changed, "wrote": bool(write and changed), **desired}
 
 
-def _format_report(rep: dict) -> str:
-    lines = [f"connector lint · {rep['package']}"]
-    rc = rep["routeCount"]
-    lines.append(f"  routes: {rc['code']} in code · {rc['manifest']} in manifest · {rc['cliSubcommands']} CLI subcommands")
-    if rep["connectorObjects"]:
-        objs = ", ".join(f"{k}={v['scheme']}://{v['target']}" for k, v in rep["connectorObjects"].items())
-        lines.append(f"  connectors: {objs}")
-    sr = rep.get("secretEnvReads") or {}
+def _format_secret_reads(sr: dict) -> list[str]:
+    lines: list[str] = []
     for f in sr.get("findings", []):
         label = "SECRET ambient env read" if sr.get("bypass") else "warn  secret env read"
         lines.append(f"  {label} `{f['name']}` ({f['file']}:{f['line']}) — address by reference via urirun.resolve_secret")
     if sr.get("bypass"):
         lines.append("  → connector reads secret-shaped env vars and never calls resolve_secret: it bypasses the secrets layer (no policy/redaction/node-guard)")
-    if rep["pattern"] != "decorator":
-        lines.append("  pattern: declarative / no @connector decorators recognized — duplication & drift checks skipped")
-        return "\n".join(lines)
-    lines.append(f"  handler routes (in-process): {rep['handlerRoutes']} · argv routes (subprocess): {rep['argvRoutes']}")
-    lines.append(f"  manifest: {rep['manifestMode']} ({'machine fields derived from code' if rep['manifestMode'] == 'derived' else 'routes declared in JSON'})")
-    if rep["machineFieldsHandWritten"]:
-        lines.append(f"  manifest hand-writes derivable fields: {', '.join(rep['machineFieldsHandWritten'])}")
+    return lines
+
+
+def _format_drift(rep: dict) -> list[str]:
+    lines: list[str] = []
     for u in rep["drift"]["in_code_not_in_manifest"]:
         lines.append(f"  DRIFT decorator route missing from manifest: {u}")
     for u in rep["drift"]["in_manifest_not_in_code"]:
@@ -420,11 +436,34 @@ def _format_report(rep: dict) -> str:
             lines.append(f"  DRIFT adapter `{a}` is used by a route but not in manifest.adapterKinds {ad['declared']}")
         for a in ad["declaredNotUsed"]:
             lines.append(f"  warn  manifest.adapterKinds declares `{a}` but no decorator route binds it")
-    dup = rep["duplication"]
-    lines.append(f"  duplication: max {dup['maxFactor']}× (each route spelled out in up to {dup['maxFactor']} places)")
+    return lines
+
+
+def _format_duplication(dup: dict) -> list[str]:
+    lines = [f"  duplication: max {dup['maxFactor']}× (each route spelled out in up to {dup['maxFactor']} places)"]
     for p in dup["perRoute"]:
         if p["factor"] > 1:
             lines.append(f"    {p['uri']} — {p['factor']}×: {', '.join(p['places'])}")
+    return lines
+
+
+def _format_report(rep: dict) -> str:
+    lines = [f"connector lint · {rep['package']}"]
+    rc = rep["routeCount"]
+    lines.append(f"  routes: {rc['code']} in code · {rc['manifest']} in manifest · {rc['cliSubcommands']} CLI subcommands")
+    if rep["connectorObjects"]:
+        objs = ", ".join(f"{k}={v['scheme']}://{v['target']}" for k, v in rep["connectorObjects"].items())
+        lines.append(f"  connectors: {objs}")
+    lines.extend(_format_secret_reads(rep.get("secretEnvReads") or {}))
+    if rep["pattern"] != "decorator":
+        lines.append("  pattern: declarative / no @connector decorators recognized — duplication & drift checks skipped")
+        return "\n".join(lines)
+    lines.append(f"  handler routes (in-process): {rep['handlerRoutes']} · argv routes (subprocess): {rep['argvRoutes']}")
+    lines.append(f"  manifest: {rep['manifestMode']} ({'machine fields derived from code' if rep['manifestMode'] == 'derived' else 'routes declared in JSON'})")
+    if rep["machineFieldsHandWritten"]:
+        lines.append(f"  manifest hand-writes derivable fields: {', '.join(rep['machineFieldsHandWritten'])}")
+    lines.extend(_format_drift(rep))
+    lines.extend(_format_duplication(rep["duplication"]))
     return "\n".join(lines)
 
 

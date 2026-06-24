@@ -28,6 +28,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, parse_qsl, quote, unquote, urlencode, urlparse, urlsplit, urlunsplit
 
+from .document_sync import (
+    DocumentSyncDeps,
+    document_archive_pdfs as _document_archive_pdfs_impl,
+    document_sync_verification as _document_sync_verification_impl,
+    sync_documents_to_node as _sync_documents_to_node_impl,
+)
+
 
 try:
     from docid.dedup import (
@@ -215,7 +222,36 @@ INDEX_HTML = r"""<!doctype html>
     .discovery-layout {
       grid-column: 1 / -1;
       display: grid;
+      grid-template-columns: minmax(260px, .35fr) minmax(0, .65fr);
       gap: 14px;
+      align-items: start;
+    }
+    .discovery-target {
+      width: 100%;
+      text-align: left;
+      display: block;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+    .discovery-target.active {
+      border-color: var(--accent);
+      box-shadow: inset 3px 0 0 var(--accent);
+      background: var(--surface);
+    }
+    .discovery-route-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
+    }
+    .route-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
     .panel {
       border: 1px solid var(--line);
@@ -667,6 +703,7 @@ INDEX_HTML = r"""<!doctype html>
       main { padding: 14px 12px 76px; }
       .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .grid { grid-template-columns: 1fr; }
+      .discovery-layout { grid-template-columns: 1fr; }
       .chat-shell { grid-template-columns: 1fr; min-height: 0; }
       .contacts-panel { border-right: 0; border-bottom: 1px solid var(--line-soft); padding-right: 0; padding-bottom: 10px; }
       .contact-list { max-height: 260px; }
@@ -708,11 +745,17 @@ INDEX_HTML = r"""<!doctype html>
     <section class="grid">
       <section class="discovery-layout view-block" data-section="discovery">
         <article class="panel">
-          <div class="panel-head"><h2>Discovery</h2><span class="subtle" id="discoveryCount"></span></div>
+          <div class="panel-head"><h2>URI Objects</h2><span class="subtle" id="discoveryCount"></span></div>
           <div class="panel-body"><div class="list" id="discoveryList"></div></div>
         </article>
         <article class="panel">
-          <div class="panel-head"><h2>Discovered URI Routes</h2><span class="subtle" id="discoveryRouteCount"></span></div>
+          <div class="panel-head">
+            <div>
+              <h2 id="discoveryRouteTitle">URI Registry</h2>
+              <p class="subtle" id="discoveryRouteMeta"></p>
+            </div>
+            <span class="subtle" id="discoveryRouteCount"></span>
+          </div>
           <div class="panel-body"><div class="list" id="discoveryRoutesList"></div></div>
         </article>
       </section>
@@ -892,6 +935,7 @@ INDEX_HTML = r"""<!doctype html>
     const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
     const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
     const initialTargets = (params.get('targets') || 'host').split(',').map((item) => item.trim()).filter(Boolean);
+    const initialDiscoveryTarget = (params.get('discovery') || params.get('registry') || '').trim();
     const state = {
       summary: null,
       tasks: [],
@@ -908,6 +952,7 @@ INDEX_HTML = r"""<!doctype html>
       visibleChatMessageIds: [],
       selectedChatMessageIds: new Set(),
       chatFullscreen: initialChatFull,
+      discoveryTarget: initialDiscoveryTarget,
       selectedTargets: initialTargets.length ? initialTargets : ['host']
     };
     const $ = (id) => document.getElementById(id);
@@ -960,6 +1005,7 @@ INDEX_HTML = r"""<!doctype html>
         execute: $('chatExecute') && $('chatExecute').checked ? '1' : '',
         no_llm: $('chatNoLlm') && $('chatNoLlm').checked ? '1' : '',
         targets: state.selectedTargets.join(','),
+        discovery: state.discoveryTarget || '',
         prompt: $('chatPrompt') ? $('chatPrompt').value.trim() : ''
       };
     }
@@ -982,6 +1028,7 @@ INDEX_HTML = r"""<!doctype html>
       setParam(search, 'execute', controls.execute);
       setParam(search, 'no_llm', controls.no_llm);
       setParam(search, 'targets', controls.targets || 'host');
+      setParam(search, 'discovery', controls.discovery);
       setParam(search, 'prompt', controls.prompt);
       setParam(search, 'prompt_len', controls.prompt ? controls.prompt.length : '');
       Object.entries(changes).forEach(([key, value]) => setParam(search, key, value));
@@ -1013,6 +1060,8 @@ INDEX_HTML = r"""<!doctype html>
         const target = node.startsWith('node:') ? node : `node:${node}`;
         if (!state.selectedTargets.includes(target)) state.selectedTargets.push(target);
       });
+      const discovery = (search.get('discovery') || search.get('registry') || '').trim();
+      if (discovery) state.discoveryTarget = discovery;
     }
 
     function setChatFullscreen(enabled, options = {}) {
@@ -1212,21 +1261,126 @@ INDEX_HTML = r"""<!doctype html>
       updateTargetSummary();
     }
 
+    function uriTarget(uri) {
+      const value = text(uri);
+      if (!value.includes('://')) return '';
+      return value.split('://', 2)[1].split('/', 1)[0] || '';
+    }
+
+    function normalizeRoute(route, owner) {
+      const item = typeof route === 'string' ? { uri: route } : (route || {});
+      return {
+        uri: text(item.uri),
+        kind: text(item.kind),
+        adapter: text(item.adapter || item.source),
+        title: text(item.title || item.label || ''),
+        safe: item.safe,
+        owner: owner.id,
+        ownerLabel: owner.label,
+        target: text(item.node || item.target || uriTarget(item.uri) || owner.id),
+      };
+    }
+
+    function dedupeRoutes(routes) {
+      const seen = new Set();
+      return routes.filter((route) => {
+        const key = `${route.uri}|${route.kind}|${route.adapter}`;
+        if (!route.uri || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function routesForNode(summary, node) {
+      const ownRoutes = Array.isArray(node.routes) ? node.routes : [];
+      if (ownRoutes.length) return ownRoutes;
+      return (summary.routes || []).filter((route) => route.node === node.name || uriTarget(route.uri) === node.name);
+    }
+
+    function discoveryObjects(summary) {
+      const host = summary.host || {};
+      const hostOwner = {
+        id: 'host',
+        kind: 'host',
+        label: host.label || 'urirun host',
+        status: host.status || 'local',
+        reachable: host.reachable !== false,
+        url: host.url || summary.project || '',
+      };
+      const hostObject = {
+        ...hostOwner,
+        routes: dedupeRoutes((host.routes || summary.hostRoutes || []).map((route) => normalizeRoute(route, hostOwner))),
+      };
+      const nodeObjects = (summary.nodes || []).map((node) => {
+        const owner = {
+          id: `node:${node.name}`,
+          kind: 'node',
+          label: `urirun node: ${node.name}`,
+          status: node.reachable ? 'up' : 'down',
+          reachable: !!node.reachable,
+          url: node.url || '',
+        };
+        return {
+          ...owner,
+          routes: dedupeRoutes(routesForNode(summary, node).map((route) => normalizeRoute(route, owner))),
+        };
+      });
+      const serviceObjects = (summary.services || []).map((service) => {
+        const owner = {
+          id: service.id || `service:${service.name}`,
+          kind: 'service',
+          label: service.label || `urirun service: ${service.name}`,
+          status: service.status || (service.reachable ? 'running' : 'stopped'),
+          reachable: !!service.reachable,
+          url: service.url || '',
+        };
+        return {
+          ...owner,
+          routes: dedupeRoutes((service.routes || []).map((route) => normalizeRoute(route, owner))),
+        };
+      });
+      return [hostObject, ...nodeObjects, ...serviceObjects];
+    }
+
+    function chooseDiscoveryTarget(objects) {
+      if (objects.some((item) => item.id === state.discoveryTarget)) return state.discoveryTarget;
+      const nodeTarget = state.selectedTargets.find((target) => target.startsWith('node:') && objects.some((item) => item.id === target));
+      if (nodeTarget) return nodeTarget;
+      const serviceTarget = state.selectedTargets.find((target) => target.startsWith('service:') && objects.some((item) => item.id === target));
+      if (serviceTarget) return serviceTarget;
+      return objects.length ? objects[0].id : 'host';
+    }
+
     function renderDiscovery(summary) {
-      const contacts = chatContacts(summary);
-      const routes = summary.routes || [];
-      $('discoveryCount').textContent = `${contacts.length} contacts`;
-      $('discoveryList').innerHTML = contacts.map((contact) => `<div class="item">
-        <div><strong>${esc(contact.label)}</strong> <span class="pill ${contact.reachable === false ? 'down' : 'up'}">${esc(contact.status || contact.kind)}</span></div>
-        <div class="mono">${esc(contact.id)}</div>
-        <div class="subtle">${esc(contact.url || '')}</div>
-        <div class="subtle">${esc(contact.kind || '')}</div>
-      </div>`).join('') || empty('No contacts discovered');
-      $('discoveryRouteCount').textContent = `${routes.length} routes`;
-      $('discoveryRoutesList').innerHTML = routes.map((route) => `<div class="item">
-        <div class="mono">${esc(route.uri)}</div>
-        <div class="subtle">node:${esc(route.node || 'host')} · ${esc(route.kind || '')} · ${esc(route.adapter || '')}</div>
-      </div>`).join('') || empty('No routes discovered');
+      const objects = discoveryObjects(summary);
+      state.discoveryTarget = chooseDiscoveryTarget(objects);
+      const selected = objects.find((item) => item.id === state.discoveryTarget) || objects[0] || null;
+      $('discoveryCount').textContent = `${objects.length} objects`;
+      $('discoveryList').innerHTML = objects.map((item) => {
+        const active = item.id === state.discoveryTarget ? 'active' : '';
+        const pillClass = item.reachable === false ? 'down' : 'up';
+        return `<button type="button" class="discovery-target ${active}" data-discovery-target="${esc(item.id)}">
+          <div><strong>${esc(item.label)}</strong> <span class="pill ${pillClass}">${esc(item.status || item.kind)}</span></div>
+          <div class="mono">${esc(item.id)}</div>
+          <div class="subtle">${esc(item.url || '')}</div>
+          <div class="subtle">${item.routes.length} URI routes · ${esc(item.kind || '')}</div>
+        </button>`;
+      }).join('') || empty('No URI objects discovered');
+      if (!selected) {
+        $('discoveryRouteTitle').textContent = 'URI Registry';
+        $('discoveryRouteMeta').textContent = '';
+        $('discoveryRouteCount').textContent = '0 routes';
+        $('discoveryRoutesList').innerHTML = empty('No object selected');
+        return;
+      }
+      $('discoveryRouteTitle').textContent = `${selected.label} registry`;
+      $('discoveryRouteMeta').textContent = `${selected.id}${selected.url ? ` · ${selected.url}` : ''}`;
+      $('discoveryRouteCount').textContent = `${selected.routes.length} routes`;
+      $('discoveryRoutesList').innerHTML = selected.routes.map((route) => `<div class="item">
+        <div class="route-title"><span class="mono">${esc(route.uri)}</span>${route.safe === false ? '<span class="pill down">unsafe</span>' : ''}</div>
+        ${route.title ? `<div>${esc(route.title)}</div>` : ''}
+        <div class="subtle">${esc(route.ownerLabel)} · ${esc(route.kind || 'route')} · ${esc(route.adapter || 'registry')} · target:${esc(route.target)}</div>
+      </div>`).join('') || empty('No URI routes for this object');
     }
 
     function renderRoutes(routes) {
@@ -2379,7 +2533,15 @@ INDEX_HTML = r"""<!doctype html>
       }
     }
 
-	    document.addEventListener('click', (event) => {
+    document.addEventListener('click', (event) => {
+      const discoveryButton = event.target && event.target.closest ? event.target.closest('[data-discovery-target]') : null;
+      if (discoveryButton) {
+        event.preventDefault();
+        state.discoveryTarget = discoveryButton.dataset.discoveryTarget || 'host';
+        if (state.summary) renderDiscovery(state.summary);
+        writeUrlState({ action: 'discovery:select', discovery: state.discoveryTarget }, { replace: true });
+        return;
+      }
 	      const contactButton = event.target && event.target.closest ? event.target.closest('[data-contact-action]') : null;
 	      if (contactButton) {
 	        event.preventDefault();
@@ -4484,36 +4646,14 @@ def _document_sync_verification(
     expected = [path.relative_to(source_root).as_posix() for path in files]
     uploaded = [item["relativePath"] for item in results if item.get("writeOk")]
     verified = [item["relativePath"] for item in results if item.get("verified")]
-    verified_set = set(verified)
-    missing = [rel for rel in expected if rel not in verified_set]
     mode = "read-back-sha256" if read_back else "write-ack-sha256"
-    checks = [
-        {
-            "check": "write_ack_for_every_expected_file",
-            "ok": len(uploaded) == len(expected),
-            "expected": len(expected),
-            "actual": len(uploaded),
-        },
-        {
-            "check": "sha256_verified_for_every_expected_file",
-            "ok": len(verified) == len(expected),
-            "expected": len(expected),
-            "actual": len(verified),
-            "mode": mode,
-        },
-    ]
-    return {
-        "contract": "document-sync.v1",
-        "ok": all(check["ok"] for check in checks),
-        "mode": mode,
-        "expectedFiles": len(expected),
-        "uploadedFiles": len(uploaded),
-        "verifiedFiles": len(verified),
-        "failedFiles": len(missing),
-        "missing": missing[:50],
-        "truncatedMissing": max(0, len(missing) - 50),
-        "checks": checks,
-    }
+    return file_transfer_verification(
+        contract="document-sync.v1",
+        expected=expected,
+        uploaded=uploaded,
+        verified=verified,
+        mode=mode,
+    )
 
 
 def _document_archive_pdfs(root: Path) -> list[Path]:
@@ -8030,6 +8170,21 @@ def _service_contacts() -> list[dict]:
     return contacts
 
 
+def _host_registry_routes() -> list[dict]:
+    routes = []
+    for action in _uri_action_catalog():
+        if action.get("layer") in {"host", "dashboard", "connector"}:
+            routes.append({
+                "uri": action.get("uri"),
+                "kind": action.get("kind"),
+                "title": action.get("label"),
+                "source": action.get("where"),
+                "safe": not bool(action.get("sideEffects")),
+                "layer": action.get("layer"),
+            })
+    return routes
+
+
 def summary(project: str, db: str | None, config: str | None, node_urls: list[str] | None = None) -> dict:
     tickets, task_error = _safe_tickets(project, sprint="all")
     host_db = _host_db()
@@ -8044,6 +8199,16 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     nodes = discovered.get("nodes") or []
     routes = discovered.get("routes") or []
     services = _service_contacts()
+    host_routes = _host_registry_routes()
+    host = {
+        "id": "host",
+        "kind": "host",
+        "label": "urirun host",
+        "status": "local",
+        "reachable": True,
+        "url": str(Path(project).expanduser().resolve()),
+        "routes": host_routes,
+    }
     return {
         "ok": True,
         "project": str(Path(project).expanduser().resolve()),
@@ -8056,6 +8221,8 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
         "nodesOnline": len([node for node in nodes if node.get("reachable")]),
         "routeCount": len(routes),
         "serviceCount": len(services),
+        "host": host,
+        "hostRoutes": host_routes,
         "nodes": nodes,
         "services": services,
         "routes": routes,

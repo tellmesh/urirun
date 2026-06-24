@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.00s -->
+<!-- generated in 0.01s -->
 
 ## Overview
 
@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 91, json: 13, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1302
+- **Total Functions**: 1310
 - **Total Classes**: 27
 - **Modules**: 150
-- **Entry Points**: 425
+- **Entry Points**: 427
 
 ## Architecture by Module
 
 ### adapters.python.urirun.host.host_dashboard
-- **Functions**: 211
+- **Functions**: 218
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.runtime.v2
@@ -85,7 +85,7 @@
 - **File**: `flow.py`
 
 ### adapters.python.urirun.node.client
-- **Functions**: 23
+- **Functions**: 24
 - **Classes**: 1
 - **File**: `client.py`
 
@@ -118,16 +118,13 @@ Main execution flows into the system:
 ### adapters.conformance.main
 - **Calls**: sys.path.insert, outputs.items, contracts.get, sorted, print, None.hexdigest, tempfile.mkstemp, os.write
 
-### adapters.python.urirun.runtime.v1.main
-- **Calls**: list, argparse.ArgumentParser, parser.add_subparsers, subparsers.add_parser, add_source, run_parser.add_argument, run_parser.add_argument, run_parser.add_argument
-
 ### adapters.python.urirun.node.client.NodeClient.ensure_scheme
 > Make `scheme://` live on the node, acquiring it if missing: adopt bindings already
 installed in the node venv, else discover a connector (catalog/loca
-- **Calls**: try_adopt, adopted.get, self.value, self.deploy, self.schemes, self.run, adopt.get, self.run
+- **Calls**: try_adopt, adopted.get, self.value, self.deploy, self.run, adopt.get, self.run, isinstance
 
-### adapters.python.urirun.node.mesh.NodeHandler._get
-- **Calls**: self.path.partition, adapters.python.urirun.node.mesh.send_json, adapters.python.urirun.node.mesh.send_json, adapters.python.urirun.node.mesh.send_json, self.path.startswith, self._stream_events, list, adapters.python.urirun.node.mesh.send_json
+### adapters.python.urirun.runtime.v1.main
+- **Calls**: list, argparse.ArgumentParser, parser.add_subparsers, subparsers.add_parser, add_source, run_parser.add_argument, run_parser.add_argument, run_parser.add_argument
 
 ### adapters.python.urirun.runtime._runtime.main
 - **Calls**: list, argparse.ArgumentParser, parser.add_subparsers, subparsers.add_parser, add_source, run_parser.add_argument, run_parser.add_argument, run_parser.add_argument
@@ -151,17 +148,17 @@ installed in the node venv, else discover a connector (catalog/loca
 > Build the connector argparse parser (one subcommand per route).
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
 
-### adapters.python.urirun.runtime.worker._handler_worker_main
-> Warm runner for ``local-function`` handlers — the pooled twin of
-``python -m urirun.exec``. Reads ``{"ref": "module:export", "payload": {...}}``
-line 
-- **Calls**: sys.stdout.write, sys.stdout.flush, cache.get, line.strip, json.loads, sys.stdout.flush, ref.partition, getattr
-
 ### adapters.python.urirun.runtime.v2._cmd_upgrade
 > Upgrade urirun itself (no ids) or installed connectors (``install --upgrade``).
 
 ``--all`` upgrades every installed connector; ``--check`` reports wha
 - **Calls**: getattr, getattr, getattr, getattr, adapters.python.urirun.runtime.v2._resolve_pip_targets, adapters.python.urirun.runtime.v2._pip_command, print, adapters.python.urirun.runtime.v2.connector_health
+
+### adapters.python.urirun.runtime.worker._handler_worker_main
+> Warm runner for ``local-function`` handlers — the pooled twin of
+``python -m urirun.exec``. Reads ``{"ref": "module:export", "payload": {...}}``
+line 
+- **Calls**: sys.stdout.write, sys.stdout.flush, cache.get, line.strip, json.loads, sys.stdout.flush, ref.partition, getattr
 
 ### adapters.python.urirun.runtime.v2_grpc.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, s.add_argument, s.add_argument, s.add_argument, s.add_argument, s.add_argument
@@ -171,6 +168,12 @@ line
 
 ### adapters.python.urirun.connectors.connect_catalog._cmd_show
 - **Calls**: adapters.python.urirun.connectors.connect_catalog.fetch_connector, print, print, print, print, print, document.get, adapters.python.urirun.connectors.connect_catalog._emit_json
+
+### adapters.python.urirun.runtime.v2.run_local_function_subprocess
+> Run a ``local-function`` handler in a fresh process via the shared
+``python -m urirun.exec`` runner — for routes that want isolation (untrusted
+code, 
+- **Calls**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError, isinstance, ctx.get, isinstance
 
 ### adapters.python.urirun.runtime.secrets._provider_oauth
 > ``secret://oauth/<provider>/<account>`` — a cached OAuth access token, with
@@ -182,23 +185,17 @@ refresh. The token bundle lives in the keyring under ``oauth:<provider>``
 ~/github) and push its text files to the node's deploy dir (flat, by b
 - **Calls**: os.path.expanduser, os.path.isdir, sorted, self.deploy, str, glob.glob, dep.get, sorted
 
-### adapters.python.urirun.runtime.v2.run_local_function_subprocess
-> Run a ``local-function`` handler in a fresh process via the shared
-``python -m urirun.exec`` runner — for routes that want isolation (untrusted
-code, 
-- **Calls**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError, isinstance, ctx.get, isinstance
-
 ### adapters.python.urirun.runtime.errors.problem
 > Project an error envelope to RFC 9457 ``application/problem+json``.
 - **Calls**: dict, adapters.python.urirun.runtime.errors.category_meta, err.get, adapters.python.urirun.runtime.errors.classify, err.get, adapters.python.urirun.runtime.errors.error_code, err.get, err.get
+
+### adapters.python.urirun.node.mesh.NodeHandler._handle_enroll
+- **Calls**: adapters.python.urirun.node.mesh.read_raw, keyauth.verify_request, keyauth.token_matches, print, adapters.python.urirun.node.mesh.send_json, adapters.python.urirun.node.mesh.send_json, keyauth.available, adapters.python.urirun.node.mesh.send_json
 
 ### adapters.python.urirun.node.client.NodeClient.watch
 > Yield the node's SSE events live, each tagged with its `_id`. `scheme`/`run`
 filter server-side; `last_event_id` replays what was missed (resume after
 - **Calls**: urlencode, self._auth, params.append, params.append, params.append, str, urllib.request.urlopen, urllib.request.Request
-
-### adapters.python.urirun.node.mesh.NodeHandler._handle_enroll
-- **Calls**: adapters.python.urirun.node.mesh.read_raw, keyauth.verify_request, keyauth.token_matches, print, adapters.python.urirun.node.mesh.send_json, adapters.python.urirun.node.mesh.send_json, keyauth.available, adapters.python.urirun.node.mesh.send_json
 
 ### examples.matrix.verify.main
 - **Calls**: contracts.get, sorted, None.removesuffix, adapters.python.urirun.validate_binding_document, examples.matrix.verify.essential, contracts.items, json.load, print
@@ -217,6 +214,12 @@ filter server-side; `last_event_id` replays what was missed (resume after
 - a catalog id ("browser-control") → urirun-connector-<id> (PyPI, then if-uri GitHub),
 - a l
 - **Calls**: None.strip, adapters.python.urirun.node.manage._classify_source, adapters.python.urirun.node.manage._install_policy, adapters.python.urirun.node.manage._policy_allows, res.get, payload.get, payload.get, payload.get
+
+### adapters.python.urirun.runtime.discovery.registry_for_uri
+> Compile a registry for just the connector owning ``uri``'s scheme (+ builtins).
+
+Falls back to full discovery (and refreshes the index) when the schem
+- **Calls**: adapters.python.urirun.runtime.discovery._scheme_of, adapters.python.urirun.runtime.discovery.load_index, list, adapters.python.urirun.runtime.discovery.build_index, v2.entry_point_bindings, bindings.extend, v2.compile_registry, None.get
 
 ## Process Flows
 
@@ -238,29 +241,28 @@ _stream_events [adapters.python.urirun.node.mesh.NodeHandler]
 ensure_scheme [adapters.python.urirun.node.client.NodeClient]
 ```
 
-### Flow 4: _get
-```
-_get [adapters.python.urirun.node.mesh.NodeHandler]
-  └─ →> send_json
-  └─ →> send_json
-```
-
-### Flow 5: _handle_deploy
+### Flow 4: _handle_deploy
 ```
 _handle_deploy [adapters.python.urirun.node.mesh.NodeHandler]
   └─ →> read_raw
   └─ →> send_json
 ```
 
-### Flow 6: _handle_run
+### Flow 5: _handle_run
 ```
 _handle_run [adapters.python.urirun.node.mesh.NodeHandler]
   └─ →> read_raw
 ```
 
-### Flow 7: _build_cli_parser
+### Flow 6: _build_cli_parser
 ```
 _build_cli_parser [adapters.python.urirun.Connector]
+```
+
+### Flow 7: _cmd_upgrade
+```
+_cmd_upgrade [adapters.python.urirun.runtime.v2]
+  └─> _resolve_pip_targets
 ```
 
 ### Flow 8: _handler_worker_main
@@ -268,15 +270,16 @@ _build_cli_parser [adapters.python.urirun.Connector]
 _handler_worker_main [adapters.python.urirun.runtime.worker]
 ```
 
-### Flow 9: _cmd_upgrade
-```
-_cmd_upgrade [adapters.python.urirun.runtime.v2]
-  └─> _resolve_pip_targets
-```
-
-### Flow 10: _worker_main
+### Flow 9: _worker_main
 ```
 _worker_main [adapters.python.urirun.runtime.worker]
+```
+
+### Flow 10: _cmd_show
+```
+_cmd_show [adapters.python.urirun.connectors.connect_catalog]
+  └─> fetch_connector
+      └─> _get_json
 ```
 
 ## Key Classes
@@ -290,7 +293,7 @@ so this is a normal
 
 ### adapters.python.urirun.node.client.NodeClient
 > Drive one urirun node: ``c = NodeClient("http://host:8765"); c.run(uri, payload)``.
-- **Methods**: 21
+- **Methods**: 22
 - **Key Methods**: adapters.python.urirun.node.client.NodeClient.__init__, adapters.python.urirun.node.client.NodeClient._auth, adapters.python.urirun.node.client.NodeClient.routes, adapters.python.urirun.node.client.NodeClient.get, adapters.python.urirun.node.client.NodeClient.concretize, adapters.python.urirun.node.client.NodeClient.run, adapters.python.urirun.node.client.NodeClient.run_async, adapters.python.urirun.node.client.NodeClient.cancel, adapters.python.urirun.node.client.NodeClient.status, adapters.python.urirun.node.client.NodeClient.deploy
 
 ### adapters.python.urirun.Connector
@@ -364,17 +367,17 @@ child processes t
 - **Methods**: 1
 - **Key Methods**: adapters.python.urirun.host.domain_monitor._RouteCtx.key
 
-### adapters.python.urirun.node.mesh.NodeContext
-> Everything a NodeHandler needs to serve one node — the mutable `state` (name /
-registry / routes / a
-- **Methods**: 1
-- **Key Methods**: adapters.python.urirun.node.mesh.NodeContext.__init__
-
 ### adapters.python.urirun.runtime.v2._RunAbort
 > Carries a finished (error) envelope to the single exit point in run().
 - **Methods**: 1
 - **Key Methods**: adapters.python.urirun.runtime.v2._RunAbort.__init__
 - **Inherits**: Exception
+
+### adapters.python.urirun.node.mesh.NodeContext
+> Everything a NodeHandler needs to serve one node — the mutable `state` (name /
+registry / routes / a
+- **Methods**: 1
+- **Key Methods**: adapters.python.urirun.node.mesh.NodeContext.__init__
 
 ### adapters.go.urirun.Schema
 - **Methods**: 0
@@ -439,38 +442,44 @@ verify/new/smoke/from-spe
 ### adapters.python.urirun.runtime.v1._run_process_streaming
 - **Output to**: subprocess.Popen, progress.register_proc, threading.Timer, timer.start, enumerate
 
+### adapters.python.urirun.runtime.v2.validate_input
+- **Output to**: adapters.python.urirun.runtime.v2._input_values, adapters.python.urirun.runtime.v2._schema_for, Draft202012Validator.check_schema, set, adapters.python.urirun.runtime.v2._apply_defaults
+
+### adapters.python.urirun.runtime.v2.run_local_function_subprocess
+> Run a ``local-function`` handler in a fresh process via the shared
+``python -m urirun.exec`` runner 
+- **Output to**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError
+
+### adapters.python.urirun.runtime.v2._run_parse
+- **Output to**: reglib.parse_uri, reglib.translate, _RunAbort, str, str
+
+### adapters.python.urirun.runtime.v2._run_validate
+- **Output to**: adapters.python.urirun.runtime.v2.validate_input, _RunAbort
+
+### adapters.python.urirun.runtime.v2.parse_param_declaration
+> Parse a compact CLI param declaration.
+
+Supported forms:
+- ``name``
+- ``name:type``
+- ``name:type:re
+- **Output to**: left.split, None.strip, None.get, declaration.split, ValueError
+
+### adapters.python.urirun.runtime.v2.validate_binding_document
+- **Output to**: adapters.python.urirun.runtime.v2.expand_bindings, binding.get, config.get, set, set
+
+### adapters.python.urirun.runtime.v2._parse_dockerfile_labels
+- **Output to**: re.compile, re.compile, None.splitlines, label_re.match, pair_re.findall
+
+### adapters.python.urirun.runtime.v2._cmd_validate
+- **Output to**: adapters.python.urirun.runtime.v2.validate_binding_document, adapters.python.urirun.runtime.v2._load_json_arg, Path, reglib._emit_json, print
+
 ### adapters.python.urirun.runtime._runtime.format_route_table
 - **Output to**: out.extend, None.join, max, None.rstrip, line
 
 ### adapters.python.urirun.runtime.v2_grpc._validate
 > Return an error envelope if the URI/payload is invalid, else None.
 - **Output to**: reglib.parse_uri, reglib.translate, reglib.resolve_route, v2.validate_input
-
-### adapters.python.urirun.runtime.agent._parse_stdout
-- **Output to**: isinstance, result.get, isinstance, isinstance, exec_out.get
-
-### adapters.python.urirun.runtime.dispatch_protocol.validate_request
-> Return a list of problems with a (normalized or raw) request; empty == valid.
-- **Output to**: None.get, None.get, None.get, errors.append, errors.append
-
-### adapters.python.urirun.runtime.dispatch_protocol._parse_stdout
-> A route's stdout is JSON by convention; return the parsed object, else the text.
-- **Output to**: stdout.strip, isinstance, json.loads
-
-### adapters.python.urirun.runtime.dispatch_protocol.validate_reply
-- **Output to**: isinstance, errors.append, env.get, errors.append, errors.append
-
-### adapters.python.urirun.runtime._registry.parse_uri
-- **Output to**: URI_RE.match, unquote, str, ValueError, unquote
-
-### adapters.python.urirun.runtime._registry._parse_command
-- **Output to**: shlex.split, json.loads, isinstance, str
-
-### adapters.python.urirun.runtime._scan.parse_compose_label_line
-- **Output to**: None.strip, value.startswith, value.split, key.strip, None.strip
-
-### adapters.python.urirun.runtime._scan.format_binding_table
-- **Output to**: output.extend, None.join, max, None.rstrip, line
 
 ## Behavioral Patterns
 
@@ -493,6 +502,16 @@ verify/new/smoke/from-spe
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.runtime.codegen._field_type
+
+### recursion__apply_defaults
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.runtime.v2._apply_defaults
+
+### recursion__placeholders_in
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.runtime.v2._placeholders_in
 
 ### recursion__fetch_render
 - **Type**: recursion
@@ -534,16 +553,6 @@ verify/new/smoke/from-spe
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
 
-### recursion__apply_defaults
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.v2._apply_defaults
-
-### recursion__placeholders_in
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.runtime.v2._placeholders_in
-
 ### state_machine_Urirun
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -554,7 +563,7 @@ verify/new/smoke/from-spe
 Functions exposed as public API (no underscore prefix):
 
 - `adapters.python.urirun.host.host_dashboard.chat_ask` - 185 calls
-- `adapters.python.urirun.host.host_dashboard.sync_documents_to_node` - 116 calls
+- `adapters.python.urirun.host.host_dashboard.sync_documents_to_node` - 142 calls
 - `adapters.python.urirun.host.host_dashboard.scanner_best_finish` - 102 calls
 - `adapters.python.urirun.host.host_dashboard.create_handler` - 82 calls
 - `adapters.python.urirun.host.host_dashboard.scanner_capture` - 74 calls
@@ -562,14 +571,15 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime._registry.main` - 56 calls
 - `adapters.python.urirun.node.mesh.run_command` - 49 calls
 - `adapters.conformance.main` - 45 calls
+- `adapters.python.urirun.node.client.NodeClient.ensure_scheme` - 45 calls
 - `adapters.python.urirun.runtime.v1.main` - 44 calls
 - `adapters.python.urirun.runtime.daemon.serve` - 41 calls
 - `adapters.python.urirun.host.host_dashboard.uri_invoke` - 41 calls
-- `adapters.python.urirun.node.client.NodeClient.ensure_scheme` - 40 calls
 - `adapters.python.urirun.node.recovery.normalize_error` - 37 calls
 - `adapters.python.urirun.node.mesh.apply_deploy` - 37 calls
 - `adapters.python.urirun.runtime._runtime.main` - 33 calls
 - `adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service` - 33 calls
+- `adapters.python.urirun.host.host_dashboard.summary` - 33 calls
 - `scripts.lint_connectors.main` - 31 calls
 - `adapters.python.urirun.runtime.v2_adopt.main` - 31 calls
 - `adapters.python.urirun.node.flow.normalize_flow` - 31 calls
@@ -580,7 +590,6 @@ Functions exposed as public API (no underscore prefix):
 - `scripts.repin_connectors.main` - 28 calls
 - `adapters.python.urirun.runtime.adopt_pack.adopt` - 28 calls
 - `adapters.python.urirun.node.mesh.watch_command` - 28 calls
-- `adapters.python.urirun.host.host_dashboard.summary` - 28 calls
 - `adapters.python.urirun.host.host_dashboard.artifacts_delete` - 28 calls
 - `adapters.python.urirun.runtime.errors.info` - 27 calls
 - `adapters.python.urirun.connectors.connector_lint.verify_connector` - 27 calls
@@ -590,9 +599,9 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime._runtime.run` - 25 calls
 - `adapters.python.urirun.runtime.v2_grpc.main` - 25 calls
 - `adapters.python.urirun.node.flow.execute_flow` - 25 calls
+- `adapters.python.urirun.runtime.v2.run_local_function_subprocess` - 24 calls
+- `adapters.python.urirun.runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
-- `adapters.python.urirun.connectors.resolver.resolve` - 24 calls
-- `adapters.python.urirun.node.client.NodeClient.push_folder` - 24 calls
 
 ## System Interactions
 
@@ -615,21 +624,21 @@ graph TD
     main --> get
     main --> sorted
     main --> print
-    main --> add_source
     ensure_scheme --> try_adopt
     ensure_scheme --> get
     ensure_scheme --> value
     ensure_scheme --> deploy
-    ensure_scheme --> schemes
-    _get --> partition
-    _get --> send_json
-    _get --> startswith
+    ensure_scheme --> run
+    main --> add_source
     main --> parse_args
     _handle_deploy --> read_raw
     _handle_deploy --> get
     _handle_deploy --> print
     _handle_deploy --> send_json
     _handle_run --> read_raw
+    _handle_run --> _validate_run_reques
+    _handle_run --> str
+    _handle_run --> _dispatch_control_ur
 ```
 
 ## Reverse Engineering Guidelines

@@ -193,6 +193,10 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "/api/services/live" in html
     assert "discoveryList" in html
     assert "discoveryRoutesList" in html
+    assert "discoveryRouteTitle" in html
+    assert "data-discovery-target" in html
+    assert "discoveryTarget" in html
+    assert "discoveryObjects(summary)" in html
     assert "messageMatchesTargets" in html
     assert "messageTargets" in html
     assert "chatDeleteVisibleBtn" in html
@@ -423,6 +427,9 @@ def test_summary_shows_known_nodes_file_nodes(monkeypatch, tmp_path):
     assert result["nodes"][0]["url"] == "http://laptop.local:8766"
     assert result["nodes"][0]["source"] == "known-nodes-file"
     assert result["nodes"][0]["reachable"] is False
+    host_uris = {route["uri"] for route in result["host"]["routes"]}
+    assert "document://host/archive/command/sync-to-node" in host_uris
+    assert "urifix://host/chain/command/repair" in host_uris
 
 
 def test_chat_ask_executes_document_sync_without_llm(monkeypatch):

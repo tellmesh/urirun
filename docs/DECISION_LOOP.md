@@ -123,6 +123,41 @@ intent, flow, execution, observation, nextIntent
 Do not make the chat message the source of truth for autonomous decisions. The
 chat should render `DecisionLoop`, not replace it.
 
+## Verification Contracts
+
+Any URI step with an external side effect should return a `verification` block.
+This includes file copy, document scan/archive, artifact deletion, service
+restart, deploy and connector provisioning. A side effect is not complete merely
+because the handler returned without an exception; the contract should say what
+was expected and what was actually verified.
+
+Minimum shape:
+
+```json
+{
+  "verification": {
+    "contract": "document-sync.v1",
+    "ok": false,
+    "expectedFiles": 11,
+    "uploadedFiles": 0,
+    "verifiedFiles": 0,
+    "failedFiles": 11,
+    "checks": [
+      {
+        "check": "write_ack_for_every_expected_file",
+        "ok": false,
+        "expected": 11,
+        "actual": 0
+      }
+    ]
+  }
+}
+```
+
+When `verification.ok` is false, the observation should be `uri-step-failed` and
+the next intent should normally be `urifix://host/chain/command/repair` with the
+failed result attached.
+
 ## URI Design Guidance
 
 Keep URI steps concrete and small. Prefer this:

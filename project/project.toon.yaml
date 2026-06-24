@@ -1,28 +1,28 @@
-# urirun | 1302 func | 83f | 32859L | python | 2026-06-24
+# urirun | 1310 func | 83f | 33326L | python | 2026-06-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=5.2  critical=187 (limit:10)  dup=2  cycles=0
+  CC̄=5.2  critical=188 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! cc_exceeded      chat_ask = 100 (limit:15)
   !!! high_fan_out     chat_ask = 60 (limit:10)
+  !!! cc_exceeded      sync_documents_to_node = 52 (limit:15)
   !!! high_fan_out     _archive_scanned_document = 51 (limit:10)
+  !!! high_fan_out     sync_documents_to_node = 50 (limit:10)
   !!! cc_exceeded      scanner_best_finish = 47 (limit:15)
-  !!! high_fan_out     sync_documents_to_node = 46 (limit:10)
-  !!! cc_exceeded      sync_documents_to_node = 42 (limit:15)
   !!! high_fan_out     create_handler = 38 (limit:10)
   !!! high_fan_out     scanner_capture = 37 (limit:10)
   !!! cc_exceeded      _llm_extract_metadata = 36 (limit:15)
   !!! cc_exceeded      _archive_scanned_document = 35 (limit:15)
 
 MODULES[151] (top by size):
-  M[adapters/python/urirun/host/host_dashboard.py] 9405L C:0 F:211 CC↑100 D:0 (python)
-  M[adapters/python/urirun/runtime/v2.py] 2024L C:1 F:125 CC↑14 D:3 (python)
-  M[adapters/python/urirun/node/mesh.py] 1715L C:3 F:64 CC↑20 D:1 (python)
+  M[adapters/python/urirun/host/host_dashboard.py] 9861L C:0 F:218 CC↑100 D:0 (python)
+  M[adapters/python/urirun/runtime/v2.py] 2024L C:1 F:125 CC↑14 D:4 (python)
+  M[adapters/python/urirun/node/mesh.py] 1715L C:3 F:64 CC↑20 D:2 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/__init__.py] 737L C:1 F:51 CC↑14 D:10 (python)
-  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:2 (python)
+  M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/cli.py] 681L C:0 F:7 CC↑1 D:1 (python)
   M[adapters/python/urirun/runtime/_scan.py] 666L C:0 F:35 CC↑14 D:0 (python)
   M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
@@ -37,16 +37,16 @@ MODULES[151] (top by size):
 HOTSPOTS[10]:
   ★ chat_ask fan=60  // Orchestrates 60 calls
   ★ _archive_scanned_document fan=51  // Orchestrates 51 calls
-  ★ sync_documents_to_node fan=46  // Orchestrates 46 calls
+  ★ sync_documents_to_node fan=50  // Orchestrates 50 calls
   ★ create_handler fan=38  // Orchestrates 38 calls
   ★ scanner_capture fan=37  // Orchestrates 37 calls
 
 REFACTOR[15]:
-  [1] H/L Split sync_documents_to_node (CC=42)
+  [1] H/L Split sync_documents_to_node (CC=52)
   [2] H/L Split _backfill_scanned_id_log (CC=30)
   [3] H/L Split _llm_extract_metadata (CC=36)
   [4] H/L Split _archive_scanned_document (CC=35)
   [5] H/L Split _document_frame_quality (CC=34)
 
 EVOLUTION:
-  2026-06-24 CC̄=5.2 crit=187 32859L // Automated analysis
+  2026-06-24 CC̄=5.2 crit=188 33326L // Automated analysis

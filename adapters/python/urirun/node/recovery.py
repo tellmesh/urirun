@@ -15,6 +15,13 @@ from urirun.runtime import errors as uri_errors
 TRANSIENT_CATEGORIES = {"UNAVAILABLE", "DEADLINE_EXCEEDED", "ABORTED"}
 
 
+def _infer_category(out: dict) -> str:
+    message = str(out.get("message") or "").casefold()
+    if "missing dependenc" in message or "urirun_llm_model" in message or "llm_model" in message:
+        return "FAILED_PRECONDITION"
+    return uri_errors.classify(str(out.get("type") or ""), str(out.get("message") or ""))
+
+
 def normalize_error(error: Any, *, uri: str = "") -> dict:
     if isinstance(error, dict):
         out = dict(error)
@@ -23,15 +30,12 @@ def normalize_error(error: Any, *, uri: str = "") -> dict:
     out.setdefault("type", "Error")
     out.setdefault("message", "")
     if not out.get("category"):
-        message = str(out.get("message") or "").casefold()
-        if "missing dependenc" in message or "urirun_llm_model" in message or "llm_model" in message:
-            out["category"] = "FAILED_PRECONDITION"
-        else:
-            out["category"] = uri_errors.classify(str(out.get("type") or ""), str(out.get("message") or ""))
+        out["category"] = _infer_category(out)
     status, severity, _ = uri_errors.category_meta(str(out.get("category") or "UNKNOWN"))
     out.setdefault("status", status)
     out.setdefault("severity", severity)
-    out.setdefault("code", uri_errors.error_code(str(out.get("type") or ""), str(out.get("message") or ""), uri.split("://", 1)[0] if "://" in uri else ""))
+    scheme = uri.split("://", 1)[0] if "://" in uri else ""
+    out.setdefault("code", uri_errors.error_code(str(out.get("type") or ""), str(out.get("message") or ""), scheme))
     out.setdefault("uri", uri_errors.address(str(out.get("code") or "")))
     out.setdefault("help", uri_errors.help_url(str(out.get("code") or ""), str(out.get("category") or "")))
     return out
@@ -56,102 +60,68 @@ def route_for_step(step: dict, routes: list[dict]) -> dict:
     return {}
 
 
-def recovery_actions(error: dict, *, step: dict | None = None, routes: list[dict] | None = None) -> list[dict]:
-    step = step or {}
-    routes = routes or []
-    category = str(error.get("category") or "")
-    message = str(error.get("message") or "").casefold()
-    uri = str(step.get("uri") or "")
-    scheme = uri.split("://", 1)[0] if "://" in uri else ""
-    target = step_target(step)
+def _llm_model_actions() -> list[dict]:
+    return [{
+        "id": "use-known-intent-or-configure-llm",
+        "kind": "planner",
+        "automatic": False,
+        "label": "Use a deterministic intent when available, or set URIRUN_LLM_MODEL/LLM_MODEL.",
+    }]
+
+
+def _transient_actions(target: str) -> list[dict]:
     actions: list[dict] = []
-
-    if "urirun_llm_model" in message or "llm_model" in message:
-        return [
-            {
-                "id": "use-known-intent-or-configure-llm",
-                "kind": "planner",
-                "automatic": False,
-                "label": "Use a deterministic intent when available, or set URIRUN_LLM_MODEL/LLM_MODEL.",
-            }
-        ]
-
-    if category in {"UNAVAILABLE", "DEADLINE_EXCEEDED"}:
-        if target:
-            actions.append({
-                "id": "check-target-health",
-                "kind": "diagnostic",
-                "automatic": False,
-                "uri": f"env://{target}/runtime/query/health",
-                "label": f"Check whether target {target!r} is reachable.",
-            })
+    if target:
         actions.append({
-            "id": "retry-transient-step",
-            "kind": "retry",
-            "automatic": True,
-            "label": "Retry once when the URI is a query or this is a dry-run.",
+            "id": "check-target-health",
+            "kind": "diagnostic",
+            "automatic": False,
+            "uri": f"env://{target}/runtime/query/health",
+            "label": f"Check whether target {target!r} is reachable.",
         })
-        actions.append({
-            "id": "refresh-discovery",
+    actions.append({
+        "id": "retry-transient-step",
+        "kind": "retry",
+        "automatic": True,
+        "label": "Retry once when the URI is a query or this is a dry-run.",
+    })
+    actions.append({
+        "id": "refresh-discovery",
+        "kind": "discovery",
+        "automatic": False,
+        "label": "Refresh node/service discovery before another attempt.",
+    })
+    return actions
+
+
+def _not_found_actions(message: str, error: dict, scheme: str) -> list[dict]:
+    if "route not found" in message or str(error.get("type") or "") == "registry":
+        actions = [{
+            "id": "refresh-routes",
             "kind": "discovery",
             "automatic": False,
-            "label": "Refresh node/service discovery before another attempt.",
-        })
-        return actions
-
-    if category in {"UNAUTHENTICATED", "PERMISSION_DENIED"}:
-        actions.append({
-            "id": "authorize-target",
-            "kind": "auth",
-            "automatic": False,
-            "label": "Enroll or pass a valid run token/identity before retrying this URI.",
-        })
-        return actions
-
-    if category == "NOT_FOUND":
-        if "route not found" in message or str(error.get("type") or "") == "registry":
+            "label": "Refresh /routes and rebuild the registry.",
+        }]
+        if scheme:
             actions.append({
-                "id": "refresh-routes",
-                "kind": "discovery",
+                "id": "resolve-connector",
+                "kind": "provision",
                 "automatic": False,
-                "label": "Refresh /routes and rebuild the registry.",
+                "scheme": scheme,
+                "uri": f"connector://host/{scheme}/query/resolve",
+                "label": f"Resolve or install a connector that serves {scheme}://.",
             })
-            if scheme:
-                actions.append({
-                    "id": "resolve-connector",
-                    "kind": "provision",
-                    "automatic": False,
-                    "scheme": scheme,
-                    "uri": f"connector://host/{scheme}/query/resolve",
-                    "label": f"Resolve or install a connector that serves {scheme}://.",
-                })
-            return actions
-        actions.append({
-            "id": "mark-missing-resource",
-            "kind": "data",
-            "automatic": False,
-            "label": "Mark the referenced file/artifact as missing and avoid embedding stale previews.",
-        })
         return actions
+    return [{
+        "id": "mark-missing-resource",
+        "kind": "data",
+        "automatic": False,
+        "label": "Mark the referenced file/artifact as missing and avoid embedding stale previews.",
+    }]
 
-    if category == "INVALID_ARGUMENT":
-        actions.append({
-            "id": "repair-payload",
-            "kind": "payload",
-            "automatic": False,
-            "label": "Compare the payload with the route inputSchema and repair missing or invalid fields.",
-        })
-        return actions
 
-    if category == "FAILED_PRECONDITION":
-        actions.append({
-            "id": "prepare-precondition",
-            "kind": "precondition",
-            "automatic": False,
-            "label": "Prepare the missing dependency, confirmation, or previous step output.",
-        })
-        return actions
-
+def _fallback_actions(step: dict, routes: list[dict]) -> list[dict]:
+    actions: list[dict] = []
     route = route_for_step(step, routes)
     if route:
         actions.append({
@@ -168,6 +138,54 @@ def recovery_actions(error: dict, *, step: dict | None = None, routes: list[dict
         "label": "Open the error:// help record and decide whether retry or provisioning is safe.",
     })
     return actions
+
+
+# Categories whose recovery is a single fixed action with no contextual branching.
+_STATIC_CATEGORY_ACTIONS: dict[str, dict] = {
+    "UNAUTHENTICATED": {
+        "id": "authorize-target",
+        "kind": "auth",
+        "automatic": False,
+        "label": "Enroll or pass a valid run token/identity before retrying this URI.",
+    },
+    "PERMISSION_DENIED": {
+        "id": "authorize-target",
+        "kind": "auth",
+        "automatic": False,
+        "label": "Enroll or pass a valid run token/identity before retrying this URI.",
+    },
+    "INVALID_ARGUMENT": {
+        "id": "repair-payload",
+        "kind": "payload",
+        "automatic": False,
+        "label": "Compare the payload with the route inputSchema and repair missing or invalid fields.",
+    },
+    "FAILED_PRECONDITION": {
+        "id": "prepare-precondition",
+        "kind": "precondition",
+        "automatic": False,
+        "label": "Prepare the missing dependency, confirmation, or previous step output.",
+    },
+}
+
+
+def recovery_actions(error: dict, *, step: dict | None = None, routes: list[dict] | None = None) -> list[dict]:
+    step = step or {}
+    routes = routes or []
+    category = str(error.get("category") or "")
+    message = str(error.get("message") or "").casefold()
+    uri = str(step.get("uri") or "")
+    scheme = uri.split("://", 1)[0] if "://" in uri else ""
+
+    if "urirun_llm_model" in message or "llm_model" in message:
+        return _llm_model_actions()
+    if category in {"UNAVAILABLE", "DEADLINE_EXCEEDED"}:
+        return _transient_actions(step_target(step))
+    if category in _STATIC_CATEGORY_ACTIONS:
+        return [dict(_STATIC_CATEGORY_ACTIONS[category])]
+    if category == "NOT_FOUND":
+        return _not_found_actions(message, error, scheme)
+    return _fallback_actions(step, routes)
 
 
 def recovery_plan(error: dict, *, step: dict | None = None, routes: list[dict] | None = None) -> dict:

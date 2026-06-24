@@ -263,20 +263,30 @@ def _derive_local_routes(mf: str, path: str) -> list:
         return []
 
 
+def _read_json_manifest(mf: str, path: str) -> dict:
+    """An if-uri ``connector.manifest.json`` → normalized connector record."""
+    m = json.loads(open(mf, encoding="utf-8").read())
+    routes = [r if isinstance(r, str) else r.get("uri") for r in (m.get("routes") or [])]
+    return {"id": m.get("id"), "name": m.get("name"), "kind": "if-uri",
+            "schemes": m.get("uriSchemes") or m.get("schemes") or [],
+            "routes": [r for r in routes if r], "source": path}
+
+
+def _read_tellmesh_manifest(mf: str, path: str) -> dict | None:
+    """A tellmesh ``manifest.yaml`` (has ``uri_patterns``) → normalized record, else None."""
+    text = open(mf, encoding="utf-8").read()
+    if "uri_patterns" not in text:
+        return None  # not a connector pack manifest
+    scheme = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("scheme:")), "")
+    cid = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("id:")), os.path.basename(path))
+    return {"id": cid, "name": cid, "kind": "tellmesh", "schemes": [scheme] if scheme else [], "source": path}
+
+
 def _read_connector_manifest(mf: str, path: str) -> dict | None:
     try:
         if mf.endswith(".json"):
-            m = json.loads(open(mf, encoding="utf-8").read())
-            routes = [r if isinstance(r, str) else r.get("uri") for r in (m.get("routes") or [])]
-            return {"id": m.get("id"), "name": m.get("name"), "kind": "if-uri",
-                    "schemes": m.get("uriSchemes") or m.get("schemes") or [],
-                    "routes": [r for r in routes if r], "source": path}
-        text = open(mf, encoding="utf-8").read()
-        if "uri_patterns" not in text:
-            return None  # not a connector pack manifest
-        scheme = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("scheme:")), "")
-        cid = next((ln.split(":", 1)[1].strip() for ln in text.splitlines() if ln.startswith("id:")), os.path.basename(path))
-        return {"id": cid, "name": cid, "kind": "tellmesh", "schemes": [scheme] if scheme else [], "source": path}
+            return _read_json_manifest(mf, path)
+        return _read_tellmesh_manifest(mf, path)
     except Exception:  # noqa: BLE001
         return None
 

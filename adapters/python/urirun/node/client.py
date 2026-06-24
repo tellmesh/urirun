@@ -155,6 +155,66 @@ class NodeClient:
         want = self._route_key(uri)
         return any(self._route_key(str(route.get("uri", ""))) == want for route in self.routes())
 
+    @staticmethod
+    def _local_connector_deploy_payload(scheme: str, route: str | None = None) -> dict:
+        """Build a signed-/deploy payload (code + bindings) from a connector installed in the
+        HOST environment, for nodes that LACK a --manage surface (so node:// adopt/install is
+        unavailable). Pure/no-network so it is unit-testable. Constraints: the scheme must be
+        served by a SINGLE handler module that is a self-contained file (no intra-package
+        ``from .`` relative imports) — those can't be flattened into one pushed file. When
+        ``route`` is given the host's provider MUST actually expose it (a scheme can be owned by
+        a different connector than the one a caller expects — e.g. fs:// served by the sandboxed
+        mcp-filesystem ``write_blob`` rather than the unsandboxed ``write-b64``). Returns
+        ``{ok, module, code, bindings}`` or ``{ok: False, error}``."""
+        import importlib
+        import re as _re
+
+        from urirun.runtime import v2
+
+        items = [b for b in v2.entry_point_bindings(group="urirun.bindings", on_error="ignore")
+                 if str(b.get("uri", "")).split("://", 1)[0] == scheme]
+        if not items:
+            return {"ok": False, "error": f"no host-installed connector serves {scheme}://"}
+        specs: dict[str, tuple[str, str]] = {}
+        for b in items:
+            py = b.get("python") if isinstance(b.get("python"), dict) else {}
+            module, export = py.get("module"), py.get("export")
+            if module and export:
+                specs[str(b["uri"])] = (str(module), str(export))
+        modules = {m for m, _ in specs.values()}
+        if not specs:
+            return {"ok": False, "error": f"{scheme}:// has no local-function handlers to push"}
+        if route is not None:
+            want = NodeClient._route_key(route)
+            if not any(NodeClient._route_key(u) == want for u in specs):
+                provider = sorted(modules)[0] if modules else "?"
+                return {"ok": False,
+                        "error": (f"host's {scheme}:// provider ({provider}) does not expose {route} "
+                                  f"— a different connector owns that route")}
+        if len(modules) != 1:
+            return {"ok": False, "error": f"{scheme}:// spans {len(modules)} modules; flat deploy needs one"}
+        module = next(iter(modules))
+        try:
+            src_file = getattr(importlib.import_module(module), "__file__", "") or ""
+            source = open(src_file, encoding="utf-8").read() if src_file else ""
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": f"cannot read {module} source: {exc}"}
+        if not source:
+            return {"ok": False, "error": f"empty source for {module}"}
+        if _re.search(r"(?m)^\s*from\s+\.", source):
+            return {"ok": False, "error": f"{module} uses package-relative imports; not flat-deployable"}
+        flat = "_ensured_" + _re.sub(r"[^a-z0-9_]", "_", scheme.lower())
+        bindings = {
+            uri: {
+                "uri": uri, "kind": "local-function", "adapter": "local-function",
+                "python": {"type": "python", "module": flat, "export": export},
+                "policy": {"allowExecute": True}, "meta": {"connector": scheme},
+            }
+            for uri, (_m, export) in specs.items()
+        }
+        return {"ok": True, "module": flat, "code": {flat + ".py": source},
+                "bindings": {"version": "urirun.bindings.v2", "bindings": bindings}}
+
     def ensure_scheme(self, scheme: str, roots=None, install: bool = True, route: str | None = None) -> dict:
         """Make `scheme://` live on the node, acquiring it if missing: adopt bindings already
         installed in the node venv, else discover a connector (catalog/local ~/github/git)
@@ -214,6 +274,22 @@ class NodeClient:
             inst = inst if isinstance(inst, dict) else {}
             binds = inst.get("bindings") or {}
         if not binds:
+            # Last resort for a node WITHOUT --manage (node:// adopt/install unavailable):
+            # push a HOST-installed connector's single-file handler via signed /deploy. Needs
+            # an admin credential (identity/token); otherwise there's nothing more we can do.
+            if install and (getattr(self, "identity", None) or getattr(self, "token", None)):
+                payload = self._local_connector_deploy_payload(scheme, route)
+                if payload.get("ok"):
+                    dep = self.deploy(code=payload["code"], bindings=payload["bindings"],
+                                      allow=[f"{scheme}://**"], merge=True)
+                    route_ok = self._has_route(route) if route else True
+                    live = scheme in self.schemes() and route_ok
+                    return {"ok": live, "scheme": scheme, "via": "host-deploy", "acquired": live,
+                            **({"route": route, "routeLive": route_ok} if route else {}),
+                            "deployed": dep.get("routeCount"),
+                            **({} if live else {"error": "host-deploy did not make the scheme live"})}
+                return {"ok": False, "scheme": scheme,
+                        "error": f"no installed bindings or local source for scheme ({payload.get('error')})"}
             return {"ok": False, "scheme": scheme, "error": "no installed bindings or local source for scheme"}
         dep = self.deploy(bindings={"version": inst.get("version", "urirun.bindings.v2"), "bindings": binds},
                           allow=[f"{scheme}://**"], merge=True)

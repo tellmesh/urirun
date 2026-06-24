@@ -281,5 +281,34 @@ class NodeClientTests(unittest.TestCase):
         self.assertEqual(sorted(calls[0]["code"]), ["a.py", "b.txt"])
 
 
+class LocalConnectorDeployPayloadTests(unittest.TestCase):
+    """Host-side fallback for nodes WITHOUT --manage: push a host-installed connector's
+    single-file handler via signed /deploy. Must match by the SPECIFIC requested route — a
+    scheme can be owned by a different connector than a caller expects (fs:// is served by the
+    sandboxed mcp-filesystem `write_blob`, not the unsandboxed `write-b64`)."""
+
+    def test_unknown_scheme_has_no_provider(self):
+        r = NodeClient._local_connector_deploy_payload("nope-xyz")
+        self.assertFalse(r["ok"])
+        self.assertIn("no host-installed connector", r["error"])
+
+    def test_fs_scheme_builds_flat_single_module_payload(self):
+        r = NodeClient._local_connector_deploy_payload("fs")
+        self.assertTrue(r["ok"], r)
+        self.assertTrue(r["module"].startswith("_ensured_fs"))
+        spec = next(iter(r["bindings"]["bindings"].values()))
+        self.assertEqual(spec["python"]["module"], r["module"])  # rewritten to the pushed module
+        self.assertEqual(list(r["code"]), [r["module"] + ".py"])
+
+    def test_route_aware_rejects_route_owned_by_another_connector(self):
+        r = NodeClient._local_connector_deploy_payload("fs", route="fs://host/file/command/write-b64")
+        self.assertFalse(r["ok"])
+        self.assertIn("does not expose", r["error"])
+
+    def test_route_aware_accepts_a_route_the_provider_has(self):
+        r = NodeClient._local_connector_deploy_payload("fs", route="fs://host/file/command/write_blob")
+        self.assertTrue(r["ok"], r)
+
+
 if __name__ == "__main__":
     unittest.main()

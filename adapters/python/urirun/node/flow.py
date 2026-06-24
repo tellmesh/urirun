@@ -242,32 +242,37 @@ def json_from_text(text: str) -> dict:
     return json.loads(stripped)
 
 
+def _normalize_flow_step(step: dict, index: int, allowed_uris: set[str], used: set[str]) -> dict:
+    """Validate and canonicalize one flow step; `used` tracks taken ids to keep them unique."""
+    uri = str(step.get("uri", ""))
+    if uri not in allowed_uris:
+        raise ValueError(f"URI is not available: {uri}")
+    step_id = slug(str(step.get("id") or f"step_{index}"))
+    if step_id in used:
+        step_id = f"{step_id}_{index}"
+    used.add(step_id)
+    payload = step.get("payload") if isinstance(step.get("payload"), dict) else {}
+    deps = [slug(str(dep)) for dep in step.get("depends_on", []) if isinstance(dep, str)]
+    return {"id": step_id, "uri": uri, "payload": payload, "depends_on": deps}
+
+
+def _normalize_flow_task(task: dict) -> dict:
+    return {
+        "id": slug(str(task.get("id") or task.get("title") or "nl_uri_flow")),
+        "title": str(task.get("title") or "NL to URI host flow"),
+        "source": str(task.get("source") or "llm"),
+    }
+
+
 def normalize_flow(flow: dict, allowed_uris: set[str]) -> dict:
     task = flow.get("task") if isinstance(flow.get("task"), dict) else {}
     raw_steps = flow.get("steps")
     if not isinstance(raw_steps, list) or not raw_steps:
         raise ValueError("flow must contain non-empty steps")
-    steps = []
-    used = set()
-    for index, step in enumerate(raw_steps, start=1):
-        uri = str(step.get("uri", ""))
-        if uri not in allowed_uris:
-            raise ValueError(f"URI is not available: {uri}")
-        step_id = slug(str(step.get("id") or f"step_{index}"))
-        if step_id in used:
-            step_id = f"{step_id}_{index}"
-        used.add(step_id)
-        payload = step.get("payload") if isinstance(step.get("payload"), dict) else {}
-        deps = [slug(str(dep)) for dep in step.get("depends_on", []) if isinstance(dep, str)]
-        steps.append({"id": step_id, "uri": uri, "payload": payload, "depends_on": deps})
-    return {
-        "task": {
-            "id": slug(str(task.get("id") or task.get("title") or "nl_uri_flow")),
-            "title": str(task.get("title") or "NL to URI host flow"),
-            "source": str(task.get("source") or "llm"),
-        },
-        "steps": steps,
-    }
+    used: set[str] = set()
+    steps = [_normalize_flow_step(step, index, allowed_uris, used)
+             for index, step in enumerate(raw_steps, start=1)]
+    return {"task": _normalize_flow_task(task), "steps": steps}
 
 
 def normalize_flow_or_explain(
