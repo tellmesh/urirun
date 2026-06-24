@@ -23,10 +23,22 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 from pathlib import Path
 
 DECORATOR_KINDS = ("command", "shell", "handler")
 MACHINE_FIELDS = ("routes", "uriSchemes", "adapterKinds")
+
+# Env-var names whose *value* is a credential rather than an identifier/host/path. Matched
+# case-insensitively against the literal read by os.getenv / os.environ[...] / os.environ.get.
+# Identifiers (USER, USERNAME, HOST, PORT, MODEL, DIR, PATH, IP, URL, PUBLIC_KEY, KEY_ID) are
+# deliberately NOT secrets, so they are excluded — only value-is-secret names are flagged.
+_SECRET_ENV_RE = re.compile(
+    r"(SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIAL|API[_-]?KEY|ACCESS[_-]?KEY|"
+    r"PRIVATE[_-]?KEY|AUTH[_-]?KEY|_KEY$|_PASS$)",
+    re.IGNORECASE,
+)
+_SECRET_ENV_EXCLUDE = re.compile(r"(PUBLIC[_-]?KEY|KEY[_-]?ID|KEYWORD)", re.IGNORECASE)
 
 # Each decorator kind binds to one runtime adapter. The manifest's ``adapterKinds``
 # advertises which adapters the connector uses; if it omits one a decorator route
@@ -211,6 +223,78 @@ def _route_kind_counts(code_routes: list) -> tuple[int, int]:
     return handler, argv
 
 
+def _is_os_name(node: ast.AST) -> bool:
+    return isinstance(node, ast.Name) and node.id == "os"
+
+
+def _const_str(node: ast.AST | None) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
+def _env_read_name(node: ast.AST) -> str | None:
+    """Return the env-var name if ``node`` reads the process env, else ``None``.
+
+    Recognises ``os.getenv("X")``, ``os.environ.get("X")``, ``os.environ["X"]`` and a bare
+    ``getenv("X")`` (``from os import getenv``).
+    """
+    if isinstance(node, ast.Subscript):
+        target = node.value
+        if isinstance(target, ast.Attribute) and target.attr == "environ" and _is_os_name(target.value):
+            return _const_str(node.slice)
+        return None
+    if isinstance(node, ast.Call):
+        fn = node.func
+        first = node.args[0] if node.args else None
+        if isinstance(fn, ast.Attribute):
+            if fn.attr == "getenv" and _is_os_name(fn.value):
+                return _const_str(first)
+            if (fn.attr == "get" and isinstance(fn.value, ast.Attribute)
+                    and fn.value.attr == "environ" and _is_os_name(fn.value.value)):
+                return _const_str(first)
+        elif isinstance(fn, ast.Name) and fn.id == "getenv":
+            return _const_str(first)
+    return None
+
+
+def _scan_secret_env_reads(py_files: list[Path]) -> list[dict]:
+    """Find reads of secret-shaped env vars straight from the process environment.
+
+    These bypass the secrets layer (no ``secret_allow`` policy, no redaction, no node guard).
+    The fix is to take the credential as a route argument and resolve it with
+    ``urirun.resolve_secret`` (a reference may then live in the env, but its *value* is gated).
+    """
+    findings: list[dict] = []
+    for path in py_files:
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError):
+            continue
+        for node in ast.walk(tree):
+            name = _env_read_name(node)
+            if not name or not _SECRET_ENV_RE.search(name) or _SECRET_ENV_EXCLUDE.search(name):
+                continue
+            findings.append({"file": path.name, "line": getattr(node, "lineno", 0), "name": name})
+    return sorted(findings, key=lambda f: (f["file"], f["line"]))
+
+
+def _uses_resolve_secret(py_files: list[Path]) -> bool:
+    """True if any module references ``resolve_secret`` (the connector routes credentials
+    through the secrets layer, so a secret-env read is likely a deliberate fallback)."""
+    for path in py_files:
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (OSError, SyntaxError):
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Attribute) and node.attr == "resolve_secret":
+                return True
+            if isinstance(node, ast.Name) and node.id == "resolve_secret":
+                return True
+    return False
+
+
 def lint_connector(pkg_dir: str | Path) -> dict:
     """Analyse a connector package directory and return a structured lint report."""
     root = Path(pkg_dir)
@@ -229,6 +313,8 @@ def lint_connector(pkg_dir: str | Path) -> dict:
     adapter_drift = _adapter_drift(code_routes, manifest)
     placements = _route_placements(code_routes, manifest_uris, cli_subs)
     handler_routes, argv_routes = _route_kind_counts(code_routes)
+    secret_reads = _scan_secret_env_reads(py_files)
+    uses_resolver = _uses_resolve_secret(py_files)
 
     return {
         "package": str(root),
@@ -247,6 +333,13 @@ def lint_connector(pkg_dir: str | Path) -> dict:
         },
         "handlerRoutes": handler_routes,
         "argvRoutes": argv_routes,
+        "secretEnvReads": {
+            "count": len(secret_reads),
+            "usesResolveSecret": uses_resolver,
+            # A read with no resolve_secret anywhere is a likely ambient-secret bypass.
+            "bypass": bool(secret_reads) and not uses_resolver,
+            "findings": secret_reads,
+        },
     }
 
 
@@ -310,6 +403,12 @@ def _format_report(rep: dict) -> str:
     for p in dup["perRoute"]:
         if p["factor"] > 1:
             lines.append(f"    {p['uri']} — {p['factor']}×: {', '.join(p['places'])}")
+    sr = rep.get("secretEnvReads") or {}
+    for f in sr.get("findings", []):
+        label = "SECRET ambient env read" if sr.get("bypass") else "warn  secret env read"
+        lines.append(f"  {label} `{f['name']}` ({f['file']}:{f['line']}) — address by reference via urirun.resolve_secret")
+    if sr.get("bypass"):
+        lines.append("  → connector reads secret-shaped env vars and never calls resolve_secret: it bypasses the secrets layer (no policy/redaction/node-guard)")
     return "\n".join(lines)
 
 
@@ -343,6 +442,10 @@ def lint_command(args: argparse.Namespace) -> int:
     if report["hasDrift"] or report["hasAdapterDrift"]:
         return 1
     if getattr(args, "strict", False) and report["duplication"]["maxFactor"] > 1:
+        return 1
+    # A clear secrets-layer bypass (secret env read, never routed through resolve_secret)
+    # fails strict mode so CI can gate it.
+    if getattr(args, "strict", False) and report.get("secretEnvReads", {}).get("bypass"):
         return 1
     return 0
 

@@ -663,6 +663,30 @@ def test_chat_history_reads_message_logs(monkeypatch):
     assert history["messages"][0]["content"] == "hello"
 
 
+def test_chat_history_marks_missing_attachment_files(monkeypatch, tmp_path):
+    fake_db = FakeHostDb()
+    missing = tmp_path / "missing.pdf"
+    fake_db.add_log(":memory:", "chat", "message", {
+        "role": "system",
+        "content": "scan saved",
+        "attachments": [{
+            "kind": "document-pdf",
+            "path": str(missing),
+            "previewUrl": f"/api/file?path={missing}",
+            "meta": {"displayImage": str(tmp_path / "missing-crop.jpg")},
+        }],
+    })
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+
+    history = host_dashboard.chat_history(":memory:", str(tmp_path))
+
+    att = history["messages"][0]["attachments"][0]
+    assert att["fileExists"] is False
+    assert att["previewExists"] is False
+    assert att["previewUrl"] == ""
+    assert att["visualPreviewUrl"] == ""
+
+
 def test_chat_history_limit_ignores_technical_ask_logs(monkeypatch):
     fake_db = FakeHostDb()
     fake_db.add_log(":memory:", "chat", "message", {"role": "user", "content": "one"})

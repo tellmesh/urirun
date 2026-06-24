@@ -86,6 +86,41 @@ class ConnectorLintTests(unittest.TestCase):
         self.assertEqual(rep["pattern"], "declarative-or-unrecognized")
         self.assertFalse(rep["hasDrift"])
 
+    def test_secret_env_read_without_resolver_is_a_bypass(self):
+        core = (
+            "import os\n"
+            "def go():\n"
+            "    a = os.getenv('STRIPE_API_KEY')\n"        # secret -> flag
+            "    b = os.environ['GITHUB_TOKEN']\n"          # secret subscript -> flag
+            "    c = os.environ.get('DB_PASSWORD')\n"       # secret -> flag
+            "    user = os.getenv('EMAIL_USER')\n"          # identifier -> NOT flagged
+            "    host = os.getenv('SMTP_HOST')\n"           # not a secret
+            "    pub = os.getenv('SSH_PUBLIC_KEY')\n"       # excluded
+            "    kid = os.getenv('AWS_KEY_ID')\n"           # excluded
+            "    return a, b, c, user, host, pub, kid\n"
+        )
+        rep = connector_lint.lint_connector(self._pkg(core, {"id": "x"}))
+        sr = rep["secretEnvReads"]
+        self.assertEqual({f["name"] for f in sr["findings"]},
+                         {"STRIPE_API_KEY", "GITHUB_TOKEN", "DB_PASSWORD"})
+        self.assertTrue(sr["bypass"])
+        self.assertFalse(sr["usesResolveSecret"])
+
+    def test_secret_env_read_with_resolver_is_not_a_bypass(self):
+        # An env read that is a deliberate fallback (the connector also uses resolve_secret)
+        # is reported but not a hard bypass.
+        core = (
+            "import os, urirun\n"
+            "_resolve = urirun.resolve_secret\n"
+            "def cfg():\n"
+            "    return _resolve(os.getenv('SMTP_PASSWORD', ''), '')\n"
+        )
+        rep = connector_lint.lint_connector(self._pkg(core, {"id": "x"}))
+        sr = rep["secretEnvReads"]
+        self.assertEqual([f["name"] for f in sr["findings"]], ["SMTP_PASSWORD"])
+        self.assertTrue(sr["usesResolveSecret"])
+        self.assertFalse(sr["bypass"])
+
 
 if __name__ == "__main__":
     unittest.main()

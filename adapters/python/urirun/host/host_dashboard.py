@@ -1409,6 +1409,8 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function attachmentVisualPreviewUrl(att) {
+      if (att && att.visualPreviewUrl !== undefined) return text(att.visualPreviewUrl);
+      if (att && att.previewExists === false) return '';
       const meta = att.meta || {};
       const displayPath = text(meta.displayImage || meta.displayPath || meta.previewImage || meta.image || '');
       return displayPath ? filePreviewUrl(displayPath) : '';
@@ -1444,9 +1446,10 @@ INDEX_HTML = r"""<!doctype html>
       const meta = att.meta || {};
       const ocr = meta.ocr || {};
       const isPdf = isPdfAttachment(att);
+      const fileAvailable = att.fileExists !== false;
       const kindClass = att.kind === 'qr-code' ? ' attachment-qr' : isPdf ? ' attachment-pdf' : '';
       const visualUrl = isPdf ? attachmentVisualPreviewUrl(att) : text(att.previewUrl || '');
-      const pdfUrl = isPdf ? text(att.previewUrl || '') : '';
+      const pdfUrl = isPdf && fileAvailable ? text(att.previewUrl || att.filePreviewUrl || '') : '';
       const preview = isPdf && pdfUrl
         ? `<iframe class="attachment-pdf-frame" src="${esc(pdfUrl)}" title="${esc(basename(att.path))}" loading="lazy"></iframe>`
         : (visualUrl
@@ -1454,20 +1457,23 @@ INDEX_HTML = r"""<!doctype html>
           : (isPdf
             ? `<div class="attachment-pdf-preview"><span>PDF</span><small>${esc(basename(att.path))}</small></div>`
             : `<div class="subtle">preview unavailable</div>`));
-      const open = att.previewUrl
-        ? `<a href="${esc(att.previewUrl)}" target="_blank" rel="noreferrer">open</a>`
+      const fileUrl = fileAvailable ? text(att.previewUrl || att.filePreviewUrl || '') : '';
+      const open = fileUrl
+        ? `<a href="${esc(fileUrl)}" target="_blank" rel="noreferrer">open</a>`
         : '';
-      const download = att.previewUrl ? `<a href="${esc(att.previewUrl)}" download>download</a>` : '';
+      const download = fileUrl ? `<a href="${esc(fileUrl)}" download>download</a>` : '';
+      const missing = att.fileExists === false ? '<span class="pill down">missing file</span>' : '';
+      const detailAtt = fileAvailable ? att : {...att, previewUrl: '', filePreviewUrl: ''};
       const ocrLine = ocr.ok
         ? `<div class="subtle">OCR ${esc(ocr.backend || '')}: ${esc(text(ocr.text).slice(0, 160))}</div>`
         : (ocr.error ? `<div class="subtle">OCR: ${esc(ocr.error)}</div>` : '');
       return `<div class="attachment${kindClass}">
         ${preview}
         <div class="mono">${esc(basename(att.path))}</div>
-        <div class="subtle">${esc(att.kind || 'file')} ${meta.width && meta.height ? `· ${meta.width}x${meta.height}` : ''}</div>
+        <div class="subtle">${esc(att.kind || 'file')} ${meta.width && meta.height ? `· ${meta.width}x${meta.height}` : ''} ${missing}</div>
         <div class="artifact-actions">${open}${download}</div>
         ${ocrLine}
-        <details><summary>metadata</summary><pre>${esc(JSON.stringify(att, null, 2))}</pre></details>
+        <details><summary>metadata</summary><pre>${esc(JSON.stringify(detailAtt, null, 2))}</pre></details>
       </div>`;
     }
 
@@ -3368,6 +3374,35 @@ def _public_artifacts(artifacts: list[dict], project: str) -> list[dict]:
     return [_public_artifact(artifact, project) for artifact in artifacts]
 
 
+def _public_chat_attachment(attachment: dict, project: str) -> dict:
+    """Normalize old chat attachments so the UI never embeds stale /api/file links."""
+    item = dict(attachment or {})
+    path = str(item.get("path") or "")
+    file_preview = _preview_url(path, project) if path else None
+    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+    visual_path = str(meta.get("displayImage") or meta.get("displayPath") or meta.get("previewImage") or meta.get("image") or "")
+    visual_preview = _preview_url(visual_path, project) if visual_path else None
+    if path:
+        item["fileExists"] = bool(file_preview)
+        item["filePreviewUrl"] = file_preview or ""
+    if visual_path:
+        item["previewExists"] = bool(visual_preview)
+        item["visualPath"] = visual_path
+        item["visualPreviewUrl"] = visual_preview or ""
+    preview = str(item.get("previewUrl") or "")
+    if preview.startswith("/api/file?path="):
+        item["previewUrl"] = file_preview or ""
+    elif not preview and file_preview:
+        item["previewUrl"] = file_preview
+    return item
+
+
+def _public_chat_attachments(attachments: Any, project: str) -> list[dict]:
+    if not isinstance(attachments, list):
+        return []
+    return [_public_chat_attachment(item, project) for item in attachments if isinstance(item, dict)]
+
+
 def _artifact_dedupe_key(item: dict) -> tuple[str, str]:
     path = str(item.get("path") or item.get("visualPath") or "")
     if path:
@@ -3512,6 +3547,9 @@ def chat_history(db: str | None, project: str, limit: int = 80) -> dict:
         msg = dict(detail)
         msg.setdefault("created_at", item.get("created_at"))
         msg.setdefault("id", item.get("id"))
+        msg["attachments"] = _public_chat_attachments(msg.get("attachments"), project)
+        if isinstance(msg.get("detail"), dict) and isinstance(msg["detail"].get("attachments"), list):
+            msg["detail"] = {**msg["detail"], "attachments": _public_chat_attachments(msg["detail"].get("attachments"), project)}
         messages.append(msg)
     return {"ok": True, "messages": messages[-limit:]}
 
