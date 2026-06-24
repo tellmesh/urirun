@@ -1,9 +1,9 @@
-# urirun | 152f 34092L | yaml:4,txt:3,shell:10,json:13,python:93,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-24
-# generated in 0.04s
-# stats: 1404 func | 0 cls | 152 mod | CC̄=4.9 | critical:26 | cycles:0
-# alerts[5]: CC chat_ask=100; fan-out chat_ask=60; fan-out _archive_scanned_document=51; CC scanner_best_finish=47; fan-out create_handler=39
-# hotspots[5]: chat_ask fan=60; _archive_scanned_document fan=51; create_handler fan=39; scanner_capture fan=37; scanner_best_finish fan=34
-# evolution: CC̄ 5.0→4.9 (improved -0.1)
+# urirun | 152f 34181L | yaml:4,txt:3,shell:10,python:93,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-24
+# generated in 0.03s
+# stats: 1417 func | 0 cls | 152 mod | CC̄=4.9 | critical:23 | cycles:0
+# alerts[5]: CC chat_ask=100; fan-out chat_ask=60; CC scanner_best_finish=47; fan-out _archive_scanned_document=45; fan-out create_handler=39
+# hotspots[5]: chat_ask fan=60; _archive_scanned_document fan=45; create_handler fan=39; scanner_capture fan=37; scanner_best_finish fan=34
+# evolution: CC̄ 4.9→4.9 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[152]:
   Makefile,134
@@ -59,7 +59,7 @@ M[152]:
   adapters/python/urirun/host/contracts.py,62
   adapters/python/urirun/host/document_sync.py,381
   adapters/python/urirun/host/domain_monitor.py,485
-  adapters/python/urirun/host/host_dashboard.py,9825
+  adapters/python/urirun/host/host_dashboard.py,9914
   adapters/python/urirun/host/host_db.py,540
   adapters/python/urirun/host/host_integrations.py,355
   adapters/python/urirun/host/planfile_adapter.py,279
@@ -160,7 +160,7 @@ M[152]:
   v1/js/urirun-v1.js,334
 D:
   adapters/python/urirun/host/host_dashboard.py:
-    e: _json_response,_html_response,_asset_response,_service_view_from_query,_scanner_stream_summary,_service_widget_summary,_service_widget_html,_service_widget_svg,_js_sdk_response,_read_json,_file_response,_preview_url,_is_image_path,_artifact_visual_path,_artifact_file_exists,_public_artifact,_public_artifacts,_attachment_visual_path,_apply_attachment_file_fields,_apply_attachment_visual_fields,_public_chat_attachment,_public_chat_attachments,_artifact_dedupe_key,_artifact_dedupe_rank,_merge_artifact_group,_dedupe_public_artifacts,_visible_public_artifacts,_collect_attachments,_chat_message,_add_chat_message,chat_history,chat_delete_messages,_truthy_env,_local_image_ocr_tesseract,_ocr_text_ok,_ocr_connector_envelope,_local_image_ocr,_local_image_ocr_llm,_document_archive_root,_document_index_path,_document_sync_default_dest_root,_document_sync_default_node,_iter_node_alias_values,_add_node_aliases,_node_spec_aliases,_alias_map_from_dict,_alias_map_from_list,_node_alias_map_from_value,_normalize_known_node_url,_url_map_from_dict,_url_map_from_list,_node_url_map_from_value,_node_dicts_from_url_map,_node_alias_map_from_config_doc,_node_alias_map_from_env,_node_alias_map_from_node_urls,_known_nodes_file_data,_node_alias_map_from_known_nodes_file,_known_nodes_file_urls,_merge_known_nodes_into_config,_node_alias_map_from_context,_prompt_node_match,_scanned_id_log_path,_utc_now,_file_sha256,_node_url_from_config,_node_client,_node_token_for,_run_node_uri,_route_key,_node_has_route,_fs_file_transfer_binding,_fs_file_transfer_fallback_bindings,_deploy_fs_file_transfer_fallback,_ensure_node_uri_routes,_short_value,_compact_remote_run,_route_not_found_remedy,_envelope_error_message,_remote_write_error,_remote_read_error,_document_sync_verification,_document_archive_pdfs,_document_sync_deps,sync_documents_to_node,_normalized_document_text,_load_document_index,_save_document_index,_document_files_exist,_prune_orphaned_documents,reconcile_document_index,_iter_scanned_id_log,_append_scanned_id_log,_existing_scanned_id,_scanned_log_entry,_scanned_entry_seen,_backfill_scanned_id_log,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_load_env_file,_llm_env_file,_llm_model,_llm_api_key_ref,_coerce_amount,_llm_extract_metadata,_llm_complete_metadata,_parse_llm_json_object,_normalize_llm_doc_fields,_extract_document_metadata,_filename_part,_canonical_document_filename,_document_filename_with_id,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_scanner_staging_dir,_cleanup_duplicate_scan_files,_scanner_crop_overlay,_prune_scanner_staging,_is_blank_metadata,_merge_metadata_fields,_enrich_archived_record,_sidecar_text,_find_duplicate_document,_artifact_schema_known,_document_schema_fields,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_scanner_autonomy_params,_scanner_page_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_phone_scanner_url,_phone_scanner_external_status,_nl_text,_is_phone_scanner_prompt,_is_autonomous_scanner_prompt,_is_camera_start_prompt,_torch_enabled_from_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_document_frame_quality,_public_scanner_candidate,_scanner_live_store_locked,_scanner_public_candidate_for_live,scanner_live_state,_latest_scanner_page_status,_scanner_artifact_doc_meta,_recent_scanner_artifacts,service_live_views,_scanner_best_update,_scanner_best_take,_register_scanner_result,_orientation_summary,scanner_capture,scanner_best_finish,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,_uri_action_catalog,_uri_action_lookup,_uri_mode,_service_restart_argv,_schedule_restart_command,_chat_service_restart_argv,restart_chat_service,_phone_scanner_service_id,restart_phone_scanner_service,_uri_simulated_result,_result_artifact_class,register_tagged_artifact,_run_inprocess_connector_uri,uri_invoke,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,_service_contacts,_host_registry_routes,summary,_compact_chat_result,node_add,node_set_token,_try_urifix_repair,_boolish,_document_sync_auto_retry_enabled,_document_sync_retry_payload_from_urifix,_needs_screen_document_capture,_is_document_sync_prompt,_document_sync_node_from_prompt,_document_sync_dest_from_prompt,_route_in_selected_targets,_has_screen_capture_route,_screen_document_capability_gap,_selected_nodes_from_targets,_decision_loop_for_document_sync,chat_ask,task_action,_artifact_delete_roots,_artifact_file_delete_allowed,_payload_bool,_global_document_metadata_paths,_safe_artifact_sidecar_path,_artifact_delete_candidate_paths,artifacts_delete,artifacts_dedupe_rows,artifacts_cleanup_orphan_sidecars,documents_reconcile,_dashboard_api_response,create_handler,_port_holder_pids,_process_cmdline,_is_dashboard_process,_is_scanner_process,_is_chat_process,_free_port_from_matching_processes,_free_port_from_old_scanner,_free_port_from_old_chat,_free_port_from_old_dashboard,serve,command,default_host
+    e: _json_response,_html_response,_asset_response,_service_view_from_query,_scanner_stream_summary,_service_widget_summary,_service_widget_html,_service_widget_svg,_js_sdk_response,_read_json,_file_response,_preview_url,_is_image_path,_artifact_visual_path,_artifact_file_exists,_public_artifact,_public_artifacts,_attachment_visual_path,_apply_attachment_file_fields,_apply_attachment_visual_fields,_public_chat_attachment,_public_chat_attachments,_artifact_dedupe_key,_artifact_dedupe_rank,_merge_artifact_group,_dedupe_public_artifacts,_visible_public_artifacts,_collect_attachments,_chat_message,_add_chat_message,chat_history,chat_delete_messages,_truthy_env,_local_image_ocr_tesseract,_ocr_text_ok,_ocr_connector_envelope,_local_image_ocr,_local_image_ocr_llm,_document_archive_root,_document_index_path,_document_sync_default_dest_root,_document_sync_default_node,_iter_node_alias_values,_add_node_aliases,_node_spec_aliases,_alias_map_from_dict,_alias_map_from_list,_node_alias_map_from_value,_normalize_known_node_url,_url_map_from_dict,_url_map_from_list,_node_url_map_from_value,_node_dicts_from_url_map,_node_alias_map_from_config_doc,_node_alias_map_from_env,_node_alias_map_from_node_urls,_known_nodes_file_data,_node_alias_map_from_known_nodes_file,_known_nodes_file_urls,_merge_known_nodes_into_config,_node_alias_map_from_context,_prompt_node_match,_scanned_id_log_path,_utc_now,_file_sha256,_node_url_from_config,_node_client,_node_token_for,_run_node_uri,_route_key,_node_has_route,_fs_file_transfer_binding,_fs_file_transfer_fallback_bindings,_deploy_fs_file_transfer_fallback,_ensure_node_uri_routes,_short_value,_compact_remote_run,_route_not_found_remedy,_envelope_error_message,_remote_write_error,_remote_read_error,_document_sync_verification,_document_archive_pdfs,_document_sync_deps,sync_documents_to_node,_normalized_document_text,_load_document_index,_save_document_index,_document_files_exist,_prune_orphaned_documents,reconcile_document_index,_iter_scanned_id_log,_append_scanned_id_log,_existing_scanned_id,_scanned_log_entry,_scanned_entry_seen,_backfill_scanned_id_log,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_load_env_file,_llm_env_file,_llm_model,_llm_api_key_ref,_coerce_amount,_llm_extract_metadata,_llm_complete_metadata,_parse_llm_json_object,_normalize_llm_doc_fields,_extract_document_metadata,_filename_part,_canonical_document_filename,_document_filename_with_id,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_scanner_staging_dir,_cleanup_duplicate_scan_files,_scanner_crop_overlay,_prune_scanner_staging,_is_blank_metadata,_merge_metadata_fields,_enrich_archived_record,_sidecar_text,_find_duplicate_document,_artifact_schema_known,_document_schema_fields,_archive_redundant_duplicate,_supersede_archived_document,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_scanner_autonomy_params,_scanner_page_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_phone_scanner_url,_phone_scanner_external_status,_nl_text,_is_phone_scanner_prompt,_is_autonomous_scanner_prompt,_is_camera_start_prompt,_torch_enabled_from_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_crop_quality_score,_doctype_quality_score,_metadata_quality_score,_ocr_quality_score,_visual_quality_score,_document_frame_quality,_public_scanner_candidate,_scanner_live_store_locked,_scanner_public_candidate_for_live,scanner_live_state,_scanner_status_from_log,_latest_scanner_page_status,_scanner_artifact_doc_meta,_is_scanner_artifact,_scanner_artifact_item,_recent_scanner_artifacts,service_live_views,_scanner_best_update,_scanner_best_take,_crop_overlay_attachment,_register_document_artifact,_scanner_result_content,_register_scanner_result,_orientation_summary,scanner_capture,scanner_best_finish,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,_uri_action_catalog,_uri_action_lookup,_uri_mode,_service_restart_argv,_schedule_restart_command,_chat_service_restart_argv,restart_chat_service,_phone_scanner_service_id,restart_phone_scanner_service,_uri_simulated_result,_result_artifact_class,register_tagged_artifact,_run_inprocess_connector_uri,uri_invoke,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,_service_contacts,_host_registry_routes,summary,_compact_chat_result,node_add,node_set_token,_try_urifix_repair,_boolish,_document_sync_auto_retry_enabled,_document_sync_retry_payload_from_urifix,_needs_screen_document_capture,_is_document_sync_prompt,_document_sync_node_from_prompt,_document_sync_dest_from_prompt,_route_in_selected_targets,_has_screen_capture_route,_screen_document_capability_gap,_selected_nodes_from_targets,_decision_loop_for_document_sync,chat_ask,task_action,_artifact_delete_roots,_artifact_file_delete_allowed,_payload_bool,_global_document_metadata_paths,_safe_artifact_sidecar_path,_artifact_delete_candidate_paths,artifacts_delete,artifacts_dedupe_rows,artifacts_cleanup_orphan_sidecars,documents_reconcile,_dashboard_api_response,create_handler,_port_holder_pids,_process_cmdline,_is_dashboard_process,_is_scanner_process,_is_chat_process,_free_port_from_matching_processes,_free_port_from_old_scanner,_free_port_from_old_chat,_free_port_from_old_dashboard,serve,command,default_host
     _json_response(handler;status;payload)
     _html_response(handler;html)
     _asset_response(handler;body;content_type)
@@ -292,6 +292,8 @@ D:
     _find_duplicate_document(index)
     _artifact_schema_known(type_id)
     _document_schema_fields(doc_type)
+    _archive_redundant_duplicate()
+    _supersede_archived_document()
     _archive_scanned_document()
     shutil_which(binary)
     _lan_host()
@@ -314,17 +316,28 @@ D:
     _auto_crop_receipt(path)
     _bounded(value;low;high)
     _frame_visual_metrics(path)
+    _crop_quality_score(crop;reasons)
+    _doctype_quality_score(doc_type;reasons)
+    _metadata_quality_score(metadata;reasons)
+    _ocr_quality_score(ocr;chars;reasons)
+    _visual_quality_score(visual;reasons)
     _document_frame_quality(crop;ocr;metadata;display_path)
     _public_scanner_candidate(candidate)
     _scanner_live_store_locked(series_id;series)
     _scanner_public_candidate_for_live(candidate;project)
     scanner_live_state(project;limit)
+    _scanner_status_from_log(item)
     _latest_scanner_page_status(db)
     _scanner_artifact_doc_meta(artifact)
+    _is_scanner_artifact(kind;uri;meta)
+    _scanner_artifact_item(artifact;kind;uri;path;display_path;doc;project)
     _recent_scanner_artifacts(db;project;limit)
     service_live_views(project;db;limit)
     _scanner_best_update(series_id;candidate)
     _scanner_best_take(series_id)
+    _crop_overlay_attachment(uri;project;overlay_path;crop;meta;original_path)
+    _register_document_artifact(db;project)
+    _scanner_result_content(content_prefix;crop;document;ocr)
     _register_scanner_result(project;db)
     _orientation_summary(crop)
     scanner_capture(project;db;payload)
@@ -405,6 +418,19 @@ D:
     NodeClient: __init__(3),_auth(1),routes(0),get(1),concretize(2),run(6),run_async(3),cancel(1),status(1),deploy(6),schemes(0),_route_key(0),_has_route(1),_local_connector_deploy_payload(1),_ensure_via_host_deploy(3),ensure_scheme(4),run_ensuring(3),request_capability(2),push_folder(3),value(0),resolve_refs(1),recent_log(1),watch(5),stream_run(3)  # Drive one urirun node: ``c = NodeClient("http://host:8765");...
     _get(url;timeout;headers)
     _post(url;body;headers;timeout;raw)
+  adapters/python/urirun/host/document_sync.py:
+    e: DocumentSyncDeps,_SyncParams,boolish,document_archive_pdfs,document_sync_verification,_log_and_chat_report,_parse_sync_params,_check_preflight,_upload_file,_read_back_file,sync_documents_to_node
+    DocumentSyncDeps:
+    _SyncParams:
+    boolish(value;default)
+    document_archive_pdfs(root)
+    document_sync_verification(files;results)
+    _log_and_chat_report(db;deps;report)
+    _parse_sync_params(payload;config;deps;node_urls)
+    _check_preflight(params;files;deps;token;identity)
+    _upload_file(source;params;deps;token;identity)
+    _read_back_file(item;params;deps;token;identity)
+    sync_documents_to_node(project;db;config;payload)
   v1/js/urirun-v1.js:
     i: node:child_process,node:path
     e: DEFAULT_TIMEOUT,OUTPUT_LIMIT,parseUri,match,segments,query,translate,inferKind,defaultAdapter,registryTree,setRoute,translation,bucket,compileRegistryDocument,routeRows,globMatch,parts,mergePolicy,evaluatePolicy,merged,deny,allow,allowed,check,descriptor,translation,routeEntry,tokenize,resolveParams,spec,current,renderValue,renderCommand,hasPlaceholders,truncate,renderedEnv,runProcess,result,envFlags,config,base,command,config,rendered,tokens,config,inner,config,inner,method,response,run,merged,descriptor,translation,tree,routeEntry,decision,executor,result,listRoutes,merged,expandBinding,expandBindings,compileRegistry
@@ -473,19 +499,6 @@ D:
     expandBinding()
     expandBindings()
     compileRegistry()
-  adapters/python/urirun/host/document_sync.py:
-    e: DocumentSyncDeps,_SyncParams,boolish,document_archive_pdfs,document_sync_verification,_log_and_chat_report,_parse_sync_params,_check_preflight,_upload_file,_read_back_file,sync_documents_to_node
-    DocumentSyncDeps:
-    _SyncParams:
-    boolish(value;default)
-    document_archive_pdfs(root)
-    document_sync_verification(files;results)
-    _log_and_chat_report(db;deps;report)
-    _parse_sync_params(payload;config;deps;node_urls)
-    _check_preflight(params;files;deps;token;identity)
-    _upload_file(source;params;deps;token;identity)
-    _read_back_file(item;params;deps;token;identity)
-    sync_documents_to_node(project;db;config;payload)
   adapters/python/urirun/__init__.py:
     e: Connector,parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,tag,policy,resolve_secret,action_space,result_data,result_degraded,run_steps,tool_binding,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command
     Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(2),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
@@ -1658,7 +1671,6 @@ Connector a...
   Makefile:
   requirements.txt:
   tree.sh:
-  package.json:
   prefact.yaml:
   project.sh:
   security/mesh-probe/docker-compose.yml:
@@ -1686,7 +1698,6 @@ Connector a...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1699,7 +1710,6 @@ Connector a...
   adapters/rust/Cargo.toml:
   adapters/php/composer.json:
   adapters/php/example/hash-connector.php:
-  adapters/python/pyproject.toml:
   adapters/python/urirun/host_db.py:
   adapters/python/urirun/v2_service.py:
   adapters/python/urirun/domain_monitor.py:
@@ -1737,3 +1747,6 @@ Connector a...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
+  package.json:
+  adapters/js/package.json:
+  adapters/python/pyproject.toml:

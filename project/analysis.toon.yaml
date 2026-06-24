@@ -1,28 +1,28 @@
-# code2llm | 153f 34092L | python:93,json:13,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-24
-# generated in 0.10s
-# CC̅=4.9 | critical:26/1404 | dups:0 | cycles:0
+# code2llm | 153f 34181L | python:93,json:13,shell:10,yaml:4,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-24
+# generated in 0.06s
+# CC̅=4.9 | critical:23/1417 | dups:0 | cycles:0
 
 HEALTH[20]:
+  🟡 CC    _parse_sync_params CC=19 (limit:15)
   🟡 CC    _local_connector_deploy_payload CC=25 (limit:15)
   🟡 CC    ensure_scheme CC=32 (limit:15)
   🟡 CC    push_folder CC=16 (limit:15)
   🟡 CC    watch CC=16 (limit:15)
   🟡 CC    resolveParams CC=15 (limit:15)
   🟡 CC    run CC=19 (limit:15)
-  🟡 CC    _parse_sync_params CC=19 (limit:15)
   🟡 CC    _backfill_scanned_id_log CC=17 (limit:15)
   🟡 CC    _scanner_crop_overlay CC=20 (limit:15)
   🟡 CC    _prune_scanner_staging CC=23 (limit:15)
-  🟡 CC    _archive_scanned_document CC=35 (limit:15)
-  🟡 CC    _document_frame_quality CC=34 (limit:15)
-  🟡 CC    _latest_scanner_page_status CC=18 (limit:15)
-  🟡 CC    _recent_scanner_artifacts CC=22 (limit:15)
-  🟡 CC    _register_scanner_result CC=24 (limit:15)
+  🟡 CC    _archive_scanned_document CC=17 (limit:15)
+  🟡 CC    _crop_quality_score CC=17 (limit:15)
   🟡 CC    scanner_capture CC=30 (limit:15)
   🟡 CC    scanner_best_finish CC=47 (limit:15)
   🟡 CC    _chat_service_restart_argv CC=19 (limit:15)
   🟡 CC    uri_invoke CC=26 (limit:15)
   🟡 CC    _document_sync_retry_payload_from_urifix CC=23 (limit:15)
+  🟡 CC    _decision_loop_for_document_sync CC=25 (limit:15)
+  🟡 CC    chat_ask CC=100 (limit:15)
+  🟡 CC    artifacts_delete CC=18 (limit:15)
 
 REFACTOR[1]:
   1. split 20 high-CC methods  (CC>15)
@@ -137,7 +137,7 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=5.0    ←in:9  →out:0
-  │ !! host_dashboard            9825L  0C  239m  CC=100    ←0
+  │ !! host_dashboard            9914L  0C  252m  CC=100    ←0
   │ !! v2                        2024L  1C  125m  CC=14     ←4
   │ !! mesh                      1829L  3C   96m  CC=14     ←1
   │ !! __init__                   737L  1C   51m  CC=14     ←11
@@ -215,9 +215,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0

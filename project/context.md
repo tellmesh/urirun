@@ -1,5 +1,5 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.00s -->
 
 ## Overview
 
@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 93, json: 13, shell: 10, yaml: 4, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1404
+- **Total Functions**: 1417
 - **Total Classes**: 29
 - **Modules**: 152
 - **Entry Points**: 457
@@ -15,7 +15,7 @@
 ## Architecture by Module
 
 ### adapters.python.urirun.host.host_dashboard
-- **Functions**: 239
+- **Functions**: 252
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.runtime.v2
@@ -413,6 +413,9 @@ Key functions that process and transform data:
 ### adapters.python.urirun.host.host_db._validate_record
 - **Output to**: None.validate, dataset.get, Draft202012Validator
 
+### adapters.python.urirun.host.document_sync._parse_sync_params
+- **Output to**: None.resolve, None.strip, None.strip, _SyncParams, ValueError
+
 ### adapters.python.urirun.runtime.cli._add_connectors_subparser
 > The `connectors` command tree (list/show/install/index/resolve/check/lint/
 verify/new/smoke/from-spe
@@ -478,9 +481,6 @@ Supported forms:
 
 ### adapters.python.urirun.runtime.v2._cmd_validate
 - **Output to**: adapters.python.urirun.runtime.v2.validate_binding_document, adapters.python.urirun.runtime.v2._load_json_arg, Path, reglib._emit_json, print
-
-### adapters.python.urirun.runtime._runtime.format_route_table
-- **Output to**: out.extend, None.join, max, None.rstrip, line
 
 ## Behavioral Patterns
 
@@ -597,8 +597,8 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.mesh.watch_command` - 24 calls
 - `adapters.python.urirun.host.host_dashboard.startup_phone_qr` - 24 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
-- `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.host.document_sync.sync_documents_to_node` - 23 calls
+- `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.host.host_dashboard.node_add` - 23 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
 - `adapters.python.urirun.connectors.resolver.index_local` - 22 calls

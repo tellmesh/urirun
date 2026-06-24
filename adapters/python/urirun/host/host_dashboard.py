@@ -6000,6 +6000,106 @@ def _document_schema_fields(doc_type: str) -> dict:
     }
 
 
+def _archive_redundant_duplicate(*, duplicate: dict, index_match: dict | None, existing_meta: dict,
+                                 extracted: dict, new_completeness: float, index: dict,
+                                 docid_info: dict, doc_id: str, original_path: Path, display_path: Path,
+                                 source_sha256: str, text_sha256: str,
+                                 fingerprint: Any, dhash: Any, phash: Any) -> dict:
+    """The new scan matches an already-archived document and is NOT more complete: enrich the
+    kept record with any newly-read fields, drop the redundant staged files, log a duplicate
+    event, and return the duplicate result. Called with _DOCUMENT_INDEX_LOCK held."""
+    duplicate_path = duplicate.get("pdfPath") or duplicate.get("path")
+    # The kept document is the better scan, but this re-scan may still have
+    # recognized a field the archived record is missing. Fuse those in
+    # (best-of-both) instead of discarding the re-scan's data outright.
+    enriched_fields: list[str] = []
+    if index_match is not None:
+        fused, enriched_fields = _merge_metadata_fields(
+            existing_meta, extracted,
+            old_weight=float(_metadata_completeness(existing_meta)) + 0.5,
+            new_weight=float(new_completeness),
+        )
+        if enriched_fields:
+            _enrich_archived_record(duplicate, fused, enriched_fields)
+            _save_document_index(index)
+    # The document is already archived; drop the redundant staged scan + crop
+    # so duplicates stop accumulating in the scans folder.
+    removed_scan_files = _cleanup_duplicate_scan_files([original_path, display_path])
+    duplicate_entry = {
+        "version": 1,
+        "event": "duplicate",
+        "scannedAt": _utc_now(),
+        "docId": doc_id,
+        "docIdProvider": docid_info.get("provider"),
+        "docIdSource": docid_info.get("source"),
+        "duplicate": True,
+        "duplicateOf": duplicate.get("docId") or doc_id,
+        "matchReason": duplicate.get("_matchReason") or "exact",
+        "enrichedFields": enriched_fields or None,
+        "pdfPath": duplicate_path,
+        "jsonPath": duplicate.get("jsonPath"),
+        "fileName": Path(str(duplicate_path)).name if duplicate_path else "",
+        "existingFileExists": bool(duplicate_path and Path(str(duplicate_path)).expanduser().is_file()),
+        "originalPath": str(original_path),
+        "cropPath": str(display_path),
+        "removedScanFiles": removed_scan_files,
+        "sourceSha256": source_sha256,
+        "textSha256": text_sha256,
+        "fingerprint": fingerprint,
+        "dhash": dhash,
+        "phash": phash,
+        "metadata": extracted,
+    }
+    _append_scanned_id_log(duplicate_entry)
+    return {
+        "ok": True,
+        "duplicate": True,
+        "docId": doc_id,
+        "docIdProvider": docid_info.get("provider"),
+        "path": duplicate_path,
+        "jsonPath": duplicate.get("jsonPath"),
+        "duplicateOf": duplicate_entry["duplicateOf"],
+        "matchReason": duplicate_entry["matchReason"],
+        "enrichedFields": enriched_fields or None,
+        "existingFileExists": duplicate_entry["existingFileExists"],
+        "removedScanFiles": removed_scan_files,
+        "metadata": extracted,
+        "indexPath": str(_document_index_path()),
+        "scannedIdLogPath": str(_scanned_id_log_path()),
+    }
+
+
+def _supersede_archived_document(*, duplicate: dict, existing_meta: dict, extracted: dict,
+                                 new_completeness: float, root: Path, month: str, doc_id: str,
+                                 index: dict) -> tuple:
+    """Supersede an archived document with a better scan: fuse best-of-both metadata, recompute
+    the destination from the (possibly richer) fields, delete the old files, and drop the old
+    index entry. Returns the updated (extracted, month, archive_dir, filename, superseded_of,
+    merged_fields). Called with _DOCUMENT_INDEX_LOCK held."""
+    extracted, merged_fields = _merge_metadata_fields(
+        existing_meta, extracted,
+        old_weight=float(_metadata_completeness(existing_meta)),
+        new_weight=float(new_completeness),
+    )
+    # Recompute name/month from the fused metadata (it may now be richer).
+    month = str(extracted["date"])[:7] if re.match(r"^20\d{2}-\d{2}", str(extracted.get("date", ""))) else month
+    archive_dir = root / month
+    filename = _document_filename_with_id(_canonical_document_filename(extracted), doc_id)
+    superseded_of = duplicate.get("docId")
+    _cleanup_duplicate_scan_files([duplicate.get("originalPath"), duplicate.get("cropPath")])
+    for stale in (duplicate.get("pdfPath") or duplicate.get("path"), duplicate.get("jsonPath")):
+        try:
+            if stale and Path(str(stale)).expanduser().is_file():
+                Path(str(stale)).expanduser().unlink()
+        except OSError:
+            pass
+    index["documents"] = [
+        item for item in index.get("documents", [])
+        if isinstance(item, dict) and item.get("docId") != superseded_of
+    ]
+    return extracted, month, archive_dir, filename, superseded_of, merged_fields
+
+
 def _archive_scanned_document(
     *,
     display_path: Path,
@@ -6049,89 +6149,17 @@ def _archive_scanned_document(
             # new scan reads strictly more complete metadata (e.g. amount known vs unknown).
             can_supersede = index_match is not None and new_completeness > _metadata_completeness(existing_meta)
             if not can_supersede:
-                duplicate_path = duplicate.get("pdfPath") or duplicate.get("path")
-                # The kept document is the better scan, but this re-scan may still have
-                # recognized a field the archived record is missing. Fuse those in
-                # (best-of-both) instead of discarding the re-scan's data outright.
-                enriched_fields: list[str] = []
-                if index_match is not None:
-                    fused, enriched_fields = _merge_metadata_fields(
-                        existing_meta, extracted,
-                        old_weight=float(_metadata_completeness(existing_meta)) + 0.5,
-                        new_weight=float(new_completeness),
-                    )
-                    if enriched_fields:
-                        _enrich_archived_record(duplicate, fused, enriched_fields)
-                        _save_document_index(index)
-                # The document is already archived; drop the redundant staged scan + crop
-                # so duplicates stop accumulating in the scans folder.
-                removed_scan_files = _cleanup_duplicate_scan_files([original_path, display_path])
-                duplicate_entry = {
-                    "version": 1,
-                    "event": "duplicate",
-                    "scannedAt": _utc_now(),
-                    "docId": doc_id,
-                    "docIdProvider": docid_info.get("provider"),
-                    "docIdSource": docid_info.get("source"),
-                    "duplicate": True,
-                    "duplicateOf": duplicate.get("docId") or doc_id,
-                    "matchReason": duplicate.get("_matchReason") or "exact",
-                    "enrichedFields": enriched_fields or None,
-                    "pdfPath": duplicate_path,
-                    "jsonPath": duplicate.get("jsonPath"),
-                    "fileName": Path(str(duplicate_path)).name if duplicate_path else "",
-                    "existingFileExists": bool(duplicate_path and Path(str(duplicate_path)).expanduser().is_file()),
-                    "originalPath": str(original_path),
-                    "cropPath": str(display_path),
-                    "removedScanFiles": removed_scan_files,
-                    "sourceSha256": source_sha256,
-                    "textSha256": text_sha256,
-                    "fingerprint": fingerprint,
-                    "dhash": dhash,
-                    "phash": phash,
-                    "metadata": extracted,
-                }
-                _append_scanned_id_log(duplicate_entry)
-                return {
-                    "ok": True,
-                    "duplicate": True,
-                    "docId": doc_id,
-                    "docIdProvider": docid_info.get("provider"),
-                    "path": duplicate_path,
-                    "jsonPath": duplicate.get("jsonPath"),
-                    "duplicateOf": duplicate_entry["duplicateOf"],
-                    "matchReason": duplicate_entry["matchReason"],
-                    "enrichedFields": enriched_fields or None,
-                    "existingFileExists": duplicate_entry["existingFileExists"],
-                    "removedScanFiles": removed_scan_files,
-                    "metadata": extracted,
-                    "indexPath": str(_document_index_path()),
-                    "scannedIdLogPath": str(_scanned_id_log_path()),
-                }
-            # Supersede: keep the better image, but FUSE fields so the surviving
-            # record carries the best-of-both -- anything the old scan read that the
-            # new one missed is backfilled, instead of being lost on replacement.
-            extracted, merged_fields = _merge_metadata_fields(
-                existing_meta, extracted,
-                old_weight=float(_metadata_completeness(existing_meta)),
-                new_weight=float(new_completeness),
+                return _archive_redundant_duplicate(
+                    duplicate=duplicate, index_match=index_match, existing_meta=existing_meta,
+                    extracted=extracted, new_completeness=new_completeness, index=index,
+                    docid_info=docid_info, doc_id=doc_id, original_path=original_path,
+                    display_path=display_path, source_sha256=source_sha256, text_sha256=text_sha256,
+                    fingerprint=fingerprint, dhash=dhash, phash=phash,
+                )
+            extracted, month, archive_dir, filename, superseded_of, merged_fields = _supersede_archived_document(
+                duplicate=duplicate, existing_meta=existing_meta, extracted=extracted,
+                new_completeness=new_completeness, root=root, month=month, doc_id=doc_id, index=index,
             )
-            # Recompute name/month from the fused metadata (it may now be richer).
-            month = str(extracted["date"])[:7] if re.match(r"^20\d{2}-\d{2}", str(extracted.get("date", ""))) else month
-            archive_dir = root / month
-            filename = _document_filename_with_id(_canonical_document_filename(extracted), doc_id)
-            superseded_of = duplicate.get("docId")
-            _cleanup_duplicate_scan_files([duplicate.get("originalPath"), duplicate.get("cropPath")])
-            for stale in (duplicate.get("pdfPath") or duplicate.get("path"), duplicate.get("jsonPath")):
-                try:
-                    if stale and Path(str(stale)).expanduser().is_file():
-                        Path(str(stale)).expanduser().unlink()
-                except OSError:
-                    pass
-            index["documents"] = [
-                item for item in index.get("documents", [])
-                if isinstance(item, dict) and item.get("docId") != superseded_of
-            ]
 
         archive_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = _unique_document_path(archive_dir, filename, doc_id)
@@ -6768,26 +6796,35 @@ def scanner_live_state(project: str, limit: int = 8) -> dict:
     return {"ok": True, "updatedAt": _utc_now(), "streams": public_streams}
 
 
+def _scanner_status_from_log(item: dict) -> tuple[dict, str, dict] | None:
+    """Return (status_dict, action_uri, detail) for a scanner camera-status log entry, else None."""
+    detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
+    if item.get("event") != "result" or (detail.get("target") or "scanner") != "scanner":
+        return None
+    uri = str(detail.get("uri") or "")
+    if not (
+        uri.endswith("/camera/query/status")
+        or uri.endswith("/camera/command/start")
+        or uri.endswith("/ui/button/start-camera/command/click")
+    ):
+        return None
+    result = detail.get("result") if isinstance(detail.get("result"), dict) else {}
+    status = result.get("status") if isinstance(result.get("status"), dict) else result
+    if not isinstance(status, dict):
+        return None
+    return status, uri, detail
+
+
 def _latest_scanner_page_status(db: str | None) -> dict:
     try:
         logs = _host_db().recent_logs(db, stream="page-action", limit=80)
     except Exception:  # noqa: BLE001
         return {}
     for item in logs:
-        detail = item.get("detail") if isinstance(item.get("detail"), dict) else {}
-        if item.get("event") != "result" or (detail.get("target") or "scanner") != "scanner":
+        found = _scanner_status_from_log(item)
+        if found is None:
             continue
-        uri = str(detail.get("uri") or "")
-        if not (
-            uri.endswith("/camera/query/status")
-            or uri.endswith("/camera/command/start")
-            or uri.endswith("/ui/button/start-camera/command/click")
-        ):
-            continue
-        result = detail.get("result") if isinstance(detail.get("result"), dict) else {}
-        status = result.get("status") if isinstance(result.get("status"), dict) else result
-        if not isinstance(status, dict):
-            continue
+        status, uri, detail = found
         public_status = {key: value for key, value in status.items() if key != "localActions"}
         public_status.update({
             "actionUri": uri,
@@ -6807,6 +6844,32 @@ def _scanner_artifact_doc_meta(artifact: dict) -> dict:
     return {**detected, **document_meta}
 
 
+def _is_scanner_artifact(kind: str, uri: str, meta: dict) -> bool:
+    """True when an artifact came from the phone-scanner pipeline (by kind + uri/source)."""
+    return (
+        kind in {"camera-scan", "document-pdf", "dashboard-qr"}
+        and (
+            uri.startswith(("scanner://", "document://host/", "dashboard://host/qr/"))
+            or str(meta.get("sourceCaptureUri") or "").startswith("scanner://")
+        )
+    )
+
+
+def _scanner_artifact_item(artifact: dict, kind: str, uri: str, path: str,
+                           display_path: str, doc: dict, project: str) -> dict:
+    return {
+        "id": artifact.get("id"),
+        "kind": kind,
+        "uri": uri,
+        "path": path,
+        "createdAt": artifact.get("created_at"),
+        "previewUrl": _preview_url(display_path, project) if display_path else "",
+        "filePreviewUrl": _preview_url(path, project) if path else "",
+        "label": Path(path).name if path else uri,
+        **{key: value for key, value in doc.items() if value},
+    }
+
+
 def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> list[dict]:
     try:
         artifacts = _host_db().list_artifacts(db, limit=80)
@@ -6817,32 +6880,14 @@ def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> l
         kind = str(artifact.get("kind") or "")
         uri = str(artifact.get("uri") or "")
         meta = artifact.get("meta") if isinstance(artifact.get("meta"), dict) else {}
-        scanner_related = (
-            kind in {"camera-scan", "document-pdf", "dashboard-qr"}
-            and (
-                uri.startswith(("scanner://", "document://host/", "dashboard://host/qr/"))
-                or str(meta.get("sourceCaptureUri") or "").startswith("scanner://")
-            )
-        )
-        if not scanner_related:
+        if not _is_scanner_artifact(kind, uri, meta):
             continue
         path = str(artifact.get("path") or "")
         display_path = str(meta.get("displayImage") or meta.get("displayPath") or path)
         if not _artifact_file_exists(path) and not _artifact_file_exists(display_path):
             continue
         doc = _scanner_artifact_doc_meta(artifact)
-        item = {
-            "id": artifact.get("id"),
-            "kind": kind,
-            "uri": uri,
-            "path": path,
-            "createdAt": artifact.get("created_at"),
-            "previewUrl": _preview_url(display_path, project) if display_path else "",
-            "filePreviewUrl": _preview_url(path, project) if path else "",
-            "label": Path(path).name if path else uri,
-            **{key: value for key, value in doc.items() if value},
-        }
-        out.append(item)
+        out.append(_scanner_artifact_item(artifact, kind, uri, path, display_path, doc, project))
         if len(out) >= max(1, int(limit or 6)):
             break
     return out
@@ -6919,6 +6964,65 @@ def _scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
         return dict(series)
 
 
+def _crop_overlay_attachment(uri: str, project: str, overlay_path: str, crop: dict,
+                             meta: dict, original_path: Path) -> dict:
+    return {
+        "kind": "crop-overlay",
+        "path": overlay_path,
+        "uri": f"{uri}/crop-overlay",
+        "previewUrl": _preview_url(overlay_path, project),
+        "meta": {
+            "crop": crop,
+            "quality": meta.get("quality"),
+            "sourceCaptureUri": uri,
+            "sourceImage": str(original_path),
+        },
+    }
+
+
+def _register_document_artifact(db: str | None, project: str, *, uri: str, display_path: Path,
+                                original_path: Path, meta: dict, ocr: dict, document: dict) -> tuple[Any, dict]:
+    """Register the canonical document-pdf artifact; return (artifact_row, chat_attachment)."""
+    document_id = str(document.get("duplicateOf") or document.get("docId") or meta.get("sha256") or "")
+    document_uri = str(document.get("uri") or f"document://host/{quote(document_id, safe='')}")
+    document_meta = {
+        "document": document,
+        "ocr": {key: value for key, value in ocr.items() if key != "text"},
+        "sourceCaptureUri": uri,
+        "sourceImage": str(original_path),
+        "displayImage": str(display_path),
+    }
+    artifact = _host_db().register_artifact(db, "document-pdf", document_uri, str(document["path"]), document_meta)
+    attachment = {
+        "kind": "document-pdf",
+        "path": str(document["path"]),
+        "uri": document_uri,
+        "previewUrl": _preview_url(str(document["path"]), project),
+        "meta": document_meta,
+    }
+    return artifact, attachment
+
+
+def _scanner_result_content(content_prefix: str, crop: dict, document: dict, ocr: dict) -> str:
+    """Human chat line summarizing one scan: crop / document-PDF / OCR outcome."""
+    content = content_prefix
+    if crop.get("ok"):
+        content += " (cropped to receipt)"
+    if document.get("ok") and document.get("path"):
+        content += " -> document PDF"
+        if document.get("duplicate"):
+            content += " (duplicate)"
+    elif document.get("error"):
+        content += " (document archive failed)"
+    else:
+        content += " (no document PDF)"
+    if ocr.get("ok") and ocr.get("text"):
+        content += f": {str(ocr.get('text'))[:180]}"
+    elif ocr.get("error"):
+        content += f" (OCR: {ocr.get('error')})"
+    return content
+
+
 def _register_scanner_result(
     project: str,
     db: str | None,
@@ -6938,39 +7042,15 @@ def _register_scanner_result(
     display_exists = Path(str(display_path)).expanduser().is_file()
     attachments = []
     document_artifact = None
-    scan_artifact = None
     overlay_path = str(meta.get("overlayPath") or "")
     if overlay_path and Path(overlay_path).expanduser().is_file():
-        attachments.append({
-            "kind": "crop-overlay",
-            "path": overlay_path,
-            "uri": f"{uri}/crop-overlay",
-            "previewUrl": _preview_url(overlay_path, project),
-            "meta": {
-                "crop": crop,
-                "quality": meta.get("quality"),
-                "sourceCaptureUri": uri,
-                "sourceImage": str(original_path),
-            },
-        })
+        attachments.append(_crop_overlay_attachment(uri, project, overlay_path, crop, meta, original_path))
     if document.get("ok") and document.get("path"):
-        document_id = str(document.get("duplicateOf") or document.get("docId") or meta.get("sha256") or "")
-        document_uri = str(document.get("uri") or f"document://host/{quote(document_id, safe='')}")
-        document_meta = {
-            "document": document,
-            "ocr": {key: value for key, value in ocr.items() if key != "text"},
-            "sourceCaptureUri": uri,
-            "sourceImage": str(original_path),
-            "displayImage": str(display_path),
-        }
-        document_artifact = _host_db().register_artifact(db, "document-pdf", document_uri, str(document["path"]), document_meta)
-        attachments.append({
-            "kind": "document-pdf",
-            "path": str(document["path"]),
-            "uri": document_uri,
-            "previewUrl": _preview_url(str(document["path"]), project),
-            "meta": document_meta,
-        })
+        document_artifact, document_attachment = _register_document_artifact(
+            db, project, uri=uri, display_path=display_path, original_path=original_path,
+            meta=meta, ocr=ocr, document=document,
+        )
+        attachments.append(document_attachment)
     if document_artifact is None and display_exists:
         scan_artifact = _host_db().register_artifact(db, "camera-scan", uri, str(display_path), meta)
     else:
@@ -6983,21 +7063,7 @@ def _register_scanner_result(
             "reason": "document-pdf artifact is canonical" if document_artifact else "staged display image is not available",
         }
     primary_artifact = document_artifact or scan_artifact
-    content = content_prefix
-    if crop.get("ok"):
-        content += " (cropped to receipt)"
-    if document.get("ok") and document.get("path"):
-        content += " -> document PDF"
-        if document.get("duplicate"):
-            content += " (duplicate)"
-    elif document.get("error"):
-        content += " (document archive failed)"
-    else:
-        content += " (no document PDF)"
-    if ocr.get("ok") and ocr.get("text"):
-        content += f": {str(ocr.get('text'))[:180]}"
-    elif ocr.get("error"):
-        content += f" (OCR: {ocr.get('error')})"
+    content = _scanner_result_content(content_prefix, crop, document, ocr)
     message = _chat_message(
         "system",
         content,
