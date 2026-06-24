@@ -86,3 +86,53 @@ index.json        -> rebuildable materialized view
 
 That keeps manual operations safe while avoiding unnecessary complexity in the
 dashboard read path.
+
+## Sync To A Node
+
+Archived PDFs can be copied to a URI node through the host dashboard URI API:
+
+```text
+document://host/archive/command/sync-to-node
+```
+
+The host reads local files from `URIRUN_DOCUMENT_DIR` and writes them on the node
+with:
+
+```text
+fs://<node>/file/command/write-b64
+```
+
+Default target settings:
+
+```bash
+export URIRUN_DOCUMENT_SYNC_NODE=laptop
+export URIRUN_DOCUMENT_SYNC_DEST='~/Downloads/urirun-scans'
+```
+
+Example payload:
+
+```json
+{
+  "uri": "document://host/archive/command/sync-to-node",
+  "payload": {
+    "node_url": "http://192.168.188.201:8766",
+    "node": "laptop",
+    "dest_root": "~/Downloads/urirun-scans",
+    "overwrite": true
+  }
+}
+```
+
+The sync is intentionally visible in two places:
+
+- `logs` stream `document-sync`, event `sync-to-node`
+- chat stream as a system message with copied/failed counts
+
+Each copied file is verified by SHA-256 after the node write result is returned.
+The destination layout mirrors the archive month folders:
+
+```text
+~/Downloads/urirun-scans/
+  2026-06/
+    rachunek_2026-06-19_duo-cafe-hanna-gruba_30.26-pln_doc-fv-877312030cff5231.pdf
+```

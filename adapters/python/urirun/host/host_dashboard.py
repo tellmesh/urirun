@@ -2198,6 +2198,52 @@ SCANNER_HTML = r"""<!doctype html>
       state.className = error ? 'status error' : 'status';
     }
 
+    // Audible/tactile confirmation that scan + OCR + identification finished.
+    // 'ok' = new document saved, 'duplicate' = recognised as already archived,
+    // 'superseded' = replaced a worse earlier scan, 'error' = processing failed.
+    let feedbackAudioCtx = null;
+    function feedbackTone(kind) {
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate(kind === 'error' ? [120, 60, 120] : kind === 'duplicate' ? [40, 40, 40] : 30);
+        }
+      } catch (_e) {}
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        feedbackAudioCtx = feedbackAudioCtx || new Ctx();
+        if (feedbackAudioCtx.state === 'suspended') feedbackAudioCtx.resume();
+        // Each tone: [frequencyHz, startOffsetSec, durationSec].
+        const tones = kind === 'error'
+          ? [[220, 0, 0.32]]
+          : kind === 'duplicate'
+            ? [[620, 0, 0.09], [620, 0.13, 0.09]]
+            : kind === 'superseded'
+              ? [[660, 0, 0.09], [990, 0.11, 0.16]]
+              : [[880, 0, 0.12], [1320, 0.12, 0.16]];
+        const now = feedbackAudioCtx.currentTime;
+        for (const [freq, at, dur] of tones) {
+          const osc = feedbackAudioCtx.createOscillator();
+          const gain = feedbackAudioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.0001, now + at);
+          gain.gain.exponentialRampToValueAtTime(0.25, now + at + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + at + dur);
+          osc.connect(gain).connect(feedbackAudioCtx.destination);
+          osc.start(now + at);
+          osc.stop(now + at + dur + 0.02);
+        }
+      } catch (_e) {}
+    }
+
+    function captureFeedbackKind(data) {
+      const doc = (data && data.document) || {};
+      if (doc.superseded || (data && data.superseded)) return 'superseded';
+      if (doc.duplicate || (data && data.duplicate)) return 'duplicate';
+      return 'ok';
+    }
+
     function invokeURI(uri, payload={}) {
       if (window.urirun && typeof window.urirun.invoke === 'function') {
         return window.urirun.invoke(uri, payload);
@@ -2410,8 +2456,11 @@ SCANNER_HTML = r"""<!doctype html>
       const h = video.videoHeight || 1080;
       setState(`uploading ${w}x${h}...`);
       const data = await sendFrame({archive: true, ...options});
-      if (!data || data.ok === false) throw new Error((data && data.error) || 'scan failed');
-      setState(`saved ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
+      if (!data || data.ok === false) { feedbackTone('error'); throw new Error((data && data.error) || 'scan failed'); }
+      const kind = captureFeedbackKind(data);
+      const label = kind === 'duplicate' ? 'already saved' : kind === 'superseded' ? 'updated' : 'saved';
+      setState(`${label} ${data.artifact && data.artifact.path ? data.artifact.path : data.uri}`);
+      feedbackTone(kind);
       return data;
     }
 
@@ -2442,8 +2491,11 @@ SCANNER_HTML = r"""<!doctype html>
         }
         const minScore = Number(Object.prototype.hasOwnProperty.call(options || {}, 'minScore') ? options.minScore : numericParam('minScore', 45));
         const finalData = await invokeURI('scanner://host/best/command/finish', {seriesId, minScore});
-        if (!finalData || finalData.ok === false) throw new Error((finalData && finalData.error) || 'best scan failed');
-        setState(`saved best ${finalData.document && finalData.document.path ? finalData.document.path : finalData.uri}`);
+        if (!finalData || finalData.ok === false) { feedbackTone('error'); throw new Error((finalData && finalData.error) || 'best scan failed'); }
+        const kind = captureFeedbackKind(finalData);
+        const label = kind === 'duplicate' ? 'already saved' : kind === 'superseded' ? 'updated best' : 'saved best';
+        setState(`${label} ${finalData.document && finalData.document.path ? finalData.document.path : finalData.uri}`);
+        feedbackTone(kind);
         return finalData;
       } finally {
         bestRunning = false;
@@ -3051,6 +3103,14 @@ def _document_index_path() -> Path:
     return Path(configured).expanduser().resolve() if configured else _document_archive_root() / "index.json"
 
 
+def _document_sync_default_dest_root() -> str:
+    return os.environ.get("URIRUN_DOCUMENT_SYNC_DEST", "~/Downloads/urirun-scans")
+
+
+def _document_sync_default_node() -> str:
+    return os.environ.get("URIRUN_DOCUMENT_SYNC_NODE", "laptop")
+
+
 def _scanned_id_log_path() -> Path:
     configured = os.environ.get("URIRUN_SCANNED_ID_LOG")
     return Path(configured).expanduser().resolve() if configured else _document_archive_root() / "scanned.id.jsonl"
@@ -3066,6 +3126,160 @@ def _file_sha256(path: str | Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _node_url_from_config(config: str | None, node_urls: list[str] | None, node: str) -> str | None:
+    try:
+        return str(_mesh().node_url(_host_config(config, node_urls), node)).rstrip("/")
+    except (Exception, SystemExit):  # mesh.node_url exits for unknown nodes.
+        return None
+
+
+def _node_client(url: str, *, token: str | None = None, identity: str | None = None):
+    from urirun.node.client import NodeClient
+
+    return NodeClient(url, token=token, identity=identity)
+
+
+def _run_node_uri(
+    node_url: str,
+    uri: str,
+    payload: dict,
+    *,
+    token: str | None = None,
+    identity: str | None = None,
+    timeout: float = 120.0,
+) -> dict:
+    client = _node_client(node_url, token=token, identity=identity)
+    envelope = client.run(uri, payload, timeout=timeout)
+    value = client.value(envelope)
+    value_ok = not isinstance(value, dict) or value.get("ok", True)
+    return {
+        "ok": bool(envelope.get("ok") and value_ok),
+        "envelope": envelope,
+        "value": value,
+    }
+
+
+def _document_archive_pdfs(root: Path) -> list[Path]:
+    if not root.is_dir():
+        return []
+    return sorted(
+        path for path in root.glob("*/*.pdf")
+        if path.is_file() and path.parent.name != "no_invoice"
+    )
+
+
+def sync_documents_to_node(
+    project: str,
+    db: str | None,
+    config: str | None,
+    payload: dict,
+    *,
+    node_urls: list[str] | None = None,
+    token: str | None = None,
+    identity: str | None = None,
+) -> dict:
+    source_root = Path(payload.get("source_root") or payload.get("sourceRoot") or _document_archive_root()).expanduser().resolve()
+    node = str(payload.get("node") or payload.get("targetNode") or _document_sync_default_node()).strip() or "laptop"
+    node_url = str(payload.get("node_url") or payload.get("nodeUrl") or "").strip()
+    if not node_url:
+        node_url = _node_url_from_config(config, node_urls, node) or ""
+    if not node_url:
+        raise ValueError("node_url is required when the target node is not present in host config")
+    node_url = node_url.rstrip("/")
+    dest_root = str(payload.get("dest_root") or payload.get("destRoot") or _document_sync_default_dest_root()).rstrip("/")
+    overwrite = bool(payload.get("overwrite", True))
+    make_dirs = bool(payload.get("make_dirs", payload.get("makeDirs", True)))
+    timeout = float(payload.get("timeout", 120.0) or 120.0)
+    fs_target = str(payload.get("fs_target") or payload.get("fsTarget") or node).strip() or node
+    fs_uri = f"fs://{fs_target}/file/command/write-b64"
+
+    files = _document_archive_pdfs(source_root)
+    results: list[dict] = []
+    copied = 0
+    failed = 0
+    skipped = 0
+
+    for source in files:
+        rel = source.relative_to(source_root)
+        dest_path = f"{dest_root}/{rel.as_posix()}"
+        data = source.read_bytes()
+        sha256 = hashlib.sha256(data).hexdigest()
+        item = {
+            "source": str(source),
+            "relativePath": rel.as_posix(),
+            "dest": dest_path,
+            "bytes": len(data),
+            "sha256": sha256,
+        }
+        try:
+            run = _run_node_uri(
+                node_url,
+                fs_uri,
+                {
+                    "path": dest_path,
+                    "bytes_b64": base64.b64encode(data).decode("ascii"),
+                    "overwrite": overwrite,
+                    "make_dirs": make_dirs,
+                },
+                token=token,
+                identity=identity,
+                timeout=timeout,
+            )
+            value = run.get("value") if isinstance(run.get("value"), dict) else {}
+            remote_sha = value.get("sha256")
+            ok = bool(run.get("ok") and value.get("ok", True) and remote_sha == sha256)
+            item.update({
+                "ok": ok,
+                "remotePath": value.get("path"),
+                "remoteSha256": remote_sha,
+                "overwritten": value.get("overwritten"),
+                "renamed": value.get("renamed"),
+            })
+            if ok:
+                copied += 1
+            else:
+                failed += 1
+                item["error"] = value.get("error") or "remote write failed or sha256 mismatch"
+        except Exception as exc:  # noqa: BLE001 - report per-file transfer failures.
+            failed += 1
+            item.update({"ok": False, "error": str(exc)})
+        results.append(item)
+
+    report = {
+        "ok": failed == 0,
+        "uri": "document://host/archive/command/sync-to-node",
+        "sourceRoot": str(source_root),
+        "node": node,
+        "nodeUrl": node_url,
+        "fsUri": fs_uri,
+        "destRoot": dest_root,
+        "total": len(files),
+        "copied": copied,
+        "failed": failed,
+        "skipped": skipped,
+        "results": results,
+        "updatedAt": _utc_now(),
+    }
+    try:
+        _host_db().add_log(db, "document-sync", "sync-to-node", report)
+    except Exception:
+        pass
+
+    status = "completed" if report["ok"] else "finished with errors"
+    content = f"Document sync to {node} {status}: {copied}/{len(files)} PDFs -> {dest_root}"
+    message = _chat_message(
+        "system",
+        content,
+        detail={
+            **report,
+            "selectedTargets": ["host", f"node:{node}"],
+        },
+    )
+    _add_chat_message(db, message)
+    report["message"] = message
+    return report
 
 
 def _normalized_document_text(text: str) -> str:
@@ -4985,6 +5199,14 @@ def _uri_action_catalog() -> list[dict]:
             "sideEffects": ["service-start", "chat-message", "qr-artifact"],
             "where": "host dashboard /api/uri/invoke",
         },
+        {
+            "uri": "document://host/archive/command/sync-to-node",
+            "layer": "host",
+            "kind": "command",
+            "label": "Copy archived document PDFs to a URI node through fs://",
+            "sideEffects": ["node-file-write", "chat-message", "sync-log"],
+            "where": "host dashboard /api/uri/invoke",
+        },
     ]
 
 
@@ -5000,6 +5222,7 @@ def _uri_action_lookup(uri: str) -> dict | None:
         "scanner://page/torch": "scanner://page/camera/command/torch",
         "scanner://page/torch-button": "scanner://page/ui/button/torch/command/click",
         "dashboard://host/actions/query/list": "scanner://host/actions/query/list",
+        "document://host/archive/sync": "document://host/archive/command/sync-to-node",
     }
     target = aliases.get(uri)
     if target:
@@ -5080,6 +5303,16 @@ def uri_invoke(
             project,
             db,
             config,
+            node_urls=node_urls,
+            token=token,
+            identity=identity,
+        )
+    elif uri in {"document://host/archive/command/sync-to-node", "document://host/archive/sync"}:
+        result = sync_documents_to_node(
+            project,
+            db,
+            config,
+            action_payload,
             node_urls=node_urls,
             token=token,
             identity=identity,
@@ -5835,6 +6068,65 @@ def create_handler(
     return Handler
 
 
+def _port_holder_pids(port: int) -> list[int]:
+    """PIDs currently LISTENing on `port` (best effort via ss)."""
+    try:
+        out = subprocess.run(["ss", "-ltnpH"], capture_output=True, text=True, timeout=5).stdout
+    except Exception:  # noqa: BLE001
+        return []
+    pids: list[int] = []
+    for line in out.splitlines():
+        norm = " ".join(line.split())
+        if f":{port} " not in norm:
+            continue
+        pids.extend(int(m) for m in re.findall(r"pid=(\d+)", norm))
+    return pids
+
+
+def _is_dashboard_process(pid: int) -> bool:
+    """True only if `pid` is a urirun host dashboard serve process (cmdline check). The guard
+    that keeps auto-replace from ever killing an unrelated service that owns the port."""
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as fh:
+            cmd = fh.read().replace(b"\x00", b" ").decode("utf-8", "replace")
+    except OSError:
+        return False
+    return "host dashboard serve" in cmd
+
+
+def _free_port_from_old_dashboard(port: int) -> None:
+    """Before binding, terminate a previous dashboard instance still holding `port` so the new
+    one can start cleanly. SAFETY: only kills processes whose cmdline is a urirun host
+    dashboard serve — never an unrelated service that happens to own the port."""
+    import signal
+
+    me = os.getpid()
+
+    def stale() -> list[int]:
+        return [p for p in _port_holder_pids(port) if p != me and _is_dashboard_process(p)]
+
+    targets = stale()
+    for pid in targets:
+        try:
+            os.kill(pid, signal.SIGTERM)
+            print(json.dumps({"event": "urirun.host_dashboard.replacing_old", "pid": pid, "port": port}), flush=True)
+        except OSError:
+            pass
+    if not targets:
+        return
+    deadline = time.time() + 8.0
+    while time.time() < deadline:
+        if not stale():
+            return
+        time.sleep(0.2)
+    for pid in stale():  # last resort for a stubborn holder
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except OSError:
+            pass
+    time.sleep(0.3)
+
+
 def serve(
     project: str = ".",
     db: str | None = None,
@@ -5849,6 +6141,9 @@ def serve(
     startup_qr: bool = False,
     qr_url: str | None = None,
 ) -> ThreadingHTTPServer:
+    # Starting a new dashboard auto-replaces the old one holding this port (parent+worker), so
+    # `serve` never dies on "Address already in use".
+    _free_port_from_old_dashboard(int(port))
     server = ThreadingHTTPServer((host, port), create_handler(project, db=db, config=config, node_urls=node_urls,
                                                              token=token, identity=identity))
     scheme = "http"

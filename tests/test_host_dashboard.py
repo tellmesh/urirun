@@ -648,6 +648,7 @@ def test_uri_invoke_lists_supported_host_actions():
     assert "scanner://page/camera/command/torch" in uris
     assert "scanner://page/camera/command/best-pdf" in uris
     assert "scanner://host/capture/command/run" in uris
+    assert "document://host/archive/command/sync-to-node" in uris
     assert all("layer" in item for item in result["actions"])
 
 
@@ -681,6 +682,61 @@ def test_uri_invoke_execute_session_logs(monkeypatch):
     assert result["ok"] is True
     assert result["invokedUri"] == "scanner://host/session/command/log"
     assert fake_db.logs[-1]["detail"]["detail"]["href"] == "https://host/scanner"
+
+
+def test_sync_documents_to_node_copies_pdfs_and_logs_chat(monkeypatch, tmp_path):
+    fake_db = FakeHostDb()
+    document_root = tmp_path / "documents"
+    month = document_root / "2026-06"
+    month.mkdir(parents=True)
+    first = month / "rachunek_doc-a.pdf"
+    second = month / "faktura_doc-b.pdf"
+    first.write_bytes(b"pdf-a")
+    second.write_bytes(b"pdf-b")
+    (month / "note.txt").write_text("ignore", encoding="utf-8")
+
+    calls = []
+
+    def fake_run_node_uri(node_url, uri, payload, **kwargs):
+        data = base64.b64decode(payload["bytes_b64"].encode("ascii"))
+        calls.append({"node_url": node_url, "uri": uri, "payload": payload, "bytes": data})
+        return {
+            "ok": True,
+            "value": {
+                "ok": True,
+                "path": payload["path"],
+                "bytes": len(data),
+                "sha256": host_dashboard.hashlib.sha256(data).hexdigest(),
+            },
+        }
+
+    monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(host_dashboard, "_run_node_uri", fake_run_node_uri)
+
+    result = host_dashboard.uri_invoke(".", ":memory:", None, {
+        "uri": "document://host/archive/command/sync-to-node",
+        "payload": {
+            "source_root": str(document_root),
+            "node_url": "http://laptop.local:8766",
+            "node": "laptop",
+            "dest_root": "~/Downloads/urirun-scans",
+        },
+    })
+
+    assert result["ok"] is True
+    assert result["copied"] == 2
+    assert result["failed"] == 0
+    assert len(calls) == 2
+    assert {call["uri"] for call in calls} == {"fs://laptop/file/command/write-b64"}
+    assert {call["payload"]["path"] for call in calls} == {
+        "~/Downloads/urirun-scans/2026-06/rachunek_doc-a.pdf",
+        "~/Downloads/urirun-scans/2026-06/faktura_doc-b.pdf",
+    }
+    assert fake_db.logs[-2]["stream"] == "document-sync"
+    assert fake_db.logs[-2]["event"] == "sync-to-node"
+    assert fake_db.logs[-1]["stream"] == "chat"
+    assert fake_db.logs[-1]["event"] == "message"
+    assert "Document sync to laptop completed: 2/2 PDFs" in fake_db.logs[-1]["detail"]["content"]
 
 
 def test_uri_invoke_page_action_queues_for_scanner(monkeypatch):
@@ -1368,3 +1424,41 @@ def test_document_metadata_does_not_parse_date_as_amount():
     assert metadata["type"] == "potwierdzenie"
     assert metadata["amount"] == ""
     assert metadata["currency"] == ""
+
+
+def test_port_holder_pids_parses_ss_output(monkeypatch):
+    sample = (
+        'LISTEN 0 5 0.0.0.0:8194 0.0.0.0:* users:(("urirun",pid=4242,fd=3))\n'
+        'LISTEN 0 4096 0.0.0.0:8788 0.0.0.0:* users:(("python",pid=99,fd=7))\n'
+    )
+
+    class _R:
+        stdout = sample
+
+    monkeypatch.setattr(host_dashboard.subprocess, "run", lambda *a, **k: _R())
+    assert host_dashboard._port_holder_pids(8194) == [4242]   # only the :8194 holder
+    assert host_dashboard._port_holder_pids(8788) == [99]
+    assert host_dashboard._port_holder_pids(9999) == []       # nothing on that port
+
+
+def test_free_port_only_kills_dashboard_processes(monkeypatch):
+    killed: list[int] = []
+    # two holders on the port: one is a dashboard, one is an unrelated service
+    monkeypatch.setattr(host_dashboard, "_port_holder_pids", lambda port: [111, 222])
+    monkeypatch.setattr(host_dashboard, "_is_dashboard_process", lambda pid: pid == 111)
+    monkeypatch.setattr(host_dashboard.os, "kill", lambda pid, sig: killed.append(pid))
+    # after SIGTERM, pretend the dashboard is gone so the wait loop exits immediately
+    seq = iter([[111, 222], []])
+    monkeypatch.setattr(host_dashboard, "_port_holder_pids", lambda port: next(seq, []))
+    monkeypatch.setattr(host_dashboard, "_is_dashboard_process", lambda pid: pid == 111)
+
+    host_dashboard._free_port_from_old_dashboard(8194)
+    assert killed == [111]          # the dashboard was terminated, the other service untouched
+
+
+def test_free_port_noop_when_nothing_to_replace(monkeypatch):
+    killed: list[int] = []
+    monkeypatch.setattr(host_dashboard, "_port_holder_pids", lambda port: [])
+    monkeypatch.setattr(host_dashboard.os, "kill", lambda pid, sig: killed.append(pid))
+    host_dashboard._free_port_from_old_dashboard(8194)
+    assert killed == []
