@@ -3777,7 +3777,100 @@ def _document_sync_default_dest_root() -> str:
 
 
 def _document_sync_default_node() -> str:
-    return os.environ.get("URIRUN_DOCUMENT_SYNC_NODE", "laptop")
+    return os.environ.get("URIRUN_DOCUMENT_SYNC_NODE", "").strip()
+
+
+def _iter_node_alias_values(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [item.strip() for item in re.split(r"[,;|]", value) if item.strip()]
+    if isinstance(value, (list, tuple, set)):
+        return [str(item).strip() for item in value if str(item).strip()]
+    return [str(value).strip()] if str(value).strip() else []
+
+
+def _node_alias_map_from_config_doc(config_doc: dict | None) -> dict[str, str]:
+    out: dict[str, str] = {}
+    if not isinstance(config_doc, dict):
+        return out
+    for item in config_doc.get("nodes") or []:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+        aliases = [name]
+        for key in ("alias", "aliases", "host", "hostname", "label", "labels", "tags"):
+            aliases.extend(_iter_node_alias_values(item.get(key)))
+        for alias in aliases:
+            out.setdefault(alias.casefold(), name)
+    return out
+
+
+def _node_alias_map_from_env() -> dict[str, str]:
+    out: dict[str, str] = {}
+    default_node = _document_sync_default_node()
+    if default_node:
+        out.setdefault(default_node.casefold(), default_node)
+    for key in os.environ:
+        if key.startswith("URIRUN_NODE_URL_"):
+            node = key.removeprefix("URIRUN_NODE_URL_").lower().replace("_", "-")
+            if node:
+                out.setdefault(node.casefold(), node)
+    for item in os.environ.get("URIRUN_NODES", "").replace(";", ",").split(","):
+        text = item.strip()
+        if not text:
+            continue
+        name = text.split("=", 1)[0].strip() if "=" in text else ""
+        if name:
+            out.setdefault(name.casefold(), name)
+    # URIRUN_NODE_ALIASES="node=alias1|alias2,other=desk" lets operators keep local words
+    # out of code while still allowing natural-language target resolution.
+    for item in os.environ.get("URIRUN_NODE_ALIASES", "").split(","):
+        text = item.strip()
+        if not text or "=" not in text:
+            continue
+        name, aliases = text.split("=", 1)
+        clean_name = name.strip()
+        if not clean_name:
+            continue
+        out.setdefault(clean_name.casefold(), clean_name)
+        for alias in _iter_node_alias_values(aliases):
+            out.setdefault(alias.casefold(), clean_name)
+    return out
+
+
+def _node_alias_map_from_node_urls(node_urls: list[str] | None) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for item in node_urls or []:
+        text = str(item).strip()
+        if not text:
+            continue
+        name = text.split("=", 1)[0].strip() if "=" in text else ""
+        if name:
+            out.setdefault(name.casefold(), name)
+    return out
+
+
+def _node_alias_map_from_context(config: str | None, node_urls: list[str] | None = None) -> dict[str, str]:
+    out = _node_alias_map_from_env()
+    out.update(_node_alias_map_from_node_urls(node_urls))
+    try:
+        out.update(_node_alias_map_from_config_doc(_host_config(config, node_urls)))
+    except Exception:
+        pass
+    return out
+
+
+def _prompt_node_match(prompt: str, alias_map: dict[str, str]) -> str:
+    text = prompt.casefold()
+    for alias, node in sorted(alias_map.items(), key=lambda item: len(item[0]), reverse=True):
+        if not alias:
+            continue
+        if re.search(rf"(?<![\w.-]){re.escape(alias)}(?![\w.-])", text):
+            return node
+    return ""
 
 
 def _scanned_id_log_path() -> Path:
@@ -3850,7 +3943,9 @@ def sync_documents_to_node(
     identity: str | None = None,
 ) -> dict:
     source_root = Path(payload.get("source_root") or payload.get("sourceRoot") or _document_archive_root()).expanduser().resolve()
-    node = str(payload.get("node") or payload.get("targetNode") or _document_sync_default_node()).strip() or "laptop"
+    node = str(payload.get("node") or payload.get("targetNode") or _document_sync_default_node()).strip()
+    if not node:
+        raise ValueError("node is required: pass payload.node, select a node target, or set URIRUN_DOCUMENT_SYNC_NODE")
     node_url = str(payload.get("node_url") or payload.get("nodeUrl") or "").strip()
     if not node_url:
         node_url = _node_url_from_config(config, node_urls, node) or ""
@@ -7288,7 +7383,9 @@ def _needs_screen_document_capture(prompt: str) -> bool:
     return wants_screen and wants_document
 
 
-def _is_document_sync_prompt(prompt: str) -> bool:
+def _is_document_sync_prompt(prompt: str, selected_nodes: list[str] | None = None,
+                             selected_targets: list[str] | None = None, config: str | None = None,
+                             node_urls: list[str] | None = None) -> bool:
     text_value = prompt.casefold()
     wants_transfer = any(word in text_value for word in (
         "wyślij", "wyslij", "prześlij", "przeslij", "skopiuj", "kopiuj",
@@ -7298,18 +7395,28 @@ def _is_document_sync_prompt(prompt: str) -> bool:
         "artifact", "artefakt", "documents", "dokument", "pdf",
         "faktur", "rachunek", "paragon", "scan", "skan",
     ))
-    wants_node = any(word in text_value for word in ("node", "laptop", "lenovo"))
+    alias_map = _node_alias_map_from_context(config, node_urls)
+    target_nodes = _selected_nodes_from_targets(selected_nodes or [], selected_targets or [])
+    wants_node = bool(
+        target_nodes
+        or _document_sync_default_node()
+        or _prompt_node_match(prompt, alias_map)
+        or re.search(r"(?<![\w.-])node(?![\w.-])", text_value)
+    )
     return wants_transfer and wants_documents and wants_node
 
 
-def _document_sync_node_from_prompt(prompt: str, selected_nodes: list[str]) -> str:
+def _document_sync_node_from_prompt(prompt: str, selected_nodes: list[str],
+                                    selected_targets: list[str] | None = None,
+                                    config: str | None = None, node_urls: list[str] | None = None) -> str:
     if selected_nodes:
         return selected_nodes[0]
-    text_value = prompt.casefold()
-    if "lenovo" in text_value:
-        return "lenovo"
-    if "laptop" in text_value:
-        return "laptop"
+    target_nodes = _selected_nodes_from_targets([], selected_targets or [])
+    if target_nodes:
+        return target_nodes[0]
+    matched = _prompt_node_match(prompt, _node_alias_map_from_context(config, node_urls))
+    if matched:
+        return matched
     return _document_sync_default_node()
 
 
@@ -7464,8 +7571,8 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
     user_selected_nodes = list(selected_nodes)
     user_selected_targets = list(selected_targets)
     user_intent = None
-    if _is_document_sync_prompt(prompt):
-        preview_node = _document_sync_node_from_prompt(prompt, selected_nodes)
+    if _is_document_sync_prompt(prompt, selected_nodes, selected_targets, config, node_urls):
+        preview_node = _document_sync_node_from_prompt(prompt, selected_nodes, selected_targets, config, node_urls)
         preview_target = f"node:{preview_node}"
         user_selected_targets = list(selected_targets)
         if preview_target not in user_selected_targets:
@@ -7633,8 +7740,8 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         except Exception:
             pass
         return result
-    if _is_document_sync_prompt(prompt):
-        sync_node = _document_sync_node_from_prompt(prompt, selected_nodes)
+    if _is_document_sync_prompt(prompt, selected_nodes, selected_targets, config, node_urls):
+        sync_node = _document_sync_node_from_prompt(prompt, selected_nodes, selected_targets, config, node_urls)
         sync_selected_nodes = _selected_nodes_from_targets([*selected_nodes, sync_node], selected_targets)
         sync_selected_targets = list(selected_targets)
         node_target = f"node:{sync_node}"

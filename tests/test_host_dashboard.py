@@ -307,6 +307,7 @@ def test_chat_ask_derives_nodes_from_node_targets(monkeypatch):
 
 def test_chat_ask_plans_document_sync_without_llm(monkeypatch):
     fake_db = FakeHostDb()
+    monkeypatch.setenv("URIRUN_DOCUMENT_SYNC_NODE", "lenovo")
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
 
     result = host_dashboard.chat_ask(
@@ -440,6 +441,7 @@ def test_chat_ask_document_sync_error_includes_urifix_recovery(monkeypatch):
 
 def test_chat_ask_document_sync_decision_loop_blocks_without_node_url(monkeypatch):
     fake_db = FakeHostDb()
+    monkeypatch.setenv("URIRUN_DOCUMENT_SYNC_NODE", "lenovo")
 
     def fake_sync(project, db, config, payload, **kwargs):
         raise ValueError("node_url is required when the target node is not present in host config")

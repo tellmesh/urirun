@@ -62,6 +62,16 @@ For example, a user can select only `host` and `service:phone-scanner`, but writ
 the raw request and also show `selectedNodes: ["lenovo"]` plus
 `selectedTargets: [..., "node:lenovo"]`.
 
+Local node names are data, not code. Prompt resolution uses selected targets and
+configured node names/aliases from host config, `URIRUN_NODES`,
+`URIRUN_NODE_URL_*`, `URIRUN_DOCUMENT_SYNC_NODE`, and `URIRUN_NODE_ALIASES`.
+For example:
+
+```bash
+export URIRUN_NODES='office-laptop=http://192.168.1.20:8766'
+export URIRUN_NODE_ALIASES='office-laptop=notebook|work laptop'
+```
+
 For autonomous work, the dashboard also emits a `decisionLoop` block on supported
 deterministic flows. That block is the normalized control shape:
 
