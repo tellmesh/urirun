@@ -1,52 +1,52 @@
-# urirun | 1574 func | 91f | 35963L | python | 2026-06-24
+# urirun | 1579 func | 91f | 36099L | python | 2026-06-24
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.6  critical=191 (limit:10)  dup=2  cycles=0
+  CC̄=4.6  critical=192 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     _archive_scanned_document = 43 (limit:10)
-  !!! high_fan_out     create_handler = 40 (limit:10)
+  !!! high_fan_out     create_handler = 41 (limit:10)
   !!! high_fan_out     _write_document_pdf = 32 (limit:10)
   !!! high_fan_out     serve = 30 (limit:10)
-  !!! high_fan_out     _add_host_subparser = 27 (limit:10)
+  !!! high_fan_out     _add_host_subparser = 29 (limit:10)
   !!! high_fan_out     main = 26 (limit:10)
   !!! high_fan_out     scanner_best_finish = 26 (limit:10)
-  !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
   !!! high_fan_out     scanner_capture = 25 (limit:10)
+  !!! high_fan_out     _build_parser = 25 (limit:10)
 
 MODULES[159] (top by size):
-  M[adapters/python/urirun/host/host_dashboard.py] 9884L C:0 F:313 CC↑14 D:0 (python)
+  M[adapters/python/urirun/host/host_dashboard.py] 9921L C:0 F:314 CC↑14 D:0 (python)
   M[adapters/python/urirun/runtime/v2.py] 2024L C:1 F:125 CC↑14 D:4 (python)
-  M[adapters/python/urirun/node/mesh.py] 1864L C:3 F:97 CC↑14 D:1 (python)
+  M[adapters/python/urirun/node/mesh.py] 1888L C:3 F:97 CC↑15 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/__init__.py] 737L C:1 F:51 CC↑14 D:12 (python)
   M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
-  M[adapters/python/urirun/runtime/cli.py] 681L C:0 F:7 CC↑1 D:1 (python)
+  M[adapters/python/urirun/runtime/cli.py] 686L C:0 F:7 CC↑1 D:1 (python)
   M[adapters/python/urirun/runtime/_scan.py] 666L C:0 F:35 CC↑14 D:0 (python)
   M[adapters/python/urirun/node/flow.py] 606L C:0 F:30 CC↑14 D:2 (python)
+  M[adapters/python/urirun/host/scanner_bridge.py] 605L C:1 F:20 CC↑12 D:0 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 600L C:0 F:34 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/_runtime.py] 584L C:1 F:29 CC↑13 D:2 (python)
   M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
   M[adapters/python/urirun/host/host_db.py] 540L C:0 F:32 CC↑11 D:0 (python)
   M[goal.yaml] 538L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/host/scanner_bridge.py] 535L C:1 F:16 CC↑12 D:0 (python)
   LANGS: python:99/json:13/shell:10/csharp:4/yaml:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ _archive_scanned_document fan=43  // Orchestrates 43 calls
-  ★ create_handler fan=40  // Orchestrates 40 calls
+  ★ create_handler fan=41  // Orchestrates 41 calls
   ★ _write_document_pdf fan=32  // Orchestrates 32 calls
   ★ serve fan=30  // Run the daemon: warm registry + worker pool, one Unix socket, one process.
-  ★ _add_host_subparser fan=27  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
+  ★ _add_host_subparser fan=29  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
 
 REFACTOR[15]:
-  [1] H/H Split god module adapters/python/urirun/__init__.py (737L, 1 classes)
-  [2] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (600L, 0 classes)
-  [3] H/H Split god module adapters/python/urirun/host/host_dashboard.py (9884L, 0 classes)
-  [4] H/H Split god module adapters/python/urirun/node/flow.py (606L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun/node/mesh.py (1864L, 3 classes)
+  [1] H/H Split god module adapters/python/urirun/node/mesh.py (1888L, 3 classes)
+  [2] H/H Split god module adapters/python/urirun/__init__.py (737L, 1 classes)
+  [3] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (600L, 0 classes)
+  [4] H/H Split god module adapters/python/urirun/host/host_dashboard.py (9921L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/node/flow.py (606L, 0 classes)
 
 EVOLUTION:
-  2026-06-24 CC̄=4.6 crit=191 35963L // Automated analysis
+  2026-06-24 CC̄=4.6 crit=192 36099L // Automated analysis

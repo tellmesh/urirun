@@ -72,7 +72,9 @@ Near-term extraction targets:
   selection, chat attachments, scanner session logging, page-action queues,
   camera page-status parsing, scanner artifact metadata/item helpers and phone
   scanner live/status view assembly plus live-stream public projection moved
-  behind dashboard wrappers.
+  behind dashboard wrappers. The phone-scanner chat flow/timeline result
+  contract and scanner NL prompt heuristics also moved there so they can be
+  tested without the dashboard server.
 - `host/widgets.py` for service widget selection and summaries. First split
   landed: query selection, fallback view construction and scanner stream
   summaries moved out of `host_dashboard.py`; HTML/SVG rendering still lives in

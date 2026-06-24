@@ -17,7 +17,7 @@ DEMO_ROUTE_SUFFIX = "example/query/ping"
 
 
 def _pkg_module(connector_id: str) -> str:
-    return "urirun_connector_" + connector_id.replace("-", "_")
+    return f"urirun_connector_{connector_id.replace('-', '_')}"
 
 
 def _scheme(connector_id: str, scheme: str | None) -> str:

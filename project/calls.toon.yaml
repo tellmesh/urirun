@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.23s
-# nodes: 406 | edges: 500 | modules: 38
+# generated in 0.76s
+# nodes: 408 | edges: 500 | modules: 39
 # CC̄=4.6
 
 HUBS[20]:
@@ -10,40 +10,40 @@ HUBS[20]:
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.runtime.errors.info
     CC=13  in:2  out:27  total:29
-  adapters.python.urirun.host.document_sync._upload_file
-    CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
+  adapters.python.urirun.host.document_sync._upload_file
+    CC=6  in:1  out:27  total:28
+  adapters.python.urirun.host.discovery.node_alias_map_from_env
+    CC=14  in:1  out:26  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.discovery.node_alias_map_from_env
-    CC=14  in:1  out:26  total:27
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.testing.smoke
     CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
-  adapters.python.urirun.host.host_db.init_db
-    CC=2  in:17  out:6  total:23
   adapters.python.urirun.host.document_sync.sync_documents_to_node
     CC=13  in:0  out:23  total:23
+  adapters.python.urirun.host.host_db.init_db
+    CC=2  in:17  out:6  total:23
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
   adapters.python.urirun.runtime.errors.problem
     CC=10  in:0  out:22  total:22
-  adapters.python.urirun.host.contracts.file_transfer_verification
-    CC=4  in:1  out:20  total:21
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
   adapters.python.urirun.host.host_db.connection
     CC=1  in:18  out:3  total:21
+  adapters.python.urirun.host.contracts.file_transfer_verification
+    CC=4  in:1  out:20  total:21
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -200,6 +200,9 @@ MODULES:
     heuristic_plan_chat_request  CC=12  out:16
     is_ambiguous  CC=2  out:3
     is_destructive  CC=4  out:4
+  adapters.python.urirun.host.widgets  [2 funcs]
+    scanner_stream_summary  CC=10  out:17
+    service_widget_summary  CC=12  out:16
   adapters.python.urirun.node.mesh  [1 funcs]
     _pool_executors  CC=1  out:8
   adapters.python.urirun.runtime._runtime  [1 funcs]

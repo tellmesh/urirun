@@ -392,11 +392,7 @@ from urirun.node.routing import (  # noqa: E402
     UNSAFE_URI_PARTS,
     binding_for_remote_route,
     registry_fingerprint,
-    registry_from_routes,
-    route_target,
     route_targets_for_nodes,
-    routes_from_registry,
-    safe_route,
     target_nodes,
 )
 

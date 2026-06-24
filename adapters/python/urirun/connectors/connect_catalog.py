@@ -42,7 +42,7 @@ def _get_json(url: str, timeout: float = 10.0) -> dict:
 @errors.capture(scheme="connect")
 def fetch_catalog(base: str = DEFAULT_CATALOG_BASE, timeout: float = 10.0) -> dict:
     """Return the parsed ``connectors.json`` catalog document."""
-    return _get_json(base.rstrip("/") + "/connectors.json", timeout=timeout)
+    return _get_json(f"{base.rstrip('/')}/connectors.json", timeout=timeout)
 
 
 @errors.capture(scheme="connect")

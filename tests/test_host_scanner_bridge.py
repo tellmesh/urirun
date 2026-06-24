@@ -354,3 +354,49 @@ def test_scanner_service_live_views_builds_stream_and_status_views() -> None:
     assert result["views"][1]["updatedAt"] == "2026-06-24T00:00:01Z"
     assert result["views"][1]["data"]["streamCount"] == 2
     assert result["views"][1]["data"]["recentArtifacts"][0]["type"] == "paragon"
+
+
+def test_scanner_flow_result_includes_service_actions_timeline_and_attachments() -> None:
+    result = scanner_bridge.scanner_flow_result(
+        {
+            "ok": True,
+            "status": "running",
+            "message": {"attachments": [{"kind": "qr-code", "path": "/tmp/qr.png"}]},
+        },
+        True,
+        "scanner://page/camera/command/autonomous",
+        {"target": "scanner", "auto": True},
+        "scanner://page/ui/button/torch/command/click",
+        True,
+        {"ok": True, "queued": True},
+        {"ok": True, "queued": True},
+        "zacznij skanowanie",
+        ["lenovo"],
+        ["host", "service:phone-scanner"],
+    )
+
+    assert result["ok"] is True
+    assert result["generator"]["intent"] == "phone-scanner-service"
+    assert [step["id"] for step in result["flow"]["steps"]] == [
+        "start-phone-scanner",
+        "queue-camera-autonomous",
+        "queue-camera-light",
+    ]
+    assert result["timeline"][1]["target"] == "scanner-page"
+    assert result["timeline"][1]["autonomous"] is True
+    assert result["results"]["camera-start"]["queued"] is True
+    assert result["results"]["camera-torch"]["queued"] is True
+    assert result["attachments"] == [{"kind": "qr-code", "path": "/tmp/qr.png"}]
+
+
+def test_scanner_prompt_helpers_classify_camera_autonomous_and_torch_intents() -> None:
+    assert scanner_bridge.nl_text("Włącz światło ß") == "wlacz swiatlo ss"
+    assert scanner_bridge.is_phone_scanner_prompt("uruchom skaner telefonu i pokaz QR")
+    assert scanner_bridge.is_phone_scanner_prompt("stwórz usługę kamery online przez WebRTC")
+    assert scanner_bridge.is_phone_scanner_prompt("włącz światło w kamerze telefonu")
+    assert not scanner_bridge.is_phone_scanner_prompt("pokaz liste faktur")
+    assert scanner_bridge.is_autonomous_scanner_prompt("uruchom autonomiczne skanowanie paragonow")
+    assert scanner_bridge.is_camera_start_prompt("włącz kamerę")
+    assert scanner_bridge.torch_enabled_from_prompt("włącz latarkę w telefonie") is True
+    assert scanner_bridge.torch_enabled_from_prompt("wyłącz światło w kamerze") is False
+    assert scanner_bridge.torch_enabled_from_prompt("pokaż status skanera") is None

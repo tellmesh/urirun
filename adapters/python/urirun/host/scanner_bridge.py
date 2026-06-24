@@ -4,6 +4,7 @@ import hashlib
 import json
 import threading
 import time
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -603,3 +604,64 @@ def scanner_flow_result(
         },
         "attachments": ((service.get("message") or {}).get("attachments") or []),
     }
+
+
+def nl_text(text: str) -> str:
+    decomposed = unicodedata.normalize("NFKD", text.lower())
+    stripped = "".join(ch for ch in decomposed if not unicodedata.combining(ch))
+    return stripped.translate(str.maketrans({"ł": "l", "ß": "ss"}))
+
+
+def is_phone_scanner_prompt(prompt: str) -> bool:
+    text = nl_text(prompt)
+    scanner_terms = (
+        "skaner", "scanner", "skan", "scan", "kamera", "camera", "telefon", "phone", "mobile", "mobil",
+        "webrtc", "qr", "qrcode", "paragon", "rachunek", "smartfon", "latark", "swiatl", "torch", "flash",
+    )
+    service_terms = ("aplikac", "uslug", "service", "stron", "narzedz", "interfejs")
+    start_terms = (
+        "uruchom", "wystart", "stworz", "utworz", "start", "create", "open", "wlacz", "odpal", "daj",
+        "pokaz", "link", "adres", "ip", "qr", "wylacz", "zgas", "disable", "off",
+    )
+    wants_scanner = any(word in text for word in scanner_terms)
+    wants_service = any(word in text for word in service_terms)
+    wants_start = any(word in text for word in start_terms)
+    autonomous_context = any(word in text for word in ("auto", "autonom", "samoczyn", "petl", "ciagl", "co 1"))
+    mobile_context = any(word in text for word in (
+        "telefon", "phone", "mobile", "mobil", "smartfon", "webrtc", "kamera", "camera",
+        "qr", "skaner", "scanner", "latark", "swiatl", "torch", "flash",
+    ))
+    return (wants_start and (wants_scanner or (wants_service and mobile_context))) or (
+        autonomous_context and wants_scanner
+    )
+
+
+def is_autonomous_scanner_prompt(prompt: str) -> bool:
+    text = nl_text(prompt)
+    autonomous_terms = ("auto", "autonom", "samoczyn", "petl", "ciagl", "co 1")
+    document_terms = ("paragon", "rachunek", "faktur", "receipt", "invoice")
+    scanner_terms = ("skan", "scan", "skaner", "scanner", "kamera", "camera", "telefon", "smartfon", "phone", "mobile")
+    return any(word in text for word in autonomous_terms) and (
+        any(word in text for word in document_terms) or any(word in text for word in scanner_terms)
+    )
+
+
+def is_camera_start_prompt(prompt: str) -> bool:
+    text = nl_text(prompt)
+    camera_terms = ("kamer", "camera", "webcam", "aparat", "obiektyw")
+    start_terms = ("wlacz", "uruchom", "start", "odpal", "otworz", "aktywow", "enable")
+    return any(word in text for word in camera_terms) and any(word in text for word in start_terms)
+
+
+def torch_enabled_from_prompt(prompt: str) -> bool | None:
+    text = nl_text(prompt)
+    torch_terms = ("latark", "swiatl", "oswietl", "lampa", "led", "torch", "flash")
+    if not any(word in text for word in torch_terms):
+        return None
+    off_terms = ("wylacz", "zgas", "off", "disable", "stop")
+    on_terms = ("wlacz", "uruchom", "start", "odpal", "zaswiec", "on", "enable")
+    if any(word in text for word in off_terms):
+        return False
+    if any(word in text for word in on_terms):
+        return True
+    return True

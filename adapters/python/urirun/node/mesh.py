@@ -759,6 +759,15 @@ def _split_deploy_doc(path: str | None) -> tuple[dict | None, dict | None]:
     return doc, None
 
 
+def _warn_dropped_routes(result: dict) -> None:
+    """Warn on stderr about routes a replace-deploy (non --merge) removed from the node."""
+    import sys as _sys
+    print(f"[deploy] warning: {len(result['droppedRoutes'])} route(s) dropped by replace-deploy:",
+          file=_sys.stderr, flush=True)
+    for uri in result["droppedRoutes"]:
+        print(f"  - {uri}", file=_sys.stderr, flush=True)
+
+
 def deploy_command(args: argparse.Namespace) -> int:
     """`urirun host deploy <node> --bindings F [--allow G] [--code F] [--env K=V]`."""
     config = host_config_for_args(args)
@@ -779,11 +788,7 @@ def deploy_command(args: argparse.Namespace) -> int:
                             merge=merge,
                             persist=bool(getattr(args, "persist", False)))
     if result.get("droppedRoutes") and not merge:
-        import sys as _sys
-        print(f"[deploy] warning: {len(result['droppedRoutes'])} route(s) dropped by replace-deploy:",
-              file=_sys.stderr, flush=True)
-        for uri in result["droppedRoutes"]:
-            print(f"  - {uri}", file=_sys.stderr, flush=True)
+        _warn_dropped_routes(result)
     reglib._emit_json(result, "-")
     return 0 if result.get("ok") else 1
 
@@ -1679,7 +1684,7 @@ def _start_enroll_token_rotation(ctx: "NodeContext", public_url: str, *,
         while not stop.wait(interval):  # waits `interval`; True only when stopped
             new = keyauth.new_enroll_token()
             ctx.enroll_token = new  # old PIN stops working immediately
-            print(f"\033[1;31mTOKEN: {new}\033[0m  (rotacja · poprzedni wygasł · ważny {interval // 60} min)"
+            print(f"\033[1;32mTOKEN: {new}\033[0m  (rotacja · poprzedni wygasł · ważny {interval // 60} min)"
                   f"  →  uri-copy-id {public_url} --enroll-token {new}", flush=True)
 
     threading.Thread(target=_rotate, name="urirun-enroll-rotate", daemon=True).start()
@@ -1696,8 +1701,8 @@ def _announce_node_started(name: str, host: str, port: int, state: dict, execute
     # credential when there is no rotating PIN. Both on stdout so the token is captured there.
     print(f"[urirun] {version_line()} · node '{name}' · {public_url}", flush=True)
     if enroll_token:
-        # Bold red, isolated, so it stands out in the console scrollback.
-        print(f"\033[1;31mTOKEN: {enroll_token}\033[0m  (≤7 znaków · ważny {ENROLL_TOKEN_TTL // 60} min, "
+        # Bold green, isolated, so it stands out in the console scrollback.
+        print(f"\033[1;32mTOKEN: {enroll_token}\033[0m  (≤7 znaków · ważny {ENROLL_TOKEN_TTL // 60} min, "
               f"potem rotacja i nowy TOKEN tutaj)  →  uri-copy-id {public_url} --enroll-token {enroll_token}",
               flush=True)
     else:

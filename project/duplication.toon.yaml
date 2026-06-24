@@ -1,23 +1,23 @@
-# redup/duplication | 23 groups | 90f 30897L | 2026-06-24
+# redup/duplication | 22 groups | 90f 31033L | 2026-06-24
 
 SUMMARY:
   files_scanned: 90
-  total_lines:   30897
-  dup_groups:    23
-  dup_fragments: 53
-  saved_lines:   206
-  scan_ms:       1026
+  total_lines:   31033
+  dup_groups:    22
+  dup_fragments: 51
+  saved_lines:   190
+  scan_ms:       1401
 
 HOTSPOTS[7] (files with most duplication):
-  host/host_dashboard.py  dup=94L  groups=8  frags=14  (0.3%)
+  host/host_dashboard.py  dup=78L  groups=7  frags=13  (0.3%)
   runtime/v2.py  dup=57L  groups=7  frags=12  (0.2%)
   __init__.py  dup=38L  groups=1  frags=3  (0.1%)
   host/host_db.py  dup=33L  groups=1  frags=3  (0.1%)
   runtime/_scan.py  dup=17L  groups=3  frags=3  (0.1%)
-  host/scanner_bridge.py  dup=16L  groups=1  frags=1  (0.1%)
   runtime/v1.py  dup=16L  groups=2  frags=2  (0.1%)
+  host/discovery.py  dup=12L  groups=1  frags=2  (0.0%)
 
-DUPLICATES[23] (ranked by impact):
+DUPLICATES[22] (ranked by impact):
   [a58866334f01e99a] ! STRU  command  L=16 N=3 saved=32 sim=1.00
       __init__.py:47-62  (command)
       __init__.py:65-69  (shell)
@@ -26,9 +26,6 @@ DUPLICATES[23] (ranked by impact):
       host/host_db.py:310-320  (list_artifacts)
       host/host_db.py:355-365  (recent_checks)
       host/host_db.py:379-389  (recent_logs)
-  [a47e9426e3c3563b]   STRU  _public_scanner_candidate  L=16 N=2 saved=16 sim=1.00
-      host/host_dashboard.py:6702-6717  (_public_scanner_candidate)
-      host/scanner_bridge.py:107-122  (public_scanner_candidate)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
       runtime/v2.py:1554-1557  (_cmd_add_openapi)
       runtime/v2.py:1560-1563  (_cmd_gen)
@@ -36,12 +33,12 @@ DUPLICATES[23] (ranked by impact):
       runtime/v2.py:1871-1874  (_cmd_host)
       runtime/v2.py:1877-1880  (_cmd_node)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=2 saved=13 sim=1.00
-      host/host_dashboard.py:9780-9792  (_free_port_from_old_scanner)
-      host/host_dashboard.py:9795-9803  (_free_port_from_old_chat)
+      host/host_dashboard.py:9817-9829  (_free_port_from_old_scanner)
+      host/host_dashboard.py:9832-9840  (_free_port_from_old_chat)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:7966-7969  (_host_db)
-      host/host_dashboard.py:7972-7975  (_mesh)
-      host/host_dashboard.py:7978-7981  (_planfile_adapter)
+      host/host_dashboard.py:7989-7992  (_host_db)
+      host/host_dashboard.py:7995-7998  (_mesh)
+      host/host_dashboard.py:8001-8004  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
   [60d4dcb768819ab9]   EXAC  _binding_pairs  L=11 N=2 saved=11 sim=1.00
       runtime/v1.py:362-372  (_binding_pairs)
@@ -50,17 +47,17 @@ DUPLICATES[23] (ranked by impact):
       host/task_planner.py:82-92  (_json_from_text)
       node/flow.py:232-242  (json_from_text)
   [926b8a3d766222d9]   STRU  _chat_document_sync_response  L=9 N=2 saved=9 sim=1.00
-      host/host_dashboard.py:9104-9112  (_chat_document_sync_response)
-      host/host_dashboard.py:9115-9123  (_chat_generic_response)
+      host/host_dashboard.py:9137-9145  (_chat_document_sync_response)
+      host/host_dashboard.py:9148-9156  (_chat_generic_response)
   [f4f8c5ba3175290d]   EXAC  _short_value  L=8 N=2 saved=8 sim=1.00
       host/fs_transfer.py:128-135  (_short_value)
-      host/host_dashboard.py:4620-4627  (_short_value)
+      host/host_dashboard.py:4683-4690  (_short_value)
   [9b8d8dffe6b88b09]   STRU  node_alias_map_from_value  L=6 N=2 saved=6 sim=1.00
       host/discovery.py:72-77  (node_alias_map_from_value)
       host/discovery.py:129-134  (node_url_map_from_value)
   [61cba34717c9d3dc]   STRU  boolish  L=6 N=2 saved=6 sim=1.00
       host/document_sync.py:31-36  (boolish)
-      host/host_dashboard.py:8188-8193  (_boolish)
+      host/host_dashboard.py:8263-8268  (_boolish)
   [e0131d32b5db30ac]   STRU  _emit_json  L=6 N=2 saved=6 sim=1.00
       runtime/_registry.py:618-623  (_emit_json)
       runtime/_scan.py:54-59  (emit_json)
@@ -77,11 +74,11 @@ DUPLICATES[23] (ranked by impact):
       runtime/worker.py:156-159  (close)
       runtime/worker.py:187-190  (close)
   [cdb2ba2d3a97a0f6]   STRU  _document_index_path  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:4390-4392  (_document_index_path)
-      host/host_dashboard.py:4491-4493  (_scanned_id_log_path)
+      host/host_dashboard.py:4453-4455  (_document_index_path)
+      host/host_dashboard.py:4554-4556  (_scanned_id_log_path)
   [bed22d936aabe8e2]   STRU  _api_checks  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:9511-9513  (_api_checks)
-      host/host_dashboard.py:9516-9518  (_api_logs)
+      host/host_dashboard.py:9544-9546  (_api_checks)
+      host/host_dashboard.py:9549-9551  (_api_logs)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
@@ -95,98 +92,95 @@ DUPLICATES[23] (ranked by impact):
       runtime/v2.py:640-642  (planfile_task_bindings)
       runtime/v2.py:649-651  (host_data_bindings)
 
-REFACTOR[23] (ranked by priority):
+REFACTOR[22] (ranked by priority):
   [1] ○ extract_function   → utils/command.py
       WHY: 3 occurrences of 16-line block across 1 files — saves 32 lines
       FILES: __init__.py
   [2] ○ extract_function   → host/utils/list_artifacts.py
       WHY: 3 occurrences of 11-line block across 1 files — saves 22 lines
       FILES: host/host_db.py
-  [3] ○ extract_function   → host/utils/_public_scanner_candidate.py
-      WHY: 2 occurrences of 16-line block across 2 files — saves 16 lines
-      FILES: host/host_dashboard.py, host/scanner_bridge.py
-  [4] ○ extract_function   → runtime/utils/_cmd_add_openapi.py
+  [3] ○ extract_function   → runtime/utils/_cmd_add_openapi.py
       WHY: 5 occurrences of 4-line block across 1 files — saves 16 lines
       FILES: runtime/v2.py
-  [5] ○ extract_function   → host/utils/_free_port_from_old_scanner.py
+  [4] ○ extract_function   → host/utils/_free_port_from_old_scanner.py
       WHY: 2 occurrences of 13-line block across 1 files — saves 13 lines
       FILES: host/host_dashboard.py
-  [6] ○ extract_function   → utils/_host_db.py
+  [5] ○ extract_function   → utils/_host_db.py
       WHY: 4 occurrences of 4-line block across 2 files — saves 12 lines
       FILES: host/host_dashboard.py, runtime/v2.py
-  [7] ○ extract_function   → runtime/utils/_binding_pairs.py
+  [6] ○ extract_function   → runtime/utils/_binding_pairs.py
       WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
       FILES: runtime/v1.py, runtime/v2.py
-  [8] ○ extract_function   → utils/_json_from_text.py
+  [7] ○ extract_function   → utils/_json_from_text.py
       WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
       FILES: host/task_planner.py, node/flow.py
-  [9] ○ extract_function   → host/utils/_chat_document_sync_response.py
+  [8] ○ extract_function   → host/utils/_chat_document_sync_response.py
       WHY: 2 occurrences of 9-line block across 1 files — saves 9 lines
       FILES: host/host_dashboard.py
-  [10] ○ extract_function   → host/utils/_short_value.py
+  [9] ○ extract_function   → host/utils/_short_value.py
       WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
       FILES: host/fs_transfer.py, host/host_dashboard.py
-  [11] ○ extract_function   → host/utils/node_alias_map_from_value.py
+  [10] ○ extract_function   → host/utils/node_alias_map_from_value.py
       WHY: 2 occurrences of 6-line block across 1 files — saves 6 lines
       FILES: host/discovery.py
-  [12] ○ extract_function   → host/utils/boolish.py
+  [11] ○ extract_function   → host/utils/boolish.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: host/document_sync.py, host/host_dashboard.py
-  [13] ○ extract_function   → runtime/utils/_emit_json.py
+  [12] ○ extract_function   → runtime/utils/_emit_json.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: runtime/_registry.py, runtime/_scan.py
-  [14] ○ extract_function   → runtime/utils/iter_project_files.py
+  [13] ○ extract_function   → runtime/utils/iter_project_files.py
       WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
       FILES: runtime/_scan.py, runtime/v2.py
-  [15] ○ extract_function   → runtime/utils/replace.py
+  [14] ○ extract_function   → runtime/utils/replace.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: runtime/v1.py, runtime/v2.py
-  [16] ○ extract_function   → runtime/utils/relpath.py
+  [15] ○ extract_function   → runtime/utils/relpath.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: runtime/_scan.py, runtime/v2.py
-  [17] ○ extract_function   → runtime/utils/close.py
+  [16] ○ extract_function   → runtime/utils/close.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: runtime/worker.py
-  [18] ○ extract_function   → host/utils/_document_index_path.py
+  [17] ○ extract_function   → host/utils/_document_index_path.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/host_dashboard.py
-  [19] ○ extract_function   → host/utils/_api_checks.py
+  [18] ○ extract_function   → host/utils/_api_checks.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/host_dashboard.py
-  [20] ○ extract_function   → host/utils/start_ticket.py
+  [19] ○ extract_function   → host/utils/start_ticket.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/planfile_adapter.py
-  [21] ○ extract_function   → node/utils/save_host_config.py
+  [20] ○ extract_function   → node/utils/save_host_config.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/config.py
-  [22] ○ extract_function   → node/utils/_data_artifact_register.py
+  [21] ○ extract_function   → node/utils/_data_artifact_register.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/mesh.py
-  [23] ○ extract_function   → runtime/utils/planfile_task_bindings.py
+  [22] ○ extract_function   → runtime/utils/planfile_task_bindings.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: runtime/v2.py
 
-QUICK_WINS[14] (low risk, high savings — do first):
+QUICK_WINS[13] (low risk, high savings — do first):
   [1] extract_function   saved=32L  → utils/command.py
       FILES: __init__.py
   [2] extract_function   saved=22L  → host/utils/list_artifacts.py
       FILES: host_db.py
-  [3] extract_function   saved=16L  → host/utils/_public_scanner_candidate.py
-      FILES: host_dashboard.py, scanner_bridge.py
-  [4] extract_function   saved=16L  → runtime/utils/_cmd_add_openapi.py
+  [3] extract_function   saved=16L  → runtime/utils/_cmd_add_openapi.py
       FILES: v2.py
-  [5] extract_function   saved=13L  → host/utils/_free_port_from_old_scanner.py
+  [4] extract_function   saved=13L  → host/utils/_free_port_from_old_scanner.py
       FILES: host_dashboard.py
-  [6] extract_function   saved=12L  → utils/_host_db.py
+  [5] extract_function   saved=12L  → utils/_host_db.py
       FILES: host_dashboard.py, v2.py
-  [7] extract_function   saved=11L  → runtime/utils/_binding_pairs.py
+  [6] extract_function   saved=11L  → runtime/utils/_binding_pairs.py
       FILES: v1.py, v2.py
-  [8] extract_function   saved=11L  → utils/_json_from_text.py
+  [7] extract_function   saved=11L  → utils/_json_from_text.py
       FILES: task_planner.py, flow.py
-  [9] extract_function   saved=9L  → host/utils/_chat_document_sync_response.py
+  [8] extract_function   saved=9L  → host/utils/_chat_document_sync_response.py
       FILES: host_dashboard.py
-  [10] extract_function   saved=8L  → host/utils/_short_value.py
+  [9] extract_function   saved=8L  → host/utils/_short_value.py
       FILES: fs_transfer.py, host_dashboard.py
+  [10] extract_function   saved=6L  → host/utils/node_alias_map_from_value.py
+      FILES: discovery.py
 
 DEPENDENCY_RISK[2] (duplicates spanning multiple packages):
   _host_db  packages=2  files=2
@@ -196,10 +190,9 @@ DEPENDENCY_RISK[2] (duplicates spanning multiple packages):
       host/task_planner.py
       node/flow.py
 
-EFFORT_ESTIMATE (total ≈ 7.6h):
+EFFORT_ESTIMATE (total ≈ 7.1h):
   medium command                             saved=32L  ~64min
   medium list_artifacts                      saved=22L  ~44min
-  medium _public_scanner_candidate           saved=16L  ~32min
   medium _cmd_add_openapi                    saved=16L  ~32min
   easy   _free_port_from_old_scanner         saved=13L  ~26min
   medium _host_db                            saved=12L  ~48min
@@ -207,8 +200,9 @@ EFFORT_ESTIMATE (total ≈ 7.6h):
   medium _json_from_text                     saved=11L  ~44min
   easy   _chat_document_sync_response        saved=9L  ~18min
   easy   _short_value                        saved=8L  ~16min
-  ... +13 more (~112min)
+  easy   node_alias_map_from_value           saved=6L  ~12min
+  ... +12 more (~100min)
 
 METRICS-TARGET:
-  dup_groups:  23 → 0
-  saved_lines: 206 lines recoverable
+  dup_groups:  22 → 0
+  saved_lines: 190 lines recoverable

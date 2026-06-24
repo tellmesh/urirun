@@ -127,7 +127,7 @@ def fs_file_transfer_fallback_bindings(required_uris: list[str]) -> dict:
 
 def _short_value(value: Any, *, limit: int = 600) -> Any:
     if isinstance(value, str):
-        return value if len(value) <= limit else value[:limit] + "..."
+        return value if len(value) <= limit else f"{value[:limit]}..."
     if isinstance(value, dict):
         return {str(k): _short_value(v, limit=limit) for k, v in value.items() if k not in {"bytes_b64", "dataUri"}}
     if isinstance(value, list):

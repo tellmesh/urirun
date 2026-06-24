@@ -44,6 +44,103 @@ def host_object(project: str, routes: list[dict]) -> dict:
     }
 
 
+def _uri_target(uri: str) -> str:
+    if "://" not in uri:
+        return ""
+    rest = uri.split("://", 1)[1]
+    return rest.split("/", 1)[0]
+
+
+def route_owner_route(route: dict, owner: dict) -> dict:
+    uri = str(route.get("uri") or "")
+    return {
+        "uri": uri,
+        "kind": route.get("kind") or "",
+        "title": route.get("title") or route.get("label") or "",
+        "source": route.get("source") or route.get("where") or route.get("adapter") or "registry",
+        "adapter": route.get("adapter") or route.get("source") or "registry",
+        "safe": route.get("safe"),
+        "layer": route.get("layer") or "",
+        "node": route.get("node") or "",
+        "target": route.get("target") or route.get("node") or _uri_target(uri) or owner.get("id"),
+        "ownerId": owner.get("id"),
+        "ownerKind": owner.get("kind"),
+        "ownerLabel": owner.get("label"),
+    }
+
+
+def dedupe_routes(routes: list[dict]) -> list[dict]:
+    seen: set[str] = set()
+    out: list[dict] = []
+    for route in routes:
+        key = "|".join(str(route.get(name) or "") for name in ("uri", "kind", "adapter"))
+        if not route.get("uri") or key in seen:
+            continue
+        seen.add(key)
+        out.append(route)
+    return out
+
+
+def node_object(node: dict, all_routes: list[dict]) -> dict:
+    name = str(node.get("name") or "")
+    owner = {
+        "id": f"node:{name}",
+        "kind": "node",
+        "label": f"urirun node: {name}",
+        "status": "up" if node.get("reachable") else "down",
+        "reachable": bool(node.get("reachable")),
+        "url": node.get("url") or "",
+        "transport": node.get("transport") or "http",
+        "runtime": node.get("runtime") or "urirun-node",
+        "error": node.get("error") or "",
+    }
+    own_routes = node.get("routes") if isinstance(node.get("routes"), list) else []
+    if not own_routes:
+        own_routes = [
+            route for route in all_routes
+            if route.get("node") == name or _uri_target(str(route.get("uri") or "")) == name
+        ]
+    return {
+        **owner,
+        "routes": dedupe_routes([route_owner_route(route, owner) for route in own_routes]),
+    }
+
+
+def service_object(service: dict) -> dict:
+    owner = {
+        "id": service.get("id") or f"service:{service.get('name')}",
+        "kind": "service",
+        "label": service.get("label") or f"urirun service: {service.get('name')}",
+        "status": service.get("status") or ("running" if service.get("reachable") else "stopped"),
+        "reachable": bool(service.get("reachable")),
+        "url": service.get("url") or "",
+        "transport": service.get("transport") or "http",
+        "runtime": service.get("runtime") or service.get("name") or "service",
+    }
+    routes = service.get("routes") if isinstance(service.get("routes"), list) else []
+    route_rows = [
+        route if isinstance(route, dict) else {"uri": route, "kind": "command", "adapter": "service"}
+        for route in routes
+    ]
+    return {
+        **owner,
+        "routes": dedupe_routes([route_owner_route(route, owner) for route in route_rows]),
+    }
+
+
+def uri_objects(*, project: str, host_routes: list[dict], nodes: list[dict],
+                services: list[dict], routes: list[dict]) -> list[dict]:
+    host = host_object(project, dedupe_routes([
+        route_owner_route(route, {"id": "host", "kind": "host", "label": "urirun host"})
+        for route in host_routes
+    ]))
+    return [
+        host,
+        *[node_object(node, routes) for node in nodes if node.get("name")],
+        *[service_object(service) for service in services],
+    ]
+
+
 def phone_scanner_contact(scanner_state: dict) -> dict:
     return {
         "id": "service:phone-scanner",

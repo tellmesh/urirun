@@ -275,7 +275,7 @@ def search_records(path: str | None, query: str = "", dataset: str | None = None
                     "JOIN records_fts ON records_fts.record_id = r.id"
                 )
                 if fts_where:
-                    sql += " WHERE " + " AND ".join(fts_where)
+                    sql += f" WHERE {' AND '.join(fts_where)}"
                 sql += " ORDER BY r.updated_at DESC LIMIT ?"
                 fts_params.append(limit)
                 return rows_dict(conn.execute(sql, fts_params).fetchall())
@@ -286,7 +286,7 @@ def search_records(path: str | None, query: str = "", dataset: str | None = None
 
         sql = "SELECT r.*, d.name AS dataset_name FROM records r JOIN datasets d ON d.id = r.dataset_id"
         if where:
-            sql += " WHERE " + " AND ".join(where)
+            sql += f" WHERE {' AND '.join(where)}"
         sql += " ORDER BY r.updated_at DESC LIMIT ?"
         params.append(limit)
         return rows_dict(conn.execute(sql, params).fetchall())

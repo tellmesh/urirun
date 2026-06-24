@@ -129,7 +129,7 @@ def capture_screenshot_artifact(
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{domain}-{timestamp}.screenshot.json"
     content = {"domain": domain, "url": url, "reason": reason, "createdAt": timestamp, "meta": meta or {}}
-    path.write_text(json.dumps(content, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(f"{json.dumps(content, indent=2, sort_keys=True)}\n", encoding="utf-8")
     artifact_uri = f"artifact://host/screenshot/{domain}/{timestamp}"
     return host_db.register_artifact(db, "screenshot", artifact_uri, str(path), content)
 

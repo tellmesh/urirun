@@ -27,7 +27,7 @@ _PATH_PARAM = re.compile(r"\{([a-zA-Z0-9_]+)\}")
 def _route_uri(scheme: str, target: str, method: str, path: str) -> str:
     body = path.strip("/")
     kind = "query" if method in ("get", "head") else "command"
-    parts = [scheme + "://" + target, body, kind, method]
+    parts = [f"{scheme}://{target}", body, kind, method]
     return "/".join(part for part in parts if part)
 
 
@@ -55,7 +55,7 @@ def _operation_binding(scheme: str, target: str, method: str, path: str, operati
     if environments:
         config["environments"] = environments
     elif base:
-        config["url"] = base.rstrip("/") + path
+        config["url"] = f"{base.rstrip('/')}{path}"
     return uri, {
         "uri": uri, "kind": "fetch", "adapter": "fetch", "config": config,
         "policy": {"allowExecute": True},

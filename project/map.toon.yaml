@@ -1,8 +1,8 @@
-# urirun | 158f 35888L | yaml:4,txt:3,shell:10,json:13,python:99,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-24
-# generated in 0.03s
-# stats: 1574 func | 0 cls | 158 mod | CC̄=4.6 | critical:0 | cycles:0
-# alerts[5]: fan-out _archive_scanned_document=43; fan-out create_handler=40; fan-out _write_document_pdf=32; fan-out serve=30; fan-out _add_host_subparser=27
-# hotspots[5]: _archive_scanned_document fan=43; create_handler fan=40; _write_document_pdf fan=32; serve fan=30; _add_host_subparser fan=27
+# urirun | 158f 36099L | yaml:4,txt:3,shell:10,python:99,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-24
+# generated in 0.09s
+# stats: 1579 func | 0 cls | 158 mod | CC̄=4.6 | critical:1 | cycles:0
+# alerts[5]: fan-out _archive_scanned_document=43; fan-out create_handler=41; fan-out _write_document_pdf=32; fan-out serve=30; fan-out _add_host_subparser=29
+# hotspots[5]: _archive_scanned_document fan=43; create_handler fan=41; _write_document_pdf fan=32; serve fan=30; _add_host_subparser fan=29
 # evolution: CC̄ 4.6→4.6 (flat 0.0)
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
 M[158]:
@@ -61,12 +61,12 @@ M[158]:
   adapters/python/urirun/host/document_sync.py,399
   adapters/python/urirun/host/domain_monitor.py,485
   adapters/python/urirun/host/fs_transfer.py,206
-  adapters/python/urirun/host/host_dashboard.py,9884
+  adapters/python/urirun/host/host_dashboard.py,9921
   adapters/python/urirun/host/host_db.py,540
   adapters/python/urirun/host/host_integrations.py,355
   adapters/python/urirun/host/object_registry.py,107
   adapters/python/urirun/host/planfile_adapter.py,279
-  adapters/python/urirun/host/scanner_bridge.py,460
+  adapters/python/urirun/host/scanner_bridge.py,605
   adapters/python/urirun/host/scheduler.py,133
   adapters/python/urirun/host/service_control.py,364
   adapters/python/urirun/host/task_planner.py,371
@@ -85,7 +85,7 @@ M[158]:
   adapters/python/urirun/node/formatting.py,78
   adapters/python/urirun/node/keyauth.py,173
   adapters/python/urirun/node/manage.py,369
-  adapters/python/urirun/node/mesh.py,1864
+  adapters/python/urirun/node/mesh.py,1888
   adapters/python/urirun/node/paths.py,38
   adapters/python/urirun/node/recovery.py,232
   adapters/python/urirun/node/routing.py,143
@@ -98,7 +98,7 @@ M[158]:
   adapters/python/urirun/runtime/_scan.py,666
   adapters/python/urirun/runtime/adopt_pack.py,245
   adapters/python/urirun/runtime/agent.py,151
-  adapters/python/urirun/runtime/cli.py,681
+  adapters/python/urirun/runtime/cli.py,686
   adapters/python/urirun/runtime/codegen.py,438
   adapters/python/urirun/runtime/compat.py,199
   adapters/python/urirun/runtime/daemon.py,116
@@ -165,6 +165,76 @@ M[158]:
   tree.sh,4
   v1/js/urirun-v1.js,343
 D:
+  adapters/python/urirun/node/mesh.py:
+    e: EventHub,NodeContext,NodeHandler,_data_bindings,_data_init,_data_dataset_create,_data_datasets,_data_record_upsert,_data_records,_data_artifact_register,_data_artifacts,_data_check_add,_data_checks,_data_sql,data_command,monitor_command,_host_delegated_command,fulfill_need,supply_command,ensure_command,_maybe_ensure_scheme,_run_streamed,run_command,_print_event,watch_command,_watch_loop,_host_cmd_config,_host_cmd_nodes,_host_cmd_routes,_host_cmd_agents,_host_cmd_ask,_host_mesh_command,copy_id_command,copy_id_cli,_split_deploy_doc,deploy_command,_maybe_load_dotenv,host_command,send_json,read_raw,read_json,_pool_executors,_probe_one_route,_render_probe_report,probe_command,resolve_admin_token,_write_pushed_code,_apply_deploy_env,_registry_to_bindings,_deploy_registry,_reimport_pushed_code,_apply_deploy_surface,_apply_deploy_allow,apply_deploy,_parse_sse_query,_sse_initial_cursor,_sse_event_matches,_sse_frame,_warn_unauthenticated_node,_start_enroll_token_rotation,_announce_node_started,serve_node,_serve_opts_merged,_resolve_serve_opts,_node_serve,node_list_command,node_stop_command,node_command
+    EventHub: __init__(1),publish(1),subscribe(0),unsubscribe(1),replay_since(1),current_id(0),count(0)  # In-memory pub/sub for a node's live event stream (SSE). Each...
+    NodeContext: __init__(0)  # Everything a NodeHandler needs to serve one node — the mutab...
+    NodeHandler(BaseHTTPRequestHandler): do_OPTIONS(0),_guarded(1),do_GET(0),do_POST(0),_health_payload(0),_routes_payload(0),_get(0),_get_errors(2),_post(0),_run_target(2),_publish_run(2),_validate_run_request(1),_dispatch_control_uri(3),_respond_async(4),_handle_run(0),_handle_adopt(2),_handle_need(2),_handle_run_control(1),_stream_events(0),_admin_ok(1),_run_ok(1),_handle_deploy(0),_handle_enroll(0),log_message(1)  # The node's HTTP surface. State/config live on `self.server.c...
+    _data_bindings(args;host_db)
+    _data_init(args;host_db)
+    _data_dataset_create(args;host_db)
+    _data_datasets(args;host_db)
+    _data_record_upsert(args;host_db)
+    _data_records(args;host_db)
+    _data_artifact_register(args;host_db)
+    _data_artifacts(args;host_db)
+    _data_check_add(args;host_db)
+    _data_checks(args;host_db)
+    _data_sql(args;host_db)
+    data_command(args)
+    monitor_command(args)
+    _host_delegated_command(args)
+    fulfill_need(client;need;roots)
+    supply_command(args)
+    ensure_command(args)
+    _maybe_ensure_scheme(client;uri;ensure;roots)
+    _run_streamed(client;uri;payload;args;timeout)
+    run_command(args)
+    _print_event(ev;as_json)
+    watch_command(args)
+    _watch_loop(url)
+    _host_cmd_config(args;config;mesh)
+    _host_cmd_nodes(args;config;mesh)
+    _host_cmd_routes(args;config;mesh)
+    _host_cmd_agents(args;config;mesh)
+    _host_cmd_ask(args;config;mesh)
+    _host_mesh_command(args;config;mesh)
+    copy_id_command(args)
+    copy_id_cli(argv)
+    _split_deploy_doc(path)
+    deploy_command(args)
+    _maybe_load_dotenv(path)
+    host_command(args)
+    send_json(handler;status;payload)
+    read_raw(handler)
+    read_json(handler)
+    _pool_executors(pools)
+    _probe_one_route(url;route;etag0;execute;timeout)
+    _render_probe_report(report)
+    probe_command(args)
+    resolve_admin_token(explicit;config_token;generate)
+    _write_pushed_code(code;summary)
+    _apply_deploy_env(env;summary)
+    _registry_to_bindings(registry)
+    _deploy_registry(body;existing)
+    _reimport_pushed_code(pushed_mods;summary)
+    _apply_deploy_surface(state;body)
+    _apply_deploy_allow(state;body;summary)
+    apply_deploy(state;body)
+    _parse_sse_query(query)
+    _sse_initial_cursor(hub;params;headers)
+    _sse_event_matches(ev;schemes;runs)
+    _sse_frame(ev)
+    _warn_unauthenticated_node(name;host;port;execute;run_auth_enforced)
+    _start_enroll_token_rotation(ctx;public_url)
+    _announce_node_started(name;host;port;state;execute)
+    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path;config_path;kind;runtime;services)
+    _serve_opts_merged(args;node)
+    _resolve_serve_opts(args;node)
+    _node_serve(args;node;name;registry)
+    node_list_command(args)
+    node_stop_command(args)
+    node_command(args)
   adapters/python/urirun/__init__.py:
     e: Connector,parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,tag,policy,resolve_secret,action_space,result_data,result_degraded,run_steps,tool_binding,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command
     Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(2),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
@@ -559,76 +629,6 @@ Connector a...
     registry_from_routes(routes)
     target_nodes(prompt;nodes;explicit)
     route_targets_for_nodes(routes;node_names)
-  adapters/python/urirun/node/mesh.py:
-    e: EventHub,NodeContext,NodeHandler,_data_bindings,_data_init,_data_dataset_create,_data_datasets,_data_record_upsert,_data_records,_data_artifact_register,_data_artifacts,_data_check_add,_data_checks,_data_sql,data_command,monitor_command,_host_delegated_command,fulfill_need,supply_command,ensure_command,_maybe_ensure_scheme,_run_streamed,run_command,_print_event,watch_command,_watch_loop,_host_cmd_config,_host_cmd_nodes,_host_cmd_routes,_host_cmd_agents,_host_cmd_ask,_host_mesh_command,copy_id_command,copy_id_cli,_split_deploy_doc,deploy_command,_maybe_load_dotenv,host_command,send_json,read_raw,read_json,_pool_executors,_probe_one_route,_render_probe_report,probe_command,resolve_admin_token,_write_pushed_code,_apply_deploy_env,_registry_to_bindings,_deploy_registry,_reimport_pushed_code,_apply_deploy_surface,_apply_deploy_allow,apply_deploy,_parse_sse_query,_sse_initial_cursor,_sse_event_matches,_sse_frame,_warn_unauthenticated_node,_start_enroll_token_rotation,_announce_node_started,serve_node,_serve_opts_merged,_resolve_serve_opts,_node_serve,node_list_command,node_stop_command,node_command
-    EventHub: __init__(1),publish(1),subscribe(0),unsubscribe(1),replay_since(1),current_id(0),count(0)  # In-memory pub/sub for a node's live event stream (SSE). Each...
-    NodeContext: __init__(0)  # Everything a NodeHandler needs to serve one node — the mutab...
-    NodeHandler(BaseHTTPRequestHandler): do_OPTIONS(0),_guarded(1),do_GET(0),do_POST(0),_health_payload(0),_routes_payload(0),_get(0),_get_errors(2),_post(0),_run_target(2),_publish_run(2),_validate_run_request(1),_dispatch_control_uri(3),_respond_async(4),_handle_run(0),_handle_adopt(2),_handle_need(2),_handle_run_control(1),_stream_events(0),_admin_ok(1),_run_ok(1),_handle_deploy(0),_handle_enroll(0),log_message(1)  # The node's HTTP surface. State/config live on `self.server.c...
-    _data_bindings(args;host_db)
-    _data_init(args;host_db)
-    _data_dataset_create(args;host_db)
-    _data_datasets(args;host_db)
-    _data_record_upsert(args;host_db)
-    _data_records(args;host_db)
-    _data_artifact_register(args;host_db)
-    _data_artifacts(args;host_db)
-    _data_check_add(args;host_db)
-    _data_checks(args;host_db)
-    _data_sql(args;host_db)
-    data_command(args)
-    monitor_command(args)
-    _host_delegated_command(args)
-    fulfill_need(client;need;roots)
-    supply_command(args)
-    ensure_command(args)
-    _maybe_ensure_scheme(client;uri;ensure;roots)
-    _run_streamed(client;uri;payload;args;timeout)
-    run_command(args)
-    _print_event(ev;as_json)
-    watch_command(args)
-    _watch_loop(url)
-    _host_cmd_config(args;config;mesh)
-    _host_cmd_nodes(args;config;mesh)
-    _host_cmd_routes(args;config;mesh)
-    _host_cmd_agents(args;config;mesh)
-    _host_cmd_ask(args;config;mesh)
-    _host_mesh_command(args;config;mesh)
-    copy_id_command(args)
-    copy_id_cli(argv)
-    _split_deploy_doc(path)
-    deploy_command(args)
-    _maybe_load_dotenv(path)
-    host_command(args)
-    send_json(handler;status;payload)
-    read_raw(handler)
-    read_json(handler)
-    _pool_executors(pools)
-    _probe_one_route(url;route;etag0;execute;timeout)
-    _render_probe_report(report)
-    probe_command(args)
-    resolve_admin_token(explicit;config_token;generate)
-    _write_pushed_code(code;summary)
-    _apply_deploy_env(env;summary)
-    _registry_to_bindings(registry)
-    _deploy_registry(body;existing)
-    _reimport_pushed_code(pushed_mods;summary)
-    _apply_deploy_surface(state;body)
-    _apply_deploy_allow(state;body;summary)
-    apply_deploy(state;body)
-    _parse_sse_query(query)
-    _sse_initial_cursor(hub;params;headers)
-    _sse_event_matches(ev;schemes;runs)
-    _sse_frame(ev)
-    _warn_unauthenticated_node(name;host;port;execute;run_auth_enforced)
-    _start_enroll_token_rotation(ctx;public_url)
-    _announce_node_started(name;host;port;state;execute)
-    serve_node(name;registry;host;port;execute;public_url;allow_secrets;allow;pool;admin_token;key_auth;require_run_auth;manage;registry_path;config_path;kind;runtime;services)
-    _serve_opts_merged(args;node)
-    _resolve_serve_opts(args;node)
-    _node_serve(args;node;name;registry)
-    node_list_command(args)
-    node_stop_command(args)
-    node_command(args)
   adapters/python/urirun/node/transport.py:
     e: http_json,_probe_health,_listening_ports_local,node_list_running,_pids_on_port,stop_node_port,parse_ports,_deploy_allow_list,_annotate_deploy_allow_compat,deploy_to_node,_watch_node_url,_watch_node_headers,_parse_sse_line,watch_node,event_topic,_mqtt_publish_fn,fanout_to_mqtt,copy_id,discover_node,discover_mesh
     http_json(method;url;body;timeout;headers;raw)
@@ -684,7 +684,7 @@ Connector a...
     verify_flow_execution(document;execution)
     run_flow_document(document;mesh)
   adapters/python/urirun/host/host_dashboard.py:
-    e: _json_response,_html_response,_asset_response,_service_view_from_query,_scanner_stream_summary,_service_widget_summary,_service_widget_html,_service_widget_svg,_js_sdk_response,_read_json,_file_response,_preview_url,_is_image_path,_artifact_visual_path,_artifact_file_exists,_public_artifact,_public_artifacts,_attachment_visual_path,_apply_attachment_file_fields,_apply_attachment_visual_fields,_public_chat_attachment,_public_chat_attachments,_artifact_dedupe_key,_artifact_dedupe_rank,_merge_artifact_group,_dedupe_public_artifacts,_visible_public_artifacts,_collect_attachments,_chat_message,_add_chat_message,chat_history,chat_delete_messages,_truthy_env,_local_image_ocr_tesseract,_ocr_text_ok,_ocr_connector_envelope,_local_image_ocr,_local_image_ocr_llm,_document_archive_root,_document_index_path,_document_sync_default_dest_root,_document_sync_default_node,_iter_node_alias_values,_add_node_aliases,_node_spec_aliases,_alias_map_from_dict,_alias_map_from_list,_node_alias_map_from_value,_normalize_known_node_url,_url_map_from_dict,_url_map_from_list,_node_url_map_from_value,_node_dicts_from_url_map,_node_alias_map_from_config_doc,_node_alias_map_from_env,_node_alias_map_from_node_urls,_known_nodes_file_data,_node_alias_map_from_known_nodes_file,_known_nodes_file_urls,_merge_known_nodes_into_config,_node_alias_map_from_context,_prompt_node_match,_scanned_id_log_path,_utc_now,_file_sha256,_node_url_from_config,_node_client,_node_token_for,_run_node_uri,_route_inputs_example,_classify_route_run,node_test_routes,_route_key,_node_has_route,_fs_file_transfer_binding,_fs_file_transfer_fallback_bindings,_deploy_fs_file_transfer_fallback,_ensure_node_uri_routes,_short_value,_compact_remote_run,_route_not_found_remedy,_envelope_error_message,_remote_write_error,_remote_read_error,_document_sync_verification,_document_archive_pdfs,_document_sync_deps,sync_documents_to_node,_normalized_document_text,_load_document_index,_save_document_index,_document_files_exist,_prune_orphaned_documents,reconcile_document_index,_iter_scanned_id_log,_append_scanned_id_log,_existing_scanned_id,_scanned_log_entry,_scanned_entry_seen,_scanned_seen_buckets,_backfill_scanned_id_log,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_load_env_file,_llm_env_file,_llm_model,_llm_api_key_ref,_coerce_amount,_llm_extract_metadata,_llm_complete_metadata,_parse_llm_json_object,_normalize_llm_doc_fields,_extract_document_metadata,_filename_part,_canonical_document_filename,_document_filename_with_id,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_scanner_staging_dir,_cleanup_duplicate_scan_files,_draw_crop_box,_draw_overlay_label,_scanner_crop_overlay,_staging_keep_paths,_prune_scanner_staging,_is_blank_metadata,_merge_metadata_fields,_enrich_archived_record,_sidecar_text,_find_duplicate_document,_artifact_schema_known,_document_schema_fields,_archive_redundant_duplicate,_supersede_archived_document,_archive_month,_existing_document_meta,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_scanner_autonomy_params,_scanner_page_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_phone_scanner_url,_phone_scanner_external_status,_nl_text,_is_phone_scanner_prompt,_is_autonomous_scanner_prompt,_is_camera_start_prompt,_torch_enabled_from_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_crop_dimensions,_crop_geometry_score,_crop_quality_score,_doctype_quality_score,_metadata_quality_score,_ocr_quality_score,_visual_quality_score,_document_frame_quality,_public_scanner_candidate,_scanner_live_store_locked,_scanner_public_candidate_for_live,scanner_live_state,_scanner_status_from_log,_latest_scanner_page_status,_scanner_artifact_doc_meta,_is_scanner_artifact,_scanner_artifact_item,_recent_scanner_artifacts,service_live_views,_scanner_best_update,_scanner_best_take,_scanner_bridge_deps,_crop_overlay_attachment,_register_document_artifact,_scanner_result_content,_register_scanner_result,_orientation_summary,_decode_capture_image,_capture_quality_ok,_capture_reject_result,_capture_candidate_result,_capture_display_path,_capture_ocr_and_detect,scanner_capture,_best_series_not_found,_resolve_best_candidate,_best_quality_rejected,_best_candidate_paths,_best_finish_store_failure,_refresh_best_ocr,_ensure_best_overlay,_store_best_finish,_best_crop_and_ocr,scanner_best_finish,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,_uri_action_catalog,_uri_action_lookup,_uri_mode,_service_restart_argv,_schedule_restart_command,_chat_service_restart_argv,restart_chat_service,_phone_scanner_service_id,restart_phone_scanner_service,_uri_simulated_result,_result_artifact_class,register_tagged_artifact,_run_inprocess_connector_uri,_uri_invoke_route,_uri_invoke_page_action,_finalize_uri_result,uri_invoke,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,_service_contacts,_host_registry_routes,summary,_compact_chat_result,node_add,node_set_token,_try_urifix_repair,_boolish,_document_sync_auto_retry_enabled,_urifix_auto_retry,_validated_sync_retry_payload,_document_sync_retry_payload_from_urifix,_needs_screen_document_capture,_is_document_sync_prompt,_document_sync_node_from_prompt,_document_sync_dest_from_prompt,_route_in_selected_targets,_has_screen_capture_route,_screen_document_capability_gap,_selected_nodes_from_targets,_decision_loop_status,_decision_loop_next_intent,_decision_loop_observation,_decision_loop_for_document_sync,_scanner_flow_result,_chat_ask_phone_scanner,_sync_execute_initial,_sync_ok_and_status,_apply_urifix_recovery,_chat_ask_document_sync,_chat_ask_general_planner_failure,_general_path_complete,_chat_ask_general,_chat_phone_scanner_response,_chat_document_sync_response,_chat_generic_response,_add_chat_user_message,chat_ask,task_action,_artifact_delete_roots,_artifact_file_delete_allowed,_payload_bool,_global_document_metadata_paths,_safe_artifact_sidecar_path,_artifact_delete_candidate_paths,_delete_one_artifact_file,_delete_artifact_files,artifacts_delete,artifacts_dedupe_rows,_iter_orphan_candidates,_cleanup_one_sidecar,artifacts_cleanup_orphan_sidecars,documents_reconcile,_api_summary,_api_tasks,_api_checks,_api_logs,_api_artifacts,_api_chat_history,_api_services_live,_api_scanner_live,_api_nodes_or_routes,_dashboard_api_response,create_handler,_port_holder_pids,_process_cmdline,_is_dashboard_process,_is_scanner_process,_is_chat_process,_free_port_from_matching_processes,_free_port_from_old_scanner,_free_port_from_old_chat,_free_port_from_old_dashboard,serve,command,default_host
+    e: _json_response,_html_response,_asset_response,_service_view_from_query,_scanner_stream_summary,_service_widget_summary,_service_widget_html,_service_widget_svg,_js_sdk_response,_read_json,_file_response,_preview_url,_is_image_path,_artifact_visual_path,_artifact_file_exists,_public_artifact,_public_artifacts,_attachment_visual_path,_apply_attachment_file_fields,_apply_attachment_visual_fields,_public_chat_attachment,_public_chat_attachments,_artifact_dedupe_key,_artifact_dedupe_rank,_merge_artifact_group,_dedupe_public_artifacts,_visible_public_artifacts,_collect_attachments,_chat_message,_add_chat_message,chat_history,chat_delete_messages,_truthy_env,_local_image_ocr_tesseract,_ocr_text_ok,_ocr_connector_envelope,_local_image_ocr,_local_image_ocr_llm,_document_archive_root,_document_index_path,_document_sync_default_dest_root,_document_sync_default_node,_iter_node_alias_values,_add_node_aliases,_node_spec_aliases,_alias_map_from_dict,_alias_map_from_list,_node_alias_map_from_value,_normalize_known_node_url,_url_map_from_dict,_url_map_from_list,_node_url_map_from_value,_node_dicts_from_url_map,_node_alias_map_from_config_doc,_node_alias_map_from_env,_node_alias_map_from_node_urls,_known_nodes_file_data,_node_alias_map_from_known_nodes_file,_known_nodes_file_urls,_merge_known_nodes_into_config,_node_alias_map_from_context,_prompt_node_match,_scanned_id_log_path,_utc_now,_file_sha256,_node_url_from_config,_node_client,_node_token_for,_run_node_uri,_route_inputs_example,_classify_route_run,node_test_routes,_route_key,_node_has_route,_fs_file_transfer_binding,_fs_file_transfer_fallback_bindings,_deploy_fs_file_transfer_fallback,_ensure_node_uri_routes,_short_value,_compact_remote_run,_route_not_found_remedy,_envelope_error_message,_remote_write_error,_remote_read_error,_document_sync_verification,_document_archive_pdfs,_document_sync_deps,sync_documents_to_node,_normalized_document_text,_load_document_index,_save_document_index,_document_files_exist,_prune_orphaned_documents,reconcile_document_index,_iter_scanned_id_log,_append_scanned_id_log,_existing_scanned_id,_scanned_log_entry,_scanned_entry_seen,_scanned_seen_buckets,_backfill_scanned_id_log,_docid_for_file,_parse_document_date,_parse_amount,_document_type,_parse_contractor,_load_env_file,_llm_env_file,_llm_model,_llm_api_key_ref,_coerce_amount,_llm_extract_metadata,_llm_complete_metadata,_parse_llm_json_object,_normalize_llm_doc_fields,_extract_document_metadata,_filename_part,_canonical_document_filename,_document_filename_with_id,_pdf_text,_pdf_stream,_write_document_pdf,_unique_document_path,_existing_document,_scanner_staging_dir,_cleanup_duplicate_scan_files,_draw_crop_box,_draw_overlay_label,_scanner_crop_overlay,_staging_keep_paths,_prune_scanner_staging,_is_blank_metadata,_merge_metadata_fields,_enrich_archived_record,_sidecar_text,_find_duplicate_document,_artifact_schema_known,_document_schema_fields,_archive_redundant_duplicate,_supersede_archived_document,_archive_month,_existing_document_meta,_archive_scanned_document,shutil_which,_lan_host,_url_host,_public_base_url,_scanner_autonomy_params,_scanner_page_url,_write_qr_png,startup_phone_qr,_ensure_tls_cert,_probe_scanner_url,_phone_scanner_url,_phone_scanner_external_status,_nl_text,_is_phone_scanner_prompt,_is_autonomous_scanner_prompt,_is_camera_start_prompt,_torch_enabled_from_prompt,ensure_phone_scanner_service,_auto_crop_receipt,_bounded,_frame_visual_metrics,_crop_dimensions,_crop_geometry_score,_crop_quality_score,_doctype_quality_score,_metadata_quality_score,_ocr_quality_score,_visual_quality_score,_document_frame_quality,_public_scanner_candidate,_scanner_live_store_locked,_scanner_public_candidate_for_live,scanner_live_state,_scanner_status_from_log,_latest_scanner_page_status,_scanner_artifact_doc_meta,_is_scanner_artifact,_scanner_artifact_item,_recent_scanner_artifacts,service_live_views,_scanner_best_update,_scanner_best_take,_scanner_bridge_deps,_crop_overlay_attachment,_register_document_artifact,_scanner_result_content,_register_scanner_result,_orientation_summary,_decode_capture_image,_capture_quality_ok,_capture_reject_result,_capture_candidate_result,_capture_display_path,_capture_ocr_and_detect,scanner_capture,_best_series_not_found,_resolve_best_candidate,_best_quality_rejected,_best_candidate_paths,_best_finish_store_failure,_refresh_best_ocr,_ensure_best_overlay,_store_best_finish,_best_crop_and_ocr,scanner_best_finish,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,_uri_action_catalog,_uri_action_lookup,_uri_mode,_service_restart_argv,_schedule_restart_command,_chat_service_restart_argv,restart_chat_service,_phone_scanner_service_id,restart_phone_scanner_service,_uri_simulated_result,_result_artifact_class,register_tagged_artifact,_run_inprocess_connector_uri,_uri_invoke_route,_uri_invoke_page_action,_finalize_uri_result,uri_invoke,_first,_host_db,_mesh,_planfile_adapter,_host_config,_safe_tickets,_task_counts,_service_contacts,_host_registry_routes,summary,_compact_chat_result,node_add,phone_node_qr,node_set_token,_try_urifix_repair,_boolish,_document_sync_auto_retry_enabled,_urifix_auto_retry,_validated_sync_retry_payload,_document_sync_retry_payload_from_urifix,_needs_screen_document_capture,_is_document_sync_prompt,_document_sync_node_from_prompt,_document_sync_dest_from_prompt,_route_in_selected_targets,_has_screen_capture_route,_screen_document_capability_gap,_selected_nodes_from_targets,_decision_loop_status,_decision_loop_next_intent,_decision_loop_observation,_decision_loop_for_document_sync,_scanner_flow_result,_chat_ask_phone_scanner,_sync_execute_initial,_sync_ok_and_status,_apply_urifix_recovery,_chat_ask_document_sync,_chat_ask_general_planner_failure,_general_path_complete,_chat_ask_general,_chat_phone_scanner_response,_chat_document_sync_response,_chat_generic_response,_add_chat_user_message,chat_ask,task_action,_artifact_delete_roots,_artifact_file_delete_allowed,_payload_bool,_global_document_metadata_paths,_safe_artifact_sidecar_path,_artifact_delete_candidate_paths,_delete_one_artifact_file,_delete_artifact_files,artifacts_delete,artifacts_dedupe_rows,_iter_orphan_candidates,_cleanup_one_sidecar,artifacts_cleanup_orphan_sidecars,documents_reconcile,_api_summary,_api_tasks,_api_checks,_api_logs,_api_artifacts,_api_chat_history,_api_services_live,_api_scanner_live,_api_nodes_or_routes,_dashboard_api_response,create_handler,_port_holder_pids,_process_cmdline,_is_dashboard_process,_is_scanner_process,_is_chat_process,_free_port_from_matching_processes,_free_port_from_old_scanner,_free_port_from_old_chat,_free_port_from_old_dashboard,serve,command,default_host
     _json_response(handler;status;payload)
     _html_response(handler;html)
     _asset_response(handler;body;content_type)
@@ -927,6 +927,7 @@ Connector a...
     summary(project;db;config;node_urls)
     _compact_chat_result(result;payload)
     node_add(config;payload)
+    phone_node_qr(project;db;payload)
     node_set_token(config;payload)
     _try_urifix_repair(prompt;request;result)
     _boolish(value;default)
@@ -1152,6 +1153,12 @@ Connector a...
     phone_scanner_contact(scanner_state)
     service_contacts()
     annotate_node_tokens(nodes;node_token_for)
+  adapters/python/urirun/host/widgets.py:
+    e: query_value,select_service_view,scanner_stream_summary,service_widget_summary
+    query_value(query;name;default)
+    select_service_view(data)
+    scanner_stream_summary(title;status;stream)
+    service_widget_summary(view)
   adapters/python/urirun/host/task_planner.py:
     e: PlannedTicket,TaskPlanningResult,normalize_text,slug,_json_from_text,is_ambiguous,is_destructive,_has_any,_unique,_short_name,_ambiguous_plan,_derive_plan_labels,_derive_acceptance_criteria,heuristic_plan_chat_request,quiet_completion,llm_plan_chat_request,plan_chat_request,ticket_payload,create_tickets_from_plan
     PlannedTicket(BaseModel):
@@ -1292,18 +1299,15 @@ Connector a...
     expandBinding()
     expandBindings()
     compileRegistry()
-  adapters/python/urirun/host/widgets.py:
-    e: query_value,select_service_view,scanner_stream_summary,service_widget_summary
-    query_value(query;name;default)
-    select_service_view(data)
-    scanner_stream_summary(title;status;stream)
-    service_widget_summary(view)
   adapters/python/urirun/host/scanner_bridge.py:
-    e: ScannerBridgeDeps,crop_overlay_attachment,register_document_artifact,scanner_result_content,register_scanner_result,_add_log,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,scanner_status_from_log,latest_scanner_page_status,scanner_artifact_doc_meta,is_scanner_artifact,scanner_artifact_item,scanner_service_live_views
+    e: ScannerBridgeDeps,crop_overlay_attachment,register_document_artifact,scanner_result_content,public_scanner_candidate,scanner_public_candidate_for_live,scanner_live_state_from_streams,register_scanner_result,_add_log,scanner_session,uri_event,page_action_enqueue,page_action_poll,page_action_result,scanner_status_from_log,latest_scanner_page_status,scanner_artifact_doc_meta,is_scanner_artifact,scanner_artifact_item,scanner_service_live_views,scanner_flow_result
     ScannerBridgeDeps:
     crop_overlay_attachment(deps)
     register_document_artifact(deps;db;project)
     scanner_result_content(content_prefix;crop;document;ocr)
+    public_scanner_candidate(candidate)
+    scanner_public_candidate_for_live(candidate;project)
+    scanner_live_state_from_streams(streams;project)
     register_scanner_result(deps;project;db)
     _add_log(deps;db;stream;event;detail)
     scanner_session(deps;db;payload)
@@ -1317,6 +1321,7 @@ Connector a...
     is_scanner_artifact(kind;uri;meta)
     scanner_artifact_item(artifact;kind;uri;path;display_path;doc;project)
     scanner_service_live_views(scanner;service;recent_artifacts;camera_status)
+    scanner_flow_result(service;autonomous_scan;camera_action_uri;camera_payload;torch_click_uri;torch_enabled;queued_camera;queued_torch;prompt;selected_nodes;selected_targets)
   scripts/repin_connectors.py:
     e: find_root,pypi_has,repin_text,classify,_pypi_write_guard,_repin_one,main
     find_root(explicit)
@@ -1818,6 +1823,10 @@ Connector a...
     i: stddef.h
     e: urirun_parse
     urirun_parse()
+  adapters/csharp/Urirun.cs:
+    i: System.Collections.Generic
+    e: Connector
+    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   adapters/python/urirun/runtime/cli.py:
     e: _add_connectors_subparser,_add_node_subparser,_add_host_task_subparser,_add_host_data_subparser,_add_host_monitor_subparser,_add_host_subparser,_build_parser
     _add_connectors_subparser(subparsers)
@@ -1827,16 +1836,11 @@ Connector a...
     _add_host_monitor_subparser(host_sub)
     _add_host_subparser(subparsers)
     _build_parser(prog)
-  adapters/csharp/Urirun.cs:
-    i: System.Collections.Generic
-    e: Connector
-    Connector: Connector(-1),Command(-1),BindingsJson(-1)
   goal.yaml:
   planfile.yaml:
   Makefile:
   requirements.txt:
   tree.sh:
-  package.json:
   prefact.yaml:
   project.sh:
   security/mesh-probe/docker-compose.yml:
@@ -1864,7 +1868,6 @@ Connector a...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1914,4 +1917,6 @@ Connector a...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
+  package.json:
+  adapters/js/package.json:
   adapters/python/pyproject.toml:

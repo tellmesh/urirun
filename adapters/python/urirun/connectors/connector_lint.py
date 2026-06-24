@@ -397,7 +397,7 @@ def sync_manifest(pkg_dir: str | Path, write: bool = True) -> dict:
     root = Path(pkg_dir)
     manifests = list(root.rglob("connector.manifest.json"))
     if not manifests:
-        return {"ok": False, "error": "no connector.manifest.json under " + str(root)}
+        return {"ok": False, "error": f"no connector.manifest.json under {root}"}
     mpath = manifests[0]
     py_files = _connector_py_files(root)
     _objs, code_routes = _scan_code_routes(py_files)
@@ -593,8 +593,8 @@ def verify_command(args: argparse.Namespace) -> int:
         return 0 if report["ok"] else 1
     print(f"connector verify · {report['package']}")
     for check in report["checks"]:
-        print(f"  {'PASS' if check['ok'] else 'FAIL'}  {check['check']}"
-              + (f"  — {check['detail']}" if check["detail"] else ""))
+        detail_suffix = f"  — {check['detail']}" if check["detail"] else ""
+        print(f"  {'PASS' if check['ok'] else 'FAIL'}  {check['check']}{detail_suffix}")
     print("OK — connector is correctly built and deployable" if report["ok"]
           else "FAIL — fix the above before deploying (routes would be advertised but dead)")
     return 0 if report["ok"] else 1
