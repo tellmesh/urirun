@@ -1,19 +1,17 @@
-# code2llm | 166f 40382L | python:105,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
-# generated in 0.11s
-# CC̅=4.7 | critical:6/1736 | dups:0 | cycles:0
+# code2llm | 169f 40974L | python:108,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
+# generated in 0.08s
+# CC̅=4.6 | critical:4/1779 | dups:0 | cycles:0
 
-HEALTH[6]:
-  🟡 CC    _run_step CC=18 (limit:15)
+HEALTH[4]:
+  🟡 CC    _chat_ask_general CC=15 (limit:15)
   🟡 CC    _preflight CC=15 (limit:15)
-  🟡 CC    execute_flow CC=25 (limit:15)
-  🟡 CC    _run_goal_check CC=17 (limit:15)
   🟡 CC    verify_flow_execution CC=15 (limit:15)
   🟡 CC    run_flow_document CC=15 (limit:15)
 
 REFACTOR[1]:
-  1. split 6 high-CC methods  (CC>15)
+  1. split 4 high-CC methods  (CC>15)
 
-PIPELINES[530]:
+PIPELINES[546]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -124,13 +122,13 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.7    ←in:10  →out:0
-  │ !! host_dashboard           11504L  0C  348m  CC=14     ←0
+  │ !! host_dashboard           11508L  0C  348m  CC=15     ←0
   │ !! v2                        2003L  1C  122m  CC=14     ←4
-  │ !! mesh                      1975L  3C  102m  CC=14     ←2
-  │ !! flow                       898L  0C   41m  CC=25     ←2
+  │ !! mesh                      1979L  3C  102m  CC=14     ←2
+  │ !! flow                       970L  0C   49m  CC=15     ←2
   │ !! __init__                   737L  1C   51m  CC=14     ←14
   │ !! _registry                  718L  0C   43m  CC=14     ←1
-  │ !! cli                        707L  0C    7m  CC=1      ←1
+  │ !! cli                        710L  0C    7m  CC=1      ←1
   │ !! scanner_bridge             670L  1C   25m  CC=12     ←0
   │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! connector_lint             602L  0C   34m  CC=14     ←1
@@ -151,8 +149,9 @@ LAYERS:
   │ discovery                  362L  0C   29m  CC=14     ←0
   │ host_integrations          356L  0C   15m  CC=8      ←0
   │ task_cli                   342L  0C   25m  CC=11     ←1
+  │ reversible                 341L  9C   25m  CC=12     ←1
+  │ cdp                        339L  1C   24m  CC=8      ←0
   │ diagnostics                324L  1C   15m  CC=14     ←2
-  │ reversible                 306L  9C   24m  CC=10     ←1
   │ recovery                   299L  0C   15m  CC=12     ←2
   │ planfile_adapter           281L  1C   26m  CC=9      ←0
   │ worker                     266L  3C   20m  CC=13     ←0
@@ -178,6 +177,7 @@ LAYERS:
   │ routing                    143L  0C   10m  CC=14     ←7
   │ scanner_net                140L  0C   10m  CC=8      ←1
   │ scheduler                  135L  0C    6m  CC=4      ←0
+  │ backend_registry           129L  2C   10m  CC=11     ←0
   │ daemon                     117L  0C    3m  CC=14     ←0
   │ v2_service                 115L  0C    3m  CC=9      ←2
   │ introspect                 112L  0C    4m  CC=9      ←1
@@ -238,6 +238,7 @@ LAYERS:
   │ hash_connector.rb            8L  0C    0m  CC=0.0    ←0
   │ composer.json                7L  0C    0m  CC=0.0    ←0
   │ Program.cs                   7L  0C    0m  CC=0.0    ←0
+  │ __init__                     6L  0C    0m  CC=0.0    ←0
   │ host_db                      5L  0C    0m  CC=0.0    ←0
   │ domain_monitor               5L  0C    0m  CC=0.0    ←0
   │ connector_sdk                5L  0C    0m  CC=0.0    ←0

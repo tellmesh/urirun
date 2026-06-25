@@ -238,6 +238,86 @@ class TwinMemory:
                 "reason": "environment changed since the last known-good" if drifted else "matches known-good"}
 
 
+def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool = False,
+                 memory: "TwinMemory | None" = None, node: str | None = None) -> dict:
+    """How plausible is acting NOW vs a known-good state — graduated, not the binary 'try and see'.
+    Returns ``{score, level, reason}``: ``score`` in [0,1] (1.0 = controllable, reliable, matches a
+    known-good); ``level`` is ``auto`` (act), ``verify`` (act but CHECK the outcome), or ``hitl``
+    (confirm with a human first). An uncontrollable env or an irreversible action forces ``hitl``;
+    a drifted / unknown / os-unreliable env drops to ``verify``; only a reversible action on a
+    controllable, reliable, known env is ``auto`` — so the further from a known-good state, the
+    more verification/confirmation is demanded instead of a blind attempt."""
+    prof = profile or {}
+    if not prof.get("controllable", True):
+        return {"score": 0.0, "level": "hitl", "reason": "environment cannot drive a UI"}
+    score, reasons = 1.0, []
+    if prof.get("osLevelReliable") is False and prof.get("best") in (None, "atspi", "vision"):
+        score -= 0.3
+        reasons.append("os-level surface unreliable")
+    if memory is not None and node is not None:
+        d = memory.drift(node, prof)
+        if not d.get("known"):
+            score -= 0.2
+            reasons.append("no known-good baseline")
+        elif d.get("drifted"):
+            score -= 0.4
+            reasons.append("environment drifted from known-good")
+    score = max(0.0, min(1.0, score))
+    if irreversible:
+        level = "hitl"
+        reasons.append("irreversible action — human confirmation required")
+    elif score >= 0.9 and reversible:
+        level = "auto"
+    elif score >= 0.5:
+        level = "verify"
+    else:
+        level = "hitl"
+    return {"score": round(score, 2), "level": level,
+            "reason": "; ".join(reasons) or "controllable, reliable, known-good"}
+
+
+def planner_context(node: str, profile: dict, surface: dict | None = None,
+                    memory: "TwinMemory | None" = None) -> dict:
+    """Concrete environment facts to inject into an LLM planner so it grounds on REALITY instead
+    of guessing — which control surface to use, whether the env is controllable, the display, the
+    foreground app/url/title (hence the UI's real language + whether logged in), and whether the
+    env drifted from a known-good. Turns 'Post vs Opublikuj' / 'os-level vs CDP' guessing into
+    facts + explicit guidance the planner must follow."""
+    prof = profile or {}
+    cs = prof.get("controlStrategies") or {}
+    best = prof.get("best")
+    facts = {"node": node, "bestSurface": best, "controllable": prof.get("controllable"),
+             "controlStrategies": cs, "display": prof.get("display"),
+             "osLevelReliable": prof.get("osLevelReliable")}
+    if surface:
+        b = surface.get("browser") or {}
+        facts["foreground"] = {"kind": surface.get("kind"), "app": surface.get("app"),
+                               "url": b.get("url"), "title": b.get("title")}
+    guidance: list[str] = []
+    if best == "cdp":
+        guidance.append("PREFER CDP DOM verbs (role + visible label); do NOT use OCR/coordinates.")
+    elif best in ("atspi", "vision"):
+        guidance.append(f"Only an os-level surface ('{best}') is live; prefer a coordinate-free path "
+                        "and launch a CDP browser session for any web target.")
+    if not facts["controllable"]:
+        guidance.append("This environment CANNOT drive a UI (no CDP/a11y/OCR+input) — do NOT emit UI "
+                        "steps; surface what is missing instead.")
+    if (facts.get("foreground") or {}).get("url"):
+        guidance.append("Use the ACTUAL on-screen labels of the foreground page (its real language) — "
+                        "do not translate them (no 'Opublikuj' when the UI says 'Post').")
+    if memory is not None and memory.drift(node, prof).get("drifted"):
+        guidance.append("Environment DRIFTED from the known-good snapshot — re-measure before relying "
+                        "on any cached element positions.")
+    # graduated confidence (distance from a known-good state) -> the planner adds verification
+    # for 'verify' and demands explicit user confirmation for irreversible / 'hitl' actions.
+    confidence = plausibility(prof, memory=memory, node=node)
+    if confidence["level"] != "auto":
+        guidance.append(f"Action confidence is '{confidence['level']}' ({confidence['reason']}) — add a "
+                        "verify/goal step after each mutating action, and for any IRREVERSIBLE or public "
+                        "action (post/publish/send/delete/pay) require explicit user confirmation first.")
+    return {"facts": facts, "guidance": guidance, "confidence": confidence}
+
+
 def local_transport(by_scheme: dict[str, Connector]) -> CallableTransport:
     """A dumb scheme->connector router (HTTP-to-node stand-in) for tests / in-process use."""
     def _route(uri: str, payload: dict) -> dict:

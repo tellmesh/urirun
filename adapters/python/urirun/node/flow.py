@@ -355,7 +355,8 @@ def normalize_flow_or_explain(
         ) from exc
 
 
-def llm_flow(prompt: str, routes: list[dict], nodes: list[dict]) -> dict:
+def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
+             environments: list[dict] | None = None) -> dict:
     model = os.getenv("URIRUN_LLM_MODEL") or os.getenv("LLM_MODEL")
     if not model:
         raise RuntimeError("URIRUN_LLM_MODEL or LLM_MODEL is not set")
@@ -398,7 +399,11 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict]) -> dict:
                 "'ui/command/click-text', 'input/command/type') only for NATIVE desktop apps, or as a "
                 "fallback when no CDP session/route is available. Use 'window/command/focus' (kvm) to "
                 "focus a window regardless. Optionally add a ui/query/verify or page query to confirm a "
-                "target is present before acting on it."
+                "target is present before acting on it. "
+                # Concrete-state grounding: when an 'environments' field is present it is the LIVE
+                # capability profile + foreground surface of each node — GROUND your steps on it:
+                "honour each node's 'bestSurface' and 'guidance', use the foreground page's REAL "
+                "on-screen labels (its language), and refuse UI steps where controllable is false."
             ),
         },
         {
@@ -407,6 +412,7 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict]) -> dict:
                 {
                     "request": prompt,
                     "nodes": [{"name": node["name"], "reachable": node.get("reachable")} for node in nodes],
+                    "environments": environments or [],
                     "allowedRoutes": allowed_routes,
                     "shape": {
                         "task": {"id": "short_id", "title": "title"},
@@ -421,13 +427,40 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict]) -> dict:
     return json_from_text(response.choices[0].message.content)
 
 
-def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, use_llm: bool = True) -> tuple[dict, dict]:
+def fetch_planner_environments(node_names: list[str], registry: dict, mesh: dict | None = None) -> list[dict]:
+    """Best-effort live capability profile + foreground surface per node, formatted as
+    planner_context facts+guidance — so the planner GROUNDS on reality (surface, language,
+    known-good) instead of guessing. Sets the serviceMap from ``mesh`` so the kvm queries route
+    to the node; skips any node that doesn't answer (non-kvm / unreachable); never raises."""
+    from urirun.node.reversible import planner_context
+    old_map = os.environ.get("URI_SERVICE_MAP")
+    if mesh is not None:
+        os.environ["URI_SERVICE_MAP"] = json.dumps(mesh.get("serviceMap") or {})
+    out: list[dict] = []
+    try:
+        for name in node_names or []:
+            prof = _fetch_kvm_query({"uri": f"kvm://{name}/x"}, registry, "env/query/profile", "controlStrategies")
+            if not prof:
+                continue
+            surf = _fetch_kvm_query({"uri": f"kvm://{name}/x"}, registry, "surface/query/current", "kind")
+            out.append(planner_context(name, prof, surf))
+    finally:
+        if mesh is not None:
+            if old_map is None:
+                os.environ.pop("URI_SERVICE_MAP", None)
+            else:
+                os.environ["URI_SERVICE_MAP"] = old_map
+    return out
+
+
+def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, use_llm: bool = True,
+              environments: list[dict] | None = None) -> tuple[dict, dict]:
     routes = [route for route in mesh["routes"] if safe_route(route)]
     allowed = {route["uri"] for route in routes}
     if use_llm:
         try:
             return normalize_flow_or_explain(
-                llm_flow(prompt, routes, mesh["nodes"]),
+                llm_flow(prompt, routes, mesh["nodes"], environments=environments),
                 allowed,
                 routes=routes,
                 selected_nodes=selected_nodes,
@@ -689,6 +722,54 @@ def _rollback_partial(timeline: list, results: dict, registry: dict) -> dict | N
     return rollback_partial_flow(timeline, results, transport)
 
 
+def _circuit_break_if_over(start: float, max_wall_clock: float, remediations_used: int,
+                           max_remediations: int, timeline: list, results: dict, recoveries: list) -> dict | None:
+    if time.monotonic() - start > max_wall_clock:
+        return _circuit_break(f"flow exceeded {max_wall_clock:.0f}s wall-clock", timeline, results, recoveries)
+    if remediations_used > max_remediations:
+        return _circuit_break(f"flow exceeded {max_remediations} self-heal remediations", timeline, results, recoveries)
+    return None
+
+
+def _resolve_payload_or_fail(step: dict, results: dict, routes: list, timeline: list,
+                             recoveries: list) -> tuple[dict | None, dict | None]:
+    """(resolved payload, None) on success, or (None, failure envelope) on a missing dependency
+    or a payload-resolution error."""
+    missing = [dep for dep in step.get("depends_on", []) if dep not in results]
+    if missing:
+        exc = RuntimeError(f"{step['id']} missing dependencies: {missing}")
+        return None, _step_fail_envelope(step, exc, routes, timeline, results, recoveries)
+    try:
+        return resolve_step_payload(step.get("payload") or {}, results), None
+    except Exception as exc:  # noqa: BLE001 - surface as a structured step error.
+        return None, _step_fail_envelope(step, exc, routes, timeline, results, recoveries)
+
+
+def _step_fail_envelope(step: dict, exc: BaseException, routes: list, timeline: list,
+                        results: dict, recoveries: list) -> dict:
+    entry = _flow_step_failure(step, exc, routes)
+    timeline.append(entry)
+    recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
+    return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+
+
+def _abort_envelope(step: dict, step_timeline: list, step_recoveries: list, timeline: list,
+                    results: dict, recoveries: list, registry: dict, rollback_on_failure: bool,
+                    execute: bool) -> dict:
+    """Build the failure envelope for an aborted step and, when reversible mutations were already
+    made, ROLL THEM BACK so the give-up leaves a clean state (catch->diagnose->heal->rollback)."""
+    err = next((e["error"] for e in reversed(step_timeline) if "error" in e),
+               step_recoveries[-1]["error"] if step_recoveries else {"message": "step failed"})
+    out = {"ok": False, "timeline": timeline, "results": results, "error": err, "recovery": recoveries}
+    if rollback_on_failure and execute:
+        rb = _rollback_partial(timeline, results, registry)
+        if rb is not None:
+            timeline.append({"id": "flow:rollback", "uri": step["uri"], "type": "recovery",
+                             "action": "rollback", "ok": bool(rb.get("ok")), "undone": len(rb.get("undone") or [])})
+            out["rollback"] = rb
+    return out
+
+
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
                  max_retries: int = 1, max_wall_clock: float = 180.0, max_remediations: int = 6,
                  rollback_on_failure: bool = True) -> dict:
@@ -705,25 +786,14 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
             timeline.extend(_preflight(flow, registry))   # provision known surfaces up-front
         for step in flow["steps"]:
             # circuit-breaker: bound the WHOLE flow for unattended autonomy — a bad plan must not
-            # spin self-healing forever and burn the node. Checked before each step + after each
-            # step's remediation budget is spent.
-            if time.monotonic() - start > max_wall_clock:
-                return _circuit_break(f"flow exceeded {max_wall_clock:.0f}s wall-clock", timeline, results, recoveries)
-            if remediations_used > max_remediations:
-                return _circuit_break(f"flow exceeded {max_remediations} self-heal remediations", timeline, results, recoveries)
-            missing = [dep for dep in step.get("depends_on", []) if dep not in results]
-            if missing:
-                entry = _flow_step_failure(step, RuntimeError(f"{step['id']} missing dependencies: {missing}"), routes)
-                timeline.append(entry)
-                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
-                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
-            try:
-                payload = resolve_step_payload(step.get("payload") or {}, results)
-            except Exception as exc:  # noqa: BLE001 - surface as a structured step error.
-                entry = _flow_step_failure(step, exc, routes)
-                timeline.append(entry)
-                recoveries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
-                return {"ok": False, "timeline": timeline, "results": results, "error": entry["error"], "recovery": recoveries}
+            # spin self-healing forever and burn the node.
+            broke = _circuit_break_if_over(start, max_wall_clock, remediations_used,
+                                           max_remediations, timeline, results, recoveries)
+            if broke is not None:
+                return broke
+            payload, fail = _resolve_payload_or_fail(step, results, routes, timeline, recoveries)
+            if fail is not None:
+                return fail
             env, step_timeline, step_recoveries, aborted = _run_step(
                 step, payload, registry, execute, routes, recover, max_retries
             )
@@ -732,22 +802,8 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
             remediations_used += sum(1 for e in step_timeline if e.get("action") == "self-heal")
             results[step["id"]] = env
             if aborted:
-                # The last timeline entry may be a ``self-heal`` record (no ``error`` key) when a
-                # remediation was attempted and didn't fix the step — pick the last entry that
-                # actually carries the error, falling back to the step's recovery record.
-                err = next((e["error"] for e in reversed(step_timeline) if "error" in e),
-                           step_recoveries[-1]["error"] if step_recoveries else {"message": "step failed"})
-                out = {"ok": False, "timeline": timeline, "results": results, "error": err, "recovery": recoveries}
-                # ROLLBACK-ON-GIVE-UP: catch -> diagnose -> heal -> (still failed) -> undo the
-                # reversible mutations this flow already made, so the failure leaves a clean state.
-                if rollback_on_failure and execute:
-                    rb = _rollback_partial(timeline, results, registry)
-                    if rb is not None:
-                        timeline.append({"id": "flow:rollback", "uri": step["uri"], "type": "recovery",
-                                         "action": "rollback", "ok": bool(rb.get("ok")),
-                                         "undone": len(rb.get("undone") or [])})
-                        out["rollback"] = rb
-                return out
+                return _abort_envelope(step, step_timeline, step_recoveries, timeline, results,
+                                       recoveries, registry, rollback_on_failure, execute)
         result = {"ok": True, "timeline": timeline, "results": results}
         if recoveries:
             result["recovery"] = recoveries
@@ -778,20 +834,30 @@ def _run_goal_check(goal: dict, dispatch) -> tuple[bool, dict]:
     except Exception as exc:  # noqa: BLE001
         return False, {"error": str(exc)[:160]}
     val = result_data(env) if isinstance(env, dict) else None
+    actual = _dig_value(val, goal.get("path"))
+    env_ok = bool(isinstance(env, dict) and env.get("ok"))
+    passed = _goal_passed(env_ok, actual, goal)
+    return passed, {"actual": str(actual)[:160] if actual is not None else None}
+
+
+def _dig_value(val: Any, path: str | None) -> Any:
+    """Pull a dotted ``path`` out of a nested dict (``a.b.c``); stops at the first non-dict."""
     actual = val
-    for key in str(goal.get("path") or "").split("."):
+    for key in str(path or "").split("."):
         if key and isinstance(actual, dict):
             actual = actual.get(key)
-    env_ok = bool(isinstance(env, dict) and env.get("ok"))
+    return actual
+
+
+def _goal_passed(env_ok: bool, actual: Any, goal: dict) -> bool:
+    """Assert the goal post-condition: contains / equals / present, else plain transport ok."""
     if "contains" in goal:
-        passed = env_ok and str(goal["contains"]) in str(actual or "")
-    elif "equals" in goal:
-        passed = env_ok and str(actual) == str(goal["equals"])
-    elif goal.get("present"):
-        passed = env_ok and actual not in (None, "", [], {})
-    else:
-        passed = env_ok
-    return passed, {"actual": str(actual)[:160] if actual is not None else None}
+        return env_ok and str(goal["contains"]) in str(actual or "")
+    if "equals" in goal:
+        return env_ok and str(actual) == str(goal["equals"])
+    if goal.get("present"):
+        return env_ok and actual not in (None, "", [], {})
+    return env_ok
 
 
 def verify_flow_execution(document: dict, execution: dict, *, executed: bool, dispatch=None) -> dict | None:

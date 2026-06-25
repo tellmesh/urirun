@@ -196,6 +196,7 @@ from urirun.node.flow import (  # noqa: E402,F401
     _flow_stdout,
     append_if_available,
     execute_flow,
+    fetch_planner_environments,
     first_url,
     flow_document,
     heuristic_flow,
@@ -757,7 +758,10 @@ def _host_mesh_command(args: argparse.Namespace, config: dict, mesh: dict) -> in
     if handler is not None:
         return handler(args, config, mesh)
     if args.host_command == "flow" and args.flow_command == "run":
-        result = run_flow_document(load_flow_document(args.flow), mesh, execute=args.execute)
+        # `rollbackOnFailure` in the flow document already triggers saga compensation; the CLI flag
+        # (when present) is an explicit override so a one-off run can opt in without editing the YAML.
+        result = run_flow_document(load_flow_document(args.flow), mesh, execute=args.execute,
+                                   rollback_on_failure=getattr(args, "rollback_on_failure", False))
         result = compact_result_artifacts(result, args, hint="host-flow")
         reglib._emit_json(result, "-")
         return 0 if result["ok"] else 1

@@ -168,3 +168,52 @@ def test_execute_flow_green_when_every_action_succeeds(monkeypatch) -> None:
     monkeypatch.setattr(flow.v2_service, "call", fake_call)
     res = flow.execute_flow(flow_doc, mesh={}, registry={}, execute=True, recover=False)
     assert res["ok"] is True and set(res["results"]) == {"a", "b"}
+
+
+def test_llm_flow_injects_environment_facts_into_planner(monkeypatch) -> None:
+    """profile->planner: the live env facts/guidance must reach the LLM planner message, so it
+    grounds on reality (surface, real labels) instead of guessing."""
+    import urirun.host.task_planner as tp
+    monkeypatch.setenv("URIRUN_LLM_MODEL", "test-model")
+    captured = {}
+
+    class _Resp:
+        class _C:
+            class message:
+                content = '{"task":{"id":"t","title":"x"},"steps":[]}'
+        choices = [_C()]
+
+    def fake_complete(model, messages, **k):
+        captured["messages"] = messages
+        return _Resp()
+
+    monkeypatch.setattr(tp, "quiet_completion", fake_complete)
+    envs = [{"facts": {"node": "lap", "bestSurface": "cdp", "controllable": True},
+             "guidance": ["PREFER CDP DOM verbs", "do not translate labels"]}]
+    flow.llm_flow("post on linkedin", routes=[], nodes=[{"name": "lap", "reachable": True}], environments=envs)
+
+    user = next(m for m in captured["messages"] if m["role"] == "user")
+    assert "environments" in user["content"]
+    assert "bestSurface" in user["content"] and "PREFER CDP DOM" in user["content"]
+    system = next(m for m in captured["messages"] if m["role"] == "system")
+    assert "bestSurface" in system["content"] and "guidance" in system["content"]  # told to ground on them
+
+
+def test_fetch_planner_environments_builds_context(monkeypatch) -> None:
+    """The dashboard-feeding helper: fetch each node's env profile + foreground surface and
+    format them as planner_context (so the LLM gets grounded facts). Non-answering nodes skip."""
+    def fake_call(uri, payload, registry, mode):
+        if "/env/query/profile" in uri:
+            return {"ok": True, "result": {"value": {
+                "controlStrategies": {"cdp": True}, "best": "cdp", "controllable": True}}}
+        if "/surface/query/current" in uri:
+            return {"ok": True, "result": {"value": {
+                "kind": "browser", "browser": {"url": "https://linkedin.com/feed", "title": "Feed"}}}}
+        return {"ok": False, "result": {"value": {}}}
+
+    monkeypatch.setattr(flow.v2_service, "call", fake_call)
+    envs = flow.fetch_planner_environments(["lap"], registry={}, mesh={"serviceMap": {}})
+    assert len(envs) == 1
+    assert envs[0]["facts"]["bestSurface"] == "cdp"
+    assert envs[0]["facts"]["foreground"]["url"] == "https://linkedin.com/feed"
+    assert any("do not translate" in g.lower() for g in envs[0]["guidance"])

@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 105, json: 13, shell: 10, yaml: 5, csharp: 4
+- **Languages**: python: 108, json: 13, shell: 10, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1736
-- **Total Classes**: 40
-- **Modules**: 165
-- **Entry Points**: 575
+- **Total Functions**: 1779
+- **Total Classes**: 43
+- **Modules**: 168
+- **Entry Points**: 592
 
 ## Architecture by Module
 
@@ -37,13 +37,13 @@
 - **Classes**: 1
 - **File**: `__init__.py`
 
+### adapters.python.urirun.node.flow
+- **Functions**: 49
+- **File**: `flow.py`
+
 ### adapters.python.urirun.runtime._registry
 - **Functions**: 43
 - **File**: `_registry.py`
-
-### adapters.python.urirun.node.flow
-- **Functions**: 41
-- **File**: `flow.py`
 
 ### adapters.python.urirun.node.client
 - **Functions**: 35
@@ -358,6 +358,14 @@ child processes t
 - **Methods**: 4
 - **Key Methods**: adapters.ruby.urirun.Connector.initialize, adapters.ruby.urirun.Connector.command, adapters.ruby.urirun.Connector.bindings, adapters.ruby.urirun.Connector.bindings_json
 
+### adapters.csharp.Urirun.Connector
+- **Methods**: 3
+- **Key Methods**: adapters.csharp.Urirun.Connector.Connector, adapters.csharp.Urirun.Connector.Command, adapters.csharp.Urirun.Connector.BindingsJson
+
+### adapters.python.urirun.connectors.backend_registry.Backend
+- **Methods**: 3
+- **Key Methods**: adapters.python.urirun.connectors.backend_registry.Backend.missing, adapters.python.urirun.connectors.backend_registry.Backend.platform_ok, adapters.python.urirun.connectors.backend_registry.Backend.available
+
 ### adapters.python.urirun.node.reversible.Connector
 > The ADOPTION CONTRACT. A connector enters the engine by providing these three.
 - **Methods**: 3
@@ -376,25 +384,15 @@ run dete
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun.node.reversible.TwinMemory.remember, adapters.python.urirun.node.reversible.TwinMemory.known_good, adapters.python.urirun.node.reversible.TwinMemory.drift
 
-### adapters.csharp.Urirun.Connector
-- **Methods**: 3
-- **Key Methods**: adapters.csharp.Urirun.Connector.Connector, adapters.csharp.Urirun.Connector.Command, adapters.csharp.Urirun.Connector.BindingsJson
+### adapters.python.urirun.node.diagnostics._Rule
+- **Methods**: 2
+- **Key Methods**: adapters.python.urirun.node.diagnostics._Rule.__init__, adapters.python.urirun.node.diagnostics._Rule.matches
 
 ### adapters.python.urirun.node.reversible.CallableTransport
 > Adapt any ``fn(uri, payload) -> dict`` into a Transport (e.g. a NodeClient.run bound
 method, or a te
 - **Methods**: 2
 - **Key Methods**: adapters.python.urirun.node.reversible.CallableTransport.__init__, adapters.python.urirun.node.reversible.CallableTransport.call
-
-### adapters.python.urirun.node.reversible.Twin
-> The environment model + a position signature. Holds its own scan route so a re-scan is
-self-sufficie
-- **Methods**: 2
-- **Key Methods**: adapters.python.urirun.node.reversible.Twin.scan, adapters.python.urirun.node.reversible.Twin.rescan
-
-### adapters.python.urirun.node.diagnostics._Rule
-- **Methods**: 2
-- **Key Methods**: adapters.python.urirun.node.diagnostics._Rule.__init__, adapters.python.urirun.node.diagnostics._Rule.matches
 
 ## Data Transformation Functions
 
@@ -463,25 +461,22 @@ Key functions that process and transform data:
 ### adapters.python.urirun.host.document_sync._parse_sync_params
 - **Output to**: None.resolve, adapters.python.urirun.host.document_sync._resolve_node_params, adapters.python.urirun.host.document_sync._build_sync_params, None.strip, None.expanduser
 
-### adapters.python.urirun.host.host_dashboard._decode_capture_image
-> Parse a ``data:image/*;base64`` payload into (mime, raw_bytes, sha256, file_ext).
-- **Output to**: re.match, base64.b64decode, None.hexdigest, ValueError, match.group
+### adapters.python.urirun.runtime.v1._run_process
+- **Output to**: config.get, config.get, subprocess.run, policy.get, progress.active
 
-### adapters.python.urirun.host.host_dashboard._run_inprocess_connector_uri
-> Execute an installed in-process connector URI (widget://, artifact://, …) through the
-urirun runtime
-- **Output to**: discovery.registry_for_uri, urirun.run, urirun.result_data, adapters.python.urirun.host.host_dashboard.register_tagged_artifact, bool
+### adapters.python.urirun.runtime.v1._run_process_streaming
+- **Output to**: subprocess.Popen, progress.register_proc, threading.Timer, timer.start, enumerate
 
-### adapters.python.urirun.host.host_dashboard._validated_sync_retry_payload
-> Validate a urifix `retry` block targets this document-sync node, returning its payload.
-- **Output to**: retry.get, None.strip, None.strip, dict, str
+### adapters.python.urirun.runtime.v2.validate_input
+- **Output to**: adapters.python.urirun.runtime.v2._input_values, adapters.python.urirun.runtime.v2._schema_for, Draft202012Validator.check_schema, set, adapters.python.urirun.runtime.v2._apply_defaults
 
-### adapters.python.urirun.host.host_dashboard._parse_bindings_output
-> Parse the ``BINDINGS:<count>:<names>`` smoke marker into (count, names).
-- **Output to**: None.splitlines, line.startswith, line.split, int, None.split
+### adapters.python.urirun.runtime.v2.run_local_function_subprocess
+> Run a ``local-function`` handler in a fresh process via the shared
+``python -m urirun.exec`` runner 
+- **Output to**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError
 
-### adapters.python.urirun.host.host_dashboard._process_cmdline
-- **Output to**: _process_cmdline_impl
+### adapters.python.urirun.runtime.v2._run_parse
+- **Output to**: reglib.parse_uri, reglib.translate, _RunAbort, str, str
 
 ## Behavioral Patterns
 
@@ -499,16 +494,6 @@ urirun runtime
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.Connector.handler
-
-### recursion__short_value
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.host.host_dashboard._short_value
-
-### recursion__uri_action_lookup
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
 
 ### recursion__short_value
 - **Type**: recursion
@@ -550,6 +535,16 @@ urirun runtime
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.runtime.secrets.redact
 
+### recursion__short_value
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.host.host_dashboard._short_value
+
+### recursion__uri_action_lookup
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
+
 ### state_machine_Urirun
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -572,9 +567,8 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime.daemon.serve` - 41 calls
 - `adapters.python.urirun.host.host_dashboard.scanner_capture` - 40 calls
 - `adapters.python.urirun.host.host_dashboard.summary` - 37 calls
-- `adapters.python.urirun.node.flow.execute_flow` - 34 calls
-- `adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service` - 33 calls
 - `adapters.python.urirun.runtime._runtime.main` - 33 calls
+- `adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service` - 33 calls
 - `adapters.python.urirun.runtime.v2_adopt.main` - 31 calls
 - `adapters.python.urirun.node.recovery.normalize_error` - 30 calls
 - `adapters.python.urirun.node.mesh.copy_id_command` - 30 calls
@@ -584,26 +578,27 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime.adopt_pack.adopt` - 28 calls
 - `adapters.python.urirun.runtime.errors.info` - 27 calls
 - `adapters.python.urirun.connectors.connector_lint.verify_connector` - 27 calls
-- `adapters.python.urirun.host.host_dashboard.phone_node_qr` - 26 calls
 - `adapters.python.urirun.host.discovery.node_alias_map_from_env` - 26 calls
 - `adapters.python.urirun.node.client.NodeClient.resolve_refs` - 26 calls
-- `adapters.python.urirun.host.host_dashboard.node_add` - 25 calls
+- `adapters.python.urirun.host.host_dashboard.phone_node_qr` - 26 calls
 - `adapters.python.urirun.runtime.codegen.proto_from_registry` - 25 calls
 - `adapters.python.urirun.runtime._runtime.run` - 25 calls
 - `adapters.python.urirun.runtime.v2_grpc.main` - 25 calls
+- `adapters.python.urirun.host.host_dashboard.node_add` - 25 calls
 - `adapters.python.urirun.node.mesh.apply_deploy` - 25 calls
-- `adapters.python.urirun.host.host_dashboard.startup_phone_qr` - 24 calls
 - `adapters.python.urirun.runtime.v2.run_local_function_subprocess` - 24 calls
 - `adapters.python.urirun.runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun.connectors.resolver.resolve` - 24 calls
+- `adapters.python.urirun.host.host_dashboard.startup_phone_qr` - 24 calls
 - `adapters.python.urirun.node.mesh.watch_command` - 24 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.document_sync.sync_documents_to_node` - 23 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
-- `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
 - `adapters.python.urirun.connectors.resolver.index_local` - 22 calls
+- `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
+- `adapters.python.urirun.host.host_db.search_records` - 21 calls
 
 ## System Interactions
 

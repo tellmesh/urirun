@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urirun"
-version = "0.4.146"
+version = "0.4.147"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"

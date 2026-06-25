@@ -10308,11 +10308,15 @@ def _chat_ask_general(
             except Exception:  # noqa: BLE001
                 pass
             return result
+        registry = mesh.registry_from_routes(discovered.get("routes") or [])
         try:
-            flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes, use_llm=not no_llm)
+            # profile->planner: ground the LLM on each node's LIVE capabilities + foreground surface
+            # (best control surface, real on-screen labels, drift) so it stops guessing labels/surface.
+            environments = mesh.fetch_planner_environments(selected_nodes or [], registry, discovered) if execute else []
+            flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes,
+                                             use_llm=not no_llm, environments=environments)
         except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
             return _chat_ask_general_planner_failure(exc, db, prompt, execute, selected_nodes, selected_targets)
-        registry = mesh.registry_from_routes(discovered.get("routes") or [])
         execution = mesh.execute_flow(flow, discovered, registry, execute=execute)
     finally:
         if old_token is None:

@@ -602,6 +602,9 @@ def _add_host_subparser(subparsers) -> None:
     flow_run = flow_sub.add_parser("run", parents=[host_common], help="Run a saved YAML/JSON URI flow")
     flow_run.add_argument("flow", help="flow YAML/JSON file")
     flow_run.add_argument("--execute", action="store_true", help="execute on nodes; default is dry-run")
+    flow_run.add_argument("--rollback-on-failure", action="store_true",
+                          help="on failure (incl. a green run that missed its verification.goal), undo the "
+                               "flow's mutations LIFO over the inverses connectors registered (saga compensation)")
     flow_run.add_argument("--artifact-dir", help="directory for large base64/binary result artifacts; default ~/.urirun/artifacts/host")
     flow_run.add_argument("--inline-artifacts", action="store_true", help="keep large base64 values inline in stdout")
 

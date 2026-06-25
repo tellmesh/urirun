@@ -16,6 +16,8 @@ from urirun.node.reversible import (
     ledger_from_execution,
     local_transport,
     path_of,
+    planner_context,
+    plausibility,
 )
 
 
@@ -309,5 +311,67 @@ class NodelessInverseRebaseTests(unittest.TestCase):
         self.assertEqual(led, [])
 
 
+
+class PlannerContextTests(unittest.TestCase):
+    """profile->planner: concrete env facts so the LLM grounds on reality, not guesses."""
+    CDP = {"controlStrategies": {"cdp": True, "atspi": False, "vision": True},
+           "best": "cdp", "controllable": True, "display": {"width": 1440, "height": 900}}
+
+    def test_cdp_env_guides_to_dom(self):
+        c = planner_context("lap", self.CDP)
+        self.assertEqual(c["facts"]["bestSurface"], "cdp")
+        self.assertTrue(any("CDP DOM" in g for g in c["guidance"]))
+
+    def test_uncontrollable_env_refuses_ui(self):
+        c = planner_context("lap", {"controlStrategies": {}, "best": None, "controllable": False})
+        self.assertTrue(any("CANNOT drive a UI" in g for g in c["guidance"]))
+
+    def test_foreground_url_demands_real_labels(self):
+        s = {"kind": "browser", "browser": {"url": "https://linkedin.com/feed", "title": "Feed"}}
+        c = planner_context("lap", self.CDP, surface=s)
+        self.assertEqual(c["facts"]["foreground"]["url"], "https://linkedin.com/feed")
+        self.assertTrue(any("do not translate" in g.lower() for g in c["guidance"]))
+
+    def test_drift_warns_to_remeasure(self):
+        m = TwinMemory(); m.remember("lap", {**self.CDP, "display": {"width": 1440, "height": 900}})
+        drifted = {**self.CDP, "display": {"width": 3200, "height": 1800}}
+        c = planner_context("lap", drifted, memory=m)
+        self.assertTrue(any("DRIFTED" in g for g in c["guidance"]))
+
 if __name__ == "__main__":
     unittest.main()
+
+class PlausibilityTests(unittest.TestCase):
+    """Graduated confidence: distance from a known-good state -> auto / verify / hitl, not the
+    binary 'try and see'. Irreversible / uncontrollable / drifted -> demand more verification."""
+    GOOD = {"controllable": True, "best": "cdp", "osLevelReliable": True}
+
+    def test_reversible_on_known_good_env_is_auto(self):
+        self.assertEqual(plausibility(self.GOOD)["level"], "auto")
+
+    def test_irreversible_action_always_hitl(self):
+        r = plausibility(self.GOOD, irreversible=True)
+        self.assertEqual(r["level"], "hitl")
+
+    def test_uncontrollable_env_is_hitl_zero_score(self):
+        r = plausibility({"controllable": False})
+        self.assertEqual(r["level"], "hitl")
+        self.assertEqual(r["score"], 0.0)
+
+    def test_os_unreliable_drops_to_verify(self):
+        r = plausibility({"controllable": True, "best": "atspi", "osLevelReliable": False})
+        self.assertEqual(r["level"], "verify")
+        self.assertLess(r["score"], 0.9)
+
+    def test_drift_lowers_to_hitl(self):
+        m = TwinMemory(); m.remember("lap", {**self.GOOD, "display": {"width": 1440, "height": 900}})
+        drifted = {**self.GOOD, "best": "atspi", "osLevelReliable": False,
+                   "display": {"width": 3200, "height": 1800}}
+        r = plausibility(drifted, memory=m, node="lap")
+        self.assertEqual(r["level"], "hitl")     # os-unreliable (-0.3) + drift (-0.4) -> < 0.5
+
+    def test_planner_context_carries_confidence_and_guidance(self):
+        ctx = planner_context("lap", {"controllable": True, "best": "atspi", "osLevelReliable": False})
+        self.assertEqual(ctx["confidence"]["level"], "verify")
+        self.assertTrue(any("confidence is 'verify'" in g for g in ctx["guidance"]))
+

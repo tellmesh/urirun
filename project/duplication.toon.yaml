@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 95f 35033L | 2026-06-25
+# redup/duplication | 15 groups | 98f 35619L | 2026-06-25
 
 SUMMARY:
-  files_scanned: 95
-  total_lines:   35033
+  files_scanned: 98
+  total_lines:   35619
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       1020
+  scan_ms:       1050
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=73L  groups=5  frags=12  (0.2%)
@@ -23,9 +23,9 @@ DUPLICATES[15] (ranked by impact):
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=3 saved=26 sim=1.00
-      host/host_dashboard.py:11379-11391  (_free_port_from_old_scanner)
-      host/host_dashboard.py:11394-11402  (_free_port_from_old_chat)
-      host/host_dashboard.py:11405-11413  (_free_port_from_old_android_node)
+      host/host_dashboard.py:11383-11395  (_free_port_from_old_scanner)
+      host/host_dashboard.py:11398-11406  (_free_port_from_old_chat)
+      host/host_dashboard.py:11409-11417  (_free_port_from_old_android_node)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
       runtime/v2.py:1533-1536  (_cmd_add_openapi)
       runtime/v2.py:1539-1542  (_cmd_gen)
@@ -44,8 +44,8 @@ DUPLICATES[15] (ranked by impact):
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
   [926b8a3d766222d9]   STRU  _chat_document_sync_response  L=9 N=2 saved=9 sim=1.00
-      host/host_dashboard.py:10355-10363  (_chat_document_sync_response)
-      host/host_dashboard.py:10366-10374  (_chat_generic_response)
+      host/host_dashboard.py:10359-10367  (_chat_document_sync_response)
+      host/host_dashboard.py:10370-10378  (_chat_generic_response)
   [3fed59bde8ae1620]   EXAC  replace  L=5 N=2 saved=5 sim=1.00
       runtime/v1.py:68-72  (replace)
       runtime/v2.py:507-511  (replace)
@@ -56,8 +56,8 @@ DUPLICATES[15] (ranked by impact):
       host/host_dashboard.py:5364-5366  (_document_index_path)
       host/host_dashboard.py:5465-5467  (_scanned_id_log_path)
   [bed22d936aabe8e2]   STRU  _api_checks  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:11046-11048  (_api_checks)
-      host/host_dashboard.py:11051-11053  (_api_logs)
+      host/host_dashboard.py:11050-11052  (_api_checks)
+      host/host_dashboard.py:11055-11057  (_api_logs)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
@@ -65,8 +65,8 @@ DUPLICATES[15] (ranked by impact):
       node/config.py:65-67  (save_host_config)
       node/config.py:179-181  (save_node_config)
   [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
-      node/mesh.py:268-270  (_data_artifact_register)
-      node/mesh.py:277-279  (_data_check_add)
+      node/mesh.py:269-271  (_data_artifact_register)
+      node/mesh.py:278-280  (_data_check_add)
   [79640e1194086855]   STRU  planfile_task_bindings  L=3 N=2 saved=3 sim=1.00
       runtime/v2.py:640-642  (planfile_task_bindings)
       runtime/v2.py:649-651  (host_data_bindings)
