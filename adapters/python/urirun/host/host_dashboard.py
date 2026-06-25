@@ -2832,6 +2832,7 @@ INDEX_HTML = r"""<!doctype html>
         : (Array.isArray(detail.attachments) ? detail.attachments : []);
       const hasPdf = rows.some(isPdfAttachment);
       return rows.filter((att) => {
+        if (att.kind === 'twin-monitor') return true;
         if (isPdfAttachment(att)) return true;
         if (hasPdf && isScannerFrameAttachment(att)) return false;
         if (isScannerFrameAttachment(att) && !(document.ok && document.path)) return false;
@@ -2840,6 +2841,10 @@ INDEX_HTML = r"""<!doctype html>
     }
 
     function renderAttachment(att) {
+      if (att.kind === 'twin-monitor') {
+        const url = att.uri || '/twin';
+        return `<div class="attachment attachment-widget" style="width: 100%;"><iframe src="${esc(url)}" title="Digital Twin Monitor" style="width:100%;height:450px;border:1px solid var(--border-color);border-radius:4px;" loading="lazy"></iframe></div>`;
+      }
       const meta = att.meta || {};
       const ocr = meta.ocr || {};
       const isPdf = isPdfAttachment(att);
@@ -10203,6 +10208,18 @@ def _general_path_complete(
     content = f"{status}: {len(timeline)} URI step(s)"
     if result.get("recovery"):
         content += f", {len(result.get('recovery') or [])} recovery action(s)"
+    
+    # Append twin-monitor widget if any kvm:// or twin:// or browser:// route is in the flow
+    if execute and any(
+        "kvm://" in str(s.get("uri", "")) or "twin://" in str(s.get("uri", "")) or "browser://" in str(s.get("uri", "")) 
+        for s in flow.get("steps", [])
+    ):
+        attachments.append({
+            "kind": "twin-monitor",
+            "uri": "/twin",
+            "path": "Digital Twin Widget",
+        })
+
     if attachments:
         content += f", {len(attachments)} attachment(s)"
     _add_chat_message(db, _chat_message(

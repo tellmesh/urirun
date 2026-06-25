@@ -314,6 +314,63 @@ def _normalize_flow_task(task: dict) -> dict:
     }
 
 
+_CDP_ENSURE_SUFFIX = "/cdp/session/command/ensure"
+_CDP_READY_SUFFIX = "/cdp/session/query/ready"
+_CDP_PAGE_PREFIX = "/cdp/page/"
+
+
+def _needs_session_ready_after_ensure(prev_uri: str, next_uri: str | None) -> bool:
+    """True when an ensure→page jump skips the readiness probe the launch/probe split
+    requires. ``cdp/session/command/ensure`` returns ``launching:true`` (launch fired,
+    port NOT bound yet); ``cdp/page/*`` opens a WS to that port, so it deadlocks until
+    the bind happens. ``cdp/session/query/ready`` is the idempotent poll that closes
+    that gap without spawning a competing Chrome (re-calling ensure would)."""
+    if not prev_uri.endswith(_CDP_ENSURE_SUFFIX):
+        return False
+    if next_uri is None:
+        return False
+    # /cdp/session/query/ready (the probe) and /cdp/session/query/status do NOT need
+    # the port bound — only anything that opens a page-level WS does.
+    if next_uri.endswith(_CDP_READY_SUFFIX):
+        return False
+    target = route_target(prev_uri)
+    return _CDP_PAGE_PREFIX in next_uri and route_target(next_uri) == target
+
+
+def _inject_cdp_ready_probes(steps: list[dict], allowed_uris: set[str],
+                             used: set[str]) -> list[dict]:
+    """Insert a ``cdp/session/query/ready`` step between every ensure→page jump, when
+    the probe URI is available. Idempotent: skips when a probe is already present, and
+    never injects when the route isn't served (keeps flows runnable on meshes that
+    don't expose kvm/cdp). The injected step is built through ``_normalize_flow_step``
+    so it carries the same validated shape as planner-authored steps."""
+    out: list[dict] = []
+    for index, step in enumerate(steps):
+        out.append(step)
+        next_step = steps[index + 1] if index + 1 < len(steps) else None
+        next_uri = next_step.get("uri") if isinstance(next_step, dict) else None
+        if not _needs_session_ready_after_ensure(step["uri"], next_uri):
+            continue
+        target = route_target(step["uri"])
+        probe_uri = f"kvm://{target}{_CDP_READY_SUFFIX}"
+        if not _uri_is_available(probe_uri, allowed_uris):
+            continue
+        probe = _normalize_flow_step(
+            {"id": f"{step['id']}_await_ready", "uri": probe_uri,
+             "payload": {"timeout": 25}, "depends_on": [step["id"]]},
+            index=len(steps) + len(out), allowed_uris=allowed_uris, used=used,
+        )
+        out.append(probe)
+        # re-point the next step's depends_on at the probe so the chain stays linear.
+        if isinstance(next_step, dict):
+            deps = next_step.setdefault("depends_on", [])
+            deps = [probe["id"] if d == step["id"] else d for d in deps]
+            if probe["id"] not in deps:
+                deps.insert(0, probe["id"])
+            next_step["depends_on"] = deps
+    return out
+
+
 def normalize_flow(flow: dict, allowed_uris: set[str]) -> dict:
     task = flow.get("task") if isinstance(flow.get("task"), dict) else {}
     raw_steps = flow.get("steps")
@@ -322,6 +379,7 @@ def normalize_flow(flow: dict, allowed_uris: set[str]) -> dict:
     used: set[str] = set()
     steps = [_normalize_flow_step(step, index, allowed_uris, used)
              for index, step in enumerate(raw_steps, start=1)]
+    steps = _inject_cdp_ready_probes(steps, allowed_uris, used)
     return {"task": _normalize_flow_task(task), "steps": steps}
 
 
@@ -382,11 +440,21 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
                 "Use only allowedRoutes. If the request mentions all nodes, use every matching node. "
                 "Do not invent URIs. "
                 # Desktop/UI grounding hints — make NL desktop-control flows execute correctly:
-                "Target on-screen elements by their VISIBLE label, which is in the UI's own "
-                "language (default English, e.g. 'Post'/'Start a post', NOT a translation like "
-                "'Opublikuj') unless the request states the UI language. "
+                "language. If the user's request is in a non-English language (like Polish), assume the UI is likely localized to that language and use appropriate translated labels (e.g. 'Zacznij publikację' instead of 'Start a post'). When targeting by 'text', omit the 'role' field if you are unsure of the exact HTML element type. "
                 "After any launch or navigation, insert an input/command/wait (a few seconds) "
                 "before the first interaction so the page can settle. "
+                # Launch/probe split: ensure FIRES the launch and returns fast (launching:true,
+                # port NOT bound yet); the next cdp/page/* step opens a WS to that port and
+                # would deadlock until the bind happens. session/query/ready is the idempotent
+                # poll that closes the gap without spawning a competing Chrome (re-calling
+                # ensure would fight over the profile lock). The normalizer injects this probe
+                # automatically when missing, but emitting it explicitly keeps the plan honest.
+                "CDP launch is a two-step launch/probe split: 'cdp/session/command/ensure' FIRES "
+                "the launch and returns immediately (launching:true, port NOT yet bound); the "
+                "next step must be 'cdp/session/query/ready' (polls the debug port, idempotent — "
+                "never re-call ensure, it would spawn a competing Chrome over the profile lock). "
+                "Only then run any 'cdp/page/*' step (it opens a WS to that port). Never emit "
+                "'cdp/session/command/launch' — it does not exist; use 'ensure'. "
                 # Route-selection preference: DOM-level (CDP) beats pixel-level (OCR) for web content.
                 "ROUTE PREFERENCE — when the target is web content in a browser and the allowedRoutes "
                 "expose CDP page commands (uris containing 'cdp/page/command/click' or "
@@ -394,13 +462,13 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
                 "they act through the DOM by role/visible-label, so they are coordinate-free and immune "
                 "to OCR misreads. For those CDP commands pass the target as 'text' (the visible label) "
                 "and 'role' (e.g. 'button', 'link', 'textbox') — NOT a CSS or Playwright selector — and "
-                "for fill put the content in 'value'. Launch the browser with a "
-                "'cdp/session/command/launch' route so those commands have a session. Use the pixel/OS "
+                "for fill put the content in 'value'. Use the pixel/OS "
                 "routes ('ui/command/click', "
                 "'ui/command/click-text', 'input/command/type') only for NATIVE desktop apps, or as a "
                 "fallback when no CDP session/route is available. Use 'window/command/focus' (kvm) to "
-                "focus a window regardless. Optionally add a ui/query/verify or page query to confirm a "
-                "target is present before acting on it. "
+                "focus a window regardless. "
+                "CRITICAL: Always break down the task into very detailed, atomic declarative steps. "
+                "Always add explicit validation steps (e.g., using 'ui/query/verify', 'cdp/page/query/ready', or evaluating page state) after actions to confirm success before proceeding. "
                 # Concrete-state grounding: when an 'environments' field is present it is the LIVE
                 # capability profile + foreground surface of each node — GROUND your steps on it:
                 "honour each node's 'bestSurface' and 'guidance', use the foreground page's REAL "

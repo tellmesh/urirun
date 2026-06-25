@@ -67,6 +67,118 @@ def test_normalize_flow_accepts_concrete_uri_for_templated_route():
     assert out["steps"][0]["uri"] == "kvm://kvm/display/query/info"  # concrete kept; node binds {host}
 
 
+# --- flow: CDP launch/probe split (ensure→ready must precede any page step) -----
+# Regression for the LinkedIn flow that failed at cdp/page/query/ready because the
+# planner emitted ensure (launching:true, port NOT bound) directly followed by a
+# page-level query (which opens a WS to that unbound port).
+
+_CDP_ALLOWED = {
+    "kvm://{host}/cdp/session/command/ensure",
+    "kvm://{host}/cdp/session/query/ready",
+    "kvm://{host}/cdp/page/query/ready",
+    "kvm://{host}/cdp/page/command/navigate",
+    "kvm://{host}/cdp/page/command/click",
+}
+
+
+def test_normalize_flow_injects_session_ready_between_ensure_and_page_query():
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure",
+         "payload": {"url": "https://www.linkedin.com"}, "depends_on": []},
+        {"id": "page_ready", "uri": "kvm://laptop/cdp/page/query/ready",
+         "payload": {"timeout": 10}, "depends_on": ["ensure"]},
+    ]}
+    out = flow.normalize_flow(flow_doc, _CDP_ALLOWED)
+    uris = [s["uri"] for s in out["steps"]]
+    assert uris == [
+        "kvm://laptop/cdp/session/command/ensure",
+        "kvm://laptop/cdp/session/query/ready",   # injected
+        "kvm://laptop/cdp/page/query/ready",
+    ]
+    probe = out["steps"][1]
+    assert probe["payload"] == {"timeout": 25}
+    assert probe["depends_on"] == ["ensure"]
+    # the following page step now depends on the probe, not on ensure
+    assert out["steps"][2]["depends_on"] == [probe["id"]]
+
+
+def test_normalize_flow_does_not_double_inject_when_probe_already_present():
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure", "depends_on": []},
+        {"id": "session_ready", "uri": "kvm://laptop/cdp/session/query/ready",
+         "payload": {"timeout": 8}, "depends_on": ["ensure"]},
+        {"id": "page_ready", "uri": "kvm://laptop/cdp/page/query/ready",
+         "depends_on": ["session_ready"]},
+    ]}
+    out = flow.normalize_flow(flow_doc, _CDP_ALLOWED)
+    uris = [s["uri"] for s in out["steps"]]
+    assert uris.count("kvm://laptop/cdp/session/query/ready") == 1   # planner's own, untouched
+    assert uris == [
+        "kvm://laptop/cdp/session/command/ensure",
+        "kvm://laptop/cdp/session/query/ready",
+        "kvm://laptop/cdp/page/query/ready",
+    ]
+
+
+def test_normalize_flow_skips_injection_when_probe_route_not_served():
+    # a mesh that exposes ensure + page but NOT session/query/ready: the injector must
+    # not invent a URI the runner can't dispatch (keeps the flow runnable as-is).
+    allowed = _CDP_ALLOWED - {"kvm://{host}/cdp/session/query/ready"}
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure", "depends_on": []},
+        {"id": "page_ready", "uri": "kvm://laptop/cdp/page/query/ready", "depends_on": ["ensure"]},
+    ]}
+    out = flow.normalize_flow(flow_doc, allowed)
+    uris = [s["uri"] for s in out["steps"]]
+    assert uris == [
+        "kvm://laptop/cdp/session/command/ensure",
+        "kvm://laptop/cdp/page/query/ready",
+    ]
+
+
+def test_normalize_flow_injects_before_any_cdp_page_step_not_just_ready_query():
+    # navigate is also a page-level WS opener; the probe must precede it too.
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure", "depends_on": []},
+        {"id": "nav", "uri": "kvm://laptop/cdp/page/command/navigate",
+         "payload": {"url": "https://x"}, "depends_on": ["ensure"]},
+        {"id": "click", "uri": "kvm://laptop/cdp/page/command/click", "depends_on": ["nav"]},
+    ]}
+    out = flow.normalize_flow(flow_doc, _CDP_ALLOWED)
+    uris = [s["uri"] for s in out["steps"]]
+    assert uris == [
+        "kvm://laptop/cdp/session/command/ensure",
+        "kvm://laptop/cdp/session/query/ready",   # injected before navigate
+        "kvm://laptop/cdp/page/command/navigate",
+        "kvm://laptop/cdp/page/command/click",    # no second probe: previous step isn't ensure
+    ]
+
+
+def test_normalize_flow_does_not_inject_when_ensure_is_terminal():
+    # ensure with no following step (or followed by a non-page step) needs no probe:
+    # there's nothing that would open a page-level WS.
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure", "depends_on": []},
+    ]}
+    out = flow.normalize_flow(flow_doc, _CDP_ALLOWED)
+    assert [s["uri"] for s in out["steps"]] == ["kvm://laptop/cdp/session/command/ensure"]
+
+
+def test_normalize_flow_does_not_inject_across_different_targets():
+    # ensure on 'laptop' followed by a page step on 'desktop': the probe would target
+    # laptop, but the next step is about desktop — the cross-target case is not the
+    # launch/probe split (it's two unrelated sessions), so leave it alone.
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "ensure", "uri": "kvm://laptop/cdp/session/command/ensure", "depends_on": []},
+        {"id": "page_ready", "uri": "kvm://desktop/cdp/page/query/ready", "depends_on": ["ensure"]},
+    ]}
+    out = flow.normalize_flow(flow_doc, _CDP_ALLOWED)
+    assert [s["uri"] for s in out["steps"]] == [
+        "kvm://laptop/cdp/session/command/ensure",
+        "kvm://desktop/cdp/page/query/ready",
+    ]
+
+
 # --- config.node_url ---------------------------------------------------------
 
 def test_node_url_resolves_name_then_bare_then_url():
