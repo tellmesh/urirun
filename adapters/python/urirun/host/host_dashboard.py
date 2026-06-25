@@ -10312,7 +10312,11 @@ def _chat_ask_general(
         try:
             # profile->planner: ground the LLM on each node's LIVE capabilities + foreground surface
             # (best control surface, real on-screen labels, drift) so it stops guessing labels/surface.
-            environments = mesh.fetch_planner_environments(selected_nodes or [], registry, discovered) if execute else []
+            # Only probe REACHABLE nodes — an unreachable node would block the chat request on a network
+            # timeout for no grounding gain.
+            _reachable = {n["name"] for n in (discovered.get("nodes") or []) if n.get("reachable")}
+            _ground = [n for n in (selected_nodes or []) if n in _reachable]
+            environments = mesh.fetch_planner_environments(_ground, registry, discovered) if (execute and _ground) else []
             flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes,
                                              use_llm=not no_llm, environments=environments)
         except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
@@ -11131,6 +11135,9 @@ def create_handler(
         def do_GET(self):
             parsed = urlparse(self.path)
             try:
+                if parsed.path == "/health":
+                    _json_response(self, 200, {"ok": True})
+                    return
                 if parsed.path in {"/", "/index.html"}:
                     _html_response(self)
                     return
@@ -11178,6 +11185,10 @@ def create_handler(
                     return
                 if parsed.path == "/assets/urirun.js":
                     _js_sdk_response(self, project)
+                    return
+                if parsed.path in {"/twin", "/twin/"}:
+                    widget = Path(__file__).parent / "twin_monitor_widget.html"
+                    _asset_response(self, widget.read_bytes(), "text/html; charset=utf-8")
                     return
                 if parsed.path == "/api/uri/event":
                     _json_response(self, 200, uri_event(db, parse_qs(parsed.query)))

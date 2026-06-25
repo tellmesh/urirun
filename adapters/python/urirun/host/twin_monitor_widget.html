@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twin — żywy bliźniak automatu</title>
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  WIZUALNY TWIN (ifURI / urirun) — pojedynczy plik, zero buildu, deploy-anywhere.
+
+  DWIE SCENY = rejestr przejść Transition(before, forward, inverse, after):
+    • SCENA TERAZ  = stan `before` (gdzie automat JEST: monitor, okno, url, surface)
+    • SCENA NASTĘPNA = stan `after`  (czego OCZEKUJE po `forward`, odwracalne przez `inverse`)
+    • krawędź bursztyn = forward,  krawędź cyan = inverse (return),  czerwień = blokada
+
+  KONTRAKT DANYCH (mirror reversible.py — TO jest źródło prawdy, JS tylko renderuje):
+    frame = {
+      twin: { node, os, surface, fingerprint, stateSig, url, scroll,
+              monitors: [{ id, label, x, y, w, h, scale }],
+              window:   { monitor, x, y, w, h } },
+      transition: { before, forward:{uri,args}, inverse:{uri,args}|null,
+                    after, reversible },
+      narration: "co automat robi, w kilku zdaniach"
+    }
+
+  DEPLOY:
+    • osobny port:   python3 -m http.server 8197   →   http://host:8197/twin_monitor_widget.html
+    • widget w chacie: deskryptor wg COMPONENTS.md
+        { kind:"twin-monitor", target:"node:laptop", view:"twin",
+          live:true, refreshMs:1000, dataUri:"twin://host/environment/query/profile" }
+    • LIVE: ustaw SOURCE="live" + LIVE_SSE poniżej; podłącz pod node /events (EventHub)
+      albo poll twin://.../environment/query/profile. DEMO działa od razu, bez node'a.
+
+  TRYB TIMELINE: suwak "historia" cofasz po rejestrze przejść — widzisz rollback()
+    przez kolejne inwersy. Przycisk "▶ live" wraca do trybu na żywo.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{
+    --ground:#0b1020; --panel:#111a30; --panel-2:#0e1528; --rule:rgba(122,150,205,.10);
+    --rule-strong:rgba(122,150,205,.22); --ink:#cdd8ef; --muted:#6f7e9f; --dim:#47547a;
+    --forward:#ffb454; --inverse:#48d6c8; --ok:#8fd24f; --blocked:#ff6a6a; --window:#e7eefc;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:
+      linear-gradient(var(--rule) 1px,transparent 1px) 0 0/26px 26px,
+      linear-gradient(90deg,var(--rule) 1px,transparent 1px) 0 0/26px 26px,
+      radial-gradient(1200px 600px at 70% -10%,rgba(72,214,200,.06),transparent 60%),
+      var(--ground);
+    color:var(--ink); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased; min-height:100vh; padding:18px;
+  }
+  .wrap{max-width:1120px;margin:0 auto}
+
+  /* ── status bar ── */
+  .bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding:10px 14px;border:1px solid var(--rule-strong);border-radius:10px;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));margin-bottom:16px}
+  .brand{font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px}
+  .brand b{color:var(--inverse)}
+  .pill{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+    border:1px solid var(--rule);border-radius:999px;padding:3px 9px}
+  .pill .k{color:var(--dim)}
+  .pill .v{color:var(--ink)}
+  .live{display:flex;align-items:center;gap:7px;margin-left:auto;font-family:var(--mono);font-size:12px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(143,210,79,.6);
+    animation:beat 1.8s infinite}
+  .dot.demo{background:var(--forward);box-shadow:0 0 0 0 rgba(255,180,84,.55)}
+  .dot.hist{background:var(--inverse);animation:none}
+  @keyframes beat{0%{box-shadow:0 0 0 0 rgba(143,210,79,.5)}70%{box-shadow:0 0 0 7px rgba(143,210,79,0)}100%{box-shadow:0 0 0 0 rgba(143,210,79,0)}}
+
+  /* ── diptych ── */
+  .stage{display:grid;grid-template-columns:1fr 92px 1fr;gap:0;align-items:stretch}
+  .scene{border:1px solid var(--rule-strong);border-radius:12px;padding:16px;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));min-height:288px;position:relative;overflow:hidden}
+  .scene.next{border-color:rgba(255,180,84,.28)}
+  .scene.blocked{border-color:rgba(255,106,106,.45)}
+  .scene.rollback{border-color:rgba(72,214,200,.45)}
+  .eyebrow{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .eyebrow .tag{font-family:var(--mono);letter-spacing:0;font-size:10.5px;padding:2px 7px;border-radius:5px;
+    border:1px solid var(--rule)}
+  .scene.now .tag{color:var(--inverse);border-color:rgba(72,214,200,.35)}
+  .scene.next .tag{color:var(--forward);border-color:rgba(255,180,84,.4)}
+  .scene.blocked .tag{color:var(--blocked);border-color:rgba(255,106,106,.5)}
+  .scene.rollback .tag{color:var(--inverse);border-color:rgba(72,214,200,.55)}
+
+  .map{width:100%;height:128px;display:block;margin-bottom:12px}
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-family:var(--mono);font-size:12px}
+  .facts dt{color:var(--dim)}
+  .facts dd{margin:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .facts dd.sig{color:var(--inverse)}
+
+  /* ── connective edge: forward + inverse ── */
+  .edge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 6px}
+  .edge .lane{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%}
+  .edge .arr{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-align:center;line-height:1.2}
+  .edge .fwd .glyph{color:var(--forward)} .edge .fwd .lbl{color:var(--forward)}
+  .edge .inv .glyph{color:var(--inverse)} .edge .inv .lbl{color:var(--inverse)}
+  .edge .glyph{font-size:18px}
+  .edge .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+  .edge .op{font-size:10px;color:var(--ink);max-width:84px;text-align:center;word-break:break-word}
+  .edge .blocked-mark{color:var(--blocked)}
+  .edge .rollback-mark{color:var(--inverse)}
+
+  /* ── narration ── */
+  .say{margin:16px 0 10px;border:1px solid var(--rule-strong);border-left:3px solid var(--inverse);
+    border-radius:10px;padding:13px 16px;background:var(--panel-2)}
+  .say.blocked{border-left-color:var(--blocked)}
+  .say.hist{border-left-color:rgba(72,214,200,.7)}
+  .say .lead{font-size:15px;line-height:1.5;color:#dde6f8}
+  .say .meta{margin-top:7px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+    display:flex;gap:16px;flex-wrap:wrap}
+  .say .meta .rev{color:var(--ok)} .say .meta .rev.no{color:var(--blocked)}
+
+  /* ── timeline scrubber ── */
+  .timeline{margin:10px 0 0;border:1px solid var(--rule-strong);border-radius:10px;
+    background:var(--panel-2);padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+  .timeline .tl-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .timeline .tl-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .tl-btns{display:flex;gap:6px;margin-left:auto}
+  .btn{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;border:1px solid;
+    background:transparent;transition:background .15s}
+  .btn-live{color:var(--ok);border-color:rgba(143,210,79,.4)}
+  .btn-live:hover,.btn-live.active{background:rgba(143,210,79,.12)}
+  .btn-rb{color:var(--inverse);border-color:rgba(72,214,200,.4)}
+  .btn-rb:hover{background:rgba(72,214,200,.10)}
+  .tl-track{display:flex;align-items:center;gap:10px}
+  .tl-track input[type=range]{flex:1;accent-color:var(--inverse);cursor:pointer}
+  .tl-pos{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;min-width:60px;text-align:right}
+  .tl-rollback-info{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding:6px 0 0;
+    border-top:1px solid var(--rule);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .tl-rollback-info .steps{color:var(--inverse)}
+  .tl-rollback-info .cost{color:var(--dim)}
+
+  /* ── ledger ── */
+  .ledger{border:1px solid var(--rule-strong);border-radius:12px;background:var(--panel-2);overflow:hidden;margin-top:10px}
+  .ledger .lh{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;
+    border-bottom:1px solid var(--rule);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+  .ledger .lh .cnt{font-family:var(--mono);letter-spacing:0;color:var(--dim)}
+  .rows{max-height:188px;overflow:auto}
+  .row{display:grid;grid-template-columns:64px 1fr 18px 1fr 70px;gap:10px;align-items:center;
+    padding:8px 14px;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:11.5px;cursor:pointer}
+  .row:last-child{border-bottom:0}
+  .row:hover{background:rgba(122,150,205,.06)}
+  .row.active-row{background:rgba(72,214,200,.08);border-left:2px solid var(--inverse)}
+  .row .sg{color:var(--dim)}
+  .row .fwd{color:var(--forward);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .lk{color:var(--inverse);text-align:center}
+  .row .inv{color:var(--inverse);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .st{font-size:10px;text-transform:uppercase;letter-spacing:.06em;text-align:right}
+  .row .st.ok{color:var(--ok)} .row .st.block{color:var(--blocked)}
+  .row.fresh{animation:slidein .5s ease}
+  @keyframes slidein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+  .foot{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--dim);text-align:center}
+
+  @media (max-width:740px){
+    .stage{grid-template-columns:1fr;gap:12px}
+    .edge{flex-direction:row;padding:4px 0}
+    .edge .lane{flex-direction:row;width:auto;gap:8px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .dot,.row.fresh{animation:none}
+    *{transition:none!important}
+  }
+  :focus-visible{outline:2px solid var(--inverse);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="bar">
+    <div class="brand">twin · <b>żywy bliźniak</b></div>
+    <span class="pill"><span class="k">node</span> <span class="v" id="b-node">—</span></span>
+    <span class="pill"><span class="k">surface</span> <span class="v" id="b-surface">—</span></span>
+    <span class="pill"><span class="k">fingerprint</span> <span class="v" id="b-fp">—</span></span>
+    <div class="live"><span class="dot demo" id="b-dot"></span><span id="b-src">DEMO</span></div>
+  </header>
+
+  <section class="stage" aria-label="Dwie sceny: stan obecny i oczekiwany">
+    <!-- SCENA TERAZ (before) -->
+    <div class="scene now" id="scene-now">
+      <div class="eyebrow"><span class="tag">before</span><span id="now-label"> teraz · co widzi</span></div>
+      <svg class="map" id="map-now" viewBox="0 0 360 128" preserveAspectRatio="xMidYMid meet" aria-label="Układ monitorów i okno — stan obecny"></svg>
+      <dl class="facts">
+        <dt>url</dt><dd id="now-url">—</dd>
+        <dt>okno</dt><dd id="now-win">—</dd>
+        <dt>scroll</dt><dd id="now-scroll">—</dd>
+        <dt>stateSig</dt><dd class="sig" id="now-sig">—</dd>
+      </dl>
+    </div>
+
+    <!-- KRAWĘDŹ forward / inverse -->
+    <div class="edge" id="edge">
+      <div class="lane fwd">
+        <div class="arr"><span class="glyph" id="edge-fwd-glyph">→</span><div class="lbl" id="edge-fwd-lbl">forward</div></div>
+        <div class="op" id="edge-fwd">—</div>
+      </div>
+      <div class="lane inv">
+        <div class="op" id="edge-inv">—</div>
+        <div class="arr"><div class="lbl" id="edge-inv-lbl">inverse</div><span class="glyph" id="edge-inv-glyph">↩</span></div>
+      </div>
+    </div>
+
+    <!-- SCENA NASTĘPNA (after / expected) lub ROLLBACK (inverse target) -->
+    <div class="scene next" id="scene-next">
+      <div class="eyebrow"><span class="tag" id="next-tag">after</span><span id="next-label"> następny krok · czego oczekuje</span></div>
+      <svg class="map" id="map-next" viewBox="0 0 360 128" preserveAspectRatio="xMidYMid meet" aria-label="Układ monitorów i okno — stan oczekiwany"></svg>
+      <dl class="facts">
+        <dt>url</dt><dd id="next-url">—</dd>
+        <dt>okno</dt><dd id="next-win">—</dd>
+        <dt>scroll</dt><dd id="next-scroll">—</dd>
+        <dt>stateSig</dt><dd class="sig" id="next-sig">—</dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="say" id="say">
+    <div class="lead" id="say-lead">Inicjalizacja bliźniaka…</div>
+    <div class="meta">
+      <span><span style="color:var(--dim)">os</span> <span id="say-os">—</span></span>
+      <span><span style="color:var(--dim)">odwracalne</span> <span class="rev" id="say-rev">—</span></span>
+      <span><span style="color:var(--dim)">przejście</span> <span id="say-sig">—</span></span>
+    </div>
+  </section>
+
+  <!-- TIMELINE SCRUBBER -->
+  <section class="timeline" id="timeline">
+    <div class="tl-head">
+      <span class="tl-label">historia przejść</span>
+      <div class="tl-btns">
+        <button class="btn btn-rb" id="btn-rb" onclick="stepRollback()" title="Krok rollback()">↩ rollback</button>
+        <button class="btn btn-live active" id="btn-live" onclick="resumeLive()" title="Wróć do trybu live">▶ live</button>
+      </div>
+    </div>
+    <div class="tl-track">
+      <input type="range" id="tl-slider" min="0" max="0" value="0" oninput="scrubTo(+this.value)" aria-label="Cofnij w historii przejść">
+      <span class="tl-pos" id="tl-pos">0 / 0</span>
+    </div>
+    <div class="tl-rollback-info" id="tl-rb-info" style="display:none">
+      <span>rollback() przez <span class="steps" id="rb-steps">0</span> inwersów</span>
+      <span class="cost">koszt: <span id="rb-cost">—</span> kroków</span>
+      <span style="color:var(--muted)">·</span>
+      <span style="color:var(--dim)">inwersy wykonywane w odwrotnej kolejności do przodu</span>
+    </div>
+  </section>
+
+  <section class="ledger">
+    <div class="lh"><span>rejestr przejść</span><span class="cnt"><span id="led-count">0</span> · before → forward ⟂ inverse → after</span></div>
+    <div class="rows" id="rows"></div>
+  </section>
+
+  <div class="foot" id="foot">DEMO feed — podmień SOURCE="live" i podłącz pod node /events (SSE) lub twin://…/environment/query/profile</div>
+</div>
+
+<script>
+"use strict";
+/* ── KONFIG ─────────────────────────────────────────────────────────────── */
+const SOURCE   = "demo";
+const LIVE_SSE = "/events?scheme=twin";
+const TICK_MS  = 2600;
+
+/* ── stan globalny ──────────────────────────────────────────────────────── */
+let history   = [];   // wszystkie frame'y w kolejności (najnowszy na końcu)
+let histIdx   = -1;   // -1 = tryb live (najnowszy), 0..N-1 = scrub
+let liveTimer = null;
+let paused    = false;
+
+/* ── render: mapa monitorów + okno ─────────────────────────────────────── */
+function renderMap(svg, twin){
+  const W=360,H=128,PAD=8;
+  const mons=twin.monitors||[];
+  if(!mons.length){ svg.innerHTML=""; return; }
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const m of mons){ minX=Math.min(minX,m.x); minY=Math.min(minY,m.y);
+    maxX=Math.max(maxX,m.x+m.w); maxY=Math.max(maxY,m.y+m.h); }
+  const bw=maxX-minX, bh=maxY-minY;
+  const s=Math.min((W-2*PAD)/bw,(H-2*PAD)/bh);
+  const offX=PAD+((W-2*PAD)-bw*s)/2, offY=PAD+((H-2*PAD)-bh*s)/2;
+  const X=x=>offX+(x-minX)*s, Y=y=>offY+(y-minY)*s;
+  const parts=[];
+  const rect=(x,y,w,h,attrs)=>`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${Math.max(1,w).toFixed(1)}" height="${Math.max(1,h).toFixed(1)}" ${attrs}/>`;
+  const text=(x,y,t,attrs)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" ${attrs}>${t}</text>`;
+  for(const m of mons){
+    const x=X(m.x),y=Y(m.y),w=m.w*s,h=m.h*s;
+    parts.push(rect(x,y,w,h,'rx="2" fill="rgba(122,150,205,.05)" stroke="rgba(122,150,205,.35)" stroke-width="1"'));
+    parts.push(text(x+4,y+12,`${m.label||('M'+m.id)}`,'font-size="8" font-family="var(--mono)" fill="#6f7e9f"'));
+    parts.push(text(x+w-4,y+h-4,`${m.w}×${m.h}${m.scale&&m.scale!==1?'@'+m.scale:''}`,'font-size="7.5" text-anchor="end" font-family="var(--mono)" fill="#47547a"'));
+  }
+  const win=twin.window;
+  if(win){
+    const wx=X(win.x),wy=Y(win.y),ww=win.w*s,wh=win.h*s;
+    parts.push(rect(wx,wy,ww,wh,'rx="1.5" fill="rgba(231,238,252,.10)" stroke="#e7eefc" stroke-width="1.4"'));
+    parts.push(rect(wx,wy,ww,Math.min(8,wh),'rx="1.5" fill="rgba(231,238,252,.22)"'));
+    parts.push(text(wx+ww/2,wy+wh/2+3,`${win.w}×${win.h}`,'font-size="8" text-anchor="middle" font-family="var(--mono)" fill="#e7eefc"'));
+    if(typeof twin.scroll==="number"){
+      const track=wh-6, knob=Math.max(6,track*0.28), pos=Math.min(1,twin.scroll/1600);
+      parts.push(rect(wx+ww-3,wy+3,2,track,'rx="1" fill="rgba(122,150,205,.25)"'));
+      parts.push(rect(wx+ww-3,wy+3+(track-knob)*pos,2,knob,'rx="1" fill="#48d6c8"'));
+    }
+  }
+  svg.innerHTML=parts.join("");
+}
+
+/* ── render: jedna scena ────────────────────────────────────────────────── */
+const $=id=>document.getElementById(id);
+function shortUrl(u){ try{const x=new URL(u);return x.host+x.pathname;}catch(_){return u||"—";} }
+function opLabel(call){ if(!call) return "—"; const p=(call.uri||"").split("/").slice(3).join("/");
+  const a=call.args?Object.values(call.args)[0]:""; return p+(a?` · ${String(a).slice(0,22)}`:""); }
+
+function renderScene(side,twin){
+  renderMap($("map-"+side),twin);
+  $(side+"-url").textContent=shortUrl(twin.url);
+  $(side+"-win").textContent=twin.window?`${twin.window.w}×${twin.window.h} @ ${twin.window.label||('M'+twin.window.monitor)}`:"—";
+  $(side+"-scroll").textContent=(typeof twin.scroll==="number")?`${twin.scroll}px`:"—";
+  $(side+"-sig").textContent=twin.stateSig||"—";
+}
+
+/* ── render: pełny frame (live lub hist) ───────────────────────────────── */
+function renderFrame(f, mode){
+  // mode: "live" | "hist" | "rollback-preview"
+  const isHist = mode==="hist";
+  const isRB   = mode==="rollback-preview";
+  const t=f.transition, blocked=!t.reversible;
+
+  $("b-node").textContent=f.twin.node||"—";
+  $("b-surface").textContent=f.twin.surface||"—";
+  $("b-fp").textContent=f.twin.fingerprint||"—";
+
+  // SCENA TERAZ = always the `twin` (where automat IS at this step)
+  renderScene("now", f.twin);
+  $("now-label").textContent = isHist ? " cofnięto · był tutaj" : " teraz · co widzi";
+
+  if(isRB){
+    // rollback-preview: prawa scena = stan, do którego wróciłby inverse
+    const rbTarget = history[histIdx-1];
+    const sc=$("scene-next");
+    sc.className="scene rollback";
+    $("next-tag").textContent="rollback";
+    $("next-label").textContent=" cel rollback() · po inwersie";
+    $("edge-fwd-glyph").textContent="↩";
+    $("edge-fwd-lbl").textContent="inverse";
+    $("edge-inv-glyph").textContent="←";
+    $("edge-inv-lbl").textContent="cofa do";
+    $("edge-fwd").innerHTML=`<span class="rollback-mark">${opLabel(t.inverse)}</span>`;
+    $("edge-inv").innerHTML=`<span class="rollback-mark">${rbTarget?rbTarget.twin.stateSig:"?"}</span>`;
+    renderScene("next", rbTarget?rbTarget.twin:f.twin);
+  } else {
+    // standard: prawa scena = after (oczekiwany)
+    const sc=$("scene-next");
+    sc.className="scene next"+(blocked?" blocked":"");
+    $("next-tag").textContent=blocked?"blocked":"after";
+    $("next-label").textContent=blocked?" zablokowane · czeka na decyzję":" następny krok · czego oczekuje";
+    $("edge-fwd-glyph").textContent="→";
+    $("edge-fwd-lbl").textContent="forward";
+    $("edge-inv-glyph").textContent="↩";
+    $("edge-inv-lbl").textContent="inverse";
+    $("edge-fwd").textContent=opLabel(t.forward);
+    $("edge-inv").innerHTML=blocked?'<span class="blocked-mark">brak inwersu</span>':opLabel(t.inverse);
+    renderScene("next", blocked?f.twin:(f.after||f.twin));
+  }
+
+  // narracja
+  const sayEl=$("say");
+  sayEl.className="say"+(blocked?" blocked":"")+(isHist?" hist":"");
+  $("say-lead").textContent = isRB
+    ? `[rollback-preview] Krok ${histIdx+1}/${history.length}: wywołanie ${opLabel(t.inverse)} cofa do stanu ${history[histIdx-1]?history[histIdx-1].twin.stateSig:"początkowego"}.`
+    : (isHist ? `[historia #${histIdx+1}] ${f.narration||"—"}` : (f.narration||"—"));
+  $("say-os").textContent=f.twin.os||"—";
+  const rev=$("say-rev"); rev.textContent=blocked?"NIE — niewykonywalne":"tak"; rev.classList.toggle("no",blocked);
+  $("say-sig").textContent=`${f.twin.stateSig||"?"} → ${blocked?"—":(f.after&&f.after.stateSig)||"?"}`;
+}
+
+/* ── timeline / scrubber ────────────────────────────────────────────────── */
+function updateSlider(){
+  const n=history.length;
+  const sl=$("tl-slider");
+  sl.max=String(Math.max(0,n-1));
+  const idx=histIdx<0?n-1:histIdx;
+  sl.value=String(idx);
+  $("tl-pos").textContent=`${idx+1} / ${n}`;
+}
+
+function scrubTo(idx){
+  if(history.length===0) return;
+  idx=Math.max(0,Math.min(history.length-1,idx));
+  paused=true;
+  histIdx=idx;
+  $("b-dot").className="dot hist";
+  $("b-src").textContent="HISTORIA";
+  $("btn-live").classList.remove("active");
+  updateSlider();
+  updateRollbackInfo();
+  renderFrame(history[idx],"hist");
+  highlightRow(idx);
+}
+
+function stepRollback(){
+  if(history.length===0) return;
+  const cur=histIdx<0?history.length-1:histIdx;
+  if(cur===0){ alert("Brak wcześniejszego kroku do cofnięcia."); return; }
+  paused=true;
+  histIdx=cur;
+  $("b-dot").className="dot hist";
+  $("b-src").textContent="ROLLBACK";
+  $("btn-live").classList.remove("active");
+  updateSlider();
+  updateRollbackInfo();
+  // pokazujemy krok który ma inwers + prawa scena = cel (poprzedni stan)
+  renderFrame(history[cur],"rollback-preview");
+  highlightRow(cur);
+}
+
+function resumeLive(){
+  paused=false;
+  histIdx=-1;
+  $("b-dot").className=SOURCE==="live"?"dot":"dot demo";
+  $("b-src").textContent=SOURCE==="live"?"LIVE":"DEMO";
+  $("btn-live").classList.add("active");
+  $("tl-rb-info").style.display="none";
+  if(history.length>0) renderFrame(history[history.length-1],"live");
+  updateSlider();
+  clearHighlightRow();
+}
+
+function updateRollbackInfo(){
+  const cur=histIdx<0?history.length-1:histIdx;
+  // ile kroków do rollback do początku przez inwersy
+  let steps=0;
+  for(let i=cur;i>=0;i--) if(history[i].transition.reversible) steps++;
+  const info=$("tl-rb-info");
+  info.style.display="flex";
+  $("rb-steps").textContent=String(steps);
+  $("rb-cost").textContent=String(cur);
+}
+
+/* ── ledger ─────────────────────────────────────────────────────────────── */
+let ledN=0;
+function pushLedger(f, idx){
+  if(f.transition.reversible===false) return pushBlocked(f,idx);
+  ledN++; $("led-count").textContent=ledN;
+  const t=f.transition;
+  const row=document.createElement("div"); row.className="row fresh";
+  row.dataset.idx=String(idx);
+  row.innerHTML=`<span class="sg">${f.twin.stateSig||"?"}</span>
+    <span class="fwd">${opLabel(t.forward)}</span>
+    <span class="lk">⟂</span>
+    <span class="inv">${opLabel(t.inverse)}</span>
+    <span class="st ok">applied</span>`;
+  row.onclick=()=>scrubTo(idx);
+  const rows=$("rows"); rows.prepend(row);
+  while(rows.children.length>40) rows.removeChild(rows.lastChild);
+}
+function pushBlocked(f,idx){
+  ledN++; $("led-count").textContent=ledN;
+  const row=document.createElement("div"); row.className="row fresh";
+  row.dataset.idx=String(idx);
+  row.innerHTML=`<span class="sg">${f.twin.stateSig||"?"}</span>
+    <span class="fwd">${opLabel(f.transition.forward)}</span>
+    <span class="lk" style="color:var(--blocked)">✕</span>
+    <span class="inv" style="color:var(--blocked)">brak inwersu</span>
+    <span class="st block">blocked</span>`;
+  row.onclick=()=>scrubTo(idx);
+  $("rows").prepend(row);
+}
+function highlightRow(idx){
+  document.querySelectorAll(".row").forEach(r=>{
+    r.classList.toggle("active-row",r.dataset.idx===String(idx));
+  });
+}
+function clearHighlightRow(){
+  document.querySelectorAll(".row").forEach(r=>r.classList.remove("active-row"));
+}
+
+/* ── przyjęcie nowego frame'u ───────────────────────────────────────────── */
+function ingestFrame(f){
+  const idx=history.length;
+  history.push(f);
+  pushLedger(f, idx);
+  updateSlider();
+  if(!paused) renderFrame(f,"live");
+}
+
+/* ── DEMO feed ──────────────────────────────────────────────────────────── */
+const MON=[
+  {id:1,label:"DP-1",x:0,y:0,w:3200,h:1800,scale:1.5},
+  {id:2,label:"HDMI-1",x:3200,y:280,w:1920,h:1080,scale:1}
+];
+function twinAt(over){ return Object.assign({
+  node:"laptop", os:"linux-wayland", surface:"cdp", fingerprint:"fp-047484dc",
+  url:"https://www.linkedin.com/feed/", scroll:0, monitors:MON,
+  window:{monitor:2,label:"HDMI-1",x:3360,y:380,w:1400,h:900}
+}, over); }
+let sig=0; const sg=()=>"s"+(0x1000+(sig++)*0x111).toString(16).slice(0,4);
+function frame(before,fwd,inv,after,narration){
+  return {twin:before,after,transition:{forward:fwd,inverse:inv,reversible:inv!==null,before:before.stateSig,after:after?after.stateSig:null},narration};
+}
+function demoScript(){
+  const A=twinAt({stateSig:sg(),scroll:0});
+  const B=twinAt({stateSig:sg(),scroll:0});
+  const C=twinAt({stateSig:sg(),scroll:0});
+  const D=twinAt({stateSig:sg(),scroll:640,window:{monitor:2,label:"HDMI-1",x:3360,y:380,w:1400,h:900}});
+  const E=twinAt({stateSig:sg(),scroll:640});
+  return [
+    frame(A,{uri:"kvm://laptop/ui/command/click",args:{text:"Zacznij publikację"}},
+            {uri:"kvm://laptop/ui/command/close-composer",args:{}},B,
+      "Otwieram kompozytor przez CDP DOM (klik „Zacznij publikację"). Inwers zarejestrowany: zamknij kompozytor. Krok odwracalny."),
+    frame(B,{uri:"kvm://laptop/ui/command/fill",args:{role:"textbox",value:"Aktualizacja statusu…"}},
+            {uri:"kvm://laptop/ui/command/fill",args:{role:"textbox",value:""}},C,
+      "Wpisuję treść posta w pole DOM. Inwers: przywróć poprzednią wartość (puste pole). set(new) ⟂ set(old)."),
+    frame(C,{uri:"kvm://laptop/window/command/scroll",args:{y:640}},
+            {uri:"kvm://laptop/window/command/scroll",args:{y:0}},D,
+      "Przewijam do przycisku publikacji. Inwers: scroll do poprzedniej pozycji. Okno na monitorze HDMI-1."),
+    frame(D,{uri:"kvm://laptop/ui/command/click",args:{text:"Opublikuj"}},
+            {uri:"kvm://laptop/ui/command/delete-post",args:{id:"post-1"}},E,
+      "Publikuję (klik „Opublikuj"). Commit „na zewnątrz", ale to dane — inwers: delete-post(post-1). create ⟂ delete."),
+    frame(E,{uri:"kvm://laptop/mail/command/send",args:{to:"zespół"}},null,null,
+      "Akcja „wyślij e-mail" NIE ma zarejestrowanego inwersu → NIEWYKONYWALNA. Blokuję przed wykonaniem; prefiks pozostaje odwracalny. Czekam na decyzję.")
+  ];
+}
+function runDemo(){
+  $("b-dot").className="dot demo"; $("b-src").textContent="DEMO";
+  let seq=demoScript(),i=0;
+  const step=()=>{
+    ingestFrame(seq[i]);
+    i++;
+    if(i>=seq.length){ i=0; seq=demoScript(); }
+  };
+  step();
+  liveTimer=setInterval(step,TICK_MS);
+}
+
+/* ── LIVE feed ──────────────────────────────────────────────────────────── */
+function runLive(){
+  $("b-dot").className="dot"; $("b-src").textContent="LIVE"; $("foot").textContent="LIVE — strumień z node /events";
+  try{
+    const es=new EventSource(LIVE_SSE);
+    es.onmessage=ev=>{ try{ ingestFrame(JSON.parse(ev.data)); }catch(_){} };
+    es.onerror=()=>{ $("say-lead").textContent="Utracono strumień. Sprawdź node /events i SOURCE/LIVE_SSE."; };
+  }catch(e){
+    $("say-lead").textContent="EventSource niedostępny — uruchom przez HTTP.";
+  }
+}
+
+(SOURCE==="live"?runLive:runDemo)();
+</script>
+</body>
+</html>
