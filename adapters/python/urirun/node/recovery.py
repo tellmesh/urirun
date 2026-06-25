@@ -15,6 +15,13 @@ from urirun.runtime import errors as uri_errors
 
 TRANSIENT_CATEGORIES = {"UNAVAILABLE", "DEADLINE_EXCEEDED", "ABORTED"}
 
+# Only these remediation kinds may be fired UNATTENDED by the self-heal loop. They are
+# idempotent provisioning / preconditions / safe retries / read-only discovery. A `payload`
+# fix needs the caller to repair arguments and `auth` needs a human credential — firing those
+# automatically would loop or act on the user's behalf, so they stay human-gated even if a
+# rule mistakenly marks them automatic.
+AUTO_REMEDIATION_KINDS = {"provision", "precondition", "retry", "discovery"}
+
 
 def _infer_category(out: dict) -> str:
     message = str(out.get("message") or "").casefold()
@@ -189,15 +196,17 @@ def recovery_actions(error: dict, *, step: dict | None = None, routes: list[dict
     return _fallback_actions(step, routes)
 
 
-def recovery_plan(error: dict, *, step: dict | None = None, routes: list[dict] | None = None) -> dict:
+def recovery_plan(error: dict, *, step: dict | None = None, routes: list[dict] | None = None,
+                  environment: dict | None = None) -> dict:
     actions = recovery_actions(error, step=step, routes=routes)
     plan = {
         "recoverable": bool(actions),
         "category": error.get("category"),
         "actions": actions,
     }
-    # Experience-driven layer: name the root cause + a specific, partly auto-applicable fix.
-    diagnosis = diagnose(error, step=step, routes=routes)
+    # Experience-driven layer: name the root cause + a specific, partly auto-applicable fix,
+    # fitted to what the node's environment can actually do when a profile is supplied.
+    diagnosis = diagnose(error, step=step, routes=routes, environment=environment)
     if diagnosis:
         plan["diagnosis"] = diagnosis
     return plan
@@ -214,6 +223,15 @@ def apply_auto_remediation(diagnosis: dict, registry: dict, *, dispatch=None) ->
     applied: list[dict] = []
     for action in diagnosis.get("remediation") or []:
         if not action.get("automatic") or not action.get("uri"):
+            continue
+        if action.get("kind") not in AUTO_REMEDIATION_KINDS:
+            # belt-and-suspenders: a payload/auth/diagnostic action must never auto-fire even
+            # if a rule marked it automatic — those need a human, not an unattended retry loop.
+            applied.append({"id": action["id"], "uri": action["uri"], "ok": False,
+                            "skipped": f"kind {action.get('kind')!r} not auto-applicable (needs a human)"})
+            continue
+        if action.get("feasible") is False:        # environment can't support this fix — skip it
+            applied.append({"id": action["id"], "uri": action["uri"], "ok": False, "skipped": "infeasible"})
             continue
         try:
             env = call(action["uri"])

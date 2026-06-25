@@ -115,6 +115,38 @@ PLAYBOOK: list[_Rule] = [
         confidence=0.8,
     ),
     _Rule(
+        "not-logged-in",
+        [r"authwall", r"login required", r"sign ?in", r"not logged in", r"zaloguj", r"\b401\b"],
+        "The browser session is not authenticated — a fresh CDP profile lands on the login / "
+        "authwall, so the target controls (compose / post / account UI) aren't present. Re-launch "
+        "the CDP Chrome on a COPY of the user's logged-in profile (the persistent-context trick).",
+        lambda t: [
+            {"id": "relaunch-cdp-with-auth", "kind": "provision", "automatic": False,
+             "uri": f"kvm://{t}/cdp/session/command/ensure",
+             "label": "Re-launch CDP Chrome with copy_from=<user chrome profile> so it's logged in (needs consent)."},
+        ],
+        confidence=0.8,
+    ),
+    _Rule(
+        "stale-node-urirun",
+        [r"route not found.*(capability|env[./]query[./]profile|ui[./]command[./]act|cdp[./]session|registry[./]command[./]adopt)",
+         r"(capability|env[./]query[./]profile|ui[./]command[./]act|cdp[./]session).*route not found"],
+        "A route from a NEWER urirun / connector is absent on the node — the node runs an older "
+        "urirun, or the connector was not (re)deployed. Update urirun on the node and/or re-deploy "
+        "the connector with --merge.",
+        lambda t: [
+            {"id": "check-node-runtime", "kind": "diagnostic", "automatic": False,
+             "uri": f"node://{t}/runtime/query/info", "label": "Check the node's urirun version."},
+            {"id": "check-capability", "kind": "diagnostic", "automatic": False,
+             "uri": f"node://{t}/capability/query/check",
+             "label": "Probe whether the scheme/route is served by an installed connector here."},
+            {"id": "update-or-redeploy", "kind": "provision", "automatic": False,
+             "label": "Update urirun on the node (node://…/package/command/install urirun) or re-deploy the connector."},
+        ],
+        categories={"NOT_FOUND"},
+        confidence=0.75,
+    ),
+    _Rule(
         "route-not-served",
         [r"route not found", r"no available backend for"],
         "The URI's route is not live on the node — bindings were deployed without handler code, or the "
@@ -133,11 +165,16 @@ PLAYBOOK: list[_Rule] = [
 ]
 
 
-def diagnose(error: dict, *, step: dict | None = None, routes: list[dict] | None = None) -> dict | None:
+def diagnose(error: dict, *, step: dict | None = None, routes: list[dict] | None = None,
+             environment: dict | None = None) -> dict | None:
     """Match an error against the playbook → a structured diagnosis, or None if no rule fits.
 
     Returns ``{rule, cause, confidence, remediation, autoApplicable}`` where ``remediation`` is
-    the list of fix actions (URIs) and ``autoApplicable`` lists the ids safe to apply unattended."""
+    the list of fix actions (URIs) and ``autoApplicable`` lists the ids safe to apply unattended.
+    When ``environment`` (the node's ``env/query/profile``) is given, the remediation is FITTED
+    to what the machine can actually do — infeasible fixes are flagged and dropped from
+    ``autoApplicable`` so the self-heal never wastes a round-trip on, say, CDP where no Chrome
+    exists, and the diagnosis names the missing capability instead."""
     message = str((error or {}).get("message") or "").casefold()
     category = str((error or {}).get("category") or "")
     uri = str((step or {}).get("uri") or "")
@@ -147,11 +184,42 @@ def diagnose(error: dict, *, step: dict | None = None, routes: list[dict] | None
     for rule in PLAYBOOK:
         if rule.matches(message, category, scheme):
             actions = rule.remediation(_target(step))
-            return {
+            diag = {
                 "rule": rule.id,
                 "cause": rule.cause,
                 "confidence": rule.confidence,
                 "remediation": actions,
                 "autoApplicable": [a["id"] for a in actions if a.get("automatic")],
             }
+            return fit_to_environment(diag, environment) if environment else diag
     return None
+
+
+def fit_to_environment(diagnosis: dict, environment: dict) -> dict:
+    """Annotate each remediation action with ``feasible`` for THIS environment and recompute
+    ``autoApplicable`` to feasible-only. A CDP fix needs a chrome binary (cdpFeasible); an
+    OCR/desktop retry needs SOME working control strategy (controllable). When nothing can
+    drive the UI, prepend an honest 'install tesseract / grant /dev/uinput / provide a CDP
+    Chrome' action and mark the env unfit."""
+    cs = environment.get("controlStrategies") or {}
+    cdp_feasible = bool(cs.get("cdp")) or bool(environment.get("cdpFeasible"))
+    controllable = environment.get("controllable", any(cs.values()) if cs else True)
+    for a in diagnosis.get("remediation") or []:
+        uri = str(a.get("uri") or "")
+        aid = str(a.get("id") or "")
+        if "/cdp/" in uri or aid.startswith("ensure-cdp"):
+            a["feasible"] = cdp_feasible
+        elif aid in ("retry-via-act", "retry-bounded", "wait-page-ready"):
+            a["feasible"] = bool(controllable)
+        else:
+            a["feasible"] = True
+    diagnosis["autoApplicable"] = [a["id"] for a in (diagnosis.get("remediation") or [])
+                                   if a.get("automatic") and a.get("feasible", True)]
+    diagnosis["environmentFit"] = {"controllable": bool(controllable),
+                                   "best": environment.get("best"), "cdpFeasible": cdp_feasible}
+    if not controllable:
+        diagnosis["remediation"].insert(0, {
+            "id": "enable-ui-control", "kind": "provision", "automatic": False, "feasible": True,
+            "label": "This environment cannot drive a UI: install tesseract / grant /dev/uinput, "
+                     "or launch a CDP Chrome (env/query/profile shows what's missing)."})
+    return diagnosis

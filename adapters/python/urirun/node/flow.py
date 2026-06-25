@@ -16,6 +16,7 @@ from typing import Any
 
 from urirun import result_data, v2_service
 from urirun.node._util import json_write, now_id, slug
+from urirun.node.diagnostics import fit_to_environment
 from urirun.node.recovery import (
     apply_auto_remediation,
     can_retry_step,
@@ -493,7 +494,27 @@ def _action_error(env: dict) -> Any:
     return value.get("error") if isinstance(value, dict) else None
 
 
-def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict]) -> dict:
+def _node_environment(target: str, registry: dict, cache: dict) -> dict | None:
+    """Fetch + cache the node's ``env/query/profile`` so the recovery engine can FIT
+    remediation to what the machine can actually do — drop infeasible CDP fixes, and escalate
+    the SURFACE to CDP when os-level pixel input is unreliable here (the three-sessions lesson,
+    made a recovery INPUT, not just a doctor warning). Lazy: only fetched on a step failure.
+    ``None`` if the route isn't served (older node) — the diagnosis then stays unfitted."""
+    if target in cache:
+        return cache[target]
+    prof = None
+    try:
+        env = v2_service.call(f"kvm://{target}/env/query/profile", {}, registry, mode="execute")
+        val = result_data(env) if isinstance(env, dict) else None
+        if isinstance(val, dict) and val.get("ok"):
+            prof = val
+    except Exception:  # noqa: BLE001 - a missing profile route must not break recovery.
+        prof = None
+    cache[target] = prof
+    return prof
+
+
+def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict], environment: dict | None = None) -> dict:
     error = exception_error(exc, uri=str(step.get("uri") or ""))
     return {
         "id": step.get("id"),
@@ -501,11 +522,12 @@ def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict]) -> di
         "target": step_target(step),
         "ok": False,
         "error": error,
-        "recovery": recovery_plan(error, step=step, routes=routes),
+        "recovery": recovery_plan(error, step=step, routes=routes, environment=environment),
     }
 
 
-def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: int = 0) -> dict:
+def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: int = 0,
+                         environment: dict | None = None) -> dict:
     ok = _action_ok(env)
     entry = {
         "id": step["id"],
@@ -519,8 +541,23 @@ def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: 
         raw = env.get("error") or _action_error(env)
         error = exception_error(Exception("unknown URI error"), uri=step["uri"]) if not raw else normalize_error(raw, uri=step["uri"])
         entry["error"] = error
-        entry["recovery"] = recovery_plan(error, step=step, routes=routes)
+        entry["recovery"] = recovery_plan(error, step=step, routes=routes, environment=environment)
     return entry
+
+
+def _fetch_env_profile(step: dict, registry: dict) -> dict | None:
+    """Best-effort fetch of the failing node's capability profile (kvm env/query/profile),
+    so the self-heal fits its remediation to the live machine. None on any hiccup — fitting
+    is an optimisation, never a correctness dependency."""
+    target = route_target(str(step.get("uri") or ""))
+    if not target:
+        return None
+    try:
+        env = v2_service.call(f"kvm://{target}/env/query/profile", {}, registry, mode="execute")
+        value = result_data(env)
+        return value if isinstance(value, dict) and "controlStrategies" in value else None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def _run_step(
@@ -580,6 +617,11 @@ def _run_step(
         # so the loop repairs the cause instead of just aborting with a named diagnosis.
         diagnosis = (entry.get("recovery") or {}).get("diagnosis")
         if recover and execute and not healed and diagnosis and diagnosis.get("autoApplicable"):
+            # Fit the fix to the node's LIVE capabilities before spending round-trips: a CDP
+            # remediation is pointless where no Chrome exists, an OCR retry where no tesseract.
+            env_profile = _fetch_env_profile(step, registry)
+            if env_profile:
+                diagnosis = fit_to_environment(diagnosis, env_profile)
             applied = apply_auto_remediation(diagnosis, registry)
             healed = True
             timeline_entries.append({
@@ -594,16 +636,36 @@ def _run_step(
         return env, timeline_entries, recovery_entries, True
 
 
+def _circuit_break(reason: str, timeline: list, results: dict, recoveries: list) -> dict:
+    """Halt the flow for an unattended-safety reason (wall-clock / remediation budget), with a
+    structured ABORTED error so the caller sees WHY it stopped rather than a silent hang."""
+    error = {"category": "ABORTED", "type": "CircuitBreaker", "message": reason,
+             "uri": "error://local/circuit-breaker/query/info", "severity": "error", "status": 503}
+    out = {"ok": False, "timeline": timeline, "results": results, "error": error, "circuitBreaker": reason}
+    if recoveries:
+        out["recovery"] = recoveries
+    return out
+
+
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
-                 max_retries: int = 1) -> dict:
+                 max_retries: int = 1, max_wall_clock: float = 180.0, max_remediations: int = 6) -> dict:
     old_map = os.environ.get("URI_SERVICE_MAP")
     os.environ["URI_SERVICE_MAP"] = json.dumps(mesh.get("serviceMap") or {})
     results = {}
     timeline = []
     recoveries = []
     routes = mesh.get("routes") or []
+    start = time.monotonic()
+    remediations_used = 0
     try:
         for step in flow["steps"]:
+            # circuit-breaker: bound the WHOLE flow for unattended autonomy — a bad plan must not
+            # spin self-healing forever and burn the node. Checked before each step + after each
+            # step's remediation budget is spent.
+            if time.monotonic() - start > max_wall_clock:
+                return _circuit_break(f"flow exceeded {max_wall_clock:.0f}s wall-clock", timeline, results, recoveries)
+            if remediations_used > max_remediations:
+                return _circuit_break(f"flow exceeded {max_remediations} self-heal remediations", timeline, results, recoveries)
             missing = [dep for dep in step.get("depends_on", []) if dep not in results]
             if missing:
                 entry = _flow_step_failure(step, RuntimeError(f"{step['id']} missing dependencies: {missing}"), routes)
@@ -622,9 +684,15 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
             )
             timeline.extend(step_timeline)
             recoveries.extend(step_recoveries)
+            remediations_used += sum(1 for e in step_timeline if e.get("action") == "self-heal")
             results[step["id"]] = env
             if aborted:
-                return {"ok": False, "timeline": timeline, "results": results, "error": step_timeline[-1]["error"], "recovery": recoveries}
+                # The last timeline entry may be a ``self-heal`` record (no ``error`` key) when a
+                # remediation was attempted and didn't fix the step — pick the last entry that
+                # actually carries the error, falling back to the step's recovery record.
+                err = next((e["error"] for e in reversed(step_timeline) if "error" in e),
+                           step_recoveries[-1]["error"] if step_recoveries else {"message": "step failed"})
+                return {"ok": False, "timeline": timeline, "results": results, "error": err, "recovery": recoveries}
         result = {"ok": True, "timeline": timeline, "results": results}
         if recoveries:
             result["recovery"] = recoveries

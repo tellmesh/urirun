@@ -55,6 +55,22 @@ class DiagnoseTests(unittest.TestCase):
         self.assertIsNone(diagnose(_err("route not found", category="WEIRD"),
                                    step={"uri": "kvm://laptop/x/y/z"}))
 
+    def test_not_logged_in(self):
+        d = diagnose(_err("redirected to authwall - sign in required"),
+                     step={"uri": "kvm://laptop/ui/command/click"})
+        self.assertEqual(d["rule"], "not-logged-in")
+        # auth-copy is sensitive -> human-gated, never auto-fired
+        self.assertEqual(d["autoApplicable"], [])
+
+    def test_stale_node_urirun_beats_generic_route_not_served(self):
+        d = diagnose(_err("Route not found: kvm.cdp.session.command", category="NOT_FOUND"),
+                     step={"uri": "kvm://laptop/cdp/session/command/ensure"})
+        self.assertEqual(d["rule"], "stale-node-urirun")        # specific wins over route-not-served
+        # a plain unknown route still falls to the generic rule
+        d2 = diagnose(_err("Route not found: fs.file.command", category="NOT_FOUND"),
+                      step={"uri": "fs://laptop/file/command/write"})
+        self.assertEqual(d2["rule"], "route-not-served")
+
     def test_empty_target(self):
         d = diagnose(_err("a target (text/name/role) is required"),
                      step={"uri": "kvm://laptop/ui/command/click"})
@@ -63,6 +79,33 @@ class DiagnoseTests(unittest.TestCase):
     def test_no_match_returns_none(self):
         self.assertIsNone(diagnose(_err("something totally unrecognised")))
         self.assertIsNone(diagnose(_err("")))  # empty message never matches
+
+
+class FitToEnvironmentTests(unittest.TestCase):
+    STEP = {"uri": "kvm://lap/ui/command/click"}
+
+    def test_cdp_fix_dropped_when_no_chrome(self):
+        env = {"controlStrategies": {"cdp": False, "atspi": False, "vision": True},
+               "cdpFeasible": False, "controllable": True, "best": "vision"}
+        d = diagnose(_err("ui-click: target not located"), step=self.STEP, environment=env)
+        self.assertNotIn("ensure-cdp-dom", d["autoApplicable"])           # no chrome -> not auto
+        cdp = next(a for a in d["remediation"] if a["id"] == "ensure-cdp-dom")
+        self.assertFalse(cdp["feasible"])
+        self.assertIn("retry-via-act", d["autoApplicable"])              # vision still drives it
+
+    def test_cdp_fix_kept_when_chrome_present(self):
+        env = {"controlStrategies": {"cdp": False, "atspi": True, "vision": True},
+               "cdpFeasible": True, "controllable": True, "best": "atspi"}
+        d = diagnose(_err("ui-click: target not located"), step=self.STEP, environment=env)
+        self.assertIn("ensure-cdp-dom", d["autoApplicable"])             # chrome present -> feasible
+
+    def test_uncontrollable_env_adds_install_action_and_no_auto(self):
+        env = {"controlStrategies": {"cdp": False, "atspi": False, "vision": False},
+               "cdpFeasible": False, "controllable": False, "best": None}
+        d = diagnose(_err("ui-click: target not located"), step=self.STEP, environment=env)
+        self.assertEqual(d["remediation"][0]["id"], "enable-ui-control")
+        self.assertFalse(d["environmentFit"]["controllable"])
+        self.assertEqual(d["autoApplicable"], [])                        # nothing can drive the UI
 
 
 class RecoveryPlanEnrichmentTests(unittest.TestCase):

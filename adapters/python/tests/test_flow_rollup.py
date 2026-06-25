@@ -85,6 +85,11 @@ def test_execute_flow_self_heals_then_succeeds(monkeypatch) -> None:
     calls = {"action": 0, "remediation": []}
 
     def fake_call(uri, payload, registry, mode):
+        # the self-heal fetches the node's env profile to fit the fix to the machine
+        if "/env/query/profile" in uri:
+            return {"uri": uri, "ok": True, "result": {"value": {
+                "controlStrategies": {"cdp": True, "atspi": True, "vision": True},
+                "cdpFeasible": True, "controllable": True, "best": "cdp"}}}
         # remediation URIs (cdp/session/ensure, cdp/page/ready, ui/command/act) -> ok
         if "/cdp/" in uri or "/ui/command/act" in uri:
             calls["remediation"].append(uri)
