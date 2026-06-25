@@ -2720,7 +2720,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.137', 'javascript').
+project_metadata('urirun', '0.4.138', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -5348,13 +5348,13 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
 | `_archive_scanned_document` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 72 | **74** |
-| `scanner_best_finish` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 48 | **50** |
 | `_json_response` *(in adapters.python.urirun.host.host_dashboard)* | 1 | 37 | 13 | **50** |
+| `scanner_best_finish` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 48 | **50** |
 | `scanner_capture` *(in adapters.python.urirun.host.host_dashboard)* | 12 ⚠ | 2 | 40 | **42** |
 | `_frame_visual_metrics` *(in adapters.python.urirun.host.host_dashboard)* | 7 | 1 | 40 | **41** |
 | `_write_planfile_action` *(in adapters.python.urirun.host.host_integrations)* | 8 | 1 | 39 | **40** |
 | `summary` *(in adapters.python.urirun.host.host_dashboard)* | 6 | 2 | 37 | **39** |
-| `_scanner_crop_overlay` *(in adapters.python.urirun.host.host_dashboard)* | 8 | 2 | 33 | **35** |
+| `_collect_attachments` *(in adapters.python.urirun.host.host_dashboard)* | 1 | 1 | 34 | **35** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
@@ -5365,10 +5365,10 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 HUBS[20]:
   adapters.python.urirun.host.host_dashboard._archive_scanned_document
     CC=14  in:2  out:72  total:74
-  adapters.python.urirun.host.host_dashboard.scanner_best_finish
-    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard._json_response
     CC=1  in:37  out:13  total:50
+  adapters.python.urirun.host.host_dashboard.scanner_best_finish
+    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard.scanner_capture
     CC=12  in:2  out:40  total:42
   adapters.python.urirun.host.host_dashboard._frame_visual_metrics
@@ -5377,10 +5377,10 @@ HUBS[20]:
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:2  out:37  total:39
-  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
-    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard._collect_attachments
     CC=1  in:1  out:34  total:35
+  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
+    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service
     CC=14  in:1  out:33  total:34
   adapters.python.urirun.host.host_dashboard._archive_redundant_duplicate
@@ -5391,18 +5391,18 @@ HUBS[20]:
     CC=14  in:1  out:28  total:29
   adapters.python.urirun.host.host_dashboard._scanned_log_entry
     CC=8  in:1  out:28  total:29
-  adapters.python.urirun.host.document_sync._upload_file
-    CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
+  adapters.python.urirun.host.document_sync._upload_file
+    CC=6  in:1  out:27  total:28
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.document_sync._read_back_file
     CC=11  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
-    CC=10  in:5  out:21  total:26
+  adapters.python.urirun.host.host_dashboard.node_add
+    CC=14  in:1  out:25  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]

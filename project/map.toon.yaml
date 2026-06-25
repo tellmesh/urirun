@@ -1,6 +1,6 @@
-# urirun | 163f 39398L | yaml:5,txt:3,shell:10,python:103,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-25
+# urirun | 163f 39420L | yaml:5,txt:3,shell:10,python:103,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-25
 # generated in 0.02s
-# stats: 1681 func | 0 cls | 163 mod | CC̄=4.7 | critical:1 | cycles:0
+# stats: 1683 func | 0 cls | 163 mod | CC̄=4.7 | critical:1 | cycles:0
 # alerts[5]: fan-out create_handler=59; fan-out _archive_scanned_document=43; fan-out _write_document_pdf=32; fan-out serve=30; fan-out _add_host_subparser=29
 # hotspots[5]: create_handler fan=59; _archive_scanned_document fan=43; _write_document_pdf fan=32; serve fan=30; summary fan=29
 # evolution: CC̄ 4.7→4.7 (flat 0.0)
@@ -84,7 +84,7 @@ M[163]:
   adapters/python/urirun/node/_version.py,76
   adapters/python/urirun/node/client.py,558
   adapters/python/urirun/node/config.py,209
-  adapters/python/urirun/node/flow.py,626
+  adapters/python/urirun/node/flow.py,648
   adapters/python/urirun/node/formatting.py,78
   adapters/python/urirun/node/keyauth.py,173
   adapters/python/urirun/node/manage.py,430
@@ -1081,7 +1081,7 @@ Connector a...
     discover_node(node)
     discover_mesh(config)
   adapters/python/urirun/node/flow.py:
-    e: _flow_format,flow_document,write_flow_document,load_flow_document,first_url,nl_key,append_if_available,requested_folder_path,_flow_intents,_append_target_steps,heuristic_flow,json_from_text,_uri_segments,_uri_matches_template,_uri_is_available,_normalize_flow_step,_normalize_flow_task,normalize_flow,normalize_flow_or_explain,llm_flow,make_flow,_dig_path,resolve_step_payload,_flow_step_failure,_flow_timeline_entry,_run_step,execute_flow,_flow_stdout,verify_flow_execution,run_flow_document
+    e: _flow_format,flow_document,write_flow_document,load_flow_document,first_url,nl_key,append_if_available,requested_folder_path,_flow_intents,_append_target_steps,heuristic_flow,json_from_text,_uri_segments,_uri_matches_template,_uri_is_available,_normalize_flow_step,_normalize_flow_task,normalize_flow,normalize_flow_or_explain,llm_flow,make_flow,_dig_path,resolve_step_payload,_action_ok,_action_error,_flow_step_failure,_flow_timeline_entry,_run_step,execute_flow,_flow_stdout,verify_flow_execution,run_flow_document
     _flow_format(path;requested)
     flow_document(flow)
     write_flow_document(path;document;fmt)
@@ -1105,6 +1105,8 @@ Connector a...
     make_flow(prompt;mesh;selected_nodes;use_llm)
     _dig_path(data;dotted)
     resolve_step_payload(payload;results)
+    _action_ok(env)
+    _action_error(env)
     _flow_step_failure(step;exc;routes)
     _flow_timeline_entry(step;env;routes)
     _run_step(step;payload;registry;execute;routes;recover;max_retries)

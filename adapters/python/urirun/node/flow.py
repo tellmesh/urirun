@@ -14,7 +14,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from urirun import v2_service
+from urirun import result_data, v2_service
 from urirun.node._util import json_write, now_id, slug
 from urirun.node.recovery import can_retry_step, exception_error, normalize_error, recovery_plan, step_target
 from urirun.node.routing import (
@@ -455,6 +455,26 @@ def resolve_step_payload(payload: dict, results: dict) -> dict:
     return resolved
 
 
+def _action_ok(env: dict) -> bool:
+    """A step is ok only when transport AND the action's own result are ok.
+
+    ``env['ok']`` is transport ok — the URI dispatched and the node answered — and
+    stays True even when the action it invoked failed (e.g. a ``kvm://…/ui/click``
+    that located no target reports ``result.value.ok`` False under a 200 envelope).
+    Folding the inner ok stops a flow of dead clicks from reporting green. Same
+    value_ok convention as the host's ``_run_node_uri``."""
+    if not env.get("ok"):
+        return False
+    value = result_data(env)
+    return not (isinstance(value, dict) and value.get("ok", True) is False)
+
+
+def _action_error(env: dict) -> Any:
+    """The action's own error when transport succeeded but the action failed."""
+    value = result_data(env)
+    return value.get("error") if isinstance(value, dict) else None
+
+
 def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict]) -> dict:
     error = exception_error(exc, uri=str(step.get("uri") or ""))
     return {
@@ -468,16 +488,18 @@ def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict]) -> di
 
 
 def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: int = 0) -> dict:
+    ok = _action_ok(env)
     entry = {
         "id": step["id"],
         "uri": step["uri"],
         "target": route_target(step["uri"]),
-        "ok": bool(env.get("ok")),
+        "ok": ok,
     }
     if attempt:
         entry["attempt"] = attempt + 1
-    if not env.get("ok"):
-        error = exception_error(Exception("unknown URI error"), uri=step["uri"]) if not env.get("error") else normalize_error(env.get("error"), uri=step["uri"])
+    if not ok:
+        raw = env.get("error") or _action_error(env)
+        error = exception_error(Exception("unknown URI error"), uri=step["uri"]) if not raw else normalize_error(raw, uri=step["uri"])
         entry["error"] = error
         entry["recovery"] = recovery_plan(error, step=step, routes=routes)
     return entry
@@ -512,7 +534,7 @@ def _run_step(
             env = {"uri": step["uri"], "ok": False, "error": exception_error(exc, uri=step["uri"])}
         entry = _flow_timeline_entry(step, env, routes, attempt=attempt)
         timeline_entries.append(entry)
-        if env.get("ok"):
+        if entry["ok"]:
             return env, timeline_entries, recovery_entries, False
         recovery_entries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
         if recover and can_retry_step(

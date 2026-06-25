@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 103, json: 13, shell: 10, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1681
+- **Total Functions**: 1683
 - **Total Classes**: 30
 - **Modules**: 163
 - **Entry Points**: 559
@@ -58,13 +58,13 @@
 - **Functions**: 33
 - **File**: `host_db.py`
 
+### adapters.python.urirun.node.flow
+- **Functions**: 32
+- **File**: `flow.py`
+
 ### adapters.python.urirun.runtime.errors
 - **Functions**: 31
 - **File**: `errors.py`
-
-### adapters.python.urirun.node.flow
-- **Functions**: 30
-- **File**: `flow.py`
 
 ### adapters.python.urirun.host.discovery
 - **Functions**: 29

@@ -216,13 +216,13 @@ environment[name="local"] {
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
 | `_archive_scanned_document` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 72 | **74** |
-| `scanner_best_finish` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 48 | **50** |
 | `_json_response` *(in adapters.python.urirun.host.host_dashboard)* | 1 | 37 | 13 | **50** |
+| `scanner_best_finish` *(in adapters.python.urirun.host.host_dashboard)* | 14 ⚠ | 2 | 48 | **50** |
 | `scanner_capture` *(in adapters.python.urirun.host.host_dashboard)* | 12 ⚠ | 2 | 40 | **42** |
 | `_frame_visual_metrics` *(in adapters.python.urirun.host.host_dashboard)* | 7 | 1 | 40 | **41** |
 | `_write_planfile_action` *(in adapters.python.urirun.host.host_integrations)* | 8 | 1 | 39 | **40** |
 | `summary` *(in adapters.python.urirun.host.host_dashboard)* | 6 | 2 | 37 | **39** |
-| `_scanner_crop_overlay` *(in adapters.python.urirun.host.host_dashboard)* | 8 | 2 | 33 | **35** |
+| `_collect_attachments` *(in adapters.python.urirun.host.host_dashboard)* | 1 | 1 | 34 | **35** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
@@ -233,10 +233,10 @@ environment[name="local"] {
 HUBS[20]:
   adapters.python.urirun.host.host_dashboard._archive_scanned_document
     CC=14  in:2  out:72  total:74
-  adapters.python.urirun.host.host_dashboard.scanner_best_finish
-    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard._json_response
     CC=1  in:37  out:13  total:50
+  adapters.python.urirun.host.host_dashboard.scanner_best_finish
+    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard.scanner_capture
     CC=12  in:2  out:40  total:42
   adapters.python.urirun.host.host_dashboard._frame_visual_metrics
@@ -245,10 +245,10 @@ HUBS[20]:
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:2  out:37  total:39
-  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
-    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard._collect_attachments
     CC=1  in:1  out:34  total:35
+  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
+    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service
     CC=14  in:1  out:33  total:34
   adapters.python.urirun.host.host_dashboard._archive_redundant_duplicate
@@ -259,18 +259,18 @@ HUBS[20]:
     CC=14  in:1  out:28  total:29
   adapters.python.urirun.host.host_dashboard._scanned_log_entry
     CC=8  in:1  out:28  total:29
-  adapters.python.urirun.host.document_sync._upload_file
-    CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
+  adapters.python.urirun.host.document_sync._upload_file
+    CC=6  in:1  out:27  total:28
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.document_sync._read_back_file
     CC=11  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
-    CC=10  in:5  out:21  total:26
+  adapters.python.urirun.host.host_dashboard.node_add
+    CC=14  in:1  out:25  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -573,10 +573,10 @@ EDGES:
 HUBS[20]:
   adapters.python.urirun.host.host_dashboard._archive_scanned_document
     CC=14  in:2  out:72  total:74
-  adapters.python.urirun.host.host_dashboard.scanner_best_finish
-    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard._json_response
     CC=1  in:37  out:13  total:50
+  adapters.python.urirun.host.host_dashboard.scanner_best_finish
+    CC=14  in:2  out:48  total:50
   adapters.python.urirun.host.host_dashboard.scanner_capture
     CC=12  in:2  out:40  total:42
   adapters.python.urirun.host.host_dashboard._frame_visual_metrics
@@ -585,10 +585,10 @@ HUBS[20]:
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.host.host_dashboard.summary
     CC=6  in:2  out:37  total:39
-  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
-    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard._collect_attachments
     CC=1  in:1  out:34  total:35
+  adapters.python.urirun.host.host_dashboard._scanner_crop_overlay
+    CC=8  in:2  out:33  total:35
   adapters.python.urirun.host.host_dashboard.restart_phone_scanner_service
     CC=14  in:1  out:33  total:34
   adapters.python.urirun.host.host_dashboard._archive_redundant_duplicate
@@ -599,18 +599,18 @@ HUBS[20]:
     CC=14  in:1  out:28  total:29
   adapters.python.urirun.host.host_dashboard._scanned_log_entry
     CC=8  in:1  out:28  total:29
-  adapters.python.urirun.host.document_sync._upload_file
-    CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
+  adapters.python.urirun.host.document_sync._upload_file
+    CC=6  in:1  out:27  total:28
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.document_sync._read_back_file
     CC=11  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
-    CC=10  in:5  out:21  total:26
+  adapters.python.urirun.host.host_dashboard.node_add
+    CC=14  in:1  out:25  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -893,8 +893,8 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 164f 39395L | python:103,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
-# generated in 0.07s
+# code2llm | 164f 39398L | python:103,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
+# generated in 0.08s
 # CC̅=4.7 | critical:1/1681 | dups:0 | cycles:0
 
 HEALTH[1]:
@@ -1033,7 +1033,7 @@ LAYERS:
   │ domain_monitor             487L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←1
   │ codegen                    438L  0C   19m  CC=14     ←0
-  │ !! manage                     427L  0C   26m  CC=17     ←0
+  │ !! manage                     430L  0C   26m  CC=17     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
   │ document_sync              403L  2C   11m  CC=13     ←0
   │ service_control            376L  0C   18m  CC=11     ←0
@@ -1101,9 +1101,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -1199,8 +1199,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: adapters/ (fan-in=9)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=9)
   SMELL: adapters.python/ fan-out=17 → split needed
 
 EXTERNAL:
@@ -1211,15 +1211,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 15 groups | 93f 34044L | 2026-06-25
+# redup/duplication | 15 groups | 93f 34045L | 2026-06-25
 
 SUMMARY:
   files_scanned: 93
-  total_lines:   34044
+  total_lines:   34045
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       1033
+  scan_ms:       991
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=73L  groups=5  frags=12  (0.2%)
@@ -1377,7 +1377,7 @@ METRICS-TARGET:
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
 # code2llm/evolution | 1657 func | 88f | 2026-06-25
-# generated in 0.00s
+# generated in 0.01s
 
 NEXT[4] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/host_dashboard.py

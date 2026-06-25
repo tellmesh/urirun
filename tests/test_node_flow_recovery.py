@@ -25,6 +25,26 @@ def _one_step() -> dict:
     }
 
 
+def test_execute_flow_folds_action_ok_under_ok_envelope(monkeypatch):
+    """A transport-ok envelope whose action result is ok=False (a UI click that
+    located no target) must fail the step + flow, not report green. Mirrors the
+    LinkedIn ``kvm://…/ui/click`` shape."""
+    def fake_call(uri, payload, registry, mode):
+        return {"uri": uri, "ok": True, "result": {"value": {
+            "ok": False, "action": "ui-click",
+            "error": "no control strategy could click target (text='Post' role='button')"}}}
+
+    monkeypatch.setattr(flow.v2_service, "call", fake_call)
+
+    result = flow.execute_flow(_one_step(), _mesh(kind="command"), {}, execute=True)
+
+    assert result["ok"] is False
+    assert result["timeline"][0]["ok"] is False
+    # the action's own error is surfaced, not a generic "unknown URI error"
+    assert "click target" in result["timeline"][0]["error"]["message"]
+    assert result["error"]["message"] == result["timeline"][0]["error"]["message"]
+
+
 def test_execute_flow_retries_transient_query_failure(monkeypatch):
     calls = []
 
