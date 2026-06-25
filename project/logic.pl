@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.136', 'javascript').
+project_metadata('urirun', '0.4.137', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -14,6 +14,7 @@ project_file('adapters/python/conftest.py', 24, 'python').
 project_file('adapters/python/tests/test_adopt_pack.py', 103, 'python').
 project_file('adapters/python/tests/test_adopt_tree.py', 39, 'python').
 project_file('adapters/python/tests/test_agent_command.py', 78, 'python').
+project_file('adapters/python/tests/test_capability.py', 65, 'python').
 project_file('adapters/python/tests/test_cli_parser.py', 72, 'python').
 project_file('adapters/python/tests/test_codegen.py', 164, 'python').
 project_file('adapters/python/tests/test_compat.py', 104, 'python').
@@ -39,7 +40,7 @@ project_file('adapters/python/tests/test_introspect.py', 76, 'python').
 project_file('adapters/python/tests/test_mesh.py', 1727, 'python').
 project_file('adapters/python/tests/test_minimal_imports.py', 91, 'python').
 project_file('adapters/python/tests/test_no_urirun_shadow.py', 15, 'python').
-project_file('adapters/python/tests/test_node_client.py', 321, 'python').
+project_file('adapters/python/tests/test_node_client.py', 335, 'python').
 project_file('adapters/python/tests/test_node_diagnostics.py', 46, 'python').
 project_file('adapters/python/tests/test_node_extracted.py', 141, 'python').
 project_file('adapters/python/tests/test_openapi_import.py', 49, 'python').
@@ -109,7 +110,7 @@ project_file('adapters/python/urirun/node/config.py', 210, 'python').
 project_file('adapters/python/urirun/node/flow.py', 627, 'python').
 project_file('adapters/python/urirun/node/formatting.py', 79, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
-project_file('adapters/python/urirun/node/manage.py', 374, 'python').
+project_file('adapters/python/urirun/node/manage.py', 431, 'python').
 project_file('adapters/python/urirun/node/mesh.py', 1976, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
 project_file('adapters/python/urirun/node/recovery.py', 233, 'python').
@@ -1243,6 +1244,9 @@ python_function('adapters/python/urirun/node/manage.py', '_read_json_manifest', 
 python_function('adapters/python/urirun/node/manage.py', '_read_tellmesh_manifest', 2, 7, 8).
 python_function('adapters/python/urirun/node/manage.py', '_read_connector_manifest', 2, 3, 3).
 python_function('adapters/python/urirun/node/manage.py', 'registry_installed', 0, 11, 10).
+python_function('adapters/python/urirun/node/manage.py', '_installed_route_owners', 0, 7, 6).
+python_function('adapters/python/urirun/node/manage.py', '_route_key', 1, 3, 1).
+python_function('adapters/python/urirun/node/manage.py', 'capability_check', 0, 17, 13).
 python_function('adapters/python/urirun/node/manage.py', 'registry_adopt', 0, 1, 0).
 python_function('adapters/python/urirun/node/manage.py', 'package_list', 0, 7, 5).
 python_function('adapters/python/urirun/node/manage.py', 'runtime_info', 0, 2, 3).
@@ -2038,6 +2042,15 @@ python_method('AdoptPackTests', 'test_side_effects_and_approval_become_policy', 
 python_method('AdoptPackTests', 'test_document_validates_and_compiles', 0, 3, 12).
 python_method('AdoptPackTests', 'test_hydrated_route_executes', 0, 1, 12).
 python_method('AdoptPackTests', 'test_package_json_inline_manifest', 0, 1, 8).
+python_class('adapters/python/tests/test_capability.py', 'CapabilityCheckTests').
+python_method('CapabilityCheckTests', 'setUp', 0, 1, 1).
+python_method('CapabilityCheckTests', 'tearDown', 0, 1, 0).
+python_method('CapabilityCheckTests', 'test_scheme_available_lists_all_owning_connectors', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_unknown_scheme_is_unavailable', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_narrows_to_owning_connector_host_insensitive', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_derives_scheme_when_omitted', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_not_provided_is_unavailable', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_registered_as_a_node_uri', 0, 1, 2).
 python_class('adapters/python/tests/test_compat.py', 'CompatReportTests').
 python_method('CompatReportTests', 'test_backend_layer_is_kept', 0, 3, 5).
 python_method('CompatReportTests', 'test_namecheap_is_extracted', 0, 3, 6).
@@ -2250,9 +2263,9 @@ python_method('NodeClientTests', 'test_request_capability_emits_need_route', 0, 
 python_method('NodeClientTests', 'test_push_folder_deploys_text_files', 0, 2, 10).
 python_class('adapters/python/tests/test_node_client.py', 'LocalConnectorDeployPayloadTests').
 python_method('LocalConnectorDeployPayloadTests', 'test_unknown_scheme_has_no_provider', 0, 1, 3).
-python_method('LocalConnectorDeployPayloadTests', 'test_multi_connector_scheme_without_route_bails', 0, 1, 3).
-python_method('LocalConnectorDeployPayloadTests', 'test_route_narrows_to_the_owning_connector', 0, 4, 6).
-python_method('LocalConnectorDeployPayloadTests', 'test_route_not_provided_by_any_connector', 0, 1, 3).
+python_method('LocalConnectorDeployPayloadTests', 'test_multi_connector_scheme_without_route_bails', 0, 1, 4).
+python_method('LocalConnectorDeployPayloadTests', 'test_route_narrows_to_the_owning_connector', 0, 4, 7).
+python_method('LocalConnectorDeployPayloadTests', 'test_route_not_provided_by_any_connector', 0, 1, 4).
 python_class('adapters/python/tests/test_param_routing.py', 'ParamRoutingTests').
 python_method('ParamRoutingTests', 'setUp', 0, 1, 4).
 python_method('ParamRoutingTests', '_run', 1, 1, 1).

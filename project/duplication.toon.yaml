@@ -1,12 +1,12 @@
-# redup/duplication | 15 groups | 93f 33979L | 2026-06-25
+# redup/duplication | 15 groups | 93f 34045L | 2026-06-25
 
 SUMMARY:
   files_scanned: 93
-  total_lines:   33979
+  total_lines:   34045
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       1019
+  scan_ms:       991
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=73L  groups=5  frags=12  (0.2%)

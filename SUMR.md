@@ -226,7 +226,7 @@ environment[name="local"] {
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.21s
+# generated in 0.20s
 # nodes: 434 | edges: 500 | modules: 35
 # CC̄=4.7
 
@@ -263,14 +263,14 @@ HUBS[20]:
     CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.node_add
-    CC=14  in:1  out:25  total:26
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
+  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
+    CC=10  in:5  out:21  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -566,7 +566,7 @@ EDGES:
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.21s
+# generated in 0.20s
 # nodes: 434 | edges: 500 | modules: 35
 # CC̄=4.7
 
@@ -603,14 +603,14 @@ HUBS[20]:
     CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.node_add
-    CC=14  in:1  out:25  total:26
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
+  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
+    CC=10  in:5  out:21  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -893,15 +893,17 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 164f 39332L | python:103,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
-# generated in 0.08s
-# CC̅=4.7 | critical:0/1678 | dups:0 | cycles:0
+# code2llm | 164f 39395L | python:103,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-25
+# generated in 0.07s
+# CC̅=4.7 | critical:1/1681 | dups:0 | cycles:0
 
-HEALTH[0]: ok
+HEALTH[1]:
+  🟡 CC    capability_check CC=17 (limit:15)
 
-REFACTOR[0]: none needed
+REFACTOR[1]:
+  1. split 1 high-CC methods  (CC>15)
 
-PIPELINES[518]:
+PIPELINES[519]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -1020,7 +1022,7 @@ LAYERS:
   │ !! cli                        707L  0C    7m  CC=1      ←1
   │ !! scanner_bridge             670L  1C   25m  CC=12     ←0
   │ !! _scan                      659L  0C   34m  CC=14     ←0
-  │ !! flow                       617L  0C   30m  CC=14     ←2
+  │ !! flow                       626L  0C   30m  CC=14     ←2
   │ !! connector_lint             602L  0C   34m  CC=14     ←1
   │ !! _runtime                   584L  1C   29m  CC=13     ←2
   │ !! errors                     563L  0C   31m  CC=13     ←1
@@ -1031,11 +1033,11 @@ LAYERS:
   │ domain_monitor             487L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←1
   │ codegen                    438L  0C   19m  CC=14     ←0
+  │ !! manage                     427L  0C   26m  CC=17     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
   │ document_sync              403L  2C   11m  CC=13     ←0
   │ service_control            376L  0C   18m  CC=11     ←0
   │ task_planner               374L  2C   17m  CC=12     ←3
-  │ manage                     373L  0C   23m  CC=12     ←0
   │ discovery                  362L  0C   29m  CC=14     ←0
   │ host_integrations          356L  0C   15m  CC=8      ←0
   │ task_cli                   342L  0C   25m  CC=11     ←1
@@ -1209,15 +1211,15 @@ EXTERNAL:
 ### Duplication (`project/duplication.toon.yaml`)
 
 ```toon markpact:analysis path=project/duplication.toon.yaml
-# redup/duplication | 15 groups | 93f 33979L | 2026-06-25
+# redup/duplication | 15 groups | 93f 34044L | 2026-06-25
 
 SUMMARY:
   files_scanned: 93
-  total_lines:   33979
+  total_lines:   34044
   dup_groups:    15
   dup_fragments: 37
   saved_lines:   143
-  scan_ms:       1019
+  scan_ms:       1033
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=73L  groups=5  frags=12  (0.2%)
@@ -1374,10 +1376,10 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 1654 func | 88f | 2026-06-25
-# generated in 0.01s
+# code2llm/evolution | 1657 func | 88f | 2026-06-25
+# generated in 0.00s
 
-NEXT[3] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
       WHY: 11504L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 161056
@@ -1390,6 +1392,10 @@ NEXT[3] (ranked by impact):
       WHY: 1975L, 3 classes, max CC=14
       EFFORT: ~4h  IMPACT: 27650
 
+  [4] !  SPLIT-FUNC      capability_check  CC=17  fan=14
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 238
+
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 348 import paths
@@ -1398,9 +1404,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.7 → ≤3.3
-  max-CC:      14 → ≤7
+  max-CC:      17 → ≤8
   god-modules: 18 → 0
-  high-CC(≥15): 0 → ≤0
+  high-CC(≥15): 1 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

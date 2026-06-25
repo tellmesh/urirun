@@ -1,20 +1,21 @@
 # Author: Tom Sapletta · https://tom.sapletta.com
 # Part of the ifURI solution.
 
-import importlib.util
 import unittest
 
 from urirun.node.client import NodeClient
 from urirun.node import client as client_mod
+from urirun.node import manage
 
 # The fs-disambiguation tests below exercise _local_connector_deploy_payload against the
-# REAL host-installed fs connectors (urirun-connector-fs + mcp-filesystem). They are only
-# meaningful when those optional connectors are installed (the repo venv has them; a bare
-# venv does not) — skip rather than fail when absent so the suite is environment-robust.
-_HAS_FS_CONNECTORS = all(
-    importlib.util.find_spec(m) is not None
-    for m in ("urirun_connector_fs", "urirun_connector_mcp_filesystem")
-)
+# REAL host-installed fs connectors (urirun-connector-fs + mcp-filesystem). Their precondition
+# — fs:// served by MULTIPLE connectors incl. the unsandboxed write-b64 route — is itself
+# answered AS A URI: node://<name>/capability/query/check {scheme, route}. We derive the guard
+# from that same capability probe so the tests are environment-robust (skip, not fail, when the
+# optional connectors are absent — the repo venv has them, a bare venv does not).
+_fs_spans = len(manage.capability_check(scheme="fs")["connectors"]) >= 2
+_fs_writeb64 = manage.capability_check(route="fs://host/file/command/write-b64")["available"]
+_HAS_FS_CONNECTORS = _fs_spans and _fs_writeb64
 
 
 class NodeClientTests(unittest.TestCase):

@@ -309,13 +309,13 @@ Language-agnostic URI to handler adapter
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# urirun | 185f 48590L | python:163,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-25
-# stats: 1841 func | 67 cls | 185 mod | CC̄=4.9 | critical:228 | cycles:0
-# alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC test_chat_ask_generates_and_dry_runs_uri_flow=15
+# urirun | 186f 48726L | python:164,shell:10,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-25
+# stats: 1844 func | 68 cls | 186 mod | CC̄=4.9 | critical:229 | cycles:0
+# alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC capability_check=17
 # hotspots[5]: create_handler fan=56; _archive_scanned_document fan=39; _write_document_pdf fan=28; summary fan=28; serve fan=28
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[185]:
+M[186]:
   adapters/bash/example/hash-connector.sh,10
   adapters/bash/urirun.sh,18
   adapters/conformance.py,168
@@ -328,6 +328,7 @@ M[185]:
   adapters/python/tests/test_adopt_pack.py,103
   adapters/python/tests/test_adopt_tree.py,39
   adapters/python/tests/test_agent_command.py,78
+  adapters/python/tests/test_capability.py,65
   adapters/python/tests/test_cli_parser.py,72
   adapters/python/tests/test_codegen.py,164
   adapters/python/tests/test_compat.py,104
@@ -353,7 +354,7 @@ M[185]:
   adapters/python/tests/test_mesh.py,1727
   adapters/python/tests/test_minimal_imports.py,91
   adapters/python/tests/test_no_urirun_shadow.py,15
-  adapters/python/tests/test_node_client.py,321
+  adapters/python/tests/test_node_client.py,335
   adapters/python/tests/test_node_diagnostics.py,46
   adapters/python/tests/test_node_extracted.py,141
   adapters/python/tests/test_openapi_import.py,49
@@ -423,7 +424,7 @@ M[185]:
   adapters/python/urirun/node/flow.py,627
   adapters/python/urirun/node/formatting.py,79
   adapters/python/urirun/node/keyauth.py,174
-  adapters/python/urirun/node/manage.py,374
+  adapters/python/urirun/node/manage.py,431
   adapters/python/urirun/node/mesh.py,1976
   adapters/python/urirun/node/paths.py,39
   adapters/python/urirun/node/recovery.py,233
@@ -530,6 +531,9 @@ D:
     test_run_plan_runs_query_and_gates_command()
     test_run_plan_allows_command_with_permission()
     test_load_planner_resolves_module_function()
+  adapters/python/tests/test_capability.py:
+    e: CapabilityCheckTests
+    CapabilityCheckTests: setUp(0),tearDown(0),test_scheme_available_lists_all_owning_connectors(0),test_unknown_scheme_is_unavailable(0),test_route_narrows_to_owning_connector_host_insensitive(0),test_route_derives_scheme_when_omitted(0),test_route_not_provided_is_unavailable(0),test_registered_as_a_node_uri(0)
   adapters/python/tests/test_cli_parser.py:
     e: test_cli_imports_without_cycle_and_builds,_commands,test_all_top_level_commands_present,test_representative_subcommands_parse_to_right_dest,test_inherited_and_typed_args_survive_extraction,test_host_add_node_accepts_api_device_flags
     test_cli_imports_without_cycle_and_builds()
@@ -1773,7 +1777,7 @@ D:
     _replay_seen(sig)
     verify_request(headers;body;purpose)
   adapters/python/urirun/node/manage.py:
-    e: _pip,_install_policy,_classify_source,_policy_allows,install_policy,package_install,_refresh_install_caches,_project_root,connector_install,_connector_match,_scan_local_connectors,_augment_local_routes,_list_installed_connectors,connector_discover,_derive_local_routes,_read_json_manifest,_read_tellmesh_manifest,_read_connector_manifest,registry_installed,registry_adopt,package_list,runtime_info,bindings
+    e: _pip,_install_policy,_classify_source,_policy_allows,install_policy,package_install,_refresh_install_caches,_project_root,connector_install,_connector_match,_scan_local_connectors,_augment_local_routes,_list_installed_connectors,connector_discover,_derive_local_routes,_read_json_manifest,_read_tellmesh_manifest,_read_connector_manifest,registry_installed,_installed_route_owners,_route_key,capability_check,registry_adopt,package_list,runtime_info,bindings
     _pip(args;timeout)
     _install_policy()
     _classify_source(s)
@@ -1793,6 +1797,9 @@ D:
     _read_tellmesh_manifest(mf;path)
     _read_connector_manifest(mf;path)
     registry_installed()
+    _installed_route_owners()
+    _route_key(uri)
+    capability_check()
     registry_adopt()
     package_list()
     runtime_info()
@@ -2713,7 +2720,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.136', 'javascript').
+project_metadata('urirun', '0.4.137', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -2728,6 +2735,7 @@ project_file('adapters/python/conftest.py', 24, 'python').
 project_file('adapters/python/tests/test_adopt_pack.py', 103, 'python').
 project_file('adapters/python/tests/test_adopt_tree.py', 39, 'python').
 project_file('adapters/python/tests/test_agent_command.py', 78, 'python').
+project_file('adapters/python/tests/test_capability.py', 65, 'python').
 project_file('adapters/python/tests/test_cli_parser.py', 72, 'python').
 project_file('adapters/python/tests/test_codegen.py', 164, 'python').
 project_file('adapters/python/tests/test_compat.py', 104, 'python').
@@ -2753,7 +2761,7 @@ project_file('adapters/python/tests/test_introspect.py', 76, 'python').
 project_file('adapters/python/tests/test_mesh.py', 1727, 'python').
 project_file('adapters/python/tests/test_minimal_imports.py', 91, 'python').
 project_file('adapters/python/tests/test_no_urirun_shadow.py', 15, 'python').
-project_file('adapters/python/tests/test_node_client.py', 321, 'python').
+project_file('adapters/python/tests/test_node_client.py', 335, 'python').
 project_file('adapters/python/tests/test_node_diagnostics.py', 46, 'python').
 project_file('adapters/python/tests/test_node_extracted.py', 141, 'python').
 project_file('adapters/python/tests/test_openapi_import.py', 49, 'python').
@@ -2823,7 +2831,7 @@ project_file('adapters/python/urirun/node/config.py', 210, 'python').
 project_file('adapters/python/urirun/node/flow.py', 627, 'python').
 project_file('adapters/python/urirun/node/formatting.py', 79, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
-project_file('adapters/python/urirun/node/manage.py', 374, 'python').
+project_file('adapters/python/urirun/node/manage.py', 431, 'python').
 project_file('adapters/python/urirun/node/mesh.py', 1976, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
 project_file('adapters/python/urirun/node/recovery.py', 233, 'python').
@@ -3957,6 +3965,9 @@ python_function('adapters/python/urirun/node/manage.py', '_read_json_manifest', 
 python_function('adapters/python/urirun/node/manage.py', '_read_tellmesh_manifest', 2, 7, 8).
 python_function('adapters/python/urirun/node/manage.py', '_read_connector_manifest', 2, 3, 3).
 python_function('adapters/python/urirun/node/manage.py', 'registry_installed', 0, 11, 10).
+python_function('adapters/python/urirun/node/manage.py', '_installed_route_owners', 0, 7, 6).
+python_function('adapters/python/urirun/node/manage.py', '_route_key', 1, 3, 1).
+python_function('adapters/python/urirun/node/manage.py', 'capability_check', 0, 17, 13).
 python_function('adapters/python/urirun/node/manage.py', 'registry_adopt', 0, 1, 0).
 python_function('adapters/python/urirun/node/manage.py', 'package_list', 0, 7, 5).
 python_function('adapters/python/urirun/node/manage.py', 'runtime_info', 0, 2, 3).
@@ -4752,6 +4763,15 @@ python_method('AdoptPackTests', 'test_side_effects_and_approval_become_policy', 
 python_method('AdoptPackTests', 'test_document_validates_and_compiles', 0, 3, 12).
 python_method('AdoptPackTests', 'test_hydrated_route_executes', 0, 1, 12).
 python_method('AdoptPackTests', 'test_package_json_inline_manifest', 0, 1, 8).
+python_class('adapters/python/tests/test_capability.py', 'CapabilityCheckTests').
+python_method('CapabilityCheckTests', 'setUp', 0, 1, 1).
+python_method('CapabilityCheckTests', 'tearDown', 0, 1, 0).
+python_method('CapabilityCheckTests', 'test_scheme_available_lists_all_owning_connectors', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_unknown_scheme_is_unavailable', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_narrows_to_owning_connector_host_insensitive', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_derives_scheme_when_omitted', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_route_not_provided_is_unavailable', 0, 1, 3).
+python_method('CapabilityCheckTests', 'test_registered_as_a_node_uri', 0, 1, 2).
 python_class('adapters/python/tests/test_compat.py', 'CompatReportTests').
 python_method('CompatReportTests', 'test_backend_layer_is_kept', 0, 3, 5).
 python_method('CompatReportTests', 'test_namecheap_is_extracted', 0, 3, 6).
@@ -4964,9 +4984,9 @@ python_method('NodeClientTests', 'test_request_capability_emits_need_route', 0, 
 python_method('NodeClientTests', 'test_push_folder_deploys_text_files', 0, 2, 10).
 python_class('adapters/python/tests/test_node_client.py', 'LocalConnectorDeployPayloadTests').
 python_method('LocalConnectorDeployPayloadTests', 'test_unknown_scheme_has_no_provider', 0, 1, 3).
-python_method('LocalConnectorDeployPayloadTests', 'test_multi_connector_scheme_without_route_bails', 0, 1, 3).
-python_method('LocalConnectorDeployPayloadTests', 'test_route_narrows_to_the_owning_connector', 0, 4, 6).
-python_method('LocalConnectorDeployPayloadTests', 'test_route_not_provided_by_any_connector', 0, 1, 3).
+python_method('LocalConnectorDeployPayloadTests', 'test_multi_connector_scheme_without_route_bails', 0, 1, 4).
+python_method('LocalConnectorDeployPayloadTests', 'test_route_narrows_to_the_owning_connector', 0, 4, 7).
+python_method('LocalConnectorDeployPayloadTests', 'test_route_not_provided_by_any_connector', 0, 1, 4).
 python_class('adapters/python/tests/test_param_routing.py', 'ParamRoutingTests').
 python_method('ParamRoutingTests', 'setUp', 0, 1, 4).
 python_method('ParamRoutingTests', '_run', 1, 1, 1).
@@ -5338,7 +5358,7 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.21s
+# generated in 0.20s
 # nodes: 434 | edges: 500 | modules: 35
 # CC̄=4.7
 
@@ -5375,14 +5395,14 @@ HUBS[20]:
     CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
-  adapters.python.urirun.host.host_dashboard.node_add
-    CC=14  in:1  out:25  total:26
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
+  adapters.python.urirun.host.host_dashboard.ensure_phone_scanner_service
+    CC=10  in:5  out:21  total:26
 
 MODULES:
   adapters.c.urirun  [4 funcs]

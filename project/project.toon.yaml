@@ -1,8 +1,8 @@
-# urirun | 1678 func | 95f | 39332L | python | 2026-06-25
+# urirun | 1681 func | 95f | 39398L | python | 2026-06-25
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.7  critical=218 (limit:10)  dup=2  cycles=0
+  CC̄=4.7  critical=219 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     create_handler = 59 (limit:10)
@@ -26,7 +26,7 @@ MODULES[164] (top by size):
   M[adapters/python/urirun/runtime/cli.py] 707L C:0 F:7 CC↑1 D:1 (python)
   M[adapters/python/urirun/host/scanner_bridge.py] 670L C:1 F:25 CC↑12 D:0 (python)
   M[adapters/python/urirun/runtime/_scan.py] 659L C:0 F:34 CC↑14 D:0 (python)
-  M[adapters/python/urirun/node/flow.py] 617L C:0 F:30 CC↑14 D:2 (python)
+  M[adapters/python/urirun/node/flow.py] 626L C:0 F:30 CC↑14 D:2 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 602L C:0 F:34 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/_runtime.py] 584L C:1 F:29 CC↑13 D:2 (python)
   M[adapters/python/urirun/runtime/errors.py] 563L C:0 F:31 CC↑13 D:1 (python)
@@ -46,7 +46,7 @@ REFACTOR[15]:
   [2] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (602L, 0 classes)
   [3] H/H Split god module adapters/python/urirun/host/document_metadata.py (517L, 0 classes)
   [4] H/H Split god module adapters/python/urirun/host/host_dashboard.py (11504L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun/node/flow.py (617L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/node/flow.py (626L, 0 classes)
 
 EVOLUTION:
-  2026-06-25 CC̄=4.7 crit=218 39332L // Automated analysis
+  2026-06-25 CC̄=4.7 crit=219 39398L // Automated analysis

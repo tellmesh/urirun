@@ -1,4 +1,4 @@
-# urirun | 163f 39395L | yaml:5,txt:3,shell:10,json:13,python:103,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-25
+# urirun | 163f 39398L | yaml:5,txt:3,shell:10,python:103,yml:2,json:13,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-25
 # generated in 0.02s
 # stats: 1681 func | 0 cls | 163 mod | CC̄=4.7 | critical:1 | cycles:0
 # alerts[5]: fan-out create_handler=59; fan-out _archive_scanned_document=43; fan-out _write_document_pdf=32; fan-out serve=30; fan-out _add_host_subparser=29
@@ -87,7 +87,7 @@ M[163]:
   adapters/python/urirun/node/flow.py,626
   adapters/python/urirun/node/formatting.py,78
   adapters/python/urirun/node/keyauth.py,173
-  adapters/python/urirun/node/manage.py,427
+  adapters/python/urirun/node/manage.py,430
   adapters/python/urirun/node/mesh.py,1975
   adapters/python/urirun/node/paths.py,38
   adapters/python/urirun/node/recovery.py,232
@@ -1956,7 +1956,6 @@ Connector a...
   Makefile:
   requirements.txt:
   tree.sh:
-  package.json:
   prefact.yaml:
   project.sh:
   docs/NODE_CONNECTIONS_TASK_PLAN.yaml:
@@ -1985,7 +1984,6 @@ Connector a...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1998,7 +1996,6 @@ Connector a...
   adapters/rust/Cargo.toml:
   adapters/php/composer.json:
   adapters/php/example/hash-connector.php:
-  adapters/python/pyproject.toml:
   adapters/python/urirun/host_db.py:
   adapters/python/urirun/v2_service.py:
   adapters/python/urirun/domain_monitor.py:
@@ -2036,3 +2033,6 @@ Connector a...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
+  package.json:
+  adapters/js/package.json:
+  adapters/python/pyproject.toml:

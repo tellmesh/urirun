@@ -8,6 +8,7 @@
 #   node://<name>/package/query/list        {match?}           list installed packages
 #   node://<name>/runtime/query/info        {}                 interpreter / venv / platform
 #   node://<name>/connector/command/install {id}               install a urirun-connector-<id>
+#   node://<name>/capability/query/check    {scheme?, route?}  is a scheme/route runnable HERE?
 #   node://<name>/registry/command/adopt    {scheme?}          make installed connector routes live
 #
 # Handlers run in-process and shell out to THIS node's interpreter (sys.executable), so a
@@ -405,6 +406,8 @@ _ROUTES = [
     ("connector/query/discover", "query", "connector_discover",
      {"match": {"type": "string"}, "scheme": {"type": "string"}, "roots": {"type": ["string", "array"]}}),
     ("registry/query/installed", "query", "registry_installed", {"match": {"type": "string"}, "scheme": {"type": "string"}}),
+    ("capability/query/check", "query", "capability_check",
+     {"scheme": {"type": "string"}, "route": {"type": "string"}}),
     ("registry/command/adopt", "command", "registry_adopt", {"scheme": {"type": "string"}}),
     ("policy/query/show", "query", "install_policy", {}),
     ("package/query/list", "query", "package_list", {"match": {"type": "string"}}),
