@@ -479,7 +479,10 @@ def _configured_api_routes(name: str, node: dict) -> list[dict]:
     return routes
 
 
-def discover_node(node: dict) -> dict:
+_DISCOVER_TIMEOUT = 1.5  # per-node health probe; short so mesh discovery fits within a 2s HTTP window
+
+
+def discover_node(node: dict, timeout: float = _DISCOVER_TIMEOUT) -> dict:
     base = str(node["url"]).rstrip("/")
     info = {"name": node["name"], "url": base, "reachable": False, "routes": [], "mcp": None, "a2a": None, "error": None}
     for key in ("tags", "kind", "type", "nodeType", "transport", "runtime", "meta", "apis", "capabilities"):
@@ -498,10 +501,10 @@ def discover_node(node: dict) -> dict:
         })
         return info
     try:
-        health = http_json("GET", f"{base}/health")
-        routes = http_json("GET", f"{base}/routes").get("routes", [])
-        mcp = http_json("GET", f"{base}/mcp/tools")
-        a2a = http_json("GET", f"{base}/a2a/card")
+        health = http_json("GET", f"{base}/health", timeout=timeout)
+        routes = http_json("GET", f"{base}/routes", timeout=timeout).get("routes", [])
+        mcp = http_json("GET", f"{base}/mcp/tools", timeout=timeout)
+        a2a = http_json("GET", f"{base}/a2a/card", timeout=timeout)
         info.update({"reachable": True, "health": health, "routes": routes, "mcp": mcp, "a2a": a2a})
     except Exception as exc:  # noqa: BLE001 - discovery should report partial/offline nodes.
         info["error"] = str(exc)
@@ -509,7 +512,14 @@ def discover_node(node: dict) -> dict:
 
 
 def discover_mesh(config: dict) -> dict:
-    nodes = [discover_node(node) for node in config.get("nodes", [])]
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    node_cfgs = config.get("nodes", [])
+    nodes: list[dict] = [{}] * len(node_cfgs)
+    with ThreadPoolExecutor(max_workers=min(len(node_cfgs) or 1, 16)) as pool:
+        futs = {pool.submit(discover_node, nc): i for i, nc in enumerate(node_cfgs)}
+        for fut in as_completed(futs):
+            nodes[futs[fut]] = fut.result()
     routes = []
     service_map = {}
     for node in nodes:
