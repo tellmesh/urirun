@@ -199,9 +199,44 @@ Removed `from __future__ import annotations` from all 8 modules (`backends.py`, 
 `control.py`, `core.py`, `environment.py`, `launch_backends.py`, `strategies.py`, `surface.py`) —
 redundant since `requires-python = ">=3.10"`. Added named constants for inline magic numbers:
 `_CDP_AWAIT_TIMEOUT`, `_CDP_LAUNCH_TIMEOUT` (cdp.py); `_CDP_PRIORITY`, `_ATSPI_PRIORITY`,
-`_VISION_PRIORITY` (strategies.py); `_PRIORITY_LINUX`, `_PRIORITY_OTHER` (launch_backends.py);
-`_CDP_SESSION_TIMEOUT`, `_ACT_BUDGET_SECS`, `_LOCATE_MIN_CONF` (core.py). All 8 files
-`py_compile` clean.
+`_VISION_PRIORITY` (strategies.py); `_PRIORITY_LINUX`, `_PRIORITY_OTHER`, `_MAX_SETTLE_SECS`
+(launch_backends.py); `_CDP_SESSION_TIMEOUT`, `_ACT_BUDGET_SECS`, `_LOCATE_MIN_CONF` (core.py).
+All 8 files `py_compile` clean. Stale `build/` artifact directory deleted.
+
+## Landed (2026-06-26): fleet lint clean — 35/35 connectors ok
+
+**Phase F progress (2026-06-26):**
+Fleet lint (`scripts/lint_connectors.py`) now exits 0 for all 35 connectors. Previously 4 had
+genuine drift:
+- `connector_lint.py`: added `computer-use-preview` to `_SKIP_DIRS` — eliminates false
+  SECRET-BYPASS on experimental preview code that is excluded from the installed package.
+- `urirun-connector-kvm/connector.manifest.json`: synced to actual `urirun_bindings()` —
+  removed 5 stale `twin://` routes, added 13 new routes (cdp/*, display, env, surface,
+  ui/act, ui/strategies, proc/kill, window/close, window/restore); removed "twin" from
+  `uriSchemes`.
+- `urirun-connector-fs/connector.manifest.json`: added `fs://host/file/command/delete`.
+- `urirun-connector-browser-control/connector.manifest.json`: added
+  `browser://cdp/page/command/click` and `/fill`.
+- `urirun-connector-linkedin/connector.manifest.json`: updated all routes from
+  `linkedin://me/` → `linkedin://host/`.
+
+## Landed (2026-06-26): document_sync — second extraction batch
+
+**Phase R progress (2026-06-26), document_sync.py:**
+Extracted 8 independent functions from `host_dashboard.py` → `host/document_sync.py`:
+config readers (`document_archive_root`, `document_index_path`,
+`document_sync_default_dest_root`, `document_sync_default_node`), pure utilities
+(`archive_month`, `pdf_text`, `pdf_stream`, `document_files_exist`).
+`host_dashboard.py` imports them back as `_private` aliases — zero call-site changes.
+host_dashboard: 11820 → 11785 L; document_sync: 403 → 458 L. 681 tests green.
+
+Remaining in `_document*` cluster in host_dashboard (next batch):
+`_document_sync_deps`, `_document_sync_verification` (shim), `_document_archive_pdfs` (shim),
+`_document_filename_with_id`, `_document_schema_fields`, `_document_matches`,
+`_document_frame_quality`, `_document_sync_auto_retry_enabled`,
+`_document_sync_retry_payload_from_urifix`, `_document_sync_node_from_prompt`,
+`_document_sync_dest_from_prompt`; `reconcile_document_index`, `_archive_redundant_duplicate`,
+`_archive_scanned_document` (these have host_dashboard dependencies and need more prep).
 
 ## Phase R: host_dashboard decomposition (the one remaining structural debt)
 
