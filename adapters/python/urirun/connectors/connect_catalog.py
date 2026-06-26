@@ -27,7 +27,7 @@ import sys
 import urllib.error
 import urllib.request
 
-from urirun import errors
+from urirun.runtime import errors
 
 DEFAULT_CATALOG_BASE = "https://connect.ifuri.com"
 _USER_AGENT = "urirun-connect-catalog"

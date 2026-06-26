@@ -36,8 +36,8 @@ def smoke(
     name: str = "connector",
 ) -> dict:
     """Run the validate -> compile -> (run) -> MCP/A2A pipeline over a bindings doc."""
-    from urirun import v2_mcp
-    from urirun._runtime import build_policy
+    from urirun.runtime import v2_mcp
+    from urirun.runtime._runtime import build_policy
 
     doc = _load(bindings)
     result: dict = {"ok": True, "stages": []}

@@ -15,17 +15,28 @@ def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
     """Call an installed connector URI in-process via the urirun runtime.
 
     Returns None when no connector owns the route (so the caller can raise the
-    correct "unsupported action" error), or a dict on success or handler failure."""
+    correct "unsupported action" error), or a dict on success or handler failure.
+
+    Tier 2a — entry-point discovery (installed packages with urirun.bindings group).
+    Tier 2b — DECORATED_BINDINGS (connector.handler() registrations without an entry point)."""
     try:
         import urirun
-        from urirun.runtime import discovery
+        from urirun.runtime import discovery, v2 as _v2
         registry = discovery.registry_for_uri(uri, _INPROCESS_BINDINGS_GROUP)
         env = urirun.run(uri, registry, payload=dict(payload or {}),
                          mode="execute", policy={"allowExecute": True})
+        if not env.get("ok") and (env.get("error") or {}).get("category") == "NOT_FOUND":
+            # Tier 2b: DECORATED_BINDINGS (connector.handler() with no package entry point)
+            live_binding = _v2.decorated_bindings()["bindings"].get(uri)
+            if live_binding is None:
+                return None
+            reg2 = urirun.compile_registry(_v2.build_binding_document([live_binding]))
+            env = urirun.run(uri, reg2, payload=dict(payload or {}),
+                             mode="execute", policy={"allowExecute": True})
+            if not env.get("ok") and (env.get("error") or {}).get("category") == "NOT_FOUND":
+                return None
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "invokedUri": uri, "error": str(exc)}
-    if not env.get("ok") and (env.get("error") or {}).get("category") == "NOT_FOUND":
-        return None
     try:
         import urirun as _u
         value = _u.result_data(env)

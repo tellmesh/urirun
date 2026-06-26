@@ -79,6 +79,7 @@ class DomainMonitorTests(unittest.TestCase):
 
     @unittest.skipUnless(PLANFILE_AVAILABLE, "planfile is not installed")
     def test_dns_mismatch_creates_review_ticket_only(self):
+        domain_monitor.set_ticket_creator(planfile_adapter.create_ticket)
         with tempfile.TemporaryDirectory() as tmp, local_http(200) as url:
             db = str(Path(tmp) / "host.db")
             result = domain_monitor.check_domain(
@@ -124,6 +125,7 @@ class DomainMonitorTests(unittest.TestCase):
 
     @unittest.skipUnless(PLANFILE_AVAILABLE, "planfile is not installed")
     def test_v2_domain_monitor_mismatch_sets_failed_envelope_and_review_ticket(self):
+        domain_monitor.set_ticket_creator(planfile_adapter.create_ticket)
         with tempfile.TemporaryDirectory() as tmp, local_http(200) as url:
             db = str(Path(tmp) / "host.db")
             registry = v2.compile_registry(host_integrations.domain_monitor_bindings(db=db, project=tmp, screenshot_dir=str(Path(tmp) / "shots")))

@@ -50,7 +50,6 @@ def call(socket_path: str, request: dict, timeout: float = _DAEMON_TIMEOUT_S) ->
 
 def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool = False) -> None:
     """Run the daemon: warm registry + worker pool, one Unix socket, one process."""
-    import urirun  # noqa: F401 - heavy imports are server-side only
     from urirun.runtime import _runtime, discovery, v2
     from urirun.runtime.worker import ConnectorPools, _pool_executors  # was node.mesh (upward); now kernel-local
 
@@ -68,7 +67,7 @@ def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool 
     server.bind(path)
     server.listen(64)
     print(json.dumps({"event": "urirun.daemon.started", "socket": path,
-                      "routes": len(list(urirun.list_routes(registry)))}), flush=True)
+                      "routes": len(_runtime.list_routes(registry))}), flush=True)
     try:
         while True:
             conn, _ = server.accept()

@@ -1,24 +1,30 @@
-# code2llm | 196f 42092L | python:135,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
-# generated in 0.09s
-# CC̅=4.7 | critical:9/1775 | dups:0 | cycles:0
+# code2llm | 198f 42460L | python:137,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
+# generated in 0.10s
+# CC̅=4.7 | critical:15/1782 | dups:0 | cycles:0
 
-HEALTH[10]:
+HEALTH[16]:
   🔴 GOD   adapters/python/urirun/node/reversible.py = 667L, 9 classes, 44m, max CC=15
-  🟡 CC    _step_inverse CC=15 (limit:15)
-  🟡 CC    _episode_artifacts CC=15 (limit:15)
-  🟡 CC    _general_path_complete CC=15 (limit:15)
-  🟡 CC    deploy_command CC=15 (limit:15)
+  🟡 CC    run CC=16 (limit:15)
   🟡 CC    _uri_rollback CC=15 (limit:15)
   🟡 CC    _normalize_flow_step CC=15 (limit:15)
+  🟡 CC    _step_inverse CC=15 (limit:15)
+  🟡 CC    _episode_artifacts CC=15 (limit:15)
+  🟡 CC    capture_episode CC=15 (limit:15)
+  🟡 CC    api_twin_state CC=18 (limit:15)
+  🟡 CC    inprocess_fallback CC=16 (limit:15)
+  🟡 CC    _general_path_complete CC=16 (limit:15)
+  🟡 CC    _chat_ask_general CC=21 (limit:15)
+  🟡 CC    deploy_command CC=15 (limit:15)
+  🟡 CC    _capture_proofs_from_results CC=15 (limit:15)
+  🟡 CC    _thin_driver CC=17 (limit:15)
   🟡 CC    _preflight CC=15 (limit:15)
-  🟡 CC    run CC=16 (limit:15)
-  🟡 CC    _thin_driver CC=16 (limit:15)
+  🟡 CC    _in_process_discovery CC=17 (limit:15)
 
 REFACTOR[2]:
   1. split adapters/python/urirun/node/reversible.py  (god module)
-  2. split 9 high-CC methods  (CC>15)
+  2. split 15 high-CC methods  (CC>15)
 
-PIPELINES[584]:
+PIPELINES[580]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -37,138 +43,139 @@ PIPELINES[584]:
       PURITY: 100% pure
   [9] Src [main]: main → lint_fleet → lint_connector → _connector_py_files
       PURITY: 100% pure
-  [10] Src [main]: main → audit → discover_modules → module_name
+  [10] Src [main]: main → find_root
       PURITY: 100% pure
-  [11] Src [main]: main → find_root
+  [11] Src [main]: main → _collect_outputs → python_reference
       PURITY: 100% pure
-  [12] Src [main]: main → _collect_outputs → python_reference
+  [12] Src [result]: result
       PURITY: 100% pure
-  [13] Src [result]: result
+  [13] Src [path]: path
       PURITY: 100% pure
-  [14] Src [path]: path
+  [14] Src [segments]: segments
       PURITY: 100% pure
-  [15] Src [segments]: segments
+  [15] Src [descriptor]: descriptor
       PURITY: 100% pure
-  [16] Src [descriptor]: descriptor
+  [16] Src [invocation]: invocation
       PURITY: 100% pure
-  [17] Src [invocation]: invocation
+  [17] Src [mod]: mod
       PURITY: 100% pure
-  [18] Src [mod]: mod
+  [18] Src [command]: command
       PURITY: 100% pure
-  [19] Src [command]: command
+  [19] Src [bindingsJson]: bindingsJson
       PURITY: 100% pure
-  [20] Src [bindingsJson]: bindingsJson
+  [20] Src [main]: main
       PURITY: 100% pure
-  [21] Src [main]: main
+  [21] Src [Target]: Target
       PURITY: 100% pure
-  [22] Src [Target]: Target
+  [22] Src [Command]: Command
       PURITY: 100% pure
-  [23] Src [Command]: Command
+  [23] Src [BindingsJSON]: BindingsJSON → Bindings
       PURITY: 100% pure
-  [24] Src [BindingsJSON]: BindingsJSON → Bindings
+  [24] Src [main]: main
       PURITY: 100% pure
-  [25] Src [main]: main
+  [25] Src [toJSON]: toJSON → document
       PURITY: 100% pure
-  [26] Src [toJSON]: toJSON → document
+  [26] Src [connector]: connector
       PURITY: 100% pure
-  [27] Src [connector]: connector
+  [27] Src [c]: c
       PURITY: 100% pure
-  [28] Src [c]: c
+  [28] Src [main]: main
       PURITY: 100% pure
-  [29] Src [main]: main
+  [29] Src [new]: new
       PURITY: 100% pure
-  [30] Src [new]: new
+  [30] Src [target]: target
       PURITY: 100% pure
-  [31] Src [target]: target
+  [31] Src [command]: command
       PURITY: 100% pure
-  [32] Src [command]: command
+  [32] Src [bindings_json]: bindings_json
       PURITY: 100% pure
-  [33] Src [bindings_json]: bindings_json
+  [33] Src [command]: command
       PURITY: 100% pure
-  [34] Src [command]: command
+  [34] Src [bindingsJson]: bindingsJson → bindings
       PURITY: 100% pure
-  [35] Src [bindingsJson]: bindingsJson → bindings
+  [35] Src [main]: main → assert
       PURITY: 100% pure
-  [36] Src [main]: main → assert
+  [36] Src [parse_target]: parse_target → copy_token → memcpy → is_path_end
       PURITY: 100% pure
-  [37] Src [parse_target]: parse_target → copy_token → memcpy → is_path_end
+  [37] Src [main]: main → _resolve
       PURITY: 100% pure
-  [38] Src [main]: main → _resolve
+  [38] Src [dispatch]: dispatch → parse_uri
       PURITY: 100% pure
-  [39] Src [dispatch]: dispatch → parse_uri
+  [39] Src [command]: command → uri_command → model_from_function
       PURITY: 100% pure
-  [40] Src [command]: command → uri_command → model_from_function
+  [40] Src [shell]: shell → uri_shell → uri_command → model_from_function
       PURITY: 100% pure
-  [41] Src [shell]: shell → uri_shell → uri_command → model_from_function
+  [41] Src [fail]: fail
       PURITY: 100% pure
-  [42] Src [fail]: fail
+  [42] Src [tag]: tag
       PURITY: 100% pure
-  [43] Src [tag]: tag
+  [43] Src [action_space]: action_space
       PURITY: 100% pure
-  [44] Src [action_space]: action_space
+  [44] Src [result_degraded]: result_degraded → result_data
       PURITY: 100% pure
-  [45] Src [result_degraded]: result_degraded → result_data
+  [45] Src [run_steps]: run_steps → run
       PURITY: 100% pure
-  [46] Src [run_steps]: run_steps → run
+  [46] Src [tool_binding]: tool_binding
       PURITY: 100% pure
-  [47] Src [tool_binding]: tool_binding
+  [47] Src [connector_bindings]: connector_bindings
       PURITY: 100% pure
-  [48] Src [connector_bindings]: connector_bindings
+  [48] Src [entry_point_bindings]: entry_point_bindings
       PURITY: 100% pure
-  [49] Src [entry_point_bindings]: entry_point_bindings
+  [49] Src [entry_point_binding_document]: entry_point_binding_document
       PURITY: 100% pure
-  [50] Src [entry_point_binding_document]: entry_point_binding_document
+  [50] Src [entry_point_registry]: entry_point_registry
       PURITY: 100% pure
 
 LAYERS:
-  scripts/                        CC̄=5.7    ←in:0  →out:1
-  │ extraction_audit           311L  2C   12m  CC=12     ←0
+  scripts/                        CC̄=5.4    ←in:0  →out:1
+  │ extraction_audit           331L  2C   12m  CC=12     ←0
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
+  │ transport_swap_proof       118L  0C    5m  CC=6      ←0
   │ cc_gate                     81L  0C    3m  CC=8      ←0
   │ release-bump.sh             29L  0C    0m  CC=0.0    ←0
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.7    ←in:12  →out:0
   │ !! html_templates            4907L  0C    3m  CC=6      ←0
-  │ !! v2                        2003L  1C  122m  CC=14     ←4
+  │ !! v2                        1996L  2C  118m  CC=14     ←3
   │ !! host_dashboard            1822L  0C   85m  CC=14     ←1
-  │ !! flow                      1134L  0C   47m  CC=15     ←4
-  │ !! server                     996L  3C   55m  CC=14     ←2
+  │ !! flow                      1066L  0C   40m  CC=17     ←4
+  │ !! server                     996L  3C   55m  CC=14     ←3
   │ !! object_registry            981L  0C   46m  CC=14     ←0
-  │ !! node_cli                   897L  0C   48m  CC=15     ←1
-  │ !! chat_orchestrator          874L  1C   21m  CC=15     ←0
-  │ !! __init__                   766L  1C   53m  CC=14     ←17
-  │ !! _registry                  718L  0C   43m  CC=14     ←1
-  │ !! cli                        715L  0C    7m  CC=1      ←1
+  │ !! node_cli                   899L  0C   48m  CC=15     ←1
+  │ !! chat_orchestrator          895L  1C   21m  CC=21     ←0
+  │ !! __init__                   766L  1C   53m  CC=14     ←18
+  │ !! _registry                  718L  0C   43m  CC=14     ←2
+  │ !! cli                        716L  0C    7m  CC=1      ←1
   │ !! connector_lint             714L  0C   38m  CC=14     ←1
   │ !! flow_planner               695L  0C   29m  CC=15     ←3
   │ !! reversible                 667L  9C   44m  CC=15     ←3
   │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! manage                     599L  0C   36m  CC=13     ←0
   │ !! _runtime                   593L  1C   29m  CC=16     ←2
-  │ !! errors                     563L  0C   31m  CC=13     ←1
+  │ !! errors                     575L  0C   32m  CC=13     ←1
   │ !! client                     558L  1C   35m  CC=12     ←0
   │ !! diagnostics                550L  1C   16m  CC=14     ←2
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! host_db                    527L  0C   33m  CC=11     ←0
-  │ domain_monitor             487L  1C   25m  CC=11     ←1
+  │ !! domain_monitor             500L  1C   26m  CC=11     ←0
+  │ !! flow_thin                  481L  1C   21m  CC=17     ←1
   │ v1                         471L  0C   25m  CC=14     ←1
   │ service_control            462L  0C   23m  CC=11     ←0
+  │ !! twin_bridge                449L  0C   17m  CC=18     ←2
   │ codegen                    438L  0C   19m  CC=14     ←0
-  │ !! flow_thin                  421L  1C   20m  CC=16     ←1
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
-  │ !! twin_bridge                403L  0C   16m  CC=15     ←2
+  │ host_integrations          374L  0C   16m  CC=8      ←0
   │ recovery                   372L  0C   18m  CC=14     ←2
   │ task_planner               366L  2C   16m  CC=12     ←3
   │ fs_transfer                364L  0C   15m  CC=14     ←3
   │ discovery                  362L  0C   29m  CC=14     ←2
-  │ host_integrations          356L  0C   15m  CC=8      ←0
-  │ task_cli                   344L  0C   25m  CC=12     ←1
+  │ task_cli                   346L  0C   25m  CC=12     ←1
   │ cdp                        339L  1C   24m  CC=8      ←0
+  │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ worker                     289L  3C   21m  CC=13     ←2
   │ dashboard_api              288L  0C   25m  CC=14     ←1
-  │ planfile_adapter           281L  1C   26m  CC=9      ←0
   │ mesh                       274L  0C    0m  CC=0.0    ←0
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
@@ -180,7 +187,7 @@ LAYERS:
   │ doctor                     217L  0C   13m  CC=9      ←1
   │ v2_mcp                     212L  0C   11m  CC=9      ←0
   │ node_api                   211L  0C   11m  CC=13     ←0
-  │ v2_grpc                    204L  0C   11m  CC=9      ←0
+  │ v2_grpc                    204L  0C   11m  CC=9      ←1
   │ discovery                  202L  0C    9m  CC=9      ←0
   │ compat                     199L  0C    6m  CC=10     ←0
   │ v2_adopt                   193L  0C    8m  CC=7      ←0
@@ -195,16 +202,17 @@ LAYERS:
   │ capability                 160L  0C    6m  CC=12     ←0
   │ agent                      151L  0C    6m  CC=10     ←0
   │ uinput                     148L  0C    9m  CC=10     ←0
-  │ v2_service                 145L  0C    4m  CC=9      ←2
+  │ v2_service                 145L  0C    4m  CC=9      ←0
   │ connector_contract         143L  1C   11m  CC=4      ←0
   │ scheduler                  135L  0C    6m  CC=4      ←0
   │ decision_loop              134L  0C    5m  CC=13     ←1
   │ backend_registry           129L  2C   10m  CC=11     ←0
   │ twin_store                 124L  2C   17m  CC=5      ←0
   │ contracts                  119L  0C    8m  CC=5      ←0
-  │ daemon                     116L  0C    3m  CC=14     ←0
+  │ daemon                     115L  0C    3m  CC=14     ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ _artifacts                 111L  0C    5m  CC=9      ←2
+  │ flow_verify                111L  0C    7m  CC=10     ←1
   │ dashboard_http             104L  0C    6m  CC=8      ←1
   │ openapi_import              95L  0C    6m  CC=12     ←0
   │ declarative                 95L  0C    3m  CC=14     ←0
@@ -219,11 +227,11 @@ LAYERS:
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
   │ project.assets.json         71L  0C    0m  CC=0.0    ←0
+  │ !! dispatch                    66L  0C    2m  CC=16     ←1
   │ urirun-connector.csproj.nuget.dgspec.json    66L  0C    0m  CC=0.0    ←0
   │ widgets                     64L  0C    4m  CC=12     ←0
   │ exec                        61L  0C    2m  CC=10     ←0
   │ pyproject.toml              58L  0C    0m  CC=0.0    ←0
-  │ dispatch                    55L  0C    2m  CC=11     ←1
   │ index.test.js               52L  0C    1m  CC=1      ←0
   │ Urirun.pm                   47L  0C    4m  CC=0.0    ←1
   │ urifix_bridge               45L  0C    1m  CC=12     ←1
@@ -232,7 +240,7 @@ LAYERS:
   │ urirun.rb                   39L  1C    4m  CC=4      ←0
   │ Urirun.java                 38L  1C    3m  CC=1      ←1
   │ paths                       38L  0C    3m  CC=5      ←4
-  │ _util                       37L  0C    5m  CC=2      ←4
+  │ _util                       37L  0C    5m  CC=2      ←5
   │ index.js                    33L  0C   11m  CC=8      ←10
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ document_metadata           26L  0C    0m  CC=0.0    ←0
@@ -346,8 +354,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: v1.js/ (fan-in=6)
   HUB: adapters/ (fan-in=12)
+  HUB: v1.js/ (fan-in=6)
   SMELL: adapters.python/ fan-out=20 → split needed
 
 EXTERNAL:

@@ -346,7 +346,8 @@ def _capture_proofs_from_results(results: dict) -> list[dict]:
             inner = res.get("value") if isinstance(res.get("value"), dict) else res
         if not isinstance(inner, dict):
             continue
-        if inner.get("action") != "capture":
+        # Detect capture via kind (kvm returns kind="screenshot") or action fallback.
+        if inner.get("kind") != "screenshot" and inner.get("action") != "capture":
             continue
         path = inner.get("path") or ""
         bts = inner.get("bytes") or 0

@@ -351,3 +351,113 @@ def test_remember_known_good_flow_routes_degraded_run_aside():
     F._remember_known_good_flow(flow, execution, mem, prompt="cap")
     assert mem.known_good_flows() == []          # NOT known-good
     assert len(mem.degraded_flows()) == 1        # visible as a degraded attempt
+
+
+# ── New behaviour: timeline + proofs propagation ──────────────────────────────
+
+def test_enrich_remember_passes_user_timeline_into_record():
+    """timeline entries for user steps pass through; infra steps (drift/preflight/remember) filtered."""
+    from urirun.node.flow_thin import _enrich_remember_with_degraded
+    user_step = {"id": "cap", "uri": "kvm://host/screen/query/capture", "ok": True, "reversible": True}
+    infra_drift = {"id": "d", "uri": "twin://host/env/query/drift", "ok": True}
+    infra_remember = {"id": "r", "uri": "twin://host/memory/command/remember", "ok": True}
+    infra_preflight = {"id": "pf", "uri": "twin://host/flow/command/preflight", "ok": True}
+    timeline = [infra_drift, infra_preflight, user_step, infra_remember]
+    out = _enrich_remember_with_degraded({"record": {"steps": []}}, {}, timeline=timeline)
+    stored_tl = out["record"].get("timeline", [])
+    assert len(stored_tl) == 1, f"expected 1 user step, got {len(stored_tl)}: {stored_tl}"
+    assert stored_tl[0]["uri"] == "kvm://host/screen/query/capture"
+    assert stored_tl[0].get("reversible") is True
+
+
+def test_enrich_remember_extracts_capture_proofs():
+    """A successful capture step generates a proof entry in captureProofs."""
+    from urirun.node.flow_thin import _enrich_remember_with_degraded
+    results = {
+        "cap": {"ok": True, "result": {
+            "kind": "screenshot", "path": "/tmp/urirun-shot.png",
+            "bytes": 123000, "via": "mutter",
+        }}
+    }
+    out = _enrich_remember_with_degraded({"record": {}}, results, timeline=[])
+    proofs = out["record"].get("captureProofs", [])
+    assert len(proofs) == 1
+    p = proofs[0]
+    assert p["kind"] == "file"
+    assert p["path"] == "/tmp/urirun-shot.png"
+    assert p["bytes"] == 123000
+    assert p["step"] == "cap"
+
+
+def test_capture_proofs_from_results_ignores_non_capture_steps():
+    from urirun.node.flow_thin import _capture_proofs_from_results
+    results = {
+        "navigate": {"ok": True, "result": {"action": "navigate", "url": "https://x"}},
+        "cap": {"ok": True, "result": {
+            "value": {"action": "capture", "path": "/tmp/urirun-s.png", "bytes": 50000, "via": "mutter"}
+        }},
+        "failed_cap": {"ok": False, "result": {"action": "capture", "path": "/tmp/bad.png", "bytes": 0}},
+    }
+    proofs = _capture_proofs_from_results(results)
+    assert len(proofs) == 1          # only the successful one with bytes > 0
+    assert proofs[0]["path"] == "/tmp/urirun-s.png"
+
+
+def test_plan_with_preflight_marks_step_optional():
+    """Preflight step must be optional so NOT_FOUND doesn't abort the flow."""
+    cdp_steps = [{"id": "s", "uri": "browser://cdp/page/query/screenshot", "payload": {}, "depends_on": []}]
+    plan = F._plan_with_preflight(cdp_steps, execute=True)
+    assert len(plan) == 2
+    assert plan[0]["uri"] == F._THIN_PREFLIGHT_URI
+    assert plan[0].get("optional") is True, "preflight must be optional"
+
+
+def test_flow_timeline_entry_reversible_field():
+    """_flow_timeline_entry sets reversible=True for /query/ URIs, False otherwise."""
+    from urirun.node.flow import _flow_timeline_entry
+    q_step = {"id": "q", "uri": "kvm://host/screen/query/capture"}
+    cmd_step = {"id": "c", "uri": "kvm://host/ui/command/click"}
+    env_ok = {"ok": True}
+    env_fail = {"ok": False, "error": {"category": "ACTION_FAILED", "message": "miss"}}
+    q_entry = _flow_timeline_entry(q_step, env_ok, [])
+    assert q_entry.get("reversible") is True
+    c_entry = _flow_timeline_entry(cmd_step, env_fail, [])
+    assert c_entry.get("reversible") is False
+
+
+def test_inprocess_discovery_exception_returns_error_dict():
+    """When _in_process_discovery raises, it should return an error dict, not None."""
+    import sys
+    from unittest.mock import patch
+    from urirun.node.flow import _in_process_discovery
+    with patch("urirun.runtime.discovery.registry_for_uri", side_effect=RuntimeError("boom")):
+        result = _in_process_discovery("twin://host/flow/command/preflight", {})
+    assert result is not None, "must not return None — None causes silent swallowing"
+    assert result.get("ok") is False
+    assert result["error"]["category"] == "INPROCESS_ERROR"
+    assert "boom" in result["error"]["message"]
+
+
+def test_remember_handler_writes_capture_proofs_to_proof_store():
+    """The /memory/command/remember handler writes capture proofs to memory.proof_store."""
+    mem = TwinMemory()
+    flow = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture", "payload": {}}]}
+    # Simulate thin driver calling remember handler via _make_memory_dispatch
+    dispatch = F._make_memory_dispatch(
+        lambda uri, payload: {"ok": True},  # base_dispatch stub
+        mem, flow, registry={},
+    )
+    # Payload the remember handler receives after _enrich_remember_with_degraded
+    result = dispatch("twin://host/memory/command/remember", {
+        "nodes": [],
+        "record": {
+            "steps": flow["steps"],
+            "captureProofs": [{"kind": "file", "step": "cap",
+                               "path": "/tmp/urirun-shot.png", "bytes": 753000, "via": "mutter"}],
+        },
+    })
+    assert result.get("ok") is True
+    proofs = list(mem.proof_store.values())
+    assert len(proofs) == 1
+    assert proofs[0]["path"] == "/tmp/urirun-shot.png"
+    assert proofs[0]["verdict"] is True

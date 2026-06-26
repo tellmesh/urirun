@@ -1,23 +1,23 @@
-# redup/duplication | 14 groups | 124f 36440L | 2026-06-26
+# redup/duplication | 13 groups | 125f 36668L | 2026-06-26
 
 SUMMARY:
-  files_scanned: 124
-  total_lines:   36440
-  dup_groups:    14
-  dup_fragments: 35
-  saved_lines:   124
-  scan_ms:       1028
+  files_scanned: 125
+  total_lines:   36668
+  dup_groups:    13
+  dup_fragments: 32
+  saved_lines:   118
+  scan_ms:       966
 
 HOTSPOTS[7] (files with most duplication):
   __init__.py  dup=38L  groups=1  frags=3  (0.1%)
-  runtime/v2.py  dup=35L  groups=4  frags=9  (0.1%)
   host/host_dashboard.py  dup=34L  groups=2  frags=4  (0.1%)
+  runtime/v2.py  dup=25L  groups=2  frags=6  (0.1%)
   host/dashboard_api.py  dup=25L  groups=2  frags=5  (0.1%)
   host/service_control.py  dup=20L  groups=1  frags=2  (0.1%)
   runtime/worker.py  dup=8L  groups=1  frags=2  (0.0%)
   host/chat_orchestrator.py  dup=7L  groups=1  frags=1  (0.0%)
 
-DUPLICATES[14] (ranked by impact):
+DUPLICATES[13] (ranked by impact):
   [a58866334f01e99a] ! STRU  command  L=16 N=3 saved=32 sim=1.00
       __init__.py:47-62  (command)
       __init__.py:65-69  (shell)
@@ -27,25 +27,24 @@ DUPLICATES[14] (ranked by impact):
       host/host_dashboard.py:1728-1736  (_free_port_from_old_chat)
       host/host_dashboard.py:1739-1747  (_free_port_from_old_android_node)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
-      runtime/v2.py:1533-1536  (_cmd_add_openapi)
-      runtime/v2.py:1539-1542  (_cmd_gen)
-      runtime/v2.py:1772-1775  (_cmd_agent)
-      runtime/v2.py:1850-1853  (_cmd_host)
-      runtime/v2.py:1856-1859  (_cmd_node)
+      runtime/v2.py:1526-1529  (_cmd_add_openapi)
+      runtime/v2.py:1532-1535  (_cmd_gen)
+      runtime/v2.py:1765-1768  (_cmd_agent)
+      runtime/v2.py:1843-1846  (_cmd_host)
+      runtime/v2.py:1849-1852  (_cmd_node)
   [19899f9cfc86ca65]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
-  [b7534632e49155f1]   STRU  _host_db  L=3 N=4 saved=9 sim=1.00
-      host/dashboard_api.py:29-31  (_host_db)
-      host/dashboard_api.py:34-36  (_mesh)
-      host/dashboard_api.py:39-41  (_planfile_adapter)
-      runtime/v2.py:634-637  (_host_integrations)
   [c0959dfe39e9f547]   STRU  _api_checks  L=8 N=2 saved=8 sim=1.00
       host/dashboard_api.py:137-144  (_api_checks)
       host/dashboard_api.py:147-154  (_api_logs)
   [b6b2d4461c71c62d]   STRU  chat_message  L=7 N=2 saved=7 sim=1.00
       host/chat_orchestrator.py:48-54  (chat_message)
       host/host_dashboard.py:373-379  (_chat_message)
+  [b7534632e49155f1]   STRU  _host_db  L=3 N=3 saved=6 sim=1.00
+      host/dashboard_api.py:29-31  (_host_db)
+      host/dashboard_api.py:34-36  (_mesh)
+      host/dashboard_api.py:39-41  (_planfile_adapter)
   [3fed59bde8ae1620]   EXAC  replace  L=5 N=2 saved=5 sim=1.00
       runtime/v1.py:68-72  (replace)
       runtime/v2.py:507-511  (replace)
@@ -62,13 +61,10 @@ DUPLICATES[14] (ranked by impact):
       node/doctor.py:74-76  (_api_id)
       node/transport.py:407-409  (_configured_api_id)
   [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
-      node/node_cli.py:96-98  (_data_artifact_register)
-      node/node_cli.py:105-107  (_data_check_add)
-  [79640e1194086855]   STRU  planfile_task_bindings  L=3 N=2 saved=3 sim=1.00
-      runtime/v2.py:640-642  (planfile_task_bindings)
-      runtime/v2.py:649-651  (host_data_bindings)
+      node/node_cli.py:97-99  (_data_artifact_register)
+      node/node_cli.py:106-108  (_data_check_add)
 
-REFACTOR[14] (ranked by priority):
+REFACTOR[13] (ranked by priority):
   [1] ○ extract_function   → utils/command.py
       WHY: 3 occurrences of 16-line block across 1 files — saves 32 lines
       FILES: __init__.py
@@ -81,15 +77,15 @@ REFACTOR[14] (ranked by priority):
   [4] ○ extract_function   → host/utils/is_scanner_process.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: host/service_control.py
-  [5] ○ extract_function   → utils/_host_db.py
-      WHY: 4 occurrences of 3-line block across 2 files — saves 9 lines
-      FILES: host/dashboard_api.py, runtime/v2.py
-  [6] ○ extract_function   → host/utils/_api_checks.py
+  [5] ○ extract_function   → host/utils/_api_checks.py
       WHY: 2 occurrences of 8-line block across 1 files — saves 8 lines
       FILES: host/dashboard_api.py
-  [7] ○ extract_function   → host/utils/chat_message.py
+  [6] ○ extract_function   → host/utils/chat_message.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: host/chat_orchestrator.py, host/host_dashboard.py
+  [7] ○ extract_function   → host/utils/_host_db.py
+      WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
+      FILES: host/dashboard_api.py
   [8] ○ extract_function   → runtime/utils/replace.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: runtime/v1.py, runtime/v2.py
@@ -108,9 +104,6 @@ REFACTOR[14] (ranked by priority):
   [13] ○ extract_function   → node/utils/_data_artifact_register.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/node_cli.py
-  [14] ○ extract_function   → runtime/utils/planfile_task_bindings.py
-      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
-      FILES: runtime/v2.py
 
 QUICK_WINS[7] (low risk, high savings — do first):
   [1] extract_function   saved=32L  → utils/command.py
@@ -121,31 +114,26 @@ QUICK_WINS[7] (low risk, high savings — do first):
       FILES: v2.py
   [4] extract_function   saved=10L  → host/utils/is_scanner_process.py
       FILES: service_control.py
-  [5] extract_function   saved=9L  → utils/_host_db.py
-      FILES: dashboard_api.py, v2.py
-  [6] extract_function   saved=8L  → host/utils/_api_checks.py
+  [5] extract_function   saved=8L  → host/utils/_api_checks.py
       FILES: dashboard_api.py
-  [7] extract_function   saved=7L  → host/utils/chat_message.py
+  [6] extract_function   saved=7L  → host/utils/chat_message.py
       FILES: chat_orchestrator.py, host_dashboard.py
+  [7] extract_function   saved=6L  → host/utils/_host_db.py
+      FILES: dashboard_api.py
 
-DEPENDENCY_RISK[1] (duplicates spanning multiple packages):
-  _host_db  packages=2  files=2
-      host/dashboard_api.py
-      runtime/v2.py
-
-EFFORT_ESTIMATE (total ≈ 4.4h):
+EFFORT_ESTIMATE (total ≈ 3.9h):
   medium command                             saved=32L  ~64min
   medium _free_port_from_old_scanner         saved=18L  ~36min
   medium _cmd_add_openapi                    saved=16L  ~32min
   easy   is_scanner_process                  saved=10L  ~20min
-  medium _host_db                            saved=9L  ~36min
   easy   _api_checks                         saved=8L  ~16min
   easy   chat_message                        saved=7L  ~14min
+  easy   _host_db                            saved=6L  ~12min
   easy   replace                             saved=5L  ~10min
   easy   close                               saved=4L  ~8min
   easy   start_ticket                        saved=3L  ~6min
-  ... +4 more (~24min)
+  ... +3 more (~18min)
 
 METRICS-TARGET:
-  dup_groups:  14 → 0
-  saved_lines: 124 lines recoverable
+  dup_groups:  13 → 0
+  saved_lines: 118 lines recoverable

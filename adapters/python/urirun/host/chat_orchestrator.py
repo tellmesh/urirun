@@ -518,6 +518,38 @@ def _chat_ask_general_planner_failure(
     return result
 
 
+def _register_step_artifacts(result: dict, db: str | None, host_db) -> int:
+    """Catalog frozen-artifact step results so a mesh-routed capture gets a durable artifact
+    address, not just a transient chat attachment.
+
+    A step result tagged per the urirun.tag contract as a frozen artifact (``live=False`` with a
+    ``kind`` and an on-disk ``path``) — e.g. a screenshot from kvm://…/screen/query/capture — is
+    registered in the artifact store. Mesh-routed steps bypass _run_inprocess_connector_uri's
+    register hook, so registration happens here at flow completion. Best-effort: never raises."""
+    results = result.get("results") or {}
+    uri_by_id = {t.get("id"): t.get("uri") for t in (result.get("timeline") or []) if isinstance(t, dict)}
+    registered = 0
+    for sid, sr in results.items():
+        if not isinstance(sr, dict):
+            continue
+        res = sr.get("result")
+        val = res.get("value") if isinstance(res, dict) else None
+        if not isinstance(val, dict):
+            # inprocess_fallback unwraps result.value into result directly
+            val = res if isinstance(res, dict) else sr
+        if not (isinstance(val, dict) and val.get("live") is False and val.get("kind")):
+            continue
+        path = str(val.get("path") or "")
+        if not path or not os.path.isfile(os.path.expanduser(path)):
+            continue
+        try:
+            host_db.register_artifact(db, str(val.get("kind")), uri_by_id.get(sid) or "", path, val)
+            registered += 1
+        except Exception:  # noqa: BLE001 - a catalog hiccup must not fail the chat turn
+            pass
+    return registered
+
+
 def _general_path_complete(
     result: dict,
     db: str | None,
@@ -548,6 +580,8 @@ def _general_path_complete(
                         intent_sig=_ep_ids.get("intent_sig", ""),
                         outcome_status=_ep_ids.get("outcome_status", status),
                         next_intent=_ep_ids.get("next_intent", ""))
+    if execute and db is not None:
+        _register_step_artifacts(result, db, deps.host_db_fn())
     if attachments:
         content += f", {len(attachments)} attachment(s)"
     deps.add_chat_message_fn(db, chat_message(

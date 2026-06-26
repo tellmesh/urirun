@@ -18,6 +18,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 from typing import Any
 
 _DOMAIN_RESULT_MAX = 50  # default upper bound on records returned by run_daily
@@ -136,6 +137,19 @@ def capture_screenshot_artifact(
     return host_db.register_artifact(db, "screenshot", artifact_uri, str(path), content)
 
 
+# Repair-ticket creation is a CAPABILITY the monitor consumes. The host INJECTS it
+# (set_ticket_creator -> planfile_adapter.create_ticket) so this module never imports the
+# planfile host layer and stays liftable as its own connector (extraction boundary). With no
+# creator wired it degrades gracefully: a monitor run never fails for lack of a ticket backend.
+_ticket_creator: "Callable[[str | None, dict], dict] | None" = None
+
+
+def set_ticket_creator(fn: "Callable[[str | None, dict], dict] | None") -> None:
+    """Inject the repair-ticket creator; keeps domain_monitor decoupled from the planfile layer."""
+    global _ticket_creator
+    _ticket_creator = fn
+
+
 def create_dns_repair_ticket(
     *,
     project: str,
@@ -144,35 +158,34 @@ def create_dns_repair_ticket(
     expected: dict,
     mismatches: list[dict],
 ) -> dict:
-    from urirun.host import planfile_adapter
-
     prompt = (
         f"Review DNS mismatch for {domain}. "
         f"Expected={json.dumps(expected, sort_keys=True)} "
         f"Current={json.dumps(current.get('records') or {}, sort_keys=True)}. "
         "Prepare a safe DNS plan only; do not apply changes automatically."
     )
-    return planfile_adapter.create_ticket(
-        project,
-        {
-            "name": f"Review DNS mismatch: {domain}",
-            "description": prompt,
-            "priority": "high",
-            "labels": ["domain", "dns", "repair", "review"],
-            "queue": "review",
-            "executor_kind": "uri-flow",
-            "executor_mode": "interactive",
-            "executor_handler": "dns://host/records/command/plan",
-            "prompt": prompt,
-            "source_tool": "urirun-domain-monitor",
-            "source_context": {
-                "domain": domain,
-                "current": current,
-                "expected": expected,
-                "mismatches": mismatches,
-            },
+    ticket = {
+        "name": f"Review DNS mismatch: {domain}",
+        "description": prompt,
+        "priority": "high",
+        "labels": ["domain", "dns", "repair", "review"],
+        "queue": "review",
+        "executor_kind": "uri-flow",
+        "executor_mode": "interactive",
+        "executor_handler": "dns://host/records/command/plan",
+        "prompt": prompt,
+        "source_tool": "urirun-domain-monitor",
+        "source_context": {
+            "domain": domain,
+            "current": current,
+            "expected": expected,
+            "mismatches": mismatches,
         },
-    )
+    }
+    if _ticket_creator is None:
+        return {"skipped": "no ticket backend wired (host injects via set_ticket_creator)",
+                "ticket": ticket}
+    return _ticket_creator(project, ticket)
 
 
 def check_domain(

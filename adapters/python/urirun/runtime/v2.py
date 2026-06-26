@@ -712,7 +712,7 @@ def _last_json_object(text: str) -> dict:
 from urirun.runtime.introspect import run_registry_introspect
 
 if not hasattr(v1, "EXECUTORS"):  # import-environment guard, not a logic error
-    import urirun as _pkg
+    _pkg = sys.modules.get("urirun")  # already loaded — no upward import needed
     raise ImportError(
         "urirun looks shadowed by an empty namespace package — urirun.v1 has no "
         f"EXECUTORS (urirun.__file__={getattr(_pkg, '__file__', None)!r}, "
@@ -1859,11 +1859,11 @@ def _builtin_binding_items(target: str = "local") -> list[dict]:
     builtin fallback in ``_run_resolve_route``; surfacing them here keeps ``list``
     in sync with ``run`` so they are discoverable, not just runnable.
     """
-    from urirun import error_bindings
+    from urirun.runtime.errors import bindings as _error_bindings  # noqa: PLC0415 — avoids urirun package import
     from urirun.runtime.introspect import registry_introspect_bindings
 
     items: list[dict] = []
-    for document in (error_bindings(target), registry_introspect_bindings(target)):
+    for document in (_error_bindings(target), registry_introspect_bindings(target)):
         items.extend(expand_bindings(document)["bindings"])
     return items
 

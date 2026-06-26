@@ -29,7 +29,8 @@ jobs:
           python scripts/extraction_audit.py --selftest
           PYTHONPATH=adapters/python python -m pytest -q \
             adapters/python/tests/test_scanner_extractable.py \
-            adapters/python/tests/test_runtime_extractable.py
+            adapters/python/tests/test_runtime_extractable.py \
+            adapters/python/tests/test_connector_extractable.py
       - run: make test
       - name: Verify urirun[grpc] optional extra
         run: |

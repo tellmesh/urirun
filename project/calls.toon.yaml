@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
 # generated in 0.22s
-# nodes: 432 | edges: 500 | modules: 53
+# nodes: 426 | edges: 500 | modules: 44
 # CC̄=4.7
 
 HUBS[20]:
-  adapters.python.urirun.host.host_integrations._write_planfile_action
-    CC=8  in:1  out:39  total:40
-  scripts.extraction_audit.print_report
-    CC=12  in:1  out:36  total:37
-  adapters.python.urirun.host.chat_orchestrator._general_path_complete
-    CC=15  in:1  out:29  total:30
+  adapters.python.urirun.host.dashboard_http._json_response
+    CC=1  in:38  out:13  total:51
+  adapters.python.urirun.host.host_dashboard.summary
+    CC=6  in:0  out:38  total:38
+  adapters.python.urirun.host.host_dashboard._handle_get
+    CC=13  in:1  out:31  total:32
   adapters.python.urirun.host.connector_admin._connector_install_node
     CC=12  in:1  out:28  total:29
+  adapters.python.urirun.host.host_dashboard._handle_events_sse
+    CC=13  in:1  out:28  total:29
   adapters.python.urirun.host.connector_admin.connector_install
     CC=13  in:0  out:29  total:29
-  adapters.python.urirun.host.chat_orchestrator.chat_ask
-    CC=14  in:0  out:29  total:29
-  adapters.python.urirun.host.chat_orchestrator._chat_ask_document_sync
-    CC=12  in:1  out:27  total:28
+  adapters.python.urirun.host.host_dashboard._handle_post
+    CC=13  in:1  out:27  total:28
+  adapters.python.urirun.host.dashboard_http._read_json
+    CC=3  in:23  out:5  total:28
+  adapters.python.urirun.host.discovery.node_alias_map_from_env
+    CC=14  in:1  out:26  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
-  adapters.python.urirun.host.discovery.node_alias_map_from_env
-    CC=14  in:1  out:26  total:27
-  adapters.python.urirun.host.chat_orchestrator._chat_ask_general
-    CC=11  in:1  out:24  total:25
   adapters.python.urirun.host.object_registry.probe_node_token
     CC=14  in:1  out:24  total:25
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
   adapters.python.urirun.host.node_api.configured_api_headers
     CC=13  in:1  out:23  total:24
-  adapters.python.urirun.host.dashboard_api._first
-    CC=1  in:21  out:1  total:22
-  adapters.python.urirun.host.dashboard_api.chat_history
-    CC=6  in:1  out:21  total:22
+  adapters.python.urirun.host.host_dashboard._recent_scanner_artifacts
+    CC=14  in:1  out:23  total:24
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
+  adapters.python.urirun.runtime.v1.run
+    CC=14  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard.serve
+    CC=6  in:1  out:22  total:23
+  adapters.python.urirun.host.host_dashboard.uri_invoke
+    CC=12  in:2  out:21  total:23
+  adapters.python.urirun.host.host_dashboard._handle_post_nodes
+    CC=8  in:1  out:21  total:22
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
-  adapters.python.urirun.host.host_db.init_db
-    CC=2  in:15  out:6  total:21
-  adapters.python.urirun.host.connector_admin.connector_env_check
-    CC=14  in:1  out:20  total:21
-  adapters.python.urirun.host.contracts.file_transfer_verification
-    CC=4  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -106,17 +106,6 @@ MODULES:
     _check_reachability  CC=9  out:6
     _protocol_owner  CC=1  out:1
     api_node_doctor  CC=12  out:10
-  adapters.python.urirun.host.chat_orchestrator  [19 funcs]
-    _add_chat_user_message  CC=4  out:9
-    _apply_run_credentials  CC=3  out:5
-    _apply_urifix_recovery  CC=14  out:16
-    _chat_ask_document_sync  CC=12  out:27
-    _chat_ask_general  CC=11  out:24
-    _chat_ask_general_build_result  CC=9  out:17
-    _chat_ask_general_capability_gap  CC=4  out:8
-    _chat_ask_general_check_offline  CC=9  out:6
-    _chat_ask_general_planner_failure  CC=9  out:15
-    _chat_insert_twin_preview  CC=4  out:5
   adapters.python.urirun.host.connector_admin  [8 funcs]
     _connector_install_node  CC=12  out:28
     connector_env_check  CC=14  out:20
@@ -146,13 +135,18 @@ MODULES:
     _api_tasks  CC=2  out:5
     _dashboard_api_response  CC=3  out:3
     _first  CC=1  out:1
-  adapters.python.urirun.host.decision_loop  [5 funcs]
+  adapters.python.urirun.host.dashboard_http  [5 funcs]
+    _asset_response  CC=1  out:9
+    _html_response  CC=1  out:9
+    _js_sdk_response  CC=5  out:16
+    _json_response  CC=1  out:13
+    _read_json  CC=3  out:5
+  adapters.python.urirun.host.decision_loop  [4 funcs]
     decision_loop_for_document_sync  CC=11  out:9
     decision_loop_next_intent  CC=5  out:1
     decision_loop_observation  CC=7  out:0
     decision_loop_status  CC=5  out:0
-    general_path_next_intent  CC=13  out:18
-  adapters.python.urirun.host.discovery  [29 funcs]
+  adapters.python.urirun.host.discovery  [28 funcs]
     _classify_not_found  CC=7  out:6
     _node_map_from_value  CC=3  out:4
     _node_test_summary  CC=5  out:4
@@ -163,19 +157,6 @@ MODULES:
     alias_map_from_list  CC=5  out:8
     classify_route_run  CC=13  out:15
     host_config  CC=2  out:3
-  adapters.python.urirun.host.dispatch  [1 funcs]
-    make_local_dispatch_uri  CC=2  out:1
-  adapters.python.urirun.host.domain_monitor  [25 funcs]
-    _db  CC=3  out:3
-    _domain  CC=2  out:2
-    _list  CC=6  out:8
-    _namecheap_moved  CC=1  out:1
-    _persist_check_effects  CC=6  out:7
-    _project  CC=3  out:3
-    _provider  CC=4  out:5
-    _route_browser  CC=4  out:8
-    _route_dns  CC=9  out:8
-    _route_flow  CC=4  out:20
   adapters.python.urirun.host.fs_transfer  [15 funcs]
     compact_remote_run  CC=10  out:17
     deploy_fs_file_transfer_fallback  CC=3  out:9
@@ -187,8 +168,17 @@ MODULES:
     node_has_route  CC=4  out:6
     node_token_for  CC=5  out:2
     remote_read_error  CC=11  out:12
-  adapters.python.urirun.host.host_dashboard  [1 funcs]
-    _service_restart_argv  CC=1  out:1
+  adapters.python.urirun.host.host_dashboard  [72 funcs]
+    _add_chat_message  CC=2  out:2
+    _document_sync_deps  CC=1  out:2
+    _extract_document_metadata  CC=1  out:2
+    _finalize_uri_result  CC=3  out:4
+    _free_port_from_matching_processes  CC=1  out:2
+    _free_port_from_old_android_node  CC=1  out:1
+    _free_port_from_old_chat  CC=1  out:1
+    _free_port_from_old_dashboard  CC=1  out:1
+    _free_port_from_old_scanner  CC=1  out:1
+    _handle_events_sse  CC=13  out:28
   adapters.python.urirun.host.host_db  [32 funcs]
     _query_table  CC=2  out:7
     _run_command_route  CC=11  out:17
@@ -200,17 +190,6 @@ MODULES:
     add_log  CC=2  out:9
     artifacts_by_ids  CC=5  out:10
     connect  CC=1  out:5
-  adapters.python.urirun.host.host_integrations  [10 funcs]
-    _list_param  CC=6  out:6
-    _planfile_action  CC=7  out:1
-    _planfile_dsl  CC=3  out:5
-    _planfile_project  CC=4  out:5
-    _planfile_update  CC=5  out:6
-    _read_planfile_action  CC=7  out:14
-    _simulate_planfile  CC=1  out:3
-    _ticket_id  CC=5  out:5
-    _write_planfile_action  CC=8  out:39
-    run_planfile_task  CC=5  out:8
   adapters.python.urirun.host.node_api  [11 funcs]
     apply_auth_header  CC=10  out:15
     build_request_body  CC=4  out:8
@@ -241,22 +220,10 @@ MODULES:
     api_item_fields  CC=9  out:15
     apply_uri_overrides  CC=10  out:8
     build_auth_extra_fields  CC=4  out:2
-  adapters.python.urirun.host.planfile_adapter  [21 funcs]
-    _imports  CC=2  out:1
-    _model_dict  CC=1  out:1
-    _normalize_labels  CC=6  out:7
-    build_ticket_payload  CC=8  out:16
-    claim_ticket  CC=2  out:3
-    complete_ticket  CC=2  out:3
-    create_ticket  CC=3  out:7
-    fail_or_retry  CC=4  out:11
-    fail_ticket  CC=2  out:3
-    get_ticket  CC=2  out:3
-  adapters.python.urirun.host.routing  [4 funcs]
+  adapters.python.urirun.host.routing  [3 funcs]
     has_screen_capture_route  CC=8  out:6
     route_in_selected_targets  CC=14  out:10
     screen_document_capability_gap  CC=8  out:7
-    selected_nodes_from_targets  CC=8  out:12
   adapters.python.urirun.host.scheduler  [5 funcs]
     build_loop_command  CC=4  out:4
     cron_line  CC=1  out:4
@@ -285,49 +252,46 @@ MODULES:
     is_ambiguous  CC=2  out:3
     is_destructive  CC=4  out:4
     llm_plan_chat_request  CC=4  out:10
-  adapters.python.urirun.host.twin_bridge  [14 funcs]
-    _episode_artifacts  CC=15  out:14
-    _inverse_from_results  CC=11  out:17
-    _is_infra_step  CC=5  out:4
-    _publish_step_event  CC=7  out:11
-    _step_info_from_results  CC=8  out:11
-    _step_inverse  CC=15  out:5
-    _step_narration  CC=7  out:2
-    _step_status  CC=3  out:0
-    append_twin_widget  CC=14  out:11
-    capture_episode  CC=9  out:13
-  adapters.python.urirun.host.urifix_bridge  [1 funcs]
-    try_urifix_repair  CC=12  out:4
   adapters.python.urirun.host.widgets  [2 funcs]
     scanner_stream_summary  CC=10  out:17
     service_widget_summary  CC=12  out:16
-  adapters.python.urirun.node._artifacts  [1 funcs]
-    materialize_base64_artifacts  CC=1  out:16
-  adapters.python.urirun.node.episode  [2 funcs]
-    intent_signature  CC=1  out:4
-    make_episode  CC=14  out:12
-  adapters.python.urirun.node.event_schema  [1 funcs]
-    step_category  CC=3  out:1
-  adapters.python.urirun.node.flow  [1 funcs]
-    _flow_key  CC=4  out:7
-  adapters.python.urirun.node.recovery  [1 funcs]
-    planner_failure  CC=3  out:3
-  adapters.python.urirun.node.reversible  [1 funcs]
-    durable_memory  CC=1  out:1
+  adapters.python.urirun.node.node_cli  [1 funcs]
+    _maybe_load_dotenv  CC=11  out:13
+  adapters.python.urirun.node.server  [1 funcs]
+    _sse_initial_cursor  CC=4  out:5
+  adapters.python.urirun.runtime._registry  [1 funcs]
+    uri_handler  CC=1  out:2
   adapters.python.urirun.runtime._runtime  [1 funcs]
     build_policy  CC=13  out:13
+  adapters.python.urirun.runtime.codegen  [11 funcs]
+    _disambiguate_rpc_name  CC=8  out:9
+    _field_snake  CC=1  out:5
+    _field_type  CC=14  out:14
+    _message_fields  CC=9  out:15
+    _msg_pascal  CC=3  out:3
+    _pascal  CC=3  out:3
+    _routes  CC=7  out:9
+    _rpc_name  CC=5  out:2
+    _snake  CC=2  out:3
+    _uri_parts  CC=5  out:3
   adapters.python.urirun.runtime.errors  [1 funcs]
     _emit  CC=1  out:2
-  adapters.python.urirun.runtime.v2  [5 funcs]
+  adapters.python.urirun.runtime.v1  [20 funcs]
+    _binding_pairs  CC=8  out:11
+    _env_flags  CC=3  out:5
+    _has_placeholders  CC=2  out:3
+    _params_spec  CC=4  out:3
+    _proc_env  CC=3  out:6
+    _run_process  CC=3  out:10
+    _run_process_streaming  CC=7  out:20
+    compile_registry  CC=1  out:2
+    expand_binding  CC=7  out:6
+    expand_bindings  CC=2  out:2
+  adapters.python.urirun.runtime.v2  [4 funcs]
     _load_manifest  CC=1  out:2
     decorated_bindings  CC=2  out:1
     uri_command  CC=1  out:6
-    uri_handler  CC=1  out:8
     uri_shell  CC=1  out:1
-  adapters.python.urirun.runtime.v2_service  [3 funcs]
-    _post  CC=5  out:15
-    call  CC=9  out:10
-    service_base  CC=5  out:6
   adapters.python.urirun.testing  [6 funcs]
     _nonportable_routes  CC=5  out:8
     _resolve_bindings  CC=5  out:8
@@ -350,17 +314,6 @@ MODULES:
     _iter_py  CC=8  out:6
     find_offenders  CC=6  out:7
     main  CC=3  out:10
-  scripts.extraction_audit  [11 funcs]
-    _allowed_down  CC=6  out:3
-    _resolve_from  CC=4  out:3
-    _selftest  CC=7  out:18
-    audit  CC=5  out:13
-    classify  CC=10  out:7
-    discover_modules  CC=3  out:3
-    edges_in_file  CC=9  out:12
-    main  CC=7  out:15
-    module_name  CC=3  out:4
-    print_report  CC=12  out:36
   scripts.lint_connectors  [6 funcs]
     _flags  CC=5  out:11
     _lint_exit_code  CC=13  out:13
@@ -391,17 +344,6 @@ EDGES:
   scripts.lint_connectors.main → scripts.lint_connectors.lint_fleet
   scripts.lint_connectors.main → scripts.lint_connectors._lint_exit_code
   scripts.lint_connectors.main → scripts.lint_connectors._print_fleet_report
-  scripts.extraction_audit.discover_modules → scripts.extraction_audit.module_name
-  scripts.extraction_audit.edges_in_file → scripts.extraction_audit._resolve_from
-  scripts.extraction_audit.classify → scripts.extraction_audit._allowed_down
-  scripts.extraction_audit.audit → scripts.extraction_audit.discover_modules
-  scripts.extraction_audit.audit → scripts.extraction_audit.resolve_package
-  scripts.extraction_audit.audit → scripts.extraction_audit.classify
-  scripts.extraction_audit._selftest → scripts.extraction_audit.classify
-  scripts.extraction_audit._selftest → scripts.extraction_audit._resolve_from
-  scripts.extraction_audit.main → scripts.extraction_audit.audit
-  scripts.extraction_audit.main → scripts.extraction_audit.print_report
-  scripts.extraction_audit.main → scripts.extraction_audit._selftest
   scripts.repin_connectors._pypi_write_guard → scripts.repin_connectors.pypi_has
   scripts.repin_connectors._repin_one → scripts.repin_connectors.classify
   scripts.repin_connectors._repin_one → scripts.repin_connectors.repin_text
@@ -428,3 +370,14 @@ EDGES:
   adapters.python.urirun.dispatch → adapters.python.urirun.build_invocation
   adapters.python.urirun.dispatch → adapters.js.fn
   adapters.python.urirun.command → adapters.python.urirun.runtime.v2.uri_command
+  adapters.python.urirun.shell → adapters.python.urirun.runtime.v2.uri_shell
+  adapters.python.urirun.handler → adapters.python.urirun.runtime._registry.uri_handler
+  adapters.python.urirun.policy → adapters.python.urirun.runtime._runtime.build_policy
+  adapters.python.urirun.result_degraded → adapters.python.urirun.result_data
+  adapters.python.urirun.run_steps → adapters.python.urirun.run
+  adapters.python.urirun.run_steps → adapters.python.urirun.result_data
+  adapters.python.urirun.run_steps → adapters.python.urirun.policy
+  adapters.python.urirun.Connector._dispatch_cli → adapters.python.urirun.connector_emit
+  adapters.python.urirun.Connector.registry → adapters.python.urirun.compile_registry
+  adapters.python.urirun.Connector.registry → adapters.python.urirun.runtime.v2.decorated_bindings
+  adapters.python.urirun.Connector._live_bindings → adapters.python.urirun.runtime.v2.decorated_bindings

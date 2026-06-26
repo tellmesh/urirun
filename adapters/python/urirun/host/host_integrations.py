@@ -349,7 +349,11 @@ def domain_monitor_bindings(
 
 def run_domain_monitor(ctx: dict, policy: dict, execute: bool) -> dict:
     from urirun import domain_monitor
+    from urirun.host import planfile_adapter
 
+    # Wire the repair-ticket capability at the host boundary (domain_monitor stays decoupled
+    # from the planfile layer so it remains liftable as its own connector). Idempotent.
+    domain_monitor.set_ticket_creator(planfile_adapter.create_ticket)
     result = domain_monitor.run_uri_route(ctx, execute)
     if isinstance(result.get("ok"), bool):
         result.setdefault("exitCode", 0 if result["ok"] else 1)

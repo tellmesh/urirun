@@ -73,6 +73,23 @@ PRESETS: dict[str, dict] = {
         "package_prefixes": (),
         "allow_outward": ("urirun.runtime.", "urirun.node."),
     },
+    "E": {
+        "name": "connectors toolkit",
+        "package": set(),
+        "package_prefixes": ("urirun.connectors.",),
+        # The connector toolkit sits DOWN on the kernel only — node/host edges are blockers.
+        # The bare `urirun` umbrella is the public-API facade (urirun.ok/connector/run), allowed.
+        "allow_outward": ("urirun.runtime.",),
+        "allow_exact": ("urirun",),
+    },
+    "F": {
+        "name": "node layer",
+        "package": set(),
+        "package_prefixes": ("urirun.node.",),
+        # node sits on the kernel + connector toolkit + public facade; host edges are blockers.
+        "allow_outward": ("urirun.runtime.", "urirun.connectors."),
+        "allow_exact": ("urirun",),
+    },
 }
 
 
@@ -160,7 +177,9 @@ def edges_in_file(path: Path, cur_mod: str, known: set[str]) -> list[Edge]:
 
 # ───────────────────────────────────────────────────────── classification ──── #
 
-def _allowed_down(target: str, allow: tuple[str, ...]) -> bool:
+def _allowed_down(target: str, allow: tuple[str, ...], allow_exact: tuple[str, ...] = ()) -> bool:
+    if target in allow_exact:
+        return True
     for a in allow:
         if a.endswith("."):
             if target.startswith(a):
@@ -178,7 +197,7 @@ def resolve_package(modules: set[str], spec: dict) -> set[str]:
 
 
 def classify(edges: list[Edge], package: set[str], allow: tuple[str, ...],
-             known: set[str]) -> Report:
+             known: set[str], allow_exact: tuple[str, ...] = ()) -> Report:
     """Classify import edges. A target is a STAYING project module iff it is in ``known``
     (the discovered module set) — namespace-agnostic, so the same logic audits any package."""
     rep = Report(package=package)
@@ -188,7 +207,7 @@ def classify(edges: list[Edge], package: set[str], allow: tuple[str, ...],
                 continue                                   # intra-package
             if e.target not in known:
                 rep.external_deps.add(e.target.split(".")[0])   # third-party / stdlib
-            elif _allowed_down(e.target, allow):
+            elif _allowed_down(e.target, allow, allow_exact):
                 rep.allowed.append(e)                      # allowed downward dep
             else:
                 rep.outward.append(e)                      # blocking
@@ -210,7 +229,8 @@ def audit(root: Path, spec: dict) -> Report:
     edges: list[Edge] = []
     for mod, path in mods.items():
         edges.extend(edges_in_file(path, mod, known))
-    return classify(edges, package, tuple(spec.get("allow_outward") or ()), known)
+    return classify(edges, package, tuple(spec.get("allow_outward") or ()), known,
+                    tuple(spec.get("allow_exact") or ()))
 
 
 # ───────────────────────────────────────────────────────── reporting ──── #
