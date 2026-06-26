@@ -78,12 +78,12 @@ def docker_install_target(source: str, spec: str) -> tuple[list[str] | None, str
 def run_docker_check(cmd: list[str]) -> tuple[Any, dict | None]:
     """Run the docker smoke command; return (completed_process, None) or (None, error_dict)."""
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=_CONNECTOR_DOCKER_TIMEOUT), None
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=CONNECTOR_DOCKER_TIMEOUT), None
     except FileNotFoundError:
         return None, {"ok": False, "error": "docker not available on host"}
     except subprocess.TimeoutExpired:
         return None, {"ok": False, "command": " ".join(cmd),
-                      "error": "docker check timed out after " + str(_CONNECTOR_DOCKER_TIMEOUT) + "s"}
+                      "error": "docker check timed out after " + str(CONNECTOR_DOCKER_TIMEOUT) + "s"}
     except Exception as exc:  # noqa: BLE001
         return None, {"ok": False, "command": " ".join(cmd), "error": str(exc)}
 
