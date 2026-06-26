@@ -220,6 +220,32 @@ genuine drift:
 - `urirun-connector-linkedin/connector.manifest.json`: updated all routes from
   `linkedin://me/` → `linkedin://host/`.
 
+## Landed (2026-06-26): scanner_bridge + object_registry — Phase R session 2
+
+**scanner_bridge.py additions (7 commits):**
+
+scanner state (SCANNER_BEST_LOCK, SCANNER_BEST_SESSIONS, SCANNER_LIVE_STREAMS), live-store,
+update/take, staging_dir, quality scoring cluster (11 fns: bounded, frame_visual_metrics,
+crop_dimensions, crop_geometry_score, crop_quality_score, doctype_quality_score,
+metadata_quality_score, ocr_quality_score, visual_quality_score, document_frame_quality,
+orientation_summary), capture pipeline (11 fns: decode_capture_image, capture_quality_ok,
+capture_display_path, cleanup_duplicate_scan_files, resolve_best_candidate, best_quality_rejected,
+best_candidate_paths, best_crop_and_ocr, best_series_not_found, store_best_finish,
+best_finish_store_failure), capture_reject_result, capture_candidate_result, scanner_live_state.
+Dead shims removed: _scanner_public_candidate_for_live, _scanner_flow_result, scanner_session.
+
+**object_registry.py additions (4 commits):**
+
+node-API utilities (16 fns: mirror_node_to_nodes_file, node_api_slug, node_api_secret_ref,
+store_node_api_secret, extract_raw_secret, extract_secret_ref, build_auth_extra_fields,
+normalize_node_api_auth, default_api_items, api_item_fields, normalize_api_item,
+normalize_node_apis, derive_node_capabilities, build_node_entry, persist_node_to_config,
+node_remove_from_mirror), node kinds sidecar (5 fns), configured-API cluster (16 symbols).
+
+host_dashboard: 11820 → 10722 L (−1098); scanner_bridge: 670 → 1146 L (+476);
+object_registry: 225 → 749 L (+524). 1212 tests green (1 pre-existing mesh test
+flaky due to separate mesh.py→server.py split in progress).
+
 ## Landed (2026-06-26): document_sync — batches 2–4
 
 **Phase R progress (2026-06-26), document_sync.py (three incremental commits):**
