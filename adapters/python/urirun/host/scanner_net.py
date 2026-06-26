@@ -1,13 +1,4 @@
-from urirun_connector_scanner.scanner_net import *  # noqa: F401, F403
-from urirun_connector_scanner.scanner_net import (  # noqa: F401
-    _ensure_tls_cert,
-    _lan_host,
-    _phone_scanner_external_status,
-    _phone_scanner_url,
-    _probe_scanner_url,
-    _public_base_url,
-    _scanner_autonomy_params,
-    _scanner_page_url,
-    _url_host,
-    _write_qr_png,
-)
+# Back-compat shim — moved to urirun_scanner.scanner_net (Phase 5 scanner extraction).
+import sys as _sys
+from urirun_scanner import scanner_net as _moved
+_sys.modules[__name__] = _moved

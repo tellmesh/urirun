@@ -1,6 +1,4 @@
-from urirun_connector_scanner.document_sync import *  # noqa: F401, F403
-from urirun_connector_scanner.document_sync import (  # noqa: F401
-    _DOCUMENT_INDEX_LOCK,
-    _transaction_fingerprint,
-    _fingerprint_match_count,
-)
+# Back-compat shim — moved to urirun_scanner.document_sync (Phase 5 scanner extraction).
+import sys as _sys
+from urirun_scanner import document_sync as _moved
+_sys.modules[__name__] = _moved
