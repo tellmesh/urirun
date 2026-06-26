@@ -1042,3 +1042,105 @@ def node_remove(config: "str | None", payload: dict, *, forget_webpage: "Any" = 
     node_remove_kind(name)
     forgot = forget_webpage(name) if (forget_webpage and (transient or not removed)) else False
     return {"ok": True, "name": name, "removed": removed, "forgot": forgot, "transient": transient}
+
+
+def node_envelope_error(envelope: dict) -> str:
+    env = envelope.get("envelope") if isinstance(envelope, dict) else None
+    err = (env or {}).get("error") if isinstance(env, dict) else None
+    if isinstance(err, dict):
+        return str(err.get("message") or "odrzucone")
+    if isinstance(err, str):
+        return err
+    value = envelope.get("value") if isinstance(envelope, dict) else None
+    if isinstance(value, dict) and value.get("error"):
+        return str(value["error"])
+    return "odrzucone"
+
+
+def probe_node_token(
+    name: str,
+    *,
+    node_url_fn: "Callable[[str], str | None]",
+    token: "str | None" = None,
+    identity: "str | None" = None,
+    timeout: float = 8.0,
+) -> dict:
+    """Check whether a token (and/or the host's enrolled key) authorizes management on node
+    ``name`` — by calling the read-only ``node://<self>/registry/query/installed`` route, which is
+    admin-gated. Returns ``{reachable, tokenValid, tokenReason, keyValid, keyAuth}``; no side
+    effects beyond a query, the token value is never logged."""
+    from .fs_transfer import run_node_uri as _run_node_uri  # noqa: PLC0415
+    url = node_url_fn(name) or (known_nodes_file_urls() or {}).get(name, "")
+    if not url:
+        return {"reachable": False, "reason": "nieznany URL węzła — najpierw dodaj node"}
+    self_name, key_auth = name, False
+    try:
+        request = urllib.request.Request(url.rstrip("/") + "/health", method="GET")
+        with urllib.request.urlopen(request, timeout=timeout) as resp:
+            health = json.loads(resp.read().decode("utf-8") or "{}")
+        self_name = str(health.get("name") or name)
+        key_auth = bool(health.get("keyAuth") or (health.get("policy") or {}).get("keyAuth"))
+    except Exception as exc:  # noqa: BLE001
+        return {"reachable": False, "reason": f"węzeł nieosiągalny: {exc}"}
+    probe = f"node://{self_name}/registry/query/installed"
+    out: dict = {"reachable": True, "keyAuth": key_auth}
+    if token:
+        try:
+            res = _run_node_uri(url, probe, {}, token=token, timeout=timeout)
+            out["tokenValid"] = bool(res.get("ok"))
+            if not res.get("ok"):
+                out["tokenReason"] = node_envelope_error(res)
+        except Exception as exc:  # noqa: BLE001
+            out["tokenValid"] = False
+            out["tokenReason"] = str(exc)
+    if identity:
+        try:
+            out["keyValid"] = bool(_run_node_uri(url, probe, {}, identity=identity, timeout=timeout).get("ok"))
+        except Exception:  # noqa: BLE001
+            out["keyValid"] = False
+    return out
+
+
+def node_set_token(
+    config: "str | None",
+    payload: dict,
+    *,
+    node_url_fn: "Callable[[str], str | None]",
+    identity: "str | None" = None,
+) -> dict:
+    """Store a node's management token (X-Urirun-Token) the user typed in the Nodes view — into the
+    OS keyring (the system's secret store), never plaintext. Records only a non-secret reference
+    (`secret://keyring/urirun-node-token/<name>`) on the node config so the run path knows a token
+    exists. The token value is never persisted in config, returned, or logged."""
+    payload = payload if isinstance(payload, dict) else {}
+    name = str(payload.get("name") or "").strip()
+    secret = str(payload.get("token") or "")
+    if not name or not secret:
+        return {"ok": False, "error": "name and token are required"}
+    try:
+        import keyring  # noqa: PLC0415
+        keyring.set_password("urirun-node-token", name, secret)
+    except Exception as exc:  # noqa: BLE001 - never fall back to plaintext
+        return {"ok": False, "error": f"could not store token securely (keyring): {exc}. "
+                                      f"Install keyring or set X-Urirun-Token via host env instead."}
+    token_ref = f"secret://keyring/urirun-node-token/{name}"
+    try:  # mark a non-secret reference on the node so the UI/run path know a token is set
+        from urirun.node import config as node_config  # noqa: PLC0415
+        cfg = node_config.load_host_config(config)
+        for node in cfg.get("nodes", []):
+            if isinstance(node, dict) and node.get("name") == name:
+                node["tokenRef"] = token_ref
+                node.pop("token", None)  # defensive: never keep a plaintext token in config
+                node_config.save_host_config(cfg, config)
+                break
+    except Exception:  # noqa: BLE001 - the marker is best-effort; the keyring store is authoritative
+        pass
+    result = {"ok": True, "name": name, "stored": "keyring", "tokenRef": token_ref}
+    try:
+        check = probe_node_token(name, node_url_fn=node_url_fn, token=secret, identity=identity)
+        result["check"] = check
+        result["valid"] = check.get("tokenValid") if check.get("reachable") else None
+    except Exception as exc:  # noqa: BLE001 - validation is best-effort; the store already succeeded
+        result["check"] = {"reachable": False, "reason": str(exc)}
+        result["valid"] = None
+    return result

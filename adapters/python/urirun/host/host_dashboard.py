@@ -161,6 +161,9 @@ from .object_registry import (
     annotate_node_kinds as _annotate_node_kinds,
     node_add as _node_add_impl,
     node_remove as _node_remove_impl,
+    node_envelope_error as _node_envelope_error_impl,
+    probe_node_token as _probe_node_token_impl,
+    node_set_token as _node_set_token_impl,
 )
 from .connector_admin import (
     CONNECTOR_DOCKER_TIMEOUT as _CONNECTOR_DOCKER_TIMEOUT,
@@ -281,6 +284,7 @@ from .scanner_bridge import (
     ensure_best_overlay as _ensure_best_overlay_impl,
     scanner_capture as _scanner_capture_impl,
     scanner_best_finish as _scanner_best_finish_impl,
+    register_scanner_result as _register_scanner_result_impl,
 )
 # Backward-compat alias — tests and older callers used _PAGE_ACTION_QUEUES.
 _PAGE_ACTION_QUEUES = _SCANNER_PAGE_ACTION_QUEUES
@@ -882,6 +886,11 @@ def uri_event(db: str | None, query: dict) -> dict:
     return _uri_event_impl(_scanner_bridge_deps(), db, query)
 
 
+def _register_scanner_result(project: str, db: "str | None", **kwargs) -> dict:
+    """Wrapper so tests can monkeypatch host_dashboard._register_scanner_result."""
+    return _register_scanner_result_impl(_scanner_bridge_deps(), project, db, **kwargs)
+
+
 def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     return _scanner_capture_impl(
         project, db, payload,
@@ -890,6 +899,7 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
         local_image_ocr_fn=_local_image_ocr,
         extract_document_metadata_fn=_extract_document_metadata,
         truthy_env_fn=_truthy_env,
+        auto_crop_receipt_fn=_auto_crop_receipt,
     )
 
 
@@ -1613,95 +1623,26 @@ def phone_node_qr(project: str, db: str | None, payload: dict) -> dict:
 
 
 def _node_envelope_error(envelope: dict) -> str:
-    env = envelope.get("envelope") if isinstance(envelope, dict) else None
-    err = (env or {}).get("error") if isinstance(env, dict) else None
-    if isinstance(err, dict):
-        return str(err.get("message") or "odrzucone")
-    if isinstance(err, str):
-        return err
-    value = envelope.get("value") if isinstance(envelope, dict) else None
-    if isinstance(value, dict) and value.get("error"):
-        return str(value["error"])
-    return "odrzucone"
+    return _node_envelope_error_impl(envelope)
 
 
 def _probe_node_token(name: str, config: str | None, *, token: str | None = None,
                       identity: str | None = None, node_urls: list[str] | None = None,
                       timeout: float = 8.0) -> dict:
-    """Check whether a token (and/or the host's enrolled key) authorizes management on node
-    ``name`` — by calling the read-only ``node://<self>/registry/query/installed`` route, which is
-    admin-gated. Returns ``{reachable, tokenValid, tokenReason, keyValid, keyAuth}``; no side
-    effects beyond a query, the token value is never logged."""
-    url = _node_url_from_config(config, node_urls, name) or (_known_nodes_file_urls_impl() or {}).get(name, "")
-    if not url:
-        return {"reachable": False, "reason": "nieznany URL węzła — najpierw dodaj node"}
-    self_name, key_auth = name, False
-    try:
-        request = urllib.request.Request(url.rstrip("/") + "/health", method="GET")
-        with urllib.request.urlopen(request, timeout=timeout) as resp:
-            health = json.loads(resp.read().decode("utf-8") or "{}")
-        self_name = str(health.get("name") or name)
-        key_auth = bool(health.get("keyAuth") or (health.get("policy") or {}).get("keyAuth"))
-    except Exception as exc:  # noqa: BLE001
-        return {"reachable": False, "reason": f"węzeł nieosiągalny: {exc}"}
-    probe = f"node://{self_name}/registry/query/installed"
-    out: dict = {"reachable": True, "keyAuth": key_auth}
-    if token:
-        try:
-            res = _run_node_uri(url, probe, {}, token=token, timeout=timeout)
-            out["tokenValid"] = bool(res.get("ok"))
-            if not res.get("ok"):
-                out["tokenReason"] = _node_envelope_error(res)
-        except Exception as exc:  # noqa: BLE001
-            out["tokenValid"] = False
-            out["tokenReason"] = str(exc)
-    if identity:
-        try:
-            out["keyValid"] = bool(_run_node_uri(url, probe, {}, identity=identity, timeout=timeout).get("ok"))
-        except Exception:  # noqa: BLE001
-            out["keyValid"] = False
-    return out
+    return _probe_node_token_impl(
+        name,
+        node_url_fn=lambda n: _node_url_from_config(config, node_urls, n),
+        token=token, identity=identity, timeout=timeout,
+    )
 
 
 def node_set_token(config: str | None, payload: dict, *, identity: str | None = None,
                    node_urls: list[str] | None = None) -> dict:
-    """Store a node's management token (X-Urirun-Token) the user typed in the Nodes view — into the
-    OS keyring (the system's secret store), never plaintext. Records only a non-secret reference
-    (`secret://keyring/urirun-node-token/<name>`) on the node config so the run path knows a token
-    exists. The token value is never persisted in config, returned, or logged."""
-    payload = payload if isinstance(payload, dict) else {}
-    name = str(payload.get("name") or "").strip()
-    secret = str(payload.get("token") or "")
-    if not name or not secret:
-        return {"ok": False, "error": "name and token are required"}
-    try:
-        import keyring
-        keyring.set_password("urirun-node-token", name, secret)
-    except Exception as exc:  # noqa: BLE001 - never fall back to plaintext
-        return {"ok": False, "error": f"could not store token securely (keyring): {exc}. "
-                                      f"Install keyring or set X-Urirun-Token via host env instead."}
-    token_ref = f"secret://keyring/urirun-node-token/{name}"
-    try:  # mark a non-secret reference on the node so the UI/run path know a token is set
-        from urirun.node import config as node_config
-        cfg = node_config.load_host_config(config)
-        for node in cfg.get("nodes", []):
-            if isinstance(node, dict) and node.get("name") == name:
-                node["tokenRef"] = token_ref
-                node.pop("token", None)  # defensive: never keep a plaintext token in config
-                node_config.save_host_config(cfg, config)
-                break
-    except Exception:  # noqa: BLE001 - the marker is best-effort; the keyring store is authoritative
-        pass
-    result = {"ok": True, "name": name, "stored": "keyring", "tokenRef": token_ref}
-    # Validate the just-saved token against the node so the UI can show a green/red indicator.
-    try:
-        check = _probe_node_token(name, config, token=secret, identity=identity, node_urls=node_urls)
-        result["check"] = check
-        result["valid"] = check.get("tokenValid") if check.get("reachable") else None
-    except Exception as exc:  # noqa: BLE001 - validation is best-effort; the store already succeeded
-        result["check"] = {"reachable": False, "reason": str(exc)}
-        result["valid"] = None
-    return result
+    return _node_set_token_impl(
+        config, payload,
+        node_url_fn=lambda n: _node_url_from_config(config, node_urls, n),
+        identity=identity,
+    )
 
 
 def _try_urifix_repair(prompt: str, request: dict, result: dict, *, node_urls: list[str] | None = None,
