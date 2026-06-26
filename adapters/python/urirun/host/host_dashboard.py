@@ -336,16 +336,6 @@ def _archive_scanned_document(**kwargs):
     return _archive_scanned_document_impl(**kwargs, docid_fn=_docid_for_file)
 
 
-def node_add(config, payload):
-    return _node_add_impl(config, payload,
-                          normalize_node_type=_normalize_node_type_impl,
-                          node_type_tags=_node_type_tags_impl)
-
-
-def node_remove(config, payload):
-    return _node_remove_impl(config, payload)
-
-
 def artifacts_delete(project, artifact_dir, payload, db=None):
     return _artifacts_delete_impl(_host_db(), project, db, payload)
 
@@ -1918,13 +1908,24 @@ from .android_node import (
     node_forget_webpage as _node_forget_webpage,
     start_android_node_service,
     restart_android_node_service as _restart_android_node_service_impl,
-    merge_live_webpage_nodes as _merge_live_webpage_nodes,
+    merge_live_webpage_nodes as _merge_live_webpage_nodes_impl,
     phone_web_nodes,
 )
 
 
 def restart_android_node_service(payload: dict | None = None) -> dict:
     return _restart_android_node_service_impl(payload, free_port_fn=_free_port_from_matching_processes)
+
+
+def _merge_live_webpage_nodes(nodes: list) -> None:
+    """Wrapper so tests can monkeypatch host_dashboard.phone_web_nodes."""
+    import urirun.host.android_node as _an
+    _orig = _an.phone_web_nodes
+    _an.phone_web_nodes = phone_web_nodes
+    try:
+        _merge_live_webpage_nodes_impl(nodes)
+    finally:
+        _an.phone_web_nodes = _orig
 
 
 def phone_node_qr(project: str, db: str | None, payload: dict) -> dict:
