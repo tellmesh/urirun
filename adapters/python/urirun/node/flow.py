@@ -15,7 +15,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from urirun import result_data
+from urirun.runtime import result_data
 from urirun.runtime import v2_service
 from urirun.node._util import json_write, now_id, slug
 from urirun.node.diagnostics import diagnose, fit_to_environment

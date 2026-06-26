@@ -1,2 +1,6 @@
 # urirun python package lives in adapters/python
 -e ./adapters/python
+
+# Surface primitive extracted from urirun — required because urirun.connectors.surfaces.cdp
+# is now a shim to urirun_cdp. Install from the local checkout until published to PyPI.
+-e ../urirun-cdp

@@ -1,8 +1,8 @@
-# urirun | 1406 func | 101f | 34542L | python | 2026-06-26
+# urirun | 1398 func | 100f | 34589L | python | 2026-06-26
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.7  critical=182 (limit:10)  dup=2  cycles=0
+  CC̄=4.7  critical=180 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     summary = 30 (limit:10)
@@ -20,13 +20,13 @@ MODULES[203] (top by size):
   M[adapters/python/urirun/host/html_templates.py] 4916L C:0 F:3 CC↑6 D:0 (python)
   M[adapters/python/urirun/host/host_dashboard.py] 1822L C:0 F:85 CC↑14 D:1 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/node/flow.py] 1006L C:0 F:43 CC↑13 D:7 (python)
+  M[adapters/python/urirun/node/flow.py] 997L C:0 F:42 CC↑13 D:7 (python)
   M[adapters/python/urirun/node/server.py] 996L C:3 F:55 CC↑14 D:3 (python)
   M[adapters/python/urirun/host/object_registry.py] 981L C:0 F:46 CC↑14 D:0 (python)
   M[adapters/python/urirun/host/chat_orchestrator.py] 979L C:1 F:26 CC↑14 D:0 (python)
-  M[adapters/python/urirun/host/node_cli.py] 899L C:0 F:48 CC↑15 D:1 (python)
+  M[adapters/python/urirun/host/node_cli.py] 914L C:0 F:50 CC↑14 D:1 (python)
   M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:15 (python)
-  M[adapters/python/urirun/node/reversible.py] 749L C:9 F:53 CC↑15 D:7 (python)
+  M[adapters/python/urirun/node/reversible.py] 758L C:9 F:55 CC↑14 D:3 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 714L C:0 F:38 CC↑14 D:1 (python)
   M[adapters/python/urirun/node/flow_planner.py] 706L C:0 F:31 CC↑14 D:3 (python)
   M[adapters/python/urirun/node/manage.py] 599L C:0 F:36 CC↑13 D:0 (python)
@@ -43,11 +43,11 @@ f
   ★ _chat_ask_general fan=21  // Handle general LLM-to-URI mesh chat requests.
 
 REFACTOR[15]:
-  [1] H/H Split god module adapters/python/urirun/host/node_cli.py (899L, 0 classes)
-  [2] H/H Split god module adapters/python/urirun/node/reversible.py (749L, 9 classes)
-  [3] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
-  [4] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (714L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (979L, 1 classes)
+  [1] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
+  [2] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (714L, 0 classes)
+  [3] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (979L, 1 classes)
+  [4] H/H Split god module adapters/python/urirun/host/host_dashboard.py (1822L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/host/node_cli.py (914L, 0 classes)
 
 EVOLUTION:
-  2026-06-26 CC̄=4.7 crit=182 34542L // Automated analysis
+  2026-06-26 CC̄=4.7 crit=180 34589L // Automated analysis

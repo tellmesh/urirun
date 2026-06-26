@@ -15,7 +15,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from urirun import result_data
+from urirun.runtime import result_data
 from urirun.node.routing import route_target
 
 

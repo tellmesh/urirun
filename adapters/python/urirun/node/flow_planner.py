@@ -12,7 +12,7 @@ import os
 import re
 import unicodedata
 
-from urirun import result_data
+from urirun.runtime import result_data
 from urirun.runtime import v2_service
 from urirun.node._util import now_id, slug
 from urirun.node.reversible import TwinMemory

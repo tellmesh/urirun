@@ -285,7 +285,7 @@ def apply_auto_remediation(diagnosis: dict, registry: dict, *, dispatch=None) ->
     Returns one ``{id, uri, ok, error?}`` per applied action. The step is retried by the
     caller AFTER this — so a diagnosed failure is actually FIXED, not just reported. The
     dispatch fn is injectable for testing (defaults to the URI service call)."""
-    from urirun import result_data
+    from urirun.runtime import result_data
     from urirun.runtime import v2_service
     call = dispatch or (lambda uri: v2_service.call(uri, {}, registry, mode="execute"))
     applied: list[dict] = []

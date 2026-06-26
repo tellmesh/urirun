@@ -1,6 +1,6 @@
-# urirun | 202f 34556L | yaml:5,txt:3,shell:10,json:13,python:142,yml:2,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-26
-# generated in 0.02s
-# stats: 1406 func | 0 cls | 202 mod | CC̄=4.7 | critical:2 | cycles:0
+# urirun | 202f 34589L | yaml:5,shell:10,python:142,yml:2,json:13,txt:3,javascript:3,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,c:1,cpp:1,csharp:4,ruby:2 | 2026-06-26
+# generated in 0.03s
+# stats: 1398 func | 0 cls | 202 mod | CC̄=4.7 | critical:0 | cycles:0
 # alerts[5]: fan-out summary=30; fan-out NodeHandler._handle_run=24; fan-out _run_streamed=23; fan-out NodeHandler._handle_deploy=22; fan-out _chat_ask_general=21
 # hotspots[5]: summary fan=30; NodeHandler._handle_run fan=24; _run_streamed fan=23; NodeHandler._handle_deploy fan=22; _chat_ask_general fan=21
 # evolution: CC̄ 4.7→4.7 (flat 0.0)
@@ -82,7 +82,7 @@ M[202]:
   adapters/python/urirun/host/host_integrations.py,374
   adapters/python/urirun/host/html_templates.py,4916
   adapters/python/urirun/host/node_api.py,211
-  adapters/python/urirun/host/node_cli.py,899
+  adapters/python/urirun/host/node_cli.py,914
   adapters/python/urirun/host/node_types.py,265
   adapters/python/urirun/host/object_registry.py,981
   adapters/python/urirun/host/planfile_adapter.py,290
@@ -111,7 +111,7 @@ M[202]:
   adapters/python/urirun/node/doctor.py,217
   adapters/python/urirun/node/episode.py,224
   adapters/python/urirun/node/event_schema.py,125
-  adapters/python/urirun/node/flow.py,1006
+  adapters/python/urirun/node/flow.py,997
   adapters/python/urirun/node/flow_planner.py,706
   adapters/python/urirun/node/flow_thin.py,553
   adapters/python/urirun/node/flow_uri.py,90
@@ -124,7 +124,7 @@ M[202]:
   adapters/python/urirun/node/paths.py,38
   adapters/python/urirun/node/preconditions.py,214
   adapters/python/urirun/node/recovery.py,373
-  adapters/python/urirun/node/reversible.py,749
+  adapters/python/urirun/node/reversible.py,758
   adapters/python/urirun/node/routing.py,173
   adapters/python/urirun/node/server.py,996
   adapters/python/urirun/node/skill.py,250
@@ -132,30 +132,30 @@ M[202]:
   adapters/python/urirun/node/transport.py,540
   adapters/python/urirun/node/twin_store.py,134
   adapters/python/urirun/planfile_adapter.py,5
-  adapters/python/urirun/runtime/__init__.py,1
-  adapters/python/urirun/runtime/_registry.py,6
-  adapters/python/urirun/runtime/_runtime.py,6
-  adapters/python/urirun/runtime/_scan.py,6
-  adapters/python/urirun/runtime/adopt_pack.py,6
-  adapters/python/urirun/runtime/agent.py,6
-  adapters/python/urirun/runtime/cli.py,6
-  adapters/python/urirun/runtime/codegen.py,6
-  adapters/python/urirun/runtime/compat.py,6
-  adapters/python/urirun/runtime/daemon.py,6
-  adapters/python/urirun/runtime/discovery.py,6
-  adapters/python/urirun/runtime/dispatch_protocol.py,6
-  adapters/python/urirun/runtime/errors.py,6
-  adapters/python/urirun/runtime/introspect.py,6
-  adapters/python/urirun/runtime/progress.py,89
-  adapters/python/urirun/runtime/secrets.py,6
-  adapters/python/urirun/runtime/tree.py,6
-  adapters/python/urirun/runtime/v1.py,6
-  adapters/python/urirun/runtime/v2.py,6
-  adapters/python/urirun/runtime/v2_adopt.py,6
-  adapters/python/urirun/runtime/v2_grpc.py,6
-  adapters/python/urirun/runtime/v2_mcp.py,6
-  adapters/python/urirun/runtime/v2_service.py,6
-  adapters/python/urirun/runtime/worker.py,6
+  adapters/python/urirun/runtime/__init__.py,2
+  adapters/python/urirun/runtime/_registry.py,10
+  adapters/python/urirun/runtime/_runtime.py,10
+  adapters/python/urirun/runtime/_scan.py,10
+  adapters/python/urirun/runtime/adopt_pack.py,10
+  adapters/python/urirun/runtime/agent.py,10
+  adapters/python/urirun/runtime/cli.py,10
+  adapters/python/urirun/runtime/codegen.py,10
+  adapters/python/urirun/runtime/compat.py,10
+  adapters/python/urirun/runtime/daemon.py,10
+  adapters/python/urirun/runtime/discovery.py,10
+  adapters/python/urirun/runtime/dispatch_protocol.py,10
+  adapters/python/urirun/runtime/errors.py,10
+  adapters/python/urirun/runtime/introspect.py,10
+  adapters/python/urirun/runtime/progress.py,10
+  adapters/python/urirun/runtime/secrets.py,10
+  adapters/python/urirun/runtime/tree.py,10
+  adapters/python/urirun/runtime/v1.py,10
+  adapters/python/urirun/runtime/v2.py,10
+  adapters/python/urirun/runtime/v2_adopt.py,10
+  adapters/python/urirun/runtime/v2_grpc.py,10
+  adapters/python/urirun/runtime/v2_mcp.py,10
+  adapters/python/urirun/runtime/v2_service.py,10
+  adapters/python/urirun/runtime/worker.py,10
   adapters/python/urirun/scheduler.py,5
   adapters/python/urirun/task_planner.py,5
   adapters/python/urirun/testing.py,189
@@ -193,9 +193,9 @@ M[202]:
   planfile.yaml,1319
   prefact.yaml,94
   project.sh,69
-  requirements.txt,2
+  requirements.txt,6
   scripts/cc_gate.py,81
-  scripts/extraction_audit.py,373
+  scripts/extraction_audit.py,377
   scripts/lint_connectors.py,140
   scripts/release-bump.sh,29
   scripts/repin_connectors.py,176
@@ -209,88 +209,6 @@ M[202]:
   tree.sh,4
   v1/js/urirun-v1.js,343
 D:
-  adapters/python/urirun/host/node_cli.py:
-    e: _data_bindings,_data_init,_data_dataset_create,_data_datasets,_data_record_upsert,_data_records,_data_artifact_register,_data_artifacts,_data_check_add,_data_checks,_data_sql,data_command,monitor_command,_parse_api_json_args,_build_implicit_api,_handle_add_node_advanced,_handle_add_node,_host_delegated_command,fulfill_need,supply_command,ensure_command,_maybe_ensure_scheme,_run_streamed,run_command,_print_event,watch_command,_watch_loop,_host_cmd_config,_host_cmd_nodes,_host_cmd_routes,_host_cmd_agents,_host_cmd_doctor,_host_cmd_ask,_host_mesh_command,copy_id_command,copy_id_cli,_split_deploy_doc,_warn_dropped_routes,deploy_command,_maybe_load_dotenv,host_command,_probe_one_route,_render_probe_report,probe_command,node_list_command,node_stop_command,_resolve_registry_source,node_command
-    _data_bindings(args;host_db)
-    _data_init(args;host_db)
-    _data_dataset_create(args;host_db)
-    _data_datasets(args;host_db)
-    _data_record_upsert(args;host_db)
-    _data_records(args;host_db)
-    _data_artifact_register(args;host_db)
-    _data_artifacts(args;host_db)
-    _data_check_add(args;host_db)
-    _data_checks(args;host_db)
-    _data_sql(args;host_db)
-    data_command(args)
-    monitor_command(args)
-    _parse_api_json_args(args)
-    _build_implicit_api(args)
-    _handle_add_node_advanced(args)
-    _handle_add_node(args)
-    _host_delegated_command(args)
-    fulfill_need(client;need;roots)
-    supply_command(args)
-    ensure_command(args)
-    _maybe_ensure_scheme(client;uri;ensure;roots)
-    _run_streamed(client;uri;payload;args;timeout)
-    run_command(args)
-    _print_event(ev;as_json)
-    watch_command(args)
-    _watch_loop(url)
-    _host_cmd_config(args;config;mesh)
-    _host_cmd_nodes(args;config;mesh)
-    _host_cmd_routes(args;config;mesh)
-    _host_cmd_agents(args;config;mesh)
-    _host_cmd_doctor(args;config;mesh)
-    _host_cmd_ask(args;config;mesh)
-    _host_mesh_command(args;config;mesh)
-    copy_id_command(args)
-    copy_id_cli(argv)
-    _split_deploy_doc(path)
-    _warn_dropped_routes(result)
-    deploy_command(args)
-    _maybe_load_dotenv(path)
-    host_command(args)
-    _probe_one_route(url;route;etag0;execute;timeout)
-    _render_probe_report(report)
-    probe_command(args)
-    node_list_command(args)
-    node_stop_command(args)
-    _resolve_registry_source(registry_arg;node_registry)
-    node_command(args)
-  adapters/python/urirun/node/reversible.py:
-    e: CallSpec,Action,Transition,Transport,CallableTransport,Connector,Twin,ReversibleProcess,TwinMemory,parse,path_of,sig,_step_kind,environment_fingerprint,plausibility,_planner_facts,_best_surface_hint,_action_matrix_hints,_infeasible_constraints,_planner_surface_guidance,planner_context,local_transport,durable_memory,rollback_partial_flow,_inner_value,_inverse_uri,ledger_from_execution,_transition_inverse_uri,_normalize_stuck,_uri_rollback
-    CallSpec:  # A route's declaration in a connector schema: does it mutate,...
-    Action:
-    Transition:  # One ledger entry — what makes the world navigable in BOTH di...
-    Transport(Protocol): call(2)  # Communication layer. In urirun this is HTTP to a node (wrap ...
-    CallableTransport: __init__(1),call(2)  # Adapt any ``fn(uri, payload) -> dict`` into a Transport (e.g...
-    Connector(Protocol): call(2),scan_uri(1),schema(2)  # The ADOPTION CONTRACT. A connector enters the engine by prov...
-    Twin: scan(2),rescan(1)  # The environment model + a position signature. Holds its own ...
-    ReversibleProcess: execute(3),rollback(2),rollback_flow(3)  # The engine: execute with the invariant, build the ledger, ro...
-    TwinMemory: remember(2),known_good(1),drift(2),remember_flow(2),recall_flow(1),known_good_flows(0),degraded_flows(0),remember_episode(1),known_good_episodes(0),recall_episode(2),recall_flow_by_intent(1),remember_proof(2),recall_proof(1),remember_skill(2),recall_skill(1),skills(0),session_start(4),session_append(2),session_commit(1),session_steps(1),session_get(1)  # Remembers the KNOWN-GOOD environment fingerprint per node (s...
-    parse(uri)
-    path_of(uri)
-    sig(obj)
-    _step_kind(spec)
-    environment_fingerprint(profile)
-    plausibility(profile)
-    _planner_facts(node;prof;surface)
-    _best_surface_hint(best)
-    _action_matrix_hints(am)
-    _infeasible_constraints(am)
-    _planner_surface_guidance(facts)
-    planner_context(node;profile;surface;memory)
-    local_transport(by_scheme)
-    durable_memory(path)
-    rollback_partial_flow(timeline;results;transport;twin)
-    _inner_value(env)
-    _inverse_uri(forward_uri;inv)
-    ledger_from_execution(execution)
-    _transition_inverse_uri(item)
-    _normalize_stuck(result)
-    _uri_rollback(payload)
   adapters/python/urirun/__init__.py:
     e: Connector,parse_uri,build_invocation,dispatch,command,shell,handler,_example_payload,ok,fail,plan,tag,policy,resolve_secret,action_space,result_data,result_degraded,run_steps,tool_binding,connector_bindings,entry_point_bindings,entry_point_binding_document,entry_point_registry,error_bindings,compat_report,compile_registry,list_routes,validate_binding_document,make_dispatch,normalize_dispatch_request,run,connector,load_manifest,connector_emit,connector_cli,connector_main,_connector_cli_routes,_connector_run_command
     Connector: __post_init__(0),uri(1),_meta(1),command(1),shell(1),cli(1),_add_route_arguments(2),_build_cli_parser(2),_dispatch_cli(3),handler(1),registry(1),bindings(0),_live_bindings(0),manifest(1),mcp_tools(0),a2a_card(0)  # Small convention helper for connector packages.
@@ -656,26 +574,6 @@ Connector a...
     registry_from_routes(routes)
     target_nodes(prompt;nodes;explicit)
     route_targets_for_nodes(routes;node_names)
-  adapters/python/urirun/node/recovery.py:
-    e: _infer_category,normalize_error,exception_error,step_target,route_for_step,_llm_model_actions,_transient_actions,_cdp_page_ready_actions,_is_cdp_page_level_query,_not_found_actions,_fallback_actions,recovery_actions,failure_signature,recovery_plan,apply_auto_remediation,can_retry_step,planner_failure,_uri_remediate
-    _infer_category(out)
-    normalize_error(error)
-    exception_error(exc)
-    step_target(step)
-    route_for_step(step;routes)
-    _llm_model_actions()
-    _transient_actions(target)
-    _cdp_page_ready_actions(step;target)
-    _is_cdp_page_level_query(uri)
-    _not_found_actions(message;error;scheme)
-    _fallback_actions(step;routes)
-    recovery_actions(error)
-    failure_signature(error)
-    recovery_plan(error)
-    apply_auto_remediation(diagnosis;registry)
-    can_retry_step(error)
-    planner_failure(exc)
-    _uri_remediate(payload)
   adapters/python/urirun/node/diagnostics.py:
     e: _Rule,_target,_target_of,_is_login_surface,_build,diagnose,_match_rule,_surface_upgrade,_cdp_feasible,_controllable,_mark_feasibility,_os_level_unreliable,_maybe_escalate_surface,fit_to_environment,_uri_classify
     _Rule: __init__(4),matches(3)
@@ -721,35 +619,6 @@ Connector a...
     _serve_opts_merged(args;node)
     _resolve_serve_opts(args;node)
     _node_serve(args;node;name;registry)
-  adapters/python/urirun/node/flow_thin.py:
-    e: FlowEnvelope,_dig_path,resolve_step_payload,_action_ok,_action_error,_circuit_break,_next_kind,_extract_inverse,_resolve_inverse_uri,_thin_circuit_break,_thin_rollback,_thin_retry_once,_thin_handle_acquire,_thin_handle_non_continue,_thin_update_ledger,_thin_step_entry,_thin_fold_inner_ok,_thin_goal_verify,_results_degraded,_capture_proof_from_result,_capture_proofs_from_results,_enrich_remember_with_degraded,_check_step_deps,_thin_dispatch_step,_thin_driver
-    FlowEnvelope: record(2),push_inverse(5)  # Carries flow awareness through every `invoke()` hop.
-
-A step...
-    _dig_path(data;dotted)
-    resolve_step_payload(payload;results)
-    _action_ok(env)
-    _action_error(env)
-    _circuit_break(reason;timeline;results;recoveries)
-    _next_kind(result)
-    _extract_inverse(r)
-    _resolve_inverse_uri(forward_uri;inv)
-    _thin_circuit_break(envelope;timeline;results;max_retries;max_remediations;start;max_wall_clock)
-    _thin_rollback(dispatch_uri;envelope;timeline;results;kind;error;explicit)
-    _thin_retry_once(sid;uri;payload;envelope;dispatch_uri;timeline;results)
-    _thin_handle_acquire(r;sid;uri;payload;envelope;dispatch_uri;timeline;results)
-    _thin_handle_non_continue(kind;r;step;sid;uri;payload;envelope;dispatch_uri;timeline;results)
-    _thin_update_ledger(envelope;uri;r)
-    _thin_step_entry(sid;uri;r)
-    _thin_fold_inner_ok(r)
-    _thin_goal_verify(dispatch_uri;envelope;timeline;results)
-    _results_degraded(results)
-    _capture_proof_from_result(sid;r)
-    _capture_proofs_from_results(results)
-    _enrich_remember_with_degraded(payload;results;timeline)
-    _check_step_deps(sid;uri;step;results;timeline)
-    _thin_dispatch_step(step;envelope;dispatch_uri;timeline;results)
-    _thin_driver(steps;envelope;dispatch_uri;registry;execute)
   adapters/python/urirun/node/transport.py:
     e: http_json,_probe_health,_listening_ports_local,node_list_running,_pids_on_port,stop_node_port,parse_ports,_deploy_allow_list,_annotate_deploy_allow_compat,deploy_to_node,_watch_node_url,_watch_node_headers,_parse_sse_line,watch_node,event_topic,_mqtt_publish_fn,fanout_to_mqtt,copy_id,_configured_node_kind,_configured_api_id,_configured_api_kind,_configured_api_routes,discover_node,discover_mesh
     http_json(method;url;body;timeout;headers;raw)
@@ -794,6 +663,26 @@ Atoms are cont...
     _plan_from_dict(d)
     _outcome_from_dict(d)
     make_episode()
+  adapters/python/urirun/node/recovery.py:
+    e: _infer_category,normalize_error,exception_error,step_target,route_for_step,_llm_model_actions,_transient_actions,_cdp_page_ready_actions,_is_cdp_page_level_query,_not_found_actions,_fallback_actions,recovery_actions,failure_signature,recovery_plan,apply_auto_remediation,can_retry_step,planner_failure,_uri_remediate
+    _infer_category(out)
+    normalize_error(error)
+    exception_error(exc)
+    step_target(step)
+    route_for_step(step;routes)
+    _llm_model_actions()
+    _transient_actions(target)
+    _cdp_page_ready_actions(step;target)
+    _is_cdp_page_level_query(uri)
+    _not_found_actions(message;error;scheme)
+    _fallback_actions(step;routes)
+    recovery_actions(error)
+    failure_signature(error)
+    recovery_plan(error)
+    apply_auto_remediation(diagnosis;registry)
+    can_retry_step(error)
+    planner_failure(exc)
+    _uri_remediate(payload)
   adapters/python/urirun/node/flow_planner.py:
     e: first_url,nl_key,append_if_available,requested_folder_path,_flow_intents_llm,_flow_intents,_append_target_steps,heuristic_flow,json_from_text,_uri_segments,_uri_matches_template,_uri_is_available,_infeasibility_error,_step_is_infeasible,_validate_step_payload,_unique_step_id,_normalize_flow_step,_normalize_flow_task,_needs_session_ready_after_ensure,_inject_cdp_ready_probes,_collect_infeasible_constraints,normalize_flow,normalize_flow_or_explain,llm_flow,_build_session_map,_append_session_guidance,_fetch_kvm_query,_fetch_env_profile,_fetch_surface,fetch_planner_environments,make_flow
     first_url(prompt)
@@ -827,6 +716,121 @@ Atoms are cont...
     _fetch_surface(step;registry)
     fetch_planner_environments(node_names;registry;mesh)
     make_flow(prompt;mesh;selected_nodes;use_llm;environments)
+  adapters/python/urirun/node/flow_thin.py:
+    e: FlowEnvelope,_dig_path,resolve_step_payload,_action_ok,_action_error,_circuit_break,_next_kind,_extract_inverse,_resolve_inverse_uri,_thin_circuit_break,_thin_rollback,_thin_retry_once,_thin_handle_acquire,_thin_handle_non_continue,_thin_update_ledger,_thin_step_entry,_thin_fold_inner_ok,_thin_goal_verify,_results_degraded,_capture_proof_from_result,_capture_proofs_from_results,_enrich_remember_with_degraded,_check_step_deps,_thin_dispatch_step,_thin_driver
+    FlowEnvelope: record(2),push_inverse(5)  # Carries flow awareness through every `invoke()` hop.
+
+A step...
+    _dig_path(data;dotted)
+    resolve_step_payload(payload;results)
+    _action_ok(env)
+    _action_error(env)
+    _circuit_break(reason;timeline;results;recoveries)
+    _next_kind(result)
+    _extract_inverse(r)
+    _resolve_inverse_uri(forward_uri;inv)
+    _thin_circuit_break(envelope;timeline;results;max_retries;max_remediations;start;max_wall_clock)
+    _thin_rollback(dispatch_uri;envelope;timeline;results;kind;error;explicit)
+    _thin_retry_once(sid;uri;payload;envelope;dispatch_uri;timeline;results)
+    _thin_handle_acquire(r;sid;uri;payload;envelope;dispatch_uri;timeline;results)
+    _thin_handle_non_continue(kind;r;step;sid;uri;payload;envelope;dispatch_uri;timeline;results)
+    _thin_update_ledger(envelope;uri;r)
+    _thin_step_entry(sid;uri;r)
+    _thin_fold_inner_ok(r)
+    _thin_goal_verify(dispatch_uri;envelope;timeline;results)
+    _results_degraded(results)
+    _capture_proof_from_result(sid;r)
+    _capture_proofs_from_results(results)
+    _enrich_remember_with_degraded(payload;results;timeline)
+    _check_step_deps(sid;uri;step;results;timeline)
+    _thin_dispatch_step(step;envelope;dispatch_uri;timeline;results)
+    _thin_driver(steps;envelope;dispatch_uri;registry;execute)
+  adapters/python/urirun/host/node_cli.py:
+    e: _data_bindings,_data_init,_data_dataset_create,_data_datasets,_data_record_upsert,_data_records,_data_artifact_register,_data_artifacts,_data_check_add,_data_checks,_data_sql,data_command,monitor_command,_parse_api_json_args,_build_implicit_api,_handle_add_node_advanced,_handle_add_node,_host_delegated_command,fulfill_need,supply_command,ensure_command,_maybe_ensure_scheme,_run_streamed,run_command,_print_event,watch_command,_watch_loop,_host_cmd_config,_host_cmd_nodes,_host_cmd_routes,_host_cmd_agents,_host_cmd_doctor,_host_cmd_ask,_host_mesh_command,copy_id_command,copy_id_cli,_split_deploy_doc,_warn_dropped_routes,_resolve_deploy_identity,_build_deploy_kwargs,deploy_command,_maybe_load_dotenv,host_command,_probe_one_route,_render_probe_report,probe_command,node_list_command,node_stop_command,_resolve_registry_source,node_command
+    _data_bindings(args;host_db)
+    _data_init(args;host_db)
+    _data_dataset_create(args;host_db)
+    _data_datasets(args;host_db)
+    _data_record_upsert(args;host_db)
+    _data_records(args;host_db)
+    _data_artifact_register(args;host_db)
+    _data_artifacts(args;host_db)
+    _data_check_add(args;host_db)
+    _data_checks(args;host_db)
+    _data_sql(args;host_db)
+    data_command(args)
+    monitor_command(args)
+    _parse_api_json_args(args)
+    _build_implicit_api(args)
+    _handle_add_node_advanced(args)
+    _handle_add_node(args)
+    _host_delegated_command(args)
+    fulfill_need(client;need;roots)
+    supply_command(args)
+    ensure_command(args)
+    _maybe_ensure_scheme(client;uri;ensure;roots)
+    _run_streamed(client;uri;payload;args;timeout)
+    run_command(args)
+    _print_event(ev;as_json)
+    watch_command(args)
+    _watch_loop(url)
+    _host_cmd_config(args;config;mesh)
+    _host_cmd_nodes(args;config;mesh)
+    _host_cmd_routes(args;config;mesh)
+    _host_cmd_agents(args;config;mesh)
+    _host_cmd_doctor(args;config;mesh)
+    _host_cmd_ask(args;config;mesh)
+    _host_mesh_command(args;config;mesh)
+    copy_id_command(args)
+    copy_id_cli(argv)
+    _split_deploy_doc(path)
+    _warn_dropped_routes(result)
+    _resolve_deploy_identity(args;token)
+    _build_deploy_kwargs(args)
+    deploy_command(args)
+    _maybe_load_dotenv(path)
+    host_command(args)
+    _probe_one_route(url;route;etag0;execute;timeout)
+    _render_probe_report(report)
+    probe_command(args)
+    node_list_command(args)
+    node_stop_command(args)
+    _resolve_registry_source(registry_arg;node_registry)
+    node_command(args)
+  adapters/python/urirun/node/reversible.py:
+    e: CallSpec,Action,Transition,Transport,CallableTransport,Connector,Twin,ReversibleProcess,TwinMemory,parse,path_of,sig,_step_kind,environment_fingerprint,plausibility,_planner_facts,_best_surface_hint,_action_matrix_hints,_infeasible_constraints,_planner_surface_guidance,planner_context,local_transport,durable_memory,rollback_partial_flow,_inner_value,_inverse_uri,ledger_from_execution,_transition_inverse_uri,_normalize_stuck,_build_ledger_transitions,_rollback_from_ledger,_uri_rollback
+    CallSpec:  # A route's declaration in a connector schema: does it mutate,...
+    Action:
+    Transition:  # One ledger entry — what makes the world navigable in BOTH di...
+    Transport(Protocol): call(2)  # Communication layer. In urirun this is HTTP to a node (wrap ...
+    CallableTransport: __init__(1),call(2)  # Adapt any ``fn(uri, payload) -> dict`` into a Transport (e.g...
+    Connector(Protocol): call(2),scan_uri(1),schema(2)  # The ADOPTION CONTRACT. A connector enters the engine by prov...
+    Twin: scan(2),rescan(1)  # The environment model + a position signature. Holds its own ...
+    ReversibleProcess: execute(3),rollback(2),rollback_flow(3)  # The engine: execute with the invariant, build the ledger, ro...
+    TwinMemory: remember(2),known_good(1),drift(2),remember_flow(2),recall_flow(1),known_good_flows(0),degraded_flows(0),remember_episode(1),known_good_episodes(0),recall_episode(2),recall_flow_by_intent(1),remember_proof(2),recall_proof(1),remember_skill(2),recall_skill(1),skills(0),session_start(4),session_append(2),session_commit(1),session_steps(1),session_get(1)  # Remembers the KNOWN-GOOD environment fingerprint per node (s...
+    parse(uri)
+    path_of(uri)
+    sig(obj)
+    _step_kind(spec)
+    environment_fingerprint(profile)
+    plausibility(profile)
+    _planner_facts(node;prof;surface)
+    _best_surface_hint(best)
+    _action_matrix_hints(am)
+    _infeasible_constraints(am)
+    _planner_surface_guidance(facts)
+    planner_context(node;profile;surface;memory)
+    local_transport(by_scheme)
+    durable_memory(path)
+    rollback_partial_flow(timeline;results;transport;twin)
+    _inner_value(env)
+    _inverse_uri(forward_uri;inv)
+    ledger_from_execution(execution)
+    _transition_inverse_uri(item)
+    _normalize_stuck(result)
+    _build_ledger_transitions(raw_ledger)
+    _rollback_from_ledger(raw_ledger;mesh;scan_uri)
+    _uri_rollback(payload)
   scripts/lint_connectors.py:
     e: classify,lint_fleet,_flags,_print_fleet_report,_lint_exit_code,main
     classify(rep)
@@ -925,7 +929,7 @@ Atoms are cont...
     host_facts()
     bindings(name)
   adapters/python/urirun/node/flow.py:
-    e: _flow_format,flow_document,write_flow_document,load_flow_document,_flow_step_failure,_flow_timeline_entry,_evaluate_step_next,_run_step,_self_heal_via_uri,_attempt_self_heal,_cdp_needs_provision,_provision_cdp_surface,_preflight,_rollback_partial,_kvm_targets,suggest_recall,_flow_key,_remember_known_good_flow,_capture_known_good,_update_known_good,_drift_timeline,_circuit_break_if_over,_resolve_payload_or_fail,_step_fail_envelope,_set_service_map,_restore_service_map,_make_memory_dispatch,_plan_with_preflight,_thin_remember_record,_build_thin_plan,execute_flow,_apply_reversibility,run_flow_document,_inproc_category,_inproc_result,_in_process_discovery,make_dispatch_uri,_flow_transport,rollback_flow,_uri_goal_verify,_uri_preflight,_uri_env_drift,_uri_memory_remember
+    e: _flow_format,flow_document,write_flow_document,load_flow_document,_flow_step_failure,_flow_timeline_entry,_evaluate_step_next,_run_step,_self_heal_via_uri,_attempt_self_heal,_cdp_needs_provision,_provision_cdp_surface,_preflight,_kvm_targets,suggest_recall,_flow_key,_remember_known_good_flow,_capture_known_good,_update_known_good,_drift_timeline,_circuit_break_if_over,_resolve_payload_or_fail,_step_fail_envelope,_set_service_map,_restore_service_map,_make_memory_dispatch,_plan_with_preflight,_thin_remember_record,_build_thin_plan,execute_flow,_apply_reversibility,run_flow_document,_inproc_category,_inproc_result,_in_process_discovery,make_dispatch_uri,_flow_transport,rollback_flow,_uri_goal_verify,_uri_preflight,_uri_env_drift,_uri_memory_remember
     _flow_format(path;requested)
     flow_document(flow)
     write_flow_document(path;document;fmt)
@@ -939,7 +943,6 @@ Atoms are cont...
     _cdp_needs_provision(prof)
     _provision_cdp_surface(target;registry)
     _preflight(flow;registry)
-    _rollback_partial(timeline;results;registry)
     _kvm_targets(flow)
     suggest_recall(flow;memory)
     _flow_key(flow)
@@ -969,22 +972,32 @@ Atoms are cont...
     _uri_preflight(payload)
     _uri_env_drift(payload)
     _uri_memory_remember(payload)
-  scripts/extraction_audit.py:
-    e: Edge,Report,module_name,discover_modules,_resolve_from,edges_in_file,_allowed_down,resolve_package,classify,audit,_short,print_report,_selftest,main
-    Edge:
-    Report:
-    module_name(path;root)
-    discover_modules(root)
-    _resolve_from(node;cur_mod)
-    edges_in_file(path;cur_mod;known)
-    _allowed_down(target;allow;allow_exact)
-    resolve_package(modules;spec)
-    classify(edges;package;allow;known;allow_exact)
-    audit(root;spec)
-    _short(mod;package)
-    print_report(rep;spec)
-    _selftest()
-    main(argv)
+  adapters/python/urirun/host/twin_bridge.py:
+    e: flow_has_desktop_step,_is_infra_step,_step_info_from_results,_inverse_from_results,_step_status,_url_from_results,_step_narration,_publish_step_event,_episode_proofs,_unwrap_result_candidate,_episode_artifacts,_coerce_next_intent,_obs_episode_id,capture_episode,_node_env_fingerprint,_publish_timeline_events,append_twin_widget,twin_plan_preview,twin_plan_summary,is_desktop_task_prompt,_nodes_from_store,_split_episodes,_now_state,api_twin_state
+    flow_has_desktop_step(flow)
+    _is_infra_step(step)
+    _step_info_from_results(results;step_id)
+    _inverse_from_results(results;step_id;step_uri)
+    _step_status(step_ok;degraded)
+    _url_from_results(results;step_id)
+    _step_narration(step;step_uri;status;degraded_reason;reversible)
+    _publish_step_event(step;node;connector_inverse;degraded;degraded_reason;episode_id;experience_id;intent_sig;env_fingerprint;url)
+    _episode_proofs(timeline;env_fingerprint)
+    _unwrap_result_candidate(r)
+    _episode_artifacts(results)
+    _coerce_next_intent(ni)
+    _obs_episode_id(intent_sig;env_fp;steps)
+    capture_episode()
+    _node_env_fingerprint(node)
+    _publish_timeline_events(timeline;node;results;episode_id;experience_id;intent_sig;env_fp)
+    append_twin_widget(execute;flow;attachments;prompt;selected_targets;timeline;results;episode_id;experience_id;intent_sig;outcome_status;next_intent)
+    twin_plan_preview(prompt;node)
+    twin_plan_summary(att)
+    is_desktop_task_prompt(prompt)
+    _nodes_from_store(store)
+    _split_episodes(all_episodes)
+    _now_state(step_events;nodes)
+    api_twin_state(project;db;config;query;node_urls)
   adapters/python/urirun/host/task_cli.py:
     e: _task_prompt,_ticket_payload,_host_local_registry,_run_executor_handler,_resolves_locally,_run_task_flow,_emit_ticket_result,_task_plan,_task_bindings,_task_schedule,_task_list,_task_show,_task_next,_task_create,_task_claim,_task_start,_task_complete,_task_fail,_task_block,_task_ready,_task_wait,_task_dsl,_task_run,_task_loop,task_command
     _task_prompt(ticket)
@@ -1176,32 +1189,22 @@ Atoms are cont...
     expandBinding()
     expandBindings()
     compileRegistry()
-  adapters/python/urirun/host/twin_bridge.py:
-    e: flow_has_desktop_step,_is_infra_step,_step_info_from_results,_inverse_from_results,_step_status,_url_from_results,_step_narration,_publish_step_event,_episode_proofs,_unwrap_result_candidate,_episode_artifacts,_coerce_next_intent,_obs_episode_id,capture_episode,_node_env_fingerprint,_publish_timeline_events,append_twin_widget,twin_plan_preview,twin_plan_summary,is_desktop_task_prompt,_nodes_from_store,_split_episodes,_now_state,api_twin_state
-    flow_has_desktop_step(flow)
-    _is_infra_step(step)
-    _step_info_from_results(results;step_id)
-    _inverse_from_results(results;step_id;step_uri)
-    _step_status(step_ok;degraded)
-    _url_from_results(results;step_id)
-    _step_narration(step;step_uri;status;degraded_reason;reversible)
-    _publish_step_event(step;node;connector_inverse;degraded;degraded_reason;episode_id;experience_id;intent_sig;env_fingerprint;url)
-    _episode_proofs(timeline;env_fingerprint)
-    _unwrap_result_candidate(r)
-    _episode_artifacts(results)
-    _coerce_next_intent(ni)
-    _obs_episode_id(intent_sig;env_fp;steps)
-    capture_episode()
-    _node_env_fingerprint(node)
-    _publish_timeline_events(timeline;node;results;episode_id;experience_id;intent_sig;env_fp)
-    append_twin_widget(execute;flow;attachments;prompt;selected_targets;timeline;results;episode_id;experience_id;intent_sig;outcome_status;next_intent)
-    twin_plan_preview(prompt;node)
-    twin_plan_summary(att)
-    is_desktop_task_prompt(prompt)
-    _nodes_from_store(store)
-    _split_episodes(all_episodes)
-    _now_state(step_events;nodes)
-    api_twin_state(project;db;config;query;node_urls)
+  scripts/extraction_audit.py:
+    e: Edge,Report,module_name,discover_modules,_resolve_from,edges_in_file,_allowed_down,resolve_package,classify,audit,_short,print_report,_selftest,main
+    Edge:
+    Report:
+    module_name(path;root)
+    discover_modules(root)
+    _resolve_from(node;cur_mod)
+    edges_in_file(path;cur_mod;known)
+    _allowed_down(target;allow;allow_exact)
+    resolve_package(modules;spec)
+    classify(edges;package;allow;known;allow_exact)
+    audit(root;spec)
+    _short(mod;package)
+    print_report(rep;spec)
+    _selftest()
+    main(argv)
   scripts/repin_connectors.py:
     e: find_root,pypi_has,repin_text,classify,_pypi_write_guard,_repin_one,main
     find_root(explicit)
@@ -1625,16 +1628,6 @@ Atoms are cont...
   adapters/php/Urirun.php:
     e: Connector
     Connector:
-  adapters/python/urirun/runtime/progress.py:
-    e: RunControl,bind,reset,current,active,emit,register_proc,cancelled
-    RunControl: __init__(2),emit(1),register_proc(1),kill(0)  # Live control for one in-flight run: a progress sink, a cance...
-    bind(ctrl)
-    reset(token)
-    current()
-    active()
-    emit(event)
-    register_proc(proc)
-    cancelled()
   adapters/python/urirun/connectors/connector_scaffold.py:
     e: _pkg_module,_scheme,_manifest,_python_manifest,_write,_python_files,_js_files,_go_files,_php_files,scaffold,new_command
     _pkg_module(connector_id)
@@ -1707,11 +1700,8 @@ Atoms are cont...
     e: Connector
     Connector: Connector(-1),Command(-1),BindingsJson(-1)
   goal.yaml:
-  planfile.yaml:
   Makefile:
-  requirements.txt:
   tree.sh:
-  package.json:
   prefact.yaml:
   project.sh:
   docs/NODE_CONNECTIONS_TASK_PLAN.yaml:
@@ -1740,7 +1730,6 @@ Atoms are cont...
     urirun_command()
     urirun_document()
   adapters/bash/example/hash-connector.sh:
-  adapters/js/package.json:
   adapters/ts/tsconfig.json:
   adapters/ts/package.json:
   adapters/perl/Urirun.pm:
@@ -1753,7 +1742,6 @@ Atoms are cont...
   adapters/rust/Cargo.toml:
   adapters/php/composer.json:
   adapters/php/example/hash-connector.php:
-  adapters/python/pyproject.toml:
   adapters/python/urirun/host_db.py:
   adapters/python/urirun/v2_service.py:
   adapters/python/urirun/domain_monitor.py:
@@ -1784,7 +1772,6 @@ Atoms are cont...
   adapters/python/urirun/host/artifacts_admin.py:
   adapters/python/urirun/host/scanner_service.py:
   adapters/python/urirun/host/scanner_bridge.py:
-  adapters/python/urirun/runtime/__init__.py:
   adapters/python/urirun/connectors/__init__.py:
   adapters/python/urirun/connectors/inputs/__init__.py:
   adapters/python/urirun/connectors/surfaces/__init__.py:
@@ -1802,25 +1789,32 @@ Atoms are cont...
   adapters/csharp/obj/Debug/net8.0/urirun-connector.AssemblyInfo.cs:
     i: System,System.Reflection
   adapters/ruby/example/hash_connector.rb:
-  adapters/python/urirun/runtime/v2_service.py:
-  adapters/python/urirun/runtime/cli.py:
-  adapters/python/urirun/runtime/v1.py:
-  adapters/python/urirun/runtime/errors.py:
-  adapters/python/urirun/runtime/daemon.py:
-  adapters/python/urirun/runtime/codegen.py:
-  adapters/python/urirun/runtime/introspect.py:
+  requirements.txt:
+  package.json:
+  planfile.yaml:
+  adapters/python/pyproject.toml:
+  adapters/js/package.json:
   adapters/python/urirun/runtime/v2.py:
-  adapters/python/urirun/runtime/_runtime.py:
-  adapters/python/urirun/runtime/v2_grpc.py:
-  adapters/python/urirun/runtime/agent.py:
-  adapters/python/urirun/runtime/v2_adopt.py:
   adapters/python/urirun/runtime/dispatch_protocol.py:
   adapters/python/urirun/runtime/v2_mcp.py:
+  adapters/python/urirun/runtime/__init__.py:
   adapters/python/urirun/runtime/adopt_pack.py:
   adapters/python/urirun/runtime/worker.py:
   adapters/python/urirun/runtime/_registry.py:
-  adapters/python/urirun/runtime/compat.py:
   adapters/python/urirun/runtime/discovery.py:
+  adapters/python/urirun/runtime/compat.py:
   adapters/python/urirun/runtime/tree.py:
   adapters/python/urirun/runtime/_scan.py:
   adapters/python/urirun/runtime/secrets.py:
+  adapters/python/urirun/runtime/cli.py:
+  adapters/python/urirun/runtime/v2_grpc.py:
+  adapters/python/urirun/runtime/_runtime.py:
+  adapters/python/urirun/runtime/v2_adopt.py:
+  adapters/python/urirun/runtime/v2_service.py:
+  adapters/python/urirun/runtime/codegen.py:
+  adapters/python/urirun/runtime/daemon.py:
+  adapters/python/urirun/runtime/progress.py:
+  adapters/python/urirun/runtime/introspect.py:
+  adapters/python/urirun/runtime/agent.py:
+  adapters/python/urirun/runtime/errors.py:
+  adapters/python/urirun/runtime/v1.py:

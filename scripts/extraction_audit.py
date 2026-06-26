@@ -97,8 +97,11 @@ PRESETS: dict[str, dict] = {
         "package_prefixes": (),
         # flow sits on kernel + connectors + the node substrate; HOST edges + cycles are blockers.
         # (Whether it reaches TWIN by import vs URI is checked separately by grep.)
+        # allow_exact includes "urirun.runtime" (the package __init__, e.g. result_data) alongside
+        # the submodule prefix "urirun.runtime." so both `from urirun.runtime import X` and
+        # `from urirun.runtime.v2_service import Y` are allowed.
         "allow_outward": ("urirun.runtime.", "urirun.connectors.", "urirun.node."),
-        "allow_exact": ("urirun",),
+        "allow_exact": ("urirun", "urirun.runtime"),
     },
     "H": {
         "name": "pure node substrate",
@@ -109,8 +112,9 @@ PRESETS: dict[str, dict] = {
         "package": set(),
         "package_prefixes": ("urirun.node.",),
         "exclude_exact": {"urirun.node.node_cli", "urirun.node.task_cli"},
+        # allow_exact includes "urirun.runtime" (the package __init__) — see Preset G comment.
         "allow_outward": ("urirun.runtime.", "urirun.connectors."),
-        "allow_exact": ("urirun",),
+        "allow_exact": ("urirun", "urirun.runtime"),
     },
 }
 
