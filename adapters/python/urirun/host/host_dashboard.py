@@ -126,6 +126,7 @@ from .scanner_bridge import (
     scanner_artifact_doc_meta as _scanner_artifact_doc_meta_impl,
     scanner_best_take as _scanner_best_take,
     scanner_best_update as _scanner_best_update,
+    scanner_staging_dir as _scanner_staging_dir,
     scanner_live_state_from_streams as _scanner_live_state_from_streams_impl,
     scanner_live_store_locked as _scanner_live_store_locked,
     scanner_public_candidate_for_live as _scanner_public_candidate_for_live_impl,
@@ -4908,10 +4909,6 @@ def _service_view_from_query(project: str, query: dict[str, list[str]]) -> dict:
     return _select_service_view_impl(data, target=target, view_id=view_id, utc_now=_utc_now)
 
 
-def _scanner_stream_summary(title: str, status: str, stream: dict) -> dict[str, str]:
-    return _scanner_stream_summary_impl(title, status, stream)
-
-
 def _service_widget_summary(view: dict) -> dict[str, str]:
     return _service_widget_summary_impl(view)
 
@@ -6135,11 +6132,6 @@ def _existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha
     return None
 
 
-def _scanner_staging_dir() -> Path:
-    """Resolved directory where raw captures + receipt crops are staged."""
-    return Path(os.environ.get("URIRUN_SCANNER_DIR", "~/.urirun/host-dashboard/scans")).expanduser().resolve()
-
-
 def _cleanup_duplicate_scan_files(paths: list) -> list[str]:
     """Delete the transient capture files (raw scan + crop) of a detected duplicate.
 
@@ -7112,10 +7104,6 @@ def _document_frame_quality(crop: dict, ocr: dict, metadata: dict, display_path:
     }
 
 
-def _public_scanner_candidate(candidate: dict) -> dict:
-    return _public_scanner_candidate_impl(candidate)
-
-
 def _scanner_public_candidate_for_live(candidate: dict | None, project: str) -> dict | None:
     return _scanner_public_candidate_for_live_impl(candidate, project, preview_url=_preview_url)
 
@@ -7132,38 +7120,12 @@ def scanner_live_state(project: str, limit: int = 8) -> dict:
     )
 
 
-def _scanner_status_from_log(item: dict) -> tuple[dict, str, dict] | None:
-    return _scanner_status_from_log_impl(item)
-
-
 def _latest_scanner_page_status(db: str | None) -> dict:
     try:
         logs = _host_db().recent_logs(db, stream="page-action", limit=80)
     except Exception:  # noqa: BLE001
         return {}
     return _latest_scanner_page_status_impl(logs)
-
-
-def _scanner_artifact_doc_meta(artifact: dict) -> dict:
-    return _scanner_artifact_doc_meta_impl(artifact)
-
-
-def _is_scanner_artifact(kind: str, uri: str, meta: dict) -> bool:
-    return _is_scanner_artifact_impl(kind, uri, meta)
-
-
-def _scanner_artifact_item(artifact: dict, kind: str, uri: str, path: str,
-                           display_path: str, doc: dict, project: str) -> dict:
-    return _scanner_artifact_item_impl(
-        artifact,
-        kind,
-        uri,
-        path,
-        display_path,
-        doc,
-        project,
-        preview_url=_preview_url,
-    )
 
 
 def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> list[dict]:
@@ -7176,14 +7138,14 @@ def _recent_scanner_artifacts(db: str | None, project: str, limit: int = 6) -> l
         kind = str(artifact.get("kind") or "")
         uri = str(artifact.get("uri") or "")
         meta = artifact.get("meta") if isinstance(artifact.get("meta"), dict) else {}
-        if not _is_scanner_artifact(kind, uri, meta):
+        if not _is_scanner_artifact_impl(kind, uri, meta):
             continue
         path = str(artifact.get("path") or "")
         display_path = str(meta.get("displayImage") or meta.get("displayPath") or path)
         if not _artifact_file_exists(path) and not _artifact_file_exists(display_path):
             continue
-        doc = _scanner_artifact_doc_meta(artifact)
-        out.append(_scanner_artifact_item(artifact, kind, uri, path, display_path, doc, project))
+        doc = _scanner_artifact_doc_meta_impl(artifact)
+        out.append(_scanner_artifact_item_impl(artifact, kind, uri, path, display_path, doc, project, preview_url=_preview_url))
         if len(out) >= max(1, int(limit or 6)):
             break
     return out
@@ -7241,10 +7203,6 @@ def _register_document_artifact(db: str | None, project: str, *, uri: str, displ
         ocr=ocr,
         document=document,
     )
-
-
-def _scanner_result_content(content_prefix: str, crop: dict, document: dict, ocr: dict) -> str:
-    return _scanner_result_content_impl(content_prefix, crop, document, ocr)
 
 
 def _register_scanner_result(

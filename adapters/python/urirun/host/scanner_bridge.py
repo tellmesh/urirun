@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import threading
 import time
 import unicodedata
@@ -80,6 +81,10 @@ def scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
         if clear:
             SCANNER_BEST_SESSIONS.pop(series_id, None)
         return dict(series)
+
+
+def scanner_staging_dir() -> Path:
+    return Path(os.environ.get("URIRUN_SCANNER_DIR", "~/.urirun/host-dashboard/scans")).expanduser().resolve()
 
 
 @dataclass(frozen=True)
