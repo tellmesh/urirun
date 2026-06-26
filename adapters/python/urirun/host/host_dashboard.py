@@ -33,17 +33,23 @@ from .document_sync import (
     DOCUMENT_SYNC_URI as _DOCUMENT_SYNC_URI,
     DocumentSyncDeps,
     archive_month as _archive_month,
+    artifact_schema_known as _artifact_schema_known,
     boolish as _boolish,
+    canonical_document_filename as _canonical_document_filename,
     document_archive_pdfs as _document_archive_pdfs_impl,
     document_archive_root as _document_archive_root,
+    document_filename_with_id as _document_filename_with_id,
     document_files_exist as _document_files_exist,
     document_index_path as _document_index_path,
+    document_schema_fields as _document_schema_fields,
     document_sync_auto_retry_enabled as _document_sync_auto_retry_enabled,
     document_sync_default_dest_root as _document_sync_default_dest_root,
     document_sync_default_node as _document_sync_default_node,
     document_sync_dest_from_prompt as _document_sync_dest_from_prompt,
     document_sync_retry_payload_from_urifix as _document_sync_retry_payload_from_urifix,
     document_sync_verification as _document_sync_verification_impl,
+    filename_part as _filename_part,
+    needs_screen_document_capture as _needs_screen_document_capture,
     pdf_stream as _pdf_stream,
     pdf_text as _pdf_text,
     sync_documents_to_node as _sync_documents_to_node_impl,
@@ -6003,32 +6009,6 @@ def _docid_for_file(path: str | Path, ocr_text: str) -> dict:
 
 
 
-def _filename_part(value: str, *, default: str, max_len: int = 48) -> str:
-    folded = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
-    folded = re.sub(r"[^A-Za-z0-9._+-]+", "-", folded).strip(".-_").lower()
-    folded = re.sub(r"-{2,}", "-", folded)
-    return (folded or default)[:max_len].strip(".-_") or default
-
-
-def _canonical_document_filename(meta: dict) -> str:
-    doc_type = _filename_part(str(meta.get("type") or ""), default="dokument", max_len=18)
-    doc_date = _filename_part(str(meta.get("date") or ""), default=time.strftime("%Y-%m-%d", time.gmtime()), max_len=10)
-    contractor = _filename_part(str(meta.get("contractor") or ""), default="kontrahent-nieznany", max_len=42)
-    amount = str(meta.get("amount") or "").strip()
-    currency = str(meta.get("currency") or "").strip().upper()
-    amount_part = f"{amount}-{currency}" if amount and currency else amount or "kwota-nieznana"
-    amount_part = _filename_part(amount_part, default="kwota-nieznana", max_len=24)
-    return f"{doc_type}_{doc_date}_{contractor}_{amount_part}.pdf"
-
-
-def _document_filename_with_id(filename: str, doc_id: str) -> str:
-    path = Path(filename)
-    doc_part = _filename_part(doc_id, default="doc-id", max_len=36)
-    if doc_part and doc_part in path.stem:
-        return filename
-    return f"{path.stem}_{doc_part}{path.suffix or '.pdf'}"
-
-
 def _write_document_pdf(image_path: str | Path, pdf_path: str | Path, *, metadata: dict, ocr_text: str) -> None:
     from PIL import Image, ImageOps
 
@@ -6538,39 +6518,6 @@ def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, te
         if reason:
             match = {**item, "_matchReason": reason}  # last match wins, mirroring _existing_scanned_id
     return match
-
-
-def _artifact_schema_known(type_id: str) -> bool | None:
-    """Whether ``type_id`` matches a registered urirun-artifacts schema id.
-
-    Bridges the file-artifact's document ``type`` (e.g. ``paragon``/``faktura``) to the
-    urirun-artifacts schema registry WITHOUT making it a hard dependency: returns ``None``
-    when the registry is not installed (validation skipped), else ``True``/``False``.
-    """
-    normalized = str(type_id or "").strip().lower()
-    if not normalized:
-        return None
-    try:
-        import urirun_artifacts  # noqa: F401  (import registers the models)
-        from urirun_artifacts import registry
-        known = {str(i).strip().lower() for i in registry.all_ids()}
-    except Exception:  # noqa: BLE001
-        return None
-    return normalized in known
-
-
-def _document_schema_fields(doc_type: str) -> dict:
-    """The schema-registry annotation written onto an archived document entry.
-
-    ``schemaKnown`` is True/False when the urirun-artifacts registry is installed and the
-    document ``type`` is/isn't a registered schema, or None when the registry is absent.
-    ``schemaId`` carries the matched schema id only when known.
-    """
-    known = _artifact_schema_known(doc_type)
-    return {
-        "schemaKnown": known,
-        "schemaId": str(doc_type or "").strip().lower() if known else None,
-    }
 
 
 def _archive_redundant_duplicate(*, duplicate: dict, index_match: dict | None, existing_meta: dict,
@@ -9588,13 +9535,6 @@ def _try_urifix_repair(prompt: str, request: dict, result: dict, *, node_urls: l
 
 
 
-def _needs_screen_document_capture(prompt: str) -> bool:
-    text_value = prompt.casefold()
-    wants_screen = any(word in text_value for word in ("zrzut", "screenshot", "screen capture", "zrzuty ekranu"))
-    wants_document = any(word in text_value for word in ("pdf", "dokument", "document", "faktur", "rachunek", "paragon"))
-    return wants_screen and wants_document
-
-
 def _is_document_sync_prompt(prompt: str, selected_nodes: list[str] | None = None,
                              selected_targets: list[str] | None = None, config: str | None = None,
                              node_urls: list[str] | None = None) -> bool:
@@ -10438,6 +10378,68 @@ def _fetch_planner_environments_for_nodes(mesh: Any, selected_nodes: list[str], 
     return mesh.fetch_planner_environments(ground, registry, discovered, memory=memory) if (execute and ground) else []
 
 
+def _chat_ask_general_check_offline(
+    selected_nodes: list[str],
+    discovered: dict,
+    db: str | None,
+    prompt: str,
+    execute: bool,
+    selected_targets: list[str],
+) -> dict | None:
+    """Return a planner-failure dict when ALL targeted nodes are offline; None when ≥1 is reachable."""
+    if not selected_nodes:
+        return None
+    reachable_names = {n.get("name") for n in (discovered.get("nodes") or []) if n.get("reachable")}
+    offline = [n for n in selected_nodes if n not in reachable_names]
+    if not offline or reachable_names.intersection(selected_nodes):
+        return None
+    exc = ValueError(
+        f"NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
+        f"selected {selected_nodes!r}. "
+        f"Node(s) {offline!r} are offline or unreachable. "
+        "Check the mesh config or pass --node-url [NAME=]URL. Sample routes: []"
+    )
+    return _chat_ask_general_planner_failure(exc, db, prompt, execute, selected_nodes, selected_targets)
+
+
+def _chat_ask_general_build_result(
+    execution: dict,
+    flow: dict,
+    discovered: dict,
+    generator: dict,
+    selected_nodes: list[str],
+    selected_targets: list[str],
+    prompt: str,
+    execute: bool,
+    payload: dict,
+    project: str,
+    db: str | None,
+) -> dict:
+    """Assemble, annotate, compact, and record the chat result after a successful flow run."""
+    result = {
+        "ok": bool(execution.get("ok")),
+        "prompt": prompt,
+        "execute": execute,
+        "selectedNodes": selected_nodes,
+        "selectedTargets": selected_targets,
+        "generator": generator,
+        "nodeCount": len(discovered.get("nodes") or []),
+        "routeCount": len(discovered.get("routes") or []),
+        "flow": flow,
+        **execution,
+    }
+    if execute and not result.get("verification"):
+        from urirun.host.contracts import flow_execution_verification as _flow_exec_verify  # noqa: PLC0415
+        result["verification"] = _flow_exec_verify(flow, execution)
+    if not result.get("ok") and not result.get("nextIntent"):
+        result["nextIntent"] = _general_path_next_intent(execution)
+    result = _compact_chat_result(result, payload)
+    attachments = _collect_attachments(result, project)
+    result["attachments"] = attachments
+    _general_path_complete(result, db, prompt, execute, selected_nodes, selected_targets, generator, flow, attachments)
+    return result
+
+
 def _chat_ask_general(
     project: str,
     db: str | None,
@@ -10462,20 +10464,10 @@ def _chat_ask_general(
             return _chat_ask_general_capability_gap(
                 db, prompt, execute, selected_nodes, selected_targets, discovered, capability_gap)
         registry = mesh.registry_from_routes(discovered.get("routes") or [])
-        # Proactive check: if specific nodes were targeted but none are reachable, surface a
-        # meaningful early-exit instead of letting make_flow raise "0 safe routes" with a
-        # payload-repair recovery that makes no sense for an offline node.
-        if selected_nodes:
-            reachable_names = {n.get("name") for n in (discovered.get("nodes") or []) if n.get("reachable")}
-            offline = [n for n in selected_nodes if n not in reachable_names]
-            if offline and not reachable_names.intersection(selected_nodes):
-                exc = ValueError(
-                    f"NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
-                    f"selected {selected_nodes!r}. "
-                    f"Node(s) {offline!r} are offline or unreachable. "
-                    "Check the mesh config or pass --node-url [NAME=]URL. Sample routes: []"
-                )
-                return _chat_ask_general_planner_failure(exc, db, prompt, execute, selected_nodes, selected_targets)
+        offline_fail = _chat_ask_general_check_offline(
+            selected_nodes, discovered, db, prompt, execute, selected_targets)
+        if offline_fail is not None:
+            return offline_fail
         from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
         twin_memory = _durable_memory() if execute else None
         try:
@@ -10488,28 +10480,11 @@ def _chat_ask_general(
         execution = mesh.execute_flow(flow, discovered, registry, execute=execute, memory=twin_memory)
     finally:
         _restore_run_credentials(old_token, old_identity)
-    result = {
-        "ok": bool(execution.get("ok")),
-        "prompt": prompt,
-        "execute": execute,
-        "selectedNodes": selected_nodes,
-        "selectedTargets": selected_targets,
-        "generator": generator,
-        "nodeCount": len(discovered.get("nodes") or []),
-        "routeCount": len(discovered.get("routes") or []),
-        "flow": flow,
-        **execution,
-    }
-    if execute and not result.get("verification"):
-        from urirun.host.contracts import flow_execution_verification as _flow_exec_verify  # noqa: PLC0415
-        result["verification"] = _flow_exec_verify(flow, execution)
-    if not result.get("ok") and not result.get("nextIntent"):
-        result["nextIntent"] = _general_path_next_intent(execution)
-    result = _compact_chat_result(result, payload)
-    attachments = _collect_attachments(result, project)
-    result["attachments"] = attachments
-    _general_path_complete(result, db, prompt, execute, selected_nodes, selected_targets, generator, flow, attachments)
-    return result
+    return _chat_ask_general_build_result(
+        execution, flow, discovered, generator,
+        selected_nodes, selected_targets,
+        prompt, execute, payload, project, db,
+    )
 
 
 def _chat_phone_scanner_response(project: str, db: str | None, config: str | None, payload: dict, *, prompt: str,

@@ -63,6 +63,68 @@ def document_files_exist(item: dict) -> bool:
             return True
     return False
 
+
+# --------------------------------------------------------------------------- #
+# Document filename / schema utilities
+# --------------------------------------------------------------------------- #
+
+def filename_part(value: str, *, default: str, max_len: int = 48) -> str:
+    folded = unicodedata.normalize("NFKD", value or "").encode("ascii", "ignore").decode("ascii")
+    folded = re.sub(r"[^A-Za-z0-9._+-]+", "-", folded).strip(".-_").lower()
+    folded = re.sub(r"-{2,}", "-", folded)
+    return (folded or default)[:max_len].strip(".-_") or default
+
+
+def canonical_document_filename(meta: dict) -> str:
+    doc_type = filename_part(str(meta.get("type") or ""), default="dokument", max_len=18)
+    doc_date = filename_part(str(meta.get("date") or ""), default=time.strftime("%Y-%m-%d", time.gmtime()), max_len=10)
+    contractor = filename_part(str(meta.get("contractor") or ""), default="kontrahent-nieznany", max_len=42)
+    amount = str(meta.get("amount") or "").strip()
+    currency = str(meta.get("currency") or "").strip().upper()
+    amount_part = f"{amount}-{currency}" if amount and currency else amount or "kwota-nieznana"
+    amount_part = filename_part(amount_part, default="kwota-nieznana", max_len=24)
+    return f"{doc_type}_{doc_date}_{contractor}_{amount_part}.pdf"
+
+
+def document_filename_with_id(filename: str, doc_id: str) -> str:
+    path = Path(filename)
+    doc_part = filename_part(doc_id, default="doc-id", max_len=36)
+    if doc_part and doc_part in path.stem:
+        return filename
+    return f"{path.stem}_{doc_part}{path.suffix or '.pdf'}"
+
+
+def artifact_schema_known(type_id: str) -> bool | None:
+    """Whether ``type_id`` matches a registered urirun-artifacts schema id.
+
+    Returns None when the registry is not installed (validation skipped).
+    """
+    normalized = str(type_id or "").strip().lower()
+    if not normalized:
+        return None
+    try:
+        import urirun_artifacts  # noqa: F401
+        from urirun_artifacts import registry
+        known = {str(i).strip().lower() for i in registry.all_ids()}
+    except Exception:  # noqa: BLE001
+        return None
+    return normalized in known
+
+
+def document_schema_fields(doc_type: str) -> dict:
+    known = artifact_schema_known(doc_type)
+    return {
+        "schemaKnown": known,
+        "schemaId": str(doc_type or "").strip().lower() if known else None,
+    }
+
+
+def needs_screen_document_capture(prompt: str) -> bool:
+    text_value = prompt.casefold()
+    wants_screen = any(word in text_value for word in ("zrzut", "screenshot", "screen capture", "zrzuty ekranu"))
+    wants_document = any(word in text_value for word in ("pdf", "dokument", "document", "faktur", "rachunek", "paragon"))
+    return wants_screen and wants_document
+
 DOCUMENT_SYNC_URI = "document://host/archive/command/sync-to-node"
 
 _DEFAULT_SYNC_TIMEOUT = 120.0
