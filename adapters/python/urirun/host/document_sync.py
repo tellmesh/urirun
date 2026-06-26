@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import hashlib
 import os
 import re
@@ -578,3 +579,143 @@ def sync_documents_to_node(
 def scanned_id_log_path() -> Path:
     configured = os.environ.get("URIRUN_SCANNED_ID_LOG")
     return Path(configured).expanduser().resolve() if configured else document_archive_root() / "scanned.id.jsonl"
+
+
+def load_document_index() -> dict:
+    path = document_index_path()
+    if not path.is_file():
+        return {"version": 1, "documents": []}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return {"version": 1, "documents": []}
+    if not isinstance(data, dict):
+        return {"version": 1, "documents": []}
+    docs = data.get("documents")
+    if not isinstance(docs, list):
+        data["documents"] = []
+    data.setdefault("version", 1)
+    return data
+
+
+def save_document_index(index: dict) -> None:
+    path = document_index_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    index["updatedAt"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(index, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp.replace(path)
+
+
+def prune_orphaned_documents(index: dict) -> list[dict]:
+    """Drop index entries whose PDF and JSON sidecar are both gone from disk."""
+    docs = index.get("documents")
+    if not isinstance(docs, list):
+        return []
+    kept: list[dict] = []
+    pruned: list[dict] = []
+    for item in docs:
+        if isinstance(item, dict) and not document_files_exist(item):
+            pruned.append(item)
+        else:
+            kept.append(item)
+    if pruned:
+        index["documents"] = kept
+    return pruned
+
+
+def iter_scanned_id_log() -> list[dict]:
+    path = scanned_id_log_path()
+    if not path.is_file():
+        return []
+    out: list[dict] = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            item = json.loads(line)
+            if isinstance(item, dict):
+                out.append(item)
+    except Exception:  # noqa: BLE001
+        return out
+    return out
+
+
+def append_scanned_id_log(entry: dict) -> None:
+    path = scanned_id_log_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(entry, ensure_ascii=False, sort_keys=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(line + "\n")
+
+
+def existing_scanned_id(*, doc_id: str, source_sha256: str, text_sha256: str) -> dict | None:
+    duplicate: dict | None = None
+    for item in iter_scanned_id_log():
+        same_doc = bool(doc_id and item.get("docId") == doc_id)
+        same_source = bool(source_sha256 and item.get("sourceSha256") == source_sha256)
+        same_text = bool(text_sha256 and item.get("textSha256") == text_sha256)
+        if same_doc or same_source or same_text:
+            duplicate = item
+    return duplicate
+
+
+def scanned_log_entry(item: dict) -> dict:
+    """Build a scanned-id-log entry from an existing document-index record."""
+    pdf_path = str(item.get("pdfPath") or item.get("path") or "")
+    return {
+        "version": 1,
+        "event": "indexed",
+        "scannedAt": item.get("createdAt") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "docId": str(item.get("docId") or "").strip(),
+        "docIdProvider": item.get("docIdProvider"),
+        "docIdSource": item.get("docIdSource"),
+        "duplicate": False,
+        "uri": item.get("uri"),
+        "pdfPath": pdf_path,
+        "jsonPath": item.get("jsonPath"),
+        "fileName": Path(pdf_path).name if pdf_path else "",
+        "originalPath": item.get("originalPath"),
+        "cropPath": item.get("cropPath"),
+        "sourceSha256": str(item.get("sourceSha256") or "").strip(),
+        "textSha256": str(item.get("textSha256") or "").strip(),
+        "ocrBackend": item.get("ocrBackend"),
+        "ocrChars": item.get("ocrChars"),
+        "metadata": {
+            "type": item.get("type"),
+            "date": item.get("date"),
+            "contractor": item.get("contractor"),
+            "amount": item.get("amount"),
+            "currency": item.get("currency"),
+        },
+    }
+
+
+def scanned_entry_seen(entry: dict, seen: dict[str, set[str]]) -> bool:
+    """True when any of the entry's identity keys is already in the seen-bucket of that key."""
+    return any(entry[key] and entry[key] in bucket for key, bucket in seen.items())
+
+
+def scanned_seen_buckets(existing: list[dict]) -> dict[str, set[str]]:
+    """Index the existing scanned-id log by each identity key for O(1) duplicate checks."""
+    return {
+        "docId": {str(i.get("docId") or "") for i in existing if i.get("docId")},
+        "sourceSha256": {str(i.get("sourceSha256") or "") for i in existing if i.get("sourceSha256")},
+        "textSha256": {str(i.get("textSha256") or "") for i in existing if i.get("textSha256")},
+    }
+
+
+def backfill_scanned_id_log(index: dict) -> None:
+    docs = [item for item in index.get("documents", []) if isinstance(item, dict)]
+    if not docs:
+        return
+    seen = scanned_seen_buckets(iter_scanned_id_log())
+    for item in docs:
+        entry = scanned_log_entry(item)
+        if scanned_entry_seen(entry, seen):
+            continue
+        append_scanned_id_log(entry)
+        for key, bucket in seen.items():
+            if entry[key]:
+                bucket.add(entry[key])
