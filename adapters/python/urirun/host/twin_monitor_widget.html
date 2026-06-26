@@ -100,7 +100,7 @@
             flex: 0 0 auto;                     /* don't fill — the NOW/NEXT maps are empty for screen captures */
             height: clamp(200px, 34vh, 340px);  /* a glanceable transition view, not a screen-filling void */
             gap: 40px;
-            align-items: stretch;
+            align-items: center;
             justify-content: center;
             min-height: 0;
         }
@@ -482,7 +482,7 @@
                 <span class="flows-header-title">&#128190; Known-Good Flows</span>
                 <span class="flows-header-count" id="flowsCount">loading...</span>
             </div>
-            <div class="flows-body collapsed" id="flowsBody">
+            <div class="flows-body" id="flowsBody">
                 <div class="flows-empty" id="flowsEmpty" style="display:none">No known-good flows yet. Run a flow with execute=true to record one.</div>
             </div>
         </div>
@@ -491,7 +491,7 @@
                 <span class="flows-header-title">&#129504; Episodes</span>
                 <span class="flows-header-count" id="episodesCount">loading...</span>
             </div>
-            <div class="flows-body collapsed" id="episodesBody">
+            <div class="flows-body" id="episodesBody">
                 <div class="flows-empty" id="episodesEmpty" style="display:none">No episodes yet. Run a flow with execute=true to record one.</div>
             </div>
         </div>
@@ -500,7 +500,7 @@
                 <span class="flows-header-title">&#128737; Reversibility Proofs</span>
                 <span class="flows-header-count" id="proofsCount">loading...</span>
             </div>
-            <div class="flows-body collapsed" id="proofsBody">
+            <div class="flows-body" id="proofsBody">
                 <div class="flows-empty" id="proofsEmpty" style="display:none">No reversibility proofs cached yet.</div>
             </div>
         </div>
@@ -509,7 +509,7 @@
                 <span class="flows-header-title">&#9888;&#65039; Degraded Runs</span>
                 <span class="flows-header-count" id="degradedCount">loading...</span>
             </div>
-            <div class="flows-body collapsed" id="degradedBody">
+            <div class="flows-body" id="degradedBody">
                 <div class="flows-empty" id="degradedEmpty" style="display:none">No degraded runs.</div>
             </div>
         </div>
@@ -973,7 +973,7 @@
         const flowsBody = document.getElementById('flowsBody');
         const flowsCount = document.getElementById('flowsCount');
         const flowsEmpty = document.getElementById('flowsEmpty');
-        let flowsCollapsed = true;
+        let flowsCollapsed = false;
         // Extra twin-state panels (episodes / proofs / degraded) — same markup as flows.
         const episodesBody = document.getElementById('episodesBody');
         const episodesEmpty = document.getElementById('episodesEmpty');

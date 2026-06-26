@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 138, json: 13, shell: 10, yaml: 5, csharp: 4
+- **Languages**: python: 142, json: 13, shell: 10, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1810
-- **Total Classes**: 57
-- **Modules**: 198
-- **Entry Points**: 662
+- **Total Functions**: 1847
+- **Total Classes**: 58
+- **Modules**: 202
+- **Entry Points**: 691
 
 ## Architecture by Module
 
@@ -38,11 +38,11 @@
 - **File**: `__init__.py`
 
 ### adapters.python.urirun.node.reversible
-- **Functions**: 50
+- **Functions**: 53
 - **Classes**: 9
 - **File**: `reversible.py`
 
-### adapters.python.urirun.node.node_cli
+### adapters.python.urirun.host.node_cli
 - **Functions**: 48
 - **File**: `node_cli.py`
 
@@ -120,19 +120,11 @@ Main execution flows into the system:
 ### adapters.python.urirun.runtime._runtime.main
 - **Calls**: list, argparse.ArgumentParser, parser.add_subparsers, subparsers.add_parser, add_source, run_parser.add_argument, run_parser.add_argument, run_parser.add_argument
 
-### adapters.python.urirun.node.flow._in_process_discovery
-> Tier-2 fallback: resolve *uri* through installed connectors (entry-point scan),
-then through DECORATED_BINDINGS (connector.handler() registrations not
-- **Calls**: _disc.registry_for_uri, _u.run, None.get, _u.compile_registry, _u.run, None.get, _v2.build_binding_document, None.get
-
 ### adapters.python.urirun.runtime.v2_adopt.main
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, py.add_argument, py.add_argument, sub.add_parser, npm.add_argument, npm.add_argument
 
 ### adapters.python.urirun.node.server.NodeHandler._stream_events
 - **Calls**: self.path.partition, adapters.python.urirun.node.server._parse_sse_query, adapters.python.urirun.node.server._sse_initial_cursor, c.hub.subscribe, adapters.python.urirun.node.server.send_json, self.send_response, self.send_header, self.send_header
-
-### adapters.python.urirun.host.twin_bridge.api_twin_state
-- **Calls**: _durable_memory, int, mem.known_good_flows, getattr, list, hasattr, store.items, isinstance
 
 ### scripts.transport_swap_proof.main
 - **Calls**: CallableTransport, subprocess.Popen, CallableTransport, print, print, print, scripts.transport_swap_proof.timed, scripts.transport_swap_proof.timed
@@ -147,19 +139,19 @@ then through DECORATED_BINDINGS (connector.handler() registrations not
 ### adapters.python.urirun.node.server.NodeHandler._handle_deploy
 - **Calls**: adapters.python.urirun.node.server.read_raw, body.get, print, adapters.python.urirun.node.server.send_json, adapters.python.urirun.node.server.send_json, self._admin_ok, adapters.python.urirun.node.server.send_json, json.loads
 
-### adapters.python.urirun.node.reversible._uri_rollback
-> Handler for twin://<node>/flow/command/rollback.
-
-Two calling conventions accepted:
-  1. {ledger: [{uri, inverse, args, before, after}], mesh?, scan_u
-- **Calls**: payload.get, adapters.python.urirun.node.reversible.ReversibleProcess.rollback_flow, payload.get, payload.get, payload.get, ReversibleProcess, proc.rollback_flow, payload.get
-
 ### adapters.python.urirun.host.dispatch.inprocess_fallback
 > Call an installed connector URI in-process via the urirun runtime.
 
 Returns None when no connector owns the route (so the caller can raise the
 correct
 - **Calls**: uri.startswith, adapters.python.urirun.host.dispatch._flow_scheme_dispatch, discovery.registry_for_uri, urirun.run, _u.result_data, bool, None.get, urirun.compile_registry
+
+### adapters.python.urirun.node.reversible._uri_rollback
+> Handler for twin://<node>/flow/command/rollback.
+
+Two calling conventions accepted:
+  1. {ledger: [{uri, inverse, args, before, after}], mesh?, scan_u
+- **Calls**: payload.get, adapters.python.urirun.node.reversible.ReversibleProcess.rollback_flow, payload.get, payload.get, payload.get, ReversibleProcess, proc.rollback_flow, payload.get
 
 ### adapters.python.urirun.Connector._build_cli_parser
 > Build the connector argparse parser (one subcommand per route).
@@ -228,6 +220,15 @@ Returns:
 ### examples.matrix.verify.main
 - **Calls**: contracts.get, sorted, None.removesuffix, adapters.python.urirun.validate_binding_document, examples.matrix.verify.essential, contracts.items, json.load, print
 
+### adapters.python.urirun.host.domain_monitor._route_flow
+- **Calls**: str, adapters.python.urirun.host.domain_monitor.check_domain, adapters.python.urirun.host.domain_monitor.run_daily, rc.payload.get, rc.payload.get, adapters.python.urirun.host.domain_monitor.expected_records, adapters.python.urirun.host.domain_monitor._db, adapters.python.urirun.host.domain_monitor._project
+
+### adapters.python.urirun.host.contracts.file_transfer_verification
+> Return the standard verification contract for file-copy style URI flows.
+
+`uploaded` means the remote write acknowledged the file. `verified` means th
+- **Calls**: list, set, set, adapters.python.urirun.host.contracts.verification_check, adapters.python.urirun.host.contracts.verification_check, all, len, len
+
 ## Process Flows
 
 Key execution flows identified:
@@ -245,53 +246,55 @@ summary [adapters.python.urirun.host.host_dashboard]
   └─ →> _host_db
 ```
 
-### Flow 3: _in_process_discovery
-```
-_in_process_discovery [adapters.python.urirun.node.flow]
-```
-
-### Flow 4: _stream_events
+### Flow 3: _stream_events
 ```
 _stream_events [adapters.python.urirun.node.server.NodeHandler]
   └─ →> _parse_sse_query
   └─ →> _sse_initial_cursor
 ```
 
-### Flow 5: api_twin_state
-```
-api_twin_state [adapters.python.urirun.host.twin_bridge]
-```
-
-### Flow 6: connector_install
+### Flow 4: connector_install
 ```
 connector_install [adapters.python.urirun.host.connector_admin]
   └─> connector_pip_tail
 ```
 
-### Flow 7: chat_ask
+### Flow 5: chat_ask
 ```
 chat_ask [adapters.python.urirun.host.chat_orchestrator]
   └─ →> selected_nodes_from_targets
 ```
 
-### Flow 8: _handle_deploy
+### Flow 6: _handle_deploy
 ```
 _handle_deploy [adapters.python.urirun.node.server.NodeHandler]
   └─ →> read_raw
   └─ →> send_json
 ```
 
-### Flow 9: _uri_rollback
+### Flow 7: inprocess_fallback
+```
+inprocess_fallback [adapters.python.urirun.host.dispatch]
+  └─> _flow_scheme_dispatch
+      └─ →> durable_memory
+```
+
+### Flow 8: _uri_rollback
 ```
 _uri_rollback [adapters.python.urirun.node.reversible]
   └─ →> rollback_flow
 ```
 
-### Flow 10: inprocess_fallback
+### Flow 9: _build_cli_parser
 ```
-inprocess_fallback [adapters.python.urirun.host.dispatch]
-  └─> _flow_scheme_dispatch
-      └─ →> durable_memory
+_build_cli_parser [adapters.python.urirun.Connector]
+```
+
+### Flow 10: _cmd_upgrade
+```
+_cmd_upgrade [adapters.python.urirun.runtime.v2]
+  └─> _resolve_pip_targets
+      └─ →> fn
 ```
 
 ## Key Classes
@@ -311,7 +314,7 @@ so this is a normal
 ### adapters.python.urirun.node.reversible.TwinMemory
 > Remembers the KNOWN-GOOD environment fingerprint per node (snapshot-on-success), so a later
 run dete
-- **Methods**: 18
+- **Methods**: 21
 - **Key Methods**: adapters.python.urirun.node.reversible.TwinMemory.remember, adapters.python.urirun.node.reversible.TwinMemory.known_good, adapters.python.urirun.node.reversible.TwinMemory.drift, adapters.python.urirun.node.reversible.TwinMemory.remember_flow, adapters.python.urirun.node.reversible.TwinMemory.recall_flow, adapters.python.urirun.node.reversible.TwinMemory.known_good_flows, adapters.python.urirun.node.reversible.TwinMemory.degraded_flows, adapters.python.urirun.node.reversible.TwinMemory.remember_episode, adapters.python.urirun.node.reversible.TwinMemory.known_good_episodes, adapters.python.urirun.node.reversible.TwinMemory.recall_episode
 
 ### adapters.python.urirun.Connector
@@ -343,6 +346,12 @@ bounded queue; publis
 - **Methods**: 7
 - **Key Methods**: adapters.python.urirun.node.server.EventHub.__init__, adapters.python.urirun.node.server.EventHub.publish, adapters.python.urirun.node.server.EventHub.subscribe, adapters.python.urirun.node.server.EventHub.unsubscribe, adapters.python.urirun.node.server.EventHub.replay_since, adapters.python.urirun.node.server.EventHub.current_id, adapters.python.urirun.node.server.EventHub.count
 
+### adapters.python.urirun.node.twin_store.JsonFileStore
+> A dict-like store that persists every write to a single JSON file (atomic replace), so a
+TwinMemory 
+- **Methods**: 7
+- **Key Methods**: adapters.python.urirun.node.twin_store.JsonFileStore.__init__, adapters.python.urirun.node.twin_store.JsonFileStore.get, adapters.python.urirun.node.twin_store.JsonFileStore.items, adapters.python.urirun.node.twin_store.JsonFileStore.__getitem__, adapters.python.urirun.node.twin_store.JsonFileStore.__contains__, adapters.python.urirun.node.twin_store.JsonFileStore.__setitem__, adapters.python.urirun.node.twin_store.JsonFileStore._flush
+
 ### adapters.python.urirun.runtime.worker.WorkerPool
 > A single long-lived connector worker. Reuse across many URI calls.
 - **Methods**: 6
@@ -353,12 +362,6 @@ bounded queue; publis
 returns the plaintext (cal
 - **Methods**: 6
 - **Key Methods**: adapters.python.urirun.runtime.secrets.SecretStr.__init__, adapters.python.urirun.runtime.secrets.SecretStr.reveal, adapters.python.urirun.runtime.secrets.SecretStr.ref, adapters.python.urirun.runtime.secrets.SecretStr.__str__, adapters.python.urirun.runtime.secrets.SecretStr.__repr__, adapters.python.urirun.runtime.secrets.SecretStr.__bool__
-
-### adapters.python.urirun.node.twin_store.JsonFileStore
-> A dict-like store that persists every write to a single JSON file (atomic replace), so a
-TwinMemory 
-- **Methods**: 6
-- **Key Methods**: adapters.python.urirun.node.twin_store.JsonFileStore.__init__, adapters.python.urirun.node.twin_store.JsonFileStore.get, adapters.python.urirun.node.twin_store.JsonFileStore.__getitem__, adapters.python.urirun.node.twin_store.JsonFileStore.__contains__, adapters.python.urirun.node.twin_store.JsonFileStore.__setitem__, adapters.python.urirun.node.twin_store.JsonFileStore._flush
 
 ### adapters.php.Urirun.Urirun.Connector
 - **Methods**: 5
@@ -398,17 +401,15 @@ child processes t
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun.connectors.backend_registry.Backend.missing, adapters.python.urirun.connectors.backend_registry.Backend.platform_ok, adapters.python.urirun.connectors.backend_registry.Backend.available
 
+### adapters.csharp.Urirun.Connector
+- **Methods**: 3
+- **Key Methods**: adapters.csharp.Urirun.Connector.Connector, adapters.csharp.Urirun.Connector.Command, adapters.csharp.Urirun.Connector.BindingsJson
+
 ### adapters.python.urirun.node.reversible.Connector
 > The ADOPTION CONTRACT. A connector enters the engine by providing these three.
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun.node.reversible.Connector.call, adapters.python.urirun.node.reversible.Connector.scan_uri, adapters.python.urirun.node.reversible.Connector.schema
 - **Inherits**: Protocol
-
-### adapters.python.urirun.node.reversible.ReversibleProcess
-> The engine: execute with the invariant, build the ledger, roll back with proof. It
-knows NO connecto
-- **Methods**: 3
-- **Key Methods**: adapters.python.urirun.node.reversible.ReversibleProcess.execute, adapters.python.urirun.node.reversible.ReversibleProcess.rollback, adapters.python.urirun.node.reversible.ReversibleProcess.rollback_flow
 
 ## Data Transformation Functions
 
@@ -593,8 +594,7 @@ Functions exposed as public API (no underscore prefix):
 - `scripts.extraction_audit.print_report` - 36 calls
 - `adapters.python.urirun.runtime._runtime.main` - 33 calls
 - `adapters.python.urirun.runtime.v2_adopt.main` - 31 calls
-- `adapters.python.urirun.host.twin_bridge.api_twin_state` - 30 calls
-- `adapters.python.urirun.node.node_cli.copy_id_command` - 30 calls
+- `adapters.python.urirun.host.node_cli.copy_id_command` - 30 calls
 - `adapters.python.urirun.node.recovery.normalize_error` - 30 calls
 - `scripts.transport_swap_proof.main` - 29 calls
 - `adapters.python.urirun.host.connector_admin.connector_install` - 29 calls
@@ -614,17 +614,18 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun.connectors.resolver.resolve` - 24 calls
-- `adapters.python.urirun.node.node_cli.watch_command` - 24 calls
+- `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
 - `adapters.python.urirun.connectors.resolver.index_local` - 22 calls
-- `adapters.python.urirun.node.node_cli.deploy_command` - 22 calls
 - `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
+- `adapters.python.urirun.host.node_cli.deploy_command` - 22 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
+- `adapters.python.urirun.host.host_dashboard.uri_invoke` - 21 calls
 
 ## System Interactions
 
@@ -643,25 +644,25 @@ graph TD
     summary --> _mesh
     summary --> recent_checks
     summary --> _public_artifacts
-    _in_process_discover --> registry_for_uri
-    _in_process_discover --> run
-    _in_process_discover --> get
-    _in_process_discover --> compile_registry
     _stream_events --> partition
     _stream_events --> _parse_sse_query
     _stream_events --> _sse_initial_cursor
     _stream_events --> subscribe
     _stream_events --> send_json
-    api_twin_state --> _durable_memory
-    api_twin_state --> int
-    api_twin_state --> known_good_flows
-    api_twin_state --> getattr
-    api_twin_state --> list
     main --> CallableTransport
     main --> Popen
     main --> print
     connector_install --> strip
     connector_install --> startswith
+    connector_install --> lower
+    connector_install --> connector_pip_tail
+    chat_ask --> strip
+    chat_ask --> list
+    chat_ask --> selected_nodes_from_
+    chat_ask --> bool
+    _handle_deploy --> read_raw
+    _handle_deploy --> get
+    _handle_deploy --> print
 ```
 
 ## Reverse Engineering Guidelines

@@ -415,6 +415,22 @@ def _split_episodes(all_episodes: list) -> "tuple[list, list, list]":
     return ok, failed, list(seen_health.values())
 
 
+def _now_state(step_events: list, nodes: dict) -> dict:
+    """The current live state for the twin NOW/NEXT header: the latest step event's after-state
+    (fingerprint / url / status). Falls back to a node's known-good env fingerprint when no event
+    has fired yet — so FINGERPRINT shows env-… instead of '--' even on a cold panel."""
+    for e in reversed(step_events or []):
+        after = (e.get("transition") or {}).get("after") or {}
+        if after.get("fingerprint") or after.get("url"):
+            return {"fingerprint": after.get("fingerprint"), "url": after.get("url"),
+                    "status": e.get("status"), "node": after.get("node")}
+    for name, rec in (nodes or {}).items():
+        fp = (rec or {}).get("fingerprint")
+        if fp:
+            return {"fingerprint": fp, "url": None, "status": None, "node": name}
+    return {"fingerprint": None, "url": None, "status": None, "node": None}
+
+
 def api_twin_state(project: str, db: "str | None", config: "str | None", query: dict,
                    node_urls: "list[str] | None" = None) -> "tuple[int, dict]":
     from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
@@ -437,6 +453,7 @@ def api_twin_state(project: str, db: "str | None", config: "str | None", query: 
     return 200, {
         "ok": True,
         "nodes": nodes,
+        "now": _now_state(step_events, nodes),  # live FINGERPRINT/URL/STATUS for the NOW/NEXT header
         "flows": flows[:limit],
         "total": len(flows),
         "degradedFlows": degraded_flows[:limit],

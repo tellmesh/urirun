@@ -177,6 +177,9 @@ def test_api_twin_state_shape(monkeypatch):
     for key in ("degradedFlows", "proofs", "episodes"):
         assert key in body
         assert isinstance(body[key], list)
+    # Live NOW/NEXT header state (fingerprint/url/status) — not just aggregates
+    assert "now" in body
+    assert set(body["now"]) >= {"fingerprint", "url", "status"}
 
 
 # ── invariant: all _API_ROUTES paths return 200 ───────────────────────────────
