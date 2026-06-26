@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
+from urllib.parse import quote
 
 from .document_sync import document_index_path, scanned_id_log_path
 
@@ -177,3 +179,153 @@ def merge_artifact_group(group: list[dict]) -> dict:
         if item.get("uri") and str(item.get("uri")) != str(keep.get("uri") or "")
     ]
     return keep
+
+
+def preview_url(path: str, project: str) -> str | None:
+    try:
+        source = Path(path).expanduser().resolve()
+        roots = [
+            Path(project).expanduser().resolve(),
+            Path("~/.urirun").expanduser().resolve(),
+            Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser().resolve(),
+        ]
+        if source.is_file() and any(source == root or source.is_relative_to(root) for root in roots):
+            return f"/api/file?path={quote(str(source))}"
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
+def public_artifact(artifact: dict, project: str) -> dict:
+    path = str(artifact.get("path") or "")
+    visual_path = artifact_visual_path(artifact)
+    file_preview = preview_url(path, project) if path else None
+    visual_preview = preview_url(visual_path, project) if visual_path else None
+    return {
+        **artifact,
+        "fileExists": artifact_file_exists(path),
+        "previewExists": artifact_file_exists(visual_path),
+        "visualPath": visual_path,
+        "filePreviewUrl": file_preview or "",
+        "previewUrl": visual_preview or "",
+    }
+
+
+def public_artifacts(artifacts: list[dict], project: str) -> list[dict]:
+    return [public_artifact(artifact, project) for artifact in artifacts]
+
+
+def attachment_visual_path(meta: dict) -> str:
+    return str(meta.get("displayImage") or meta.get("displayPath") or meta.get("previewImage") or meta.get("image") or "")
+
+
+def apply_attachment_file_fields(item: dict, path: str, file_preview: str | None) -> None:
+    if path:
+        item["fileExists"] = bool(file_preview)
+        item["filePreviewUrl"] = file_preview or ""
+
+
+def apply_attachment_visual_fields(item: dict, visual_path: str, visual_preview: str | None) -> None:
+    if visual_path:
+        item["previewExists"] = bool(visual_preview)
+        item["visualPath"] = visual_path
+        item["visualPreviewUrl"] = visual_preview or ""
+
+
+def public_chat_attachment(attachment: dict, project: str) -> dict:
+    """Normalize old chat attachments so the UI never embeds stale /api/file links."""
+    item = dict(attachment or {})
+    path = str(item.get("path") or "")
+    file_preview = preview_url(path, project) if path else None
+    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+    visual_path = attachment_visual_path(meta)
+    visual_preview = preview_url(visual_path, project) if visual_path else None
+    apply_attachment_file_fields(item, path, file_preview)
+    apply_attachment_visual_fields(item, visual_path, visual_preview)
+    prev = str(item.get("previewUrl") or "")
+    if prev.startswith("/api/file?path="):
+        item["previewUrl"] = file_preview or ""
+    elif not prev and file_preview:
+        item["previewUrl"] = file_preview
+    return item
+
+
+def public_chat_attachments(attachments: Any, project: str) -> list[dict]:
+    if not isinstance(attachments, list):
+        return []
+    return [public_chat_attachment(item, project) for item in attachments if isinstance(item, dict)]
+
+
+def dedupe_public_artifacts(public: list[dict]) -> list[dict]:
+    groups: dict[tuple[str, str], list[dict]] = {}
+    order: list[tuple[str, str]] = []
+    for item in public:
+        key = artifact_dedupe_key(item)
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(item)
+    return [merge_artifact_group(groups[key]) for key in order]
+
+
+def visible_public_artifacts(
+    artifacts: list[dict],
+    project: str,
+    *,
+    include_missing: bool = False,
+    include_duplicates: bool = False,
+) -> list[dict]:
+    public = public_artifacts(artifacts, project)
+    if not include_missing:
+        public = [item for item in public if item.get("fileExists") or item.get("previewExists")]
+    if include_duplicates:
+        return public
+    return dedupe_public_artifacts(public)
+
+
+def collect_attachments(value: Any, project: str, *, limit: int = 24) -> list[dict]:
+    """Find screenshot/photo/OCR artifacts in a URI result tree for chat rendering."""
+    attachments: list[dict] = []
+    seen: set[str] = set()
+
+    def add(path: str, *, kind: str = "file", meta: dict | None = None, uri: str = "") -> None:
+        if not path or path in seen or len(attachments) >= limit:
+            return
+        seen.add(path)
+        item: dict = {
+            "kind": "image" if Path(path).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"} else kind,
+            "path": path,
+            "uri": uri,
+            "meta": meta or {},
+        }
+        prev = preview_url(path, project)
+        if prev:
+            item["previewUrl"] = prev
+        attachments.append(item)
+
+    def walk(node: Any, hint: str = "") -> None:
+        if len(attachments) >= limit:
+            return
+        if isinstance(node, dict):
+            if node.get("artifactPath"):
+                add(str(node["artifactPath"]), kind="artifact", meta=node, uri=str(node.get("uri") or ""))
+            if node.get("path") and any(word in hint.lower() for word in ("photo", "image", "screenshot", "artifact", "scan")):
+                add(str(node["path"]), kind=hint or "file", meta=node, uri=str(node.get("uri") or ""))
+            if node.get("cropPath"):
+                add(str(node["cropPath"]), kind="crop", meta=node)
+            for key in ("photo", "screenshot", "image", "object", "inspection"):
+                child = node.get(key)
+                if isinstance(child, dict):
+                    walk(child, key)
+                elif isinstance(child, str) and ("/" in child or "\\" in child):
+                    add(child, kind=key)
+            for key, child in node.items():
+                if key in {"bytes_b64", "base64", "data"}:
+                    continue
+                walk(child, str(key))
+        elif isinstance(node, list):
+            for item in node:
+                walk(item, hint)
+
+    walk(value)
+    return attachments

@@ -154,6 +154,17 @@ from .artifacts_admin import (
     artifact_dedupe_key as _artifact_dedupe_key,
     artifact_dedupe_rank as _artifact_dedupe_rank,
     merge_artifact_group as _merge_artifact_group,
+    preview_url as _preview_url,
+    public_artifact as _public_artifact,
+    public_artifacts as _public_artifacts,
+    attachment_visual_path as _attachment_visual_path,
+    apply_attachment_file_fields as _apply_attachment_file_fields,
+    apply_attachment_visual_fields as _apply_attachment_visual_fields,
+    public_chat_attachment as _public_chat_attachment,
+    public_chat_attachments as _public_chat_attachments,
+    dedupe_public_artifacts as _dedupe_public_artifacts,
+    visible_public_artifacts as _visible_public_artifacts,
+    collect_attachments as _collect_attachments,
 )
 from .scanner_bridge import (
     PAGE_ACTION_LOCK as _SCANNER_PAGE_ACTION_LOCK,
@@ -225,7 +236,9 @@ from .service_control import (
     is_dashboard_process as _is_dashboard_process_impl,
     is_scanner_process as _is_scanner_process_impl,
     port_holder_pids as _port_holder_pids_impl,
+    port_holder_pids as _port_holder_pids,  # monkeypatch-friendly alias  # noqa: F401
     process_cmdline as _process_cmdline_impl,
+    process_cmdline as _process_cmdline,  # monkeypatch-friendly alias  # noqa: F401
     restart_chat_service as _restart_chat_service_impl,
     schedule_restart_command as _schedule_restart_command_impl,
     service_lifecycle_aliases as _service_lifecycle_aliases_impl,
@@ -5251,156 +5264,6 @@ def _file_response(handler: BaseHTTPRequestHandler, path: str, project: str) -> 
     handler.wfile.write(body)
 
 
-def _preview_url(path: str, project: str) -> str | None:
-    try:
-        source = Path(path).expanduser().resolve()
-        roots = [
-            Path(project).expanduser().resolve(),
-            Path("~/.urirun").expanduser().resolve(),
-            Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser().resolve(),
-        ]
-        if source.is_file() and any(source == root or source.is_relative_to(root) for root in roots):
-            return f"/api/file?path={quote(str(source))}"
-    except Exception:  # noqa: BLE001
-        return None
-    return None
-
-
-def _public_artifact(artifact: dict, project: str) -> dict:
-    path = str(artifact.get("path") or "")
-    visual_path = _artifact_visual_path(artifact)
-    file_preview = _preview_url(path, project) if path else None
-    visual_preview = _preview_url(visual_path, project) if visual_path else None
-    return {
-        **artifact,
-        "fileExists": _artifact_file_exists(path),
-        "previewExists": _artifact_file_exists(visual_path),
-        "visualPath": visual_path,
-        "filePreviewUrl": file_preview or "",
-        "previewUrl": visual_preview or "",
-    }
-
-
-def _public_artifacts(artifacts: list[dict], project: str) -> list[dict]:
-    return [_public_artifact(artifact, project) for artifact in artifacts]
-
-
-def _attachment_visual_path(meta: dict) -> str:
-    return str(meta.get("displayImage") or meta.get("displayPath") or meta.get("previewImage") or meta.get("image") or "")
-
-
-def _apply_attachment_file_fields(item: dict, path: str, file_preview: str | None) -> None:
-    if path:
-        item["fileExists"] = bool(file_preview)
-        item["filePreviewUrl"] = file_preview or ""
-
-
-def _apply_attachment_visual_fields(item: dict, visual_path: str, visual_preview: str | None) -> None:
-    if visual_path:
-        item["previewExists"] = bool(visual_preview)
-        item["visualPath"] = visual_path
-        item["visualPreviewUrl"] = visual_preview or ""
-
-
-def _public_chat_attachment(attachment: dict, project: str) -> dict:
-    """Normalize old chat attachments so the UI never embeds stale /api/file links."""
-    item = dict(attachment or {})
-    path = str(item.get("path") or "")
-    file_preview = _preview_url(path, project) if path else None
-    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
-    visual_path = _attachment_visual_path(meta)
-    visual_preview = _preview_url(visual_path, project) if visual_path else None
-    _apply_attachment_file_fields(item, path, file_preview)
-    _apply_attachment_visual_fields(item, visual_path, visual_preview)
-    preview = str(item.get("previewUrl") or "")
-    if preview.startswith("/api/file?path="):
-        item["previewUrl"] = file_preview or ""
-    elif not preview and file_preview:
-        item["previewUrl"] = file_preview
-    return item
-
-
-def _public_chat_attachments(attachments: Any, project: str) -> list[dict]:
-    if not isinstance(attachments, list):
-        return []
-    return [_public_chat_attachment(item, project) for item in attachments if isinstance(item, dict)]
-
-
-def _dedupe_public_artifacts(public: list[dict]) -> list[dict]:
-    groups: dict[tuple[str, str], list[dict]] = {}
-    order: list[tuple[str, str]] = []
-    for item in public:
-        key = _artifact_dedupe_key(item)
-        if key not in groups:
-            groups[key] = []
-            order.append(key)
-        groups[key].append(item)
-    return [_merge_artifact_group(groups[key]) for key in order]
-
-
-def _visible_public_artifacts(
-    artifacts: list[dict],
-    project: str,
-    *,
-    include_missing: bool = False,
-    include_duplicates: bool = False,
-) -> list[dict]:
-    public = _public_artifacts(artifacts, project)
-    if not include_missing:
-        public = [item for item in public if item.get("fileExists") or item.get("previewExists")]
-    if include_duplicates:
-        return public
-    return _dedupe_public_artifacts(public)
-
-
-def _collect_attachments(value: Any, project: str, *, limit: int = 24) -> list[dict]:
-    """Find screenshot/photo/OCR artifacts in a URI result tree for chat rendering."""
-    attachments: list[dict] = []
-    seen: set[str] = set()
-
-    def add(path: str, *, kind: str = "file", meta: dict | None = None, uri: str = "") -> None:
-        if not path or path in seen or len(attachments) >= limit:
-            return
-        seen.add(path)
-        item = {
-            "kind": "image" if Path(path).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"} else kind,
-            "path": path,
-            "uri": uri,
-            "meta": meta or {},
-        }
-        preview = _preview_url(path, project)
-        if preview:
-            item["previewUrl"] = preview
-        attachments.append(item)
-
-    def walk(node: Any, hint: str = "") -> None:
-        if len(attachments) >= limit:
-            return
-        if isinstance(node, dict):
-            if node.get("artifactPath"):
-                add(str(node["artifactPath"]), kind="artifact", meta=node, uri=str(node.get("uri") or ""))
-            if node.get("path") and any(word in hint.lower() for word in ("photo", "image", "screenshot", "artifact", "scan")):
-                add(str(node["path"]), kind=hint or "file", meta=node, uri=str(node.get("uri") or ""))
-            if node.get("cropPath"):
-                add(str(node["cropPath"]), kind="crop", meta=node)
-            for key in ("photo", "screenshot", "image", "object", "inspection"):
-                child = node.get(key)
-                if isinstance(child, dict):
-                    walk(child, key)
-                elif isinstance(child, str) and ("/" in child or "\\" in child):
-                    add(child, kind=key)
-            for key, child in node.items():
-                if key in {"bytes_b64", "base64", "data"}:
-                    continue
-                walk(child, str(key))
-        elif isinstance(node, list):
-            for item in node:
-                walk(item, hint)
-
-    walk(value)
-    return attachments
-
-
 def _chat_message(role: str, content: str, *, detail: dict | None = None, attachments: list[dict] | None = None) -> dict:
     return {
         "role": role,
@@ -9576,6 +9439,20 @@ def _add_chat_user_message(db: str | None, prompt: str, config: str | None, node
     ))
 
 
+def _chat_insert_twin_preview(db, prompt, selected_nodes, selected_targets) -> None:
+    if not _is_desktop_task_prompt(prompt):
+        return
+    node = (selected_nodes or [""])[0]
+    twin_att = _twin_plan_preview(prompt, node=node)
+    if twin_att:
+        _add_chat_message(db, _chat_message(
+            "system",
+            _twin_plan_summary(twin_att),
+            detail={"twinPlan": twin_att, "selectedTargets": selected_targets},
+            attachments=[twin_att],
+        ))
+
+
 def chat_ask(project: str, db: str | None, config: str | None, payload: dict, node_urls: list[str] | None = None,
              token: str | None = None, identity: str | None = None) -> dict:
     prompt = str(payload.get("prompt") or "").strip()
@@ -9604,17 +9481,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         return _chat_phone_scanner_response(**_dispatch)
     if _is_document_sync_prompt(prompt, selected_nodes, selected_targets, config, node_urls):
         return _chat_document_sync_response(**_dispatch)
-    # Digital Twin plan preview: grounding card before the generic LLM flow
-    if _is_desktop_task_prompt(prompt):
-        node = (selected_nodes or [""])[0]
-        twin_att = _twin_plan_preview(prompt, node=node)
-        if twin_att:
-            _add_chat_message(db, _chat_message(
-                "system",
-                _twin_plan_summary(twin_att),
-                detail={"twinPlan": twin_att, "selectedTargets": selected_targets},
-                attachments=[twin_att],
-            ))
+    _chat_insert_twin_preview(db, prompt, selected_nodes, selected_targets)
     return _chat_generic_response(**_dispatch)
 
 
@@ -10443,7 +10310,7 @@ def create_handler(
 def _is_dashboard_process(pid: int) -> bool:
     """True only if `pid` is a urirun host dashboard serve process (cmdline check). The guard
     that keeps auto-replace from ever killing an unrelated service that owns the port."""
-    return _is_dashboard_process_impl(pid, process_cmdline_fn=_process_cmdline)
+    return _is_dashboard_process_impl(pid, process_cmdline_fn=_process_cmdline_impl)
 
 
 def _free_port_from_matching_processes(
@@ -10454,14 +10321,20 @@ def _free_port_from_matching_processes(
     is_target: Any,
     event_prefix: str,
 ) -> dict:
+    # Wrap is_target so it uses the patchable _process_cmdline global (monkeypatch-friendly).
+    # All our is_target functions (is_scanner_process, is_chat_process, etc.) accept
+    # process_cmdline_fn as a keyword argument.
+    def _wrapped_is_target(pid: int) -> bool:
+        return is_target(pid, process_cmdline_fn=_process_cmdline)
+
     return _free_port_from_matching_processes_impl(
         port,
         force=force,
         emit=emit,
-        is_target=is_target,
+        is_target=_wrapped_is_target,
         event_prefix=event_prefix,
-        port_holder_pids_fn=_port_holder_pids_impl,
-        process_cmdline_fn=_process_cmdline_impl,
+        port_holder_pids_fn=_port_holder_pids,
+        process_cmdline_fn=_process_cmdline,
         kill_fn=os.kill,
         getpid_fn=os.getpid,
         sleep_fn=time.sleep,
@@ -10514,7 +10387,7 @@ def _free_port_from_old_dashboard(port: int) -> None:
     _free_port_from_old_dashboard_impl(
         port,
         is_dashboard_process_fn=_is_dashboard_process,
-        port_holder_pids_fn=_port_holder_pids_impl,
+        port_holder_pids_fn=_port_holder_pids,
         kill_fn=os.kill,
         getpid_fn=os.getpid,
         sleep_fn=time.sleep,
