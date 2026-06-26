@@ -147,7 +147,7 @@ class WorkerPool:
             return json.loads(self.proc.stdout.readline())
 
     def run_uri(self, uri: str, registry: dict, payload: dict) -> dict:
-        from urirun import _registry as reglib
+        from urirun.runtime import _registry as reglib
 
         entry = reglib.resolve_route(reglib.translate(reglib.parse_uri(uri)), registry)
         template = entry.get("argv") or (entry.get("config") or {}).get("argv") or []

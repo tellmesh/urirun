@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import re
 
-from urirun import _registry as reglib
+from urirun.runtime import _registry as reglib
 
 PROTO_TYPES = {"string": "string", "integer": "int64", "number": "double", "boolean": "bool"}
 

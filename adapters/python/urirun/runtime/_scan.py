@@ -17,7 +17,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Python 3.10 fallback.
     tomllib = None
 
-from urirun import _registry as reglib
+from urirun.runtime import _registry as reglib
 
 BINDINGS_VERSION = "urirun.bindings.v1"
 DEFAULT_MANIFEST_NAMES = {

@@ -37,8 +37,8 @@ def _fetch_render(value, payload: dict):
         return [_fetch_render(item, payload) for item in value]
     return value
 
-from urirun import _registry as reglib, _scan as scan
-from urirun import errors as _errors
+from urirun.runtime import _registry as reglib, _scan as scan
+from urirun.runtime import errors as _errors
 
 POLICY_VERSION = "urirun.policy.v1"
 OUTPUT_LIMIT = 4000

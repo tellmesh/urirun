@@ -1497,6 +1497,229 @@ def _handle_events_sse(handler, parsed):
         TWIN_EVENT_HUB.unsubscribe(q)
 
 
+def _handle_get_static(handler, parsed, project) -> bool:
+    if parsed.path == "/health":
+        _json_response(handler, 200, {"ok": True})
+        return True
+    if parsed.path == "/events":
+        _handle_events_sse(handler, parsed)
+        return True
+    if parsed.path in {"/", "/index.html"}:
+        _html_response(handler)
+        return True
+    if parsed.path == "/favicon.ico":
+        handler.send_response(204)
+        handler.send_header("Cache-Control", "public, max-age=86400")
+        handler.end_headers()
+        return True
+    if parsed.path == "/scanner":
+        _html_response(handler, SCANNER_HTML)
+        return True
+    if parsed.path in {"/docs/nodes", "/docs/nodes/"}:
+        _html_response(handler, NODE_TYPES_DOC_HTML)
+        return True
+    if parsed.path in {"/docs/node-types", "/docs/node-types/"}:
+        _html_response(handler, _docs_nodes_html())
+        return True
+    if parsed.path in {"/twin", "/twin/"}:
+        widget = Path(__file__).parent / "twin_monitor_widget.html"
+        _asset_response(handler, widget.read_bytes(), "text/html; charset=utf-8")
+        return True
+    return False
+
+
+def _handle_get_nodes_qr(handler, parsed) -> None:
+    target = _first(parse_qs(parsed.query), "url") or ""
+    if not target:
+        _json_response(handler, 400, {"ok": False, "error": "url is required"})
+        return
+    try:
+        digest = hashlib.sha256(target.encode("utf-8")).hexdigest()[:16]
+        root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
+        qr_path = root / f"endpoint-{digest}.png"
+        if not qr_path.exists():
+            _write_qr_png(target, qr_path)
+        _asset_response(handler, qr_path.read_bytes(), "image/png")
+    except Exception as exc:  # noqa: BLE001
+        _json_response(handler, 500, {"ok": False, "error": str(exc)})
+
+
+def _handle_get(handler, parsed, project, db, config, node_urls, token, identity):
+    if _handle_get_static(handler, parsed, project):
+        return
+    if parsed.path == "/api/nodes/phone-web":
+        _json_response(handler, 200, phone_web_nodes(parse_qs(parsed.query)))
+        return
+    if parsed.path == "/api/nodes/qr":
+        _handle_get_nodes_qr(handler, parsed)
+        return
+    if parsed.path == "/services/view":
+        _html_response(handler, _service_widget_html(project, parse_qs(parsed.query)))
+        return
+    if parsed.path == "/services/view.svg":
+        _asset_response(
+            handler,
+            _service_widget_svg(project, parse_qs(parsed.query)).encode("utf-8"),
+            "image/svg+xml; charset=utf-8",
+        )
+        return
+    if parsed.path == "/assets/urirun.js":
+        _js_sdk_response(handler, project)
+        return
+    if parsed.path == "/api/uri/event":
+        _json_response(handler, 200, _uri_event_impl(_scanner_bridge_deps(), db, parse_qs(parsed.query)))
+        return
+    if parsed.path == "/api/page/actions/poll":
+        query = parse_qs(parsed.query)
+        _json_response(
+            handler,
+            200,
+            _page_action_poll_impl(_first(query, "target", "scanner") or "scanner", int(_first(query, "limit", "4") or 4)),
+        )
+        return
+    if parsed.path == "/api/file":
+        path = _first(parse_qs(parsed.query), "path")
+        if not path:
+            _json_response(handler, 400, {"ok": False, "error": "path is required"})
+            return
+        _file_response(handler, unquote(path), project)
+        return
+    status, payload = _dashboard_api_response(parsed.path, project, db, config, parse_qs(parsed.query), node_urls=node_urls)
+    _json_response(handler, status, payload)
+
+
+def _handle_post_connectors(handler, parsed, project, db, config, node_urls, token, identity) -> bool:
+    if parsed.path == "/api/connectors/install":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _connector_install_impl(project, payload, config=config, node_urls=node_urls, token=token, identity=identity,
+                                                            node_url_from_config=_node_url_from_config, node_token_for=_node_token_for, node_client=_node_client))
+        return True
+    if parsed.path == "/api/connectors/docker-check":
+        payload = _read_json(handler)
+        _json_response(handler, 200, connector_env_check(payload))
+        return True
+    if parsed.path == "/api/connectors/test":
+        payload = _read_json(handler)
+        _json_response(handler, 200, connector_test(project, db, config, payload,
+                                                     node_urls=node_urls, token=token, identity=identity))
+        return True
+    return False
+
+
+def _handle_post_nodes(handler, parsed, project, db, config, node_urls, token, identity) -> bool:
+    if parsed.path == "/api/nodes/test-routes":
+        payload = _read_json(handler)
+        _json_response(handler, 200, node_test_routes(project, db, config, payload,
+                                                       node_urls=node_urls, token=token, identity=identity))
+        return True
+    if parsed.path in {"/api/nodes/add", "/api/nodes/api/add"}:
+        payload = _read_json(handler)
+        _json_response(handler, 200, _node_add_impl(config, payload, normalize_node_type=_normalize_node_type_impl, node_type_tags=_node_type_tags_impl))
+        return True
+    if parsed.path in {"/api/nodes/remove", "/api/nodes/delete"}:
+        payload = _read_json(handler)
+        _json_response(handler, 200, _node_remove_impl(config, payload, forget_webpage=_node_forget_webpage))
+        return True
+    if parsed.path == "/api/nodes/api/request":
+        payload = _read_json(handler)
+        _json_response(handler, 200, configured_node_api_request(config, node_urls, payload))
+        return True
+    if parsed.path == "/api/nodes/phone-qr":
+        payload = _read_json(handler)
+        _json_response(handler, 200, phone_node_qr(project, db, payload))
+        return True
+    if parsed.path == "/api/nodes/phone-service/start":
+        payload = _read_json(handler)
+        _json_response(handler, 200, start_android_node_service(payload))
+        return True
+    if parsed.path == "/api/nodes/token":
+        payload = _read_json(handler)
+        _json_response(handler, 200, node_set_token(config, payload, identity=identity, node_urls=node_urls))
+        return True
+    return False
+
+
+def _handle_post_scanner(handler, parsed, project, db, config, node_urls, token, identity) -> bool:
+    if parsed.path == "/api/uri/invoke":
+        payload = _read_json(handler)
+        if not payload.get("source"):
+            ref_path = urlparse(handler.headers.get("Referer", "") or "").path
+            if ref_path == "/scanner":
+                payload["source"] = "scanner-page"
+        _json_response(
+            handler,
+            200,
+            uri_invoke(project, db, config, payload, node_urls=node_urls, token=token, identity=identity),
+        )
+        return True
+    if parsed.path == "/api/page/actions/result":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _page_action_result_impl(_scanner_bridge_deps(), db, payload, utc_now=_utc_now))
+        return True
+    if parsed.path == "/api/scanner/capture":
+        payload = _read_json(handler)
+        _json_response(handler, 200, scanner_capture(project, db, payload))
+        return True
+    if parsed.path == "/api/scanner/best/finish":
+        payload = _read_json(handler)
+        _json_response(handler, 200, scanner_best_finish(project, db, payload))
+        return True
+    if parsed.path == "/api/scanner/session":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _scanner_session_impl(_scanner_bridge_deps(), db, payload))
+        return True
+    return False
+
+
+def _handle_post_chat(handler, parsed, project, db, config, node_urls, token, identity) -> bool:
+    if parsed.path == "/api/chat/ask":
+        payload = _read_json(handler)
+        _json_response(handler, 200, chat_ask(project, db, config, payload, node_urls=node_urls,
+                                               token=token, identity=identity))
+        return True
+    if parsed.path == "/api/chat/messages/delete":
+        payload = _read_json(handler)
+        _json_response(handler, 200, chat_delete_messages(db, payload))
+        return True
+    return False
+
+
+def _handle_post(handler, parsed, parts, project, db, config, node_urls, token, identity):
+    if parsed.path == "/api/tasks/create":
+        payload = _read_json(handler)
+        _json_response(handler, 200, task_create(project, payload))
+        return
+    if len(parts) == 4 and parts[0] == "api" and parts[1] == "tasks":
+        payload = _read_json(handler)
+        _json_response(handler, 200, task_action(project, parts[2], parts[3], payload))
+        return
+    if parsed.path == "/api/artifacts/delete":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _artifacts_delete_impl(_host_db(), project, db, payload))
+        return
+    if parsed.path == "/api/artifacts/dedupe":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _artifacts_dedupe_rows_impl(_host_db(), project, db, payload))
+        return
+    if parsed.path == "/api/artifacts/cleanup-orphans":
+        payload = _read_json(handler)
+        _json_response(handler, 200, _artifacts_cleanup_orphan_sidecars_impl(_host_db(), project, db, payload))
+        return
+    if parsed.path == "/api/documents/reconcile":
+        payload = _read_json(handler)
+        _json_response(handler, 200, documents_reconcile(project, db, payload))
+        return
+    if _handle_post_connectors(handler, parsed, project, db, config, node_urls, token, identity):
+        return
+    if _handle_post_nodes(handler, parsed, project, db, config, node_urls, token, identity):
+        return
+    if _handle_post_scanner(handler, parsed, project, db, config, node_urls, token, identity):
+        return
+    if _handle_post_chat(handler, parsed, project, db, config, node_urls, token, identity):
+        return
+    _json_response(handler, 404, {"ok": False, "error": "not found"})
+
+
 def create_handler(
     project: str,
     db: str | None = None,
@@ -1512,84 +1735,7 @@ def create_handler(
         def do_GET(self):
             parsed = urlparse(self.path)
             try:
-                if parsed.path == "/health":
-                    _json_response(self, 200, {"ok": True})
-                    return
-                if parsed.path == "/events":
-                    _handle_events_sse(self, parsed)
-                    return
-                if parsed.path in {"/", "/index.html"}:
-                    _html_response(self)
-                    return
-                if parsed.path == "/favicon.ico":
-                    self.send_response(204)
-                    self.send_header("Cache-Control", "public, max-age=86400")
-                    self.end_headers()
-                    return
-                if parsed.path == "/scanner":
-                    _html_response(self, SCANNER_HTML)
-                    return
-                if parsed.path in {"/docs/nodes", "/docs/nodes/"}:
-                    _html_response(self, NODE_TYPES_DOC_HTML)
-                    return
-                if parsed.path in {"/docs/node-types", "/docs/node-types/"}:
-                    _html_response(self, _docs_nodes_html())
-                    return
-                if parsed.path == "/api/nodes/phone-web":
-                    _json_response(self, 200, phone_web_nodes(parse_qs(parsed.query)))
-                    return
-                if parsed.path == "/api/nodes/qr":
-                    target = _first(parse_qs(parsed.query), "url") or ""
-                    if not target:
-                        _json_response(self, 400, {"ok": False, "error": "url is required"})
-                        return
-                    try:
-                        digest = hashlib.sha256(target.encode("utf-8")).hexdigest()[:16]
-                        root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
-                        qr_path = root / f"endpoint-{digest}.png"
-                        if not qr_path.exists():
-                            _write_qr_png(target, qr_path)
-                        _asset_response(self, qr_path.read_bytes(), "image/png")
-                    except Exception as exc:  # noqa: BLE001
-                        _json_response(self, 500, {"ok": False, "error": str(exc)})
-                    return
-                if parsed.path == "/services/view":
-                    _html_response(self, _service_widget_html(project, parse_qs(parsed.query)))
-                    return
-                if parsed.path == "/services/view.svg":
-                    _asset_response(
-                        self,
-                        _service_widget_svg(project, parse_qs(parsed.query)).encode("utf-8"),
-                        "image/svg+xml; charset=utf-8",
-                    )
-                    return
-                if parsed.path == "/assets/urirun.js":
-                    _js_sdk_response(self, project)
-                    return
-                if parsed.path in {"/twin", "/twin/"}:
-                    widget = Path(__file__).parent / "twin_monitor_widget.html"
-                    _asset_response(self, widget.read_bytes(), "text/html; charset=utf-8")
-                    return
-                if parsed.path == "/api/uri/event":
-                    _json_response(self, 200, _uri_event_impl(_scanner_bridge_deps(), db, parse_qs(parsed.query)))
-                    return
-                if parsed.path == "/api/page/actions/poll":
-                    query = parse_qs(parsed.query)
-                    _json_response(
-                        self,
-                        200,
-                        _page_action_poll_impl(_first(query, "target", "scanner") or "scanner", int(_first(query, "limit", "4") or 4)),
-                    )
-                    return
-                if parsed.path == "/api/file":
-                    path = _first(parse_qs(parsed.query), "path")
-                    if not path:
-                        _json_response(self, 400, {"ok": False, "error": "path is required"})
-                        return
-                    _file_response(self, unquote(path), project)
-                    return
-                status, payload = _dashboard_api_response(parsed.path, project, db, config, parse_qs(parsed.query), node_urls=node_urls)
-                _json_response(self, status, payload)
+                _handle_get(self, parsed, project, db, config, node_urls, token, identity)
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 return
             except Exception as exc:  # noqa: BLE001
@@ -1602,111 +1748,7 @@ def create_handler(
             parsed = urlparse(self.path)
             parts = [part for part in parsed.path.split("/") if part]
             try:
-                if parsed.path == "/api/tasks/create":
-                    payload = _read_json(self)
-                    _json_response(self, 200, task_create(project, payload))
-                    return
-                if parsed.path == "/api/connectors/install":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _connector_install_impl(project, payload, config=config, node_urls=node_urls, token=token, identity=identity,
-                                                                    node_url_from_config=_node_url_from_config, node_token_for=_node_token_for, node_client=_node_client))
-                    return
-                if parsed.path == "/api/connectors/docker-check":
-                    payload = _read_json(self)
-                    _json_response(self, 200, connector_env_check(payload))
-                    return
-                if parsed.path == "/api/connectors/test":
-                    payload = _read_json(self)
-                    _json_response(self, 200, connector_test(project, db, config, payload,
-                                                             node_urls=node_urls, token=token, identity=identity))
-                    return
-                if len(parts) == 4 and parts[0] == "api" and parts[1] == "tasks":
-                    payload = _read_json(self)
-                    _json_response(self, 200, task_action(project, parts[2], parts[3], payload))
-                    return
-                if parsed.path == "/api/chat/ask":
-                    payload = _read_json(self)
-                    _json_response(self, 200, chat_ask(project, db, config, payload, node_urls=node_urls,
-                                                       token=token, identity=identity))
-                    return
-                if parsed.path == "/api/chat/messages/delete":
-                    payload = _read_json(self)
-                    _json_response(self, 200, chat_delete_messages(db, payload))
-                    return
-                if parsed.path == "/api/artifacts/delete":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _artifacts_delete_impl(_host_db(), project, db, payload))
-                    return
-                if parsed.path == "/api/artifacts/dedupe":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _artifacts_dedupe_rows_impl(_host_db(), project, db, payload))
-                    return
-                if parsed.path == "/api/artifacts/cleanup-orphans":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _artifacts_cleanup_orphan_sidecars_impl(_host_db(), project, db, payload))
-                    return
-                if parsed.path == "/api/documents/reconcile":
-                    payload = _read_json(self)
-                    _json_response(self, 200, documents_reconcile(project, db, payload))
-                    return
-                if parsed.path == "/api/nodes/test-routes":
-                    payload = _read_json(self)
-                    _json_response(self, 200, node_test_routes(project, db, config, payload,
-                                                               node_urls=node_urls, token=token, identity=identity))
-                    return
-                if parsed.path in {"/api/nodes/add", "/api/nodes/api/add"}:
-                    payload = _read_json(self)
-                    _json_response(self, 200, _node_add_impl(config, payload, normalize_node_type=_normalize_node_type_impl, node_type_tags=_node_type_tags_impl))
-                    return
-                if parsed.path in {"/api/nodes/remove", "/api/nodes/delete"}:
-                    payload = _read_json(self)
-                    _json_response(self, 200, _node_remove_impl(config, payload, forget_webpage=_node_forget_webpage))
-                    return
-                if parsed.path == "/api/nodes/api/request":
-                    payload = _read_json(self)
-                    _json_response(self, 200, configured_node_api_request(config, node_urls, payload))
-                    return
-                if parsed.path == "/api/nodes/phone-qr":
-                    payload = _read_json(self)
-                    _json_response(self, 200, phone_node_qr(project, db, payload))
-                    return
-                if parsed.path == "/api/nodes/phone-service/start":
-                    payload = _read_json(self)
-                    _json_response(self, 200, start_android_node_service(payload))
-                    return
-                if parsed.path == "/api/nodes/token":
-                    payload = _read_json(self)
-                    _json_response(self, 200, node_set_token(config, payload, identity=identity, node_urls=node_urls))
-                    return
-                if parsed.path == "/api/uri/invoke":
-                    payload = _read_json(self)
-                    if not payload.get("source"):
-                        ref_path = urlparse(self.headers.get("Referer", "") or "").path
-                        if ref_path == "/scanner":
-                            payload["source"] = "scanner-page"
-                    _json_response(
-                        self,
-                        200,
-                        uri_invoke(project, db, config, payload, node_urls=node_urls, token=token, identity=identity),
-                    )
-                    return
-                if parsed.path == "/api/page/actions/result":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _page_action_result_impl(_scanner_bridge_deps(), db, payload, utc_now=_utc_now))
-                    return
-                if parsed.path == "/api/scanner/capture":
-                    payload = _read_json(self)
-                    _json_response(self, 200, scanner_capture(project, db, payload))
-                    return
-                if parsed.path == "/api/scanner/best/finish":
-                    payload = _read_json(self)
-                    _json_response(self, 200, scanner_best_finish(project, db, payload))
-                    return
-                if parsed.path == "/api/scanner/session":
-                    payload = _read_json(self)
-                    _json_response(self, 200, _scanner_session_impl(_scanner_bridge_deps(), db, payload))
-                    return
-                _json_response(self, 404, {"ok": False, "error": "not found"})
+                _handle_post(self, parsed, parts, project, db, config, node_urls, token, identity)
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
                 return
             except Exception as exc:  # noqa: BLE001

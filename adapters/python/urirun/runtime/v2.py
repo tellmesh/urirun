@@ -28,7 +28,7 @@ from typing import Any, Callable, Iterable
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
 
-from urirun import _registry as reglib, _scan as scan, _runtime as runtime, errors as uri_errors, v1
+from urirun.runtime import _registry as reglib, _scan as scan, _runtime as runtime, errors as uri_errors, v1
 
 VERSION = "urirun.bindings.v2"
 ENTRY_POINT_GROUP = "urirun.bindings"
@@ -1842,7 +1842,7 @@ def _cmd_errors(args, parser) -> int:
 
 
 def _cmd_compat(args, parser) -> int:
-    from urirun import compat
+    from urirun.runtime import compat
 
     return compat.main(args.compat_args)
 

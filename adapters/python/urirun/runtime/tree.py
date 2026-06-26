@@ -65,7 +65,7 @@ def build(document: dict) -> dict:
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
-    from urirun import _registry as reglib
+    from urirun.runtime import _registry as reglib
 
     parser = argparse.ArgumentParser(prog="urirun-tree")
     parser.add_argument("source", help="a bindings.v2 doc or a compiled registry")

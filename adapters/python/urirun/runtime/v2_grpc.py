@@ -35,7 +35,7 @@ from concurrent import futures
 import grpc
 from jsonschema import exceptions as jsonschema_exceptions
 
-from urirun import _registry as reglib, v2
+from urirun.runtime import _registry as reglib, v2
 
 SERVICE = "urirun.UriHandler"
 DEFAULT_PORT = 50051

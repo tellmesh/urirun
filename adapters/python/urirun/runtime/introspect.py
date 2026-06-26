@@ -17,7 +17,7 @@ executor. The registry to inspect is given in the payload (``registry: <path>``)
 
 from __future__ import annotations
 
-from urirun import _registry as reglib
+from urirun.runtime import _registry as reglib
 
 BINDINGS_VERSION = reglib.BINDINGS_VERSION if hasattr(reglib, "BINDINGS_VERSION") else "urirun.bindings.v2"
 

@@ -26,7 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from urirun import _registry as reglib, _scan as scan, _runtime as runtime
+from urirun.runtime import _registry as reglib, _scan as scan, _runtime as runtime
 from urirun.runtime import progress
 
 PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z0-9_.]+)\}")
