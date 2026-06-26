@@ -276,6 +276,8 @@ from .scanner_bridge import (
     refresh_best_ocr as _refresh_best_ocr_impl,
     ensure_best_overlay as _ensure_best_overlay_impl,
 )
+# Backward-compat alias — tests and older callers used _PAGE_ACTION_QUEUES.
+_PAGE_ACTION_QUEUES = _SCANNER_PAGE_ACTION_QUEUES
 from .service_control import (
     chat_service_restart_argv as _chat_service_restart_argv_impl,
     free_port_from_matching_processes as _free_port_from_matching_processes_impl,
@@ -311,8 +313,6 @@ except Exception as _err:  # noqa: BLE001
 _SERVICE_LOCK = threading.Lock()
 _SERVICE_SERVERS: dict[str, ThreadingHTTPServer] = {}
 _SERVICE_THREADS: dict[str, threading.Thread] = {}
-_PAGE_ACTION_LOCK = _SCANNER_PAGE_ACTION_LOCK
-_PAGE_ACTION_QUEUES = _SCANNER_PAGE_ACTION_QUEUES
 # Monkeypatch-friendly aliases (auto-sync moved these to scanner_bridge with _impl suffix)
 _is_phone_scanner_prompt = _is_phone_scanner_prompt_impl  # noqa: F401
 _torch_enabled_from_prompt = _torch_enabled_from_prompt_impl  # noqa: F401
