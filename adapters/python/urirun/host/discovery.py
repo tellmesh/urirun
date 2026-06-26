@@ -244,13 +244,23 @@ def node_alias_map_from_context(
 
 
 def prompt_node_match(prompt: str, alias_map: dict[str, str]) -> str:
+    """Return the mesh node name whose alias appears first in the prompt.
+
+    When the prompt contains multiple node names (e.g. "lenovo laptop"),
+    the one that appears earliest in the text wins — that is the intended target.
+    Longest alias checked first so 'cell-a' beats 'cell' for the same position.
+    """
     text = prompt.casefold()
+    best_pos: int = len(text) + 1
+    best_node: str = ""
     for alias, node in sorted(alias_map.items(), key=lambda item: len(item[0]), reverse=True):
         if not alias:
             continue
-        if re.search(rf"(?<![\w.-]){re.escape(alias)}(?![\w.-])", text):
-            return node
-    return ""
+        m = re.search(rf"(?<![\w.-]){re.escape(alias)}(?![\w.-])", text)
+        if m and m.start() < best_pos:
+            best_pos = m.start()
+            best_node = node
+    return best_node
 
 
 def route_inputs_example(route: dict) -> dict:

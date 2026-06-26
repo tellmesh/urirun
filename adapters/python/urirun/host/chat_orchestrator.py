@@ -865,6 +865,27 @@ def _chat_ask_general_check_offline(
         return None
     human_result = _escalate_offline_to_human(offline, prompt, discovered, execute)
     if human_result:
+        task = (human_result.get("humanTask") or {})
+        surface_url = task.get("surfaceUrl") or ""
+        content = (
+            f"node offline: {offline!r} — zadanie dla człowieka: {task.get('title', '')} "
+            f"({surface_url})"
+        )
+        deps.add_chat_message_fn(db, chat_message(
+            "system", content,
+            detail={
+                "prompt": prompt,
+                "execute": execute,
+                "ok": False,
+                "humanEscalation": True,
+                "offlineNodes": offline,
+                "selectedTargets": selected_targets,
+                "humanTask": task,
+                "next": human_result.get("next"),
+                "timeline": human_result.get("timeline") or [],
+                "error": human_result.get("error"),
+            },
+        ))
         return human_result
     exc = ValueError(
         f"NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
