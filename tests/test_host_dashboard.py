@@ -10,6 +10,8 @@ import pytest
 from PIL import Image
 
 from urirun.host import host_dashboard
+from urirun.host import chat_orchestrator as _chat_orch
+from urirun.host import dashboard_api as _dash_api
 
 
 @pytest.fixture(autouse=True)
@@ -429,6 +431,14 @@ def test_summary_shows_known_nodes_file_nodes(monkeypatch, tmp_path):
     monkeypatch.setenv("URIRUN_NODES_FILE", str(nodes_file))
     monkeypatch.setattr(host_dashboard, "_mesh", lambda: SummaryMesh())
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    # Suppress live phone-web node discovery — real android-node service may be running
+    monkeypatch.setattr(host_dashboard, "_merge_live_webpage_nodes", lambda nodes: None)
+    # _host_config is imported from dashboard_api and calls the real mesh; override it to
+    # return only the nodes from our temp known-nodes file so real config doesn't leak in.
+    monkeypatch.setattr(host_dashboard, "_host_config",
+                        lambda cfg, urls=None: {"nodes": [
+                            {"name": "lenovo", "url": "http://laptop.local:8766",
+                             "source": "known-nodes-file"}]})
 
     result = host_dashboard.summary(".", ":memory:", None)
 
@@ -823,7 +833,7 @@ def test_chat_ask_document_sync_blocks_when_contract_fails(monkeypatch):
 
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
-    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", lambda *args, **kwargs: None)
+    monkeypatch.setattr(_chat_orch, "try_urifix_repair", lambda *args, **kwargs: None)
 
     result = host_dashboard.chat_ask(
         ".",
@@ -869,7 +879,7 @@ def test_chat_ask_document_sync_error_includes_urifix_recovery(monkeypatch):
 
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
-    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(_chat_orch, "try_urifix_repair", fake_urifix)
     monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
 
     result = host_dashboard.chat_ask(
@@ -924,7 +934,7 @@ def test_chat_ask_document_sync_auto_retries_urifix_node_url(monkeypatch):
 
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
-    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(_chat_orch, "try_urifix_repair", fake_urifix)
     monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
 
     result = host_dashboard.chat_ask(
@@ -1006,7 +1016,7 @@ def test_chat_ask_document_sync_retry_failure_does_not_loop(monkeypatch):
 
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
-    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(_chat_orch, "try_urifix_repair", fake_urifix)
     monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
 
     result = host_dashboard.chat_ask(
@@ -1054,7 +1064,7 @@ def test_chat_ask_document_sync_decision_loop_blocks_without_node_url(monkeypatc
 
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
     monkeypatch.setattr(host_dashboard, "sync_documents_to_node", fake_sync)
-    monkeypatch.setattr(host_dashboard, "_try_urifix_repair", fake_urifix)
+    monkeypatch.setattr(_chat_orch, "try_urifix_repair", fake_urifix)
     monkeypatch.setattr(host_dashboard, "_host_config", lambda config, node_urls=None: {"nodes": []})
 
     result = host_dashboard.chat_ask(
@@ -1108,6 +1118,11 @@ def test_chat_ask_execute_and_transient_node_urls(monkeypatch):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_mesh", lambda: fake_mesh)
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    # _host_config is imported from dashboard_api; redirect it through fake_mesh so
+    # config_with_transient_node_urls is recorded and node_urls assertion can pass.
+    from urirun.host import discovery as _disc
+    monkeypatch.setattr(host_dashboard, "_host_config",
+                        lambda cfg, urls=None: _disc.host_config(fake_mesh, cfg, urls))
 
     result = host_dashboard.chat_ask(
         ".",
@@ -1135,6 +1150,7 @@ def test_chat_ask_requires_prompt():
 def test_chat_delete_messages_removes_only_chat_messages(monkeypatch):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
     fake_db.add_log(":memory:", "chat", "message", {"role": "system", "content": "delete me"})
     fake_db.add_log(":memory:", "chat", "ask", {"prompt": "keep audit"})
     fake_db.add_log(":memory:", "service", "message", {"role": "system", "content": "keep service"})
@@ -1366,6 +1382,7 @@ def test_artifacts_api_hides_missing_files_by_default(monkeypatch, tmp_path):
     fake_db.register_artifact("db", "camera-scan", "scanner://host/capture/ok", str(existing), {})
     fake_db.register_artifact("db", "camera-scan", "scanner://host/capture/missing", str(tmp_path / "missing.jpg"), {})
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
 
     status, payload = host_dashboard._dashboard_api_response("/api/artifacts", str(tmp_path), "db", None, parse_qs("limit=10"))
 
@@ -1395,6 +1412,7 @@ def test_artifacts_api_dedupes_same_file_path_by_default(monkeypatch, tmp_path):
     scan = fake_db.register_artifact("db", "camera-scan", "scanner://host/capture/dup", str(existing), {})
     pdf = fake_db.register_artifact("db", "document-pdf", "document://host/capture/dup", str(existing), {})
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
 
     status, payload = host_dashboard._dashboard_api_response("/api/artifacts", str(tmp_path), "db", None, parse_qs("limit=10"))
 
@@ -1489,6 +1507,7 @@ def test_chat_history_reads_message_logs(monkeypatch):
     fake_db = FakeHostDb()
     fake_db.add_log(":memory:", "chat", "message", {"role": "user", "content": "hello"})
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
 
     history = host_dashboard.chat_history(":memory:", ".")
 
@@ -1510,6 +1529,7 @@ def test_chat_history_marks_missing_attachment_files(monkeypatch, tmp_path):
         }],
     })
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
 
     history = host_dashboard.chat_history(":memory:", str(tmp_path))
 
@@ -1528,6 +1548,7 @@ def test_chat_history_limit_ignores_technical_ask_logs(monkeypatch):
     fake_db.add_log(":memory:", "chat", "ask", {"prompt": "two"})
     fake_db.add_log(":memory:", "chat", "message", {"role": "system", "content": "three"})
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(_dash_api, "_host_db", lambda: fake_db)
 
     history = host_dashboard.chat_history(":memory:", ".", limit=3)
 

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import pytest
 from urirun.host import host_dashboard as hd
+from urirun.host import dashboard_api as da
 
 
 # ── _dashboard_api_response routing ──────────────────────────────────────────
@@ -84,7 +85,7 @@ def test_api_checks_respects_limit_query(monkeypatch):
         received["limit"] = limit
         return []
     fake_db = type("DB", (), {"recent_checks": _checks})()
-    monkeypatch.setattr(hd, "_host_db", lambda: fake_db)
+    monkeypatch.setattr(da, "_host_db", lambda: fake_db)
     hd._dashboard_api_response("/api/checks", ".", None, None, {"limit": ["5"]})
     assert received["limit"] == 5
 
@@ -170,6 +171,12 @@ def test_api_twin_state_shape(monkeypatch):
     assert "nodes" in body
     assert "flows" in body
     assert "total" in body
+    assert "events" in body          # ring-buffer step events for cold-start panel state
+    assert isinstance(body["events"], list)
+    # Durable twin layer surfaced for the panels (single state source)
+    for key in ("degradedFlows", "proofs", "episodes"):
+        assert key in body
+        assert isinstance(body[key], list)
 
 
 # ── invariant: all _API_ROUTES paths return 200 ───────────────────────────────

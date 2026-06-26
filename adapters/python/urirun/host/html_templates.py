@@ -703,6 +703,9 @@ INDEX_HTML = r"""<!doctype html>
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 8px;
     }
+    .attachment.attachment-widget {
+      grid-column: 1 / -1;
+    }
     .attachment {
       display: grid;
       gap: 6px;
@@ -2928,7 +2931,7 @@ INDEX_HTML = r"""<!doctype html>
       }
       if (att.kind === 'twin-monitor') {
         const url = att.uri || '/twin';
-        return `<div class="attachment attachment-widget" style="width: 100%;"><iframe src="${esc(url)}" title="Digital Twin Monitor" style="width:100%;height:450px;border:1px solid var(--border-color);border-radius:4px;" loading="lazy"></iframe></div>`;
+        return `<div class="attachment attachment-widget"><iframe src="${esc(url)}" title="Digital Twin Monitor" loading="lazy"></iframe></div>`;
       }
       const meta = att.meta || {};
       const ocr = meta.ocr || {};

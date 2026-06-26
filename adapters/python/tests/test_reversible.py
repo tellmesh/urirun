@@ -277,6 +277,41 @@ class TwinMemoryTests(unittest.TestCase):
         self.assertEqual(environment_fingerprint({**self.P1, "windows": {"w1": 1}}),
                          environment_fingerprint({**self.P1, "windows": {}}))
 
+    def test_clean_flow_is_remembered_as_known_good(self):
+        m = TwinMemory()
+        m.remember_flow("k1", {"prompt": "p", "ts": "t1"})
+        self.assertEqual(len(m.known_good_flows()), 1)
+        self.assertEqual(m.degraded_flows(), [])
+
+    def test_degraded_flow_is_not_known_good(self):
+        # The crux: a run that completed degraded (e.g. portal-blocked capture) must NOT
+        # become known-good — it lands in degraded_store, visible but never recalled as good.
+        m = TwinMemory()
+        m.remember_flow("k1", {"prompt": "p", "ts": "t1",
+                               "degraded": True, "degradedReason": "portal denied"})
+        self.assertEqual(m.known_good_flows(), [])
+        self.assertIsNone(m.recall_flow("k1"))
+        deg = m.degraded_flows()
+        self.assertEqual(len(deg), 1)
+        self.assertEqual(deg[0]["degradedReason"], "portal denied")
+
+    def test_clean_run_supersedes_prior_degraded_attempt(self):
+        # Same structural flow_key: first run degraded, second run clean. The clean run is
+        # known-good and the degraded record no longer surfaces (superseded by the good one).
+        m = TwinMemory()
+        m.remember_flow("k1", {"ts": "t1", "degraded": True, "degradedReason": "portal denied"})
+        m.remember_flow("k1", {"ts": "t2"})  # clean re-run
+        self.assertEqual(len(m.known_good_flows()), 1)
+        self.assertEqual(m.degraded_flows(), [])
+
+    def test_degraded_run_does_not_clobber_existing_known_good(self):
+        # A known-good record must survive a later degraded run under the same key.
+        m = TwinMemory()
+        m.remember_flow("k1", {"ts": "t1"})                       # known-good established
+        m.remember_flow("k1", {"ts": "t2", "degraded": True})     # later degraded attempt
+        self.assertEqual(len(m.known_good_flows()), 1)
+        self.assertEqual(m.recall_flow("k1")["ts"], "t1")         # good record intact
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -184,12 +185,13 @@ def merge_artifact_group(group: list[dict]) -> dict:
 def preview_url(path: str, project: str) -> str | None:
     try:
         source = Path(path).expanduser().resolve()
+        in_temp = source.parent == Path(tempfile.gettempdir()) and source.name.startswith("urirun-")
         roots = [
             Path(project).expanduser().resolve(),
             Path("~/.urirun").expanduser().resolve(),
             Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser().resolve(),
         ]
-        if source.is_file() and any(source == root or source.is_relative_to(root) for root in roots):
+        if source.is_file() and (in_temp or any(source == root or source.is_relative_to(root) for root in roots)):
             return f"/api/file?path={quote(str(source))}"
     except Exception:  # noqa: BLE001
         return None
@@ -307,14 +309,20 @@ def collect_attachments(value: Any, project: str, *, limit: int = 24) -> list[di
             item["previewUrl"] = prev
         attachments.append(item)
 
+    _TAGGED_KINDS = {"screenshot", "photo", "image", "scan", "crop", "artifact"}
+
     def walk(node: Any, hint: str = "") -> None:
         if len(attachments) >= limit:
             return
         if isinstance(node, dict):
             if node.get("artifactPath"):
                 add(str(node["artifactPath"]), kind="artifact", meta=node, uri=str(node.get("uri") or ""))
-            if node.get("path") and any(word in hint.lower() for word in ("photo", "image", "screenshot", "artifact", "scan")):
-                add(str(node["path"]), kind=hint or "file", meta=node, uri=str(node.get("uri") or ""))
+            node_kind = str(node.get("kind") or "")
+            if node.get("path") and (
+                any(word in hint.lower() for word in ("photo", "image", "screenshot", "artifact", "scan"))
+                or node_kind in _TAGGED_KINDS
+            ):
+                add(str(node["path"]), kind=node_kind or hint or "file", meta=node, uri=str(node.get("uri") or ""))
             if node.get("cropPath"):
                 add(str(node["cropPath"]), kind="crop", meta=node)
             for key in ("photo", "screenshot", "image", "object", "inspection"):

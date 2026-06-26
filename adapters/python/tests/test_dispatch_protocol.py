@@ -232,6 +232,22 @@ def test_make_dispatch_non_not_found_error_skips_fallback(monkeypatch):
     assert fallback_called == []
 
 
+def test_make_dispatch_registry_miss_calls_fallback(monkeypatch):
+    """v2_service.call registry miss (type=registry) must trigger the fallback.
+
+    Regression: the error was returned with type='registry' but make_dispatch
+    checked category=='NOT_FOUND', so the in-process fallback was never reached
+    and twin://host/flow/command/preflight always failed with 'route not found'."""
+    from urirun.runtime import v2_service
+
+    # Real registry miss — no routes registered, so resolve_route raises KeyError.
+    fn = v2_service.make_dispatch({}, "execute",
+                                   fallback=lambda u, p: {"ok": True, "source": "inprocess"})
+    r = fn("twin://host/flow/command/preflight", {})
+    assert r["ok"] is True
+    assert r.get("source") == "inprocess", "fallback must fire on registry miss"
+
+
 def test_make_dispatch_no_fallback_returns_error_directly(monkeypatch):
     """Without a fallback, NOT_FOUND error is returned as-is (no crash)."""
     from urirun.runtime import v2_service

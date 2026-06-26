@@ -1,18 +1,18 @@
-# code2llm/evolution | 1959 func | 111f | 2026-06-26
+# code2llm/evolution | 1917 func | 112f | 2026-06-26
 # generated in 0.01s
 
 NEXT[7] (ranked by impact):
-  [1] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 2947L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 41258
+  [1] !! SPLIT           adapters/python/urirun/node/flow.py
+      WHY: 2117L, 1 classes, max CC=16
+      EFFORT: ~4h  IMPACT: 33872
 
-  [2] !! SPLIT           adapters/python/urirun/node/flow.py
-      WHY: 2058L, 1 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 30870
+  [2] !! SPLIT           adapters/python/urirun/host/html_templates.py
+      WHY: 4907L, 0 classes, max CC=6
+      EFFORT: ~4h  IMPACT: 29442
 
-  [3] !! SPLIT           adapters/python/urirun/host/html_templates.py
-      WHY: 4904L, 0 classes, max CC=6
-      EFFORT: ~4h  IMPACT: 29424
+  [3] !! SPLIT           adapters/python/urirun/runtime/v2.py
+      WHY: 2003L, 1 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 28042
 
   [4] !  SPLIT-FUNC      archive_scanned_document  CC=15  fan=43
       WHY: CC=15 exceeds 15
@@ -22,9 +22,9 @@ NEXT[7] (ranked by impact):
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 360
 
-  [6] !  SPLIT-FUNC      _thin_driver  CC=15  fan=17
-      WHY: CC=15 exceeds 15
-      EFFORT: ~1h  IMPACT: 255
+  [6] !  SPLIT-FUNC      _thin_driver  CC=16  fan=18
+      WHY: CC=16 exceeds 15
+      EFFORT: ~1h  IMPACT: 288
 
   [7] !  SPLIT-FUNC      deploy_command  CC=15  fan=16
       WHY: CC=15 exceeds 15
@@ -33,12 +33,12 @@ NEXT[7] (ranked by impact):
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/html_templates.py may break 3 import paths
-  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 127 import paths
-  ⚠ Splitting adapters/python/urirun/node/flow.py may break 94 import paths
+  ⚠ Splitting adapters/python/urirun/node/flow.py may break 96 import paths
+  ⚠ Splitting adapters/python/urirun/runtime/v2.py may break 122 import paths
 
 METRICS-TARGET:
   CC̄:          4.8 → ≤3.4
-  max-CC:      15 → ≤7
+  max-CC:      16 → ≤8
   god-modules: 26 → 0
   high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0

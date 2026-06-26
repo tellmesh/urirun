@@ -108,10 +108,17 @@ class _NamespacedStore:
 def durable_memory(path: str | None = None):
     """A reversible.TwinMemory backed by a JSON file — known-good snapshots persist across runs.
 
-    Environment profiles are stored at top-level keys (node name → fingerprint+snapshot).
-    Known-good flow records are stored under the ``_flows`` sub-key so both namespaces
-    share one atomic JSON file without collision."""
+    Namespaces (all in one atomic JSON file, no collision):
+      top-level keys     → node name → {fingerprint, snapshot}   (env profiles)
+      ``_flows``         → flow_key  → flow record               (known-good flows, fully-ok only)
+      ``_degraded_flows``→ flow_key  → flow record               (ran but degraded — NOT known-good)
+      ``_episodes``      → episode_id → Episode.to_dict()        (episodic memory)
+      ``_proofs``        → proof_key  → {uri, verdict, …}        (reversibility proofs, positives only)"""
     from urirun.node.reversible import TwinMemory
     file_store = JsonFileStore(path)
     flow_store = _NamespacedStore(file_store, "_flows")
-    return TwinMemory(store=file_store, flow_store=flow_store)
+    degraded_store = _NamespacedStore(file_store, "_degraded_flows")
+    episode_store = _NamespacedStore(file_store, "_episodes")
+    proof_store = _NamespacedStore(file_store, "_proofs")
+    return TwinMemory(store=file_store, flow_store=flow_store, degraded_store=degraded_store,
+                      episode_store=episode_store, proof_store=proof_store)

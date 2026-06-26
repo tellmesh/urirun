@@ -76,64 +76,64 @@ flowchart TD
     subgraph adapters__python
         adapters__python__urirun__exec___resolve["_resolve"]
         adapters__python__urirun__exec__main("main CC=10")
+        adapters__python__urirun__parse_uri["parse_uri"]
+        adapters__python__urirun__build_invocation["build_invocation"]
+        adapters__python__urirun__dispatch["dispatch"]
+        adapters__python__urirun__command["command"]
+        adapters__python__urirun__shell["shell"]
+        adapters__python__urirun__handler["handler"]
+        adapters__python__urirun___example_payload("_example_payload CC=9")
+        adapters__python__urirun__ok["ok"]
+        adapters__python__urirun__fail["fail"]
+        adapters__python__urirun__plan["plan"]
+        adapters__python__urirun__tag["tag"]
+        adapters__python__urirun__policy["policy"]
+        adapters__python__urirun__resolve_secret["resolve_secret"]
+        adapters__python__urirun__action_space("action_space CC=9")
+        adapters__python__urirun__result_data("result_data CC=8")
+        adapters__python__urirun__result_degraded("result_degraded CC=9")
+        adapters__python__urirun__run_steps("run_steps CC=14")
+        adapters__python__urirun__tool_binding["tool_binding"]
+        adapters__python__urirun__connector_bindings["connector_bindings"]
+        adapters__python__urirun__entry_point_bindings["entry_point_bindings"]
+        adapters__python__urirun__entry_point_binding_document["entry_point_binding_document"]
+        adapters__python__urirun__entry_point_registry["entry_point_registry"]
+        adapters__python__urirun__error_bindings["error_bindings"]
+        adapters__python__urirun__compat_report["compat_report"]
+        adapters__python__urirun__compile_registry["compile_registry"]
+        adapters__python__urirun__list_routes["list_routes"]
+        adapters__python__urirun__validate_binding_document["validate_binding_document"]
+        adapters__python__urirun__make_dispatch["make_dispatch"]
+        adapters__python__urirun__normalize_dispatch_request["normalize_dispatch_request"]
+        adapters__python__urirun__run["run"]
+        adapters__python__urirun__Connector____post_init__["__post_init__"]
+        adapters__python__urirun__Connector__uri["uri"]
+        adapters__python__urirun__Connector___meta["_meta"]
+        adapters__python__urirun__Connector__command["command"]
+        adapters__python__urirun__Connector__shell["shell"]
+        adapters__python__urirun__Connector__cli["cli"]
+        adapters__python__urirun__Connector___add_route_arguments("_add_route_arguments CC=8")
+        adapters__python__urirun__Connector___build_cli_parser("_build_cli_parser CC=12")
+        adapters__python__urirun__Connector___dispatch_cli("_dispatch_cli CC=11")
+        adapters__python__urirun__Connector__handler["handler"]
+        adapters__python__urirun__Connector__registry["registry"]
+        adapters__python__urirun__Connector__bindings["bindings"]
+        adapters__python__urirun__Connector___live_bindings["_live_bindings"]
+        adapters__python__urirun__Connector__manifest("manifest CC=11")
+        adapters__python__urirun__Connector__mcp_tools["mcp_tools"]
+        adapters__python__urirun__Connector__a2a_card["a2a_card"]
+        adapters__python__urirun__connector["connector"]
+        adapters__python__urirun__load_manifest["load_manifest"]
+        adapters__python__urirun__connector_emit["connector_emit"]
+        adapters__python__urirun__connector_cli["connector_cli"]
+        adapters__python__urirun__connector_main["connector_main"]
+        adapters__python__urirun___connector_cli_routes("_connector_cli_routes CC=12")
+        adapters__python__urirun___connector_run_command("_connector_run_command CC=9")
         adapters__python__urirun__testing__connector_installed["connector_installed"]
         adapters__python__urirun__testing___resolve_bindings["_resolve_bindings"]
         adapters__python__urirun__testing___nonportable_routes["_nonportable_routes"]
         adapters__python__urirun__testing__registry_portability["registry_portability"]
         adapters__python__urirun__testing__assert_registry_portable["assert_registry_portable"]
-        adapters__python__urirun__testing__smoke("smoke CC=9")
-        adapters__python__urirun__testing__assert_smoke["assert_smoke"]
-        adapters__python__urirun__testing__assert_routes["assert_routes"]
-        adapters__python__urirun__testing__run_query["run_query"]
-        adapters__python__urirun__host__host_db__db_path["db_path"]
-        adapters__python__urirun__host__host_db__now_iso["now_iso"]
-        adapters__python__urirun__host__host_db__new_id["new_id"]
-        adapters__python__urirun__host__host_db__connect["connect"]
-        adapters__python__urirun__host__host_db__connection["connection"]
-        adapters__python__urirun__host__host_db__row_dict["row_dict"]
-        adapters__python__urirun__host__host_db__rows_dict["rows_dict"]
-        adapters__python__urirun__host__host_db__init_db["init_db"]
-        adapters__python__urirun__host__host_db___schema_json["_schema_json"]
-        adapters__python__urirun__host__host_db__create_dataset["create_dataset"]
-        adapters__python__urirun__host__host_db__list_datasets["list_datasets"]
-        adapters__python__urirun__host__host_db__get_dataset["get_dataset"]
-        adapters__python__urirun__host__host_db___validate_record["_validate_record"]
-        adapters__python__urirun__host__host_db__upsert_record["upsert_record"]
-        adapters__python__urirun__host__host_db___sync_record_fts["_sync_record_fts"]
-        adapters__python__urirun__host__host_db__search_records["search_records"]
-        adapters__python__urirun__host__host_db__register_artifact["register_artifact"]
-        adapters__python__urirun__host__host_db___query_table["_query_table"]
-        adapters__python__urirun__host__host_db__list_artifacts["list_artifacts"]
-        adapters__python__urirun__host__host_db__artifacts_by_ids["artifacts_by_ids"]
-        adapters__python__urirun__host__host_db__delete_artifacts["delete_artifacts"]
-        adapters__python__urirun__host__host_db__add_check["add_check"]
-        adapters__python__urirun__host__host_db__recent_checks["recent_checks"]
-        adapters__python__urirun__host__host_db__add_log["add_log"]
-        adapters__python__urirun__host__host_db__recent_logs["recent_logs"]
-        adapters__python__urirun__host__host_db__delete_logs("delete_logs CC=8")
-        adapters__python__urirun__host__host_db__create_llm_session["create_llm_session"]
-        adapters__python__urirun__host__host_db__add_llm_message["add_llm_message"]
-        adapters__python__urirun__host__host_db__read_only_sql["read_only_sql"]
-        adapters__python__urirun__host__host_db__route_db_path["route_db_path"]
-        adapters__python__urirun__host__host_db___run_query_route["_run_query_route"]
-        adapters__python__urirun__host__host_db___run_command_route("_run_command_route CC=11")
-        adapters__python__urirun__host__host_db__run_uri_route["run_uri_route"]
-        adapters__python__urirun__host__domain_monitor__now_id["now_id"]
-        adapters__python__urirun__host__domain_monitor___list["_list"]
-        adapters__python__urirun__host__domain_monitor___domain["_domain"]
-        adapters__python__urirun__host__domain_monitor__default_url["default_url"]
-        adapters__python__urirun__host__domain_monitor__http_status["http_status"]
-        adapters__python__urirun__host__domain_monitor__dns_records("dns_records CC=11")
-        adapters__python__urirun__host__domain_monitor__expected_records("expected_records CC=8")
-        adapters__python__urirun__host__domain_monitor__dns_mismatches["dns_mismatches"]
-        adapters__python__urirun__host__domain_monitor__capture_screenshot_artifact["capture_screenshot_artifact"]
-        adapters__python__urirun__host__domain_monitor__create_dns_repair_ticket["create_dns_repair_ticket"]
-        adapters__python__urirun__host__domain_monitor__check_domain("check_domain CC=8")
-        adapters__python__urirun__host__domain_monitor___screenshot_artifacts["_screenshot_artifacts"]
-        adapters__python__urirun__host__domain_monitor___persist_check_effects["_persist_check_effects"]
-        adapters__python__urirun__host__domain_monitor__run_daily["run_daily"]
-        adapters__python__urirun__host__domain_monitor___db["_db"]
-        adapters__python__urirun__host__domain_monitor___project["_project"]
     end
     subgraph adapters__ruby
         adapters__ruby__urirun__Connector__initialize["initialize"]
@@ -252,7 +252,7 @@ flowchart TD
         v1__js__urirun_v1__expandBindings["expandBindings"]
         v1__js__urirun_v1__compileRegistry["compileRegistry"]
     end
-    examples__matrix__verify__main --> adapters__python__urirun__runtime__v2__validate_binding_document
+    examples__matrix__verify__main --> adapters__python__urirun__validate_binding_document
     examples__matrix__verify__main --> examples__matrix__verify__essential
     examples__node_file_transfer__fs_transfer__read_b64 --> examples__node_file_transfer__fs_transfer___expand_path
     examples__node_file_transfer__fs_transfer__write_b64 --> examples__node_file_transfer__fs_transfer___expand_path
@@ -290,6 +290,29 @@ flowchart TD
     adapters__c__urirun__parse_target --> adapters__c__urirun__copy_token
     adapters__python__urirun__exec__main --> adapters__python__urirun__exec___resolve
     adapters__python__urirun__exec__main --> adapters__js__fn
+    adapters__python__urirun__dispatch --> adapters__python__urirun__parse_uri
+    adapters__python__urirun__dispatch --> adapters__python__urirun__build_invocation
+    adapters__python__urirun__dispatch --> adapters__js__fn
+    adapters__python__urirun__command --> adapters__python__urirun__runtime__v2__uri_command
+    adapters__python__urirun__shell --> adapters__python__urirun__runtime__v2__uri_shell
+    adapters__python__urirun__handler --> adapters__python__urirun__runtime__v2__uri_handler
+    adapters__python__urirun__policy --> adapters__python__urirun__runtime___runtime__build_policy
+    adapters__python__urirun__result_degraded --> adapters__python__urirun__result_data
+    adapters__python__urirun__run_steps --> adapters__python__urirun__run
+    adapters__python__urirun__run_steps --> adapters__python__urirun__result_data
+    adapters__python__urirun__run_steps --> adapters__python__urirun__policy
+    adapters__python__urirun__Connector___dispatch_cli --> adapters__python__urirun__connector_emit
+    adapters__python__urirun__Connector__registry --> adapters__python__urirun__compile_registry
+    adapters__python__urirun__Connector__registry --> adapters__python__urirun__runtime__v2__decorated_bindings
+    adapters__python__urirun__Connector___live_bindings --> adapters__python__urirun__runtime__v2__decorated_bindings
+    adapters__python__urirun__Connector__manifest --> adapters__python__urirun___example_payload
+    adapters__python__urirun__connector --> adapters__java__Urirun__Urirun__Connector
+    adapters__python__urirun__load_manifest --> adapters__python__urirun__runtime__v2___load_manifest
+    adapters__python__urirun__connector_emit --> adapters__python__urirun__runtime__errors___emit
+    adapters__python__urirun__connector_main --> adapters__python__urirun___connector_cli_routes
+    adapters__python__urirun__connector_main --> adapters__python__urirun___connector_run_command
+    adapters__python__urirun__connector_main --> adapters__python__urirun__connector_emit
+    adapters__python__urirun___connector_run_command --> adapters__python__urirun__connector_emit
     adapters__python__urirun__testing__registry_portability --> adapters__python__urirun__testing___nonportable_routes
     adapters__python__urirun__testing__registry_portability --> adapters__python__urirun__testing___resolve_bindings
     adapters__python__urirun__testing__assert_registry_portable --> adapters__python__urirun__testing__registry_portability
@@ -366,14 +389,14 @@ flowchart TD
     adapters__python__urirun__host__host_db__read_only_sql --> adapters__python__urirun__host__host_db__init_db
     adapters__python__urirun__host__host_db__read_only_sql --> adapters__python__urirun__host__host_db__connection
     adapters__python__urirun__host__host_db__read_only_sql --> adapters__python__urirun__host__host_db__rows_dict
-    adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun_0__4__166__urirun__handler
+    adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__handler
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__recent_logs
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__list_datasets
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__search_records
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__read_only_sql
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__list_artifacts
     adapters__python__urirun__host__host_db___run_query_route --> adapters__python__urirun__host__host_db__recent_checks
-    adapters__python__urirun__host__host_db___run_command_route --> adapters__python__urirun_0__4__166__urirun__handler
+    adapters__python__urirun__host__host_db___run_command_route --> adapters__python__urirun__handler
     adapters__python__urirun__host__host_db___run_command_route --> adapters__python__urirun__host__host_db__add_check
     adapters__python__urirun__host__host_db___run_command_route --> adapters__python__urirun__host__host_db__add_log
     adapters__python__urirun__host__host_db___run_command_route --> adapters__python__urirun__host__host_db__create_dataset
@@ -417,12 +440,33 @@ flowchart TD
     adapters__python__urirun__host__domain_monitor___route_flow --> adapters__python__urirun__host__domain_monitor___db
     adapters__python__urirun__host__domain_monitor___route_flow --> adapters__python__urirun__host__domain_monitor___project
     adapters__python__urirun__host__domain_monitor___route_flow --> adapters__python__urirun__host__domain_monitor___screenshot_dir
-    adapters__python__urirun__host__domain_monitor__run_uri_route --> adapters__python__urirun_0__4__166__urirun__handler
+    adapters__python__urirun__host__domain_monitor__run_uri_route --> adapters__python__urirun__handler
     adapters__python__urirun__host__decision_loop__decision_loop_for_document_sync --> adapters__python__urirun__host__decision_loop__decision_loop_status
     adapters__python__urirun__host__decision_loop__decision_loop_for_document_sync --> adapters__python__urirun__host__decision_loop__decision_loop_next_intent
     adapters__python__urirun__host__decision_loop__decision_loop_for_document_sync --> adapters__python__urirun__host__decision_loop__decision_loop_observation
     adapters__python__urirun__host__routing__has_screen_capture_route --> adapters__python__urirun__host__routing__route_in_selected_targets
     adapters__python__urirun__host__routing__screen_document_capability_gap --> adapters__python__urirun__host__routing__has_screen_capture_route
+    adapters__python__urirun__host__dashboard_api___host_config --> adapters__python__urirun__host__dashboard_api___mesh
+    adapters__python__urirun__host__dashboard_api___safe_tickets --> adapters__python__urirun__host__dashboard_api___planfile_adapter
+    adapters__python__urirun__host__dashboard_api__chat_history --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__dashboard_api___api_tasks --> adapters__python__urirun__host__dashboard_api___safe_tickets
+    adapters__python__urirun__host__dashboard_api___api_tasks --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_checks --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__dashboard_api___api_checks --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_logs --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__dashboard_api___api_logs --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_artifacts --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__dashboard_api___api_artifacts --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_chat_history --> adapters__python__urirun__host__dashboard_api__chat_history
+    adapters__python__urirun__host__dashboard_api___api_chat_history --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_services_live --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_scanner_live --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__dashboard_api___api_nodes_or_routes --> adapters__python__urirun__host__dashboard_api___mesh
+    adapters__python__urirun__host__dashboard_api___api_nodes_or_routes --> adapters__python__urirun__host__dashboard_api___host_config
+    adapters__python__urirun__host__dashboard_api___dashboard_api_response --> adapters__python__urirun__handler
+    adapters__python__urirun__host__dashboard_api___dashboard_api_response --> adapters__python__urirun__host__dashboard_api___api_nodes_or_routes
+    adapters__python__urirun__host__dashboard_api__chat_delete_messages --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__dashboard_api__task_create --> adapters__python__urirun__host__dashboard_api___planfile_adapter
     adapters__python__urirun__host__android_node__android_node_service_url --> adapters__python__urirun__host__scanner_net___lan_host
     adapters__python__urirun__host__android_node__node_forget_webpage --> adapters__python__urirun__host__android_node__android_node_service_url
     adapters__python__urirun__host__android_node__start_android_node_service --> adapters__python__urirun__host__android_node__android_node_service_url
@@ -503,7 +547,7 @@ flowchart TD
     adapters__python__urirun__host__host_integrations___read_planfile_action --> adapters__python__urirun__host__host_integrations___ticket_id
     adapters__python__urirun__host__host_integrations___read_planfile_action --> adapters__python__urirun__host__host_integrations___list_param
     adapters__python__urirun__host__host_integrations___planfile_update --> adapters__python__urirun__host__host_integrations___ticket_id
-    adapters__python__urirun__host__host_integrations___write_planfile_action --> adapters__python__urirun_0__4__166__urirun__handler
+    adapters__python__urirun__host__host_integrations___write_planfile_action --> adapters__python__urirun__handler
     adapters__python__urirun__host__host_integrations___write_planfile_action --> adapters__python__urirun__host__host_integrations___planfile_update
     adapters__python__urirun__host__host_integrations___write_planfile_action --> adapters__python__urirun__host__host_integrations___planfile_dsl
     adapters__python__urirun__host__host_integrations___write_planfile_action --> adapters__python__urirun__host__host_integrations___ticket_id
@@ -545,7 +589,7 @@ flowchart TD
     adapters__python__urirun__host__service_control__service_lifecycle_uris --> adapters__python__urirun__host__service_control__canonical_service_uri
     adapters__python__urirun__host__service_control__service_lifecycle_aliases --> adapters__python__urirun__host__service_control__canonical_service_uri
     adapters__python__urirun__host__widgets__service_widget_summary --> adapters__python__urirun__host__widgets__scanner_stream_summary
-    adapters__python__urirun__host__capability___check_auth --> adapters__python__urirun__runtime__secrets__resolve_secret
+    adapters__python__urirun__host__capability___check_auth --> adapters__python__urirun__resolve_secret
     adapters__python__urirun__host__capability___capability_check_for_api --> adapters__python__urirun__host__capability___check_auth
     adapters__python__urirun__host__capability___capability_check_for_api --> adapters__python__urirun__host__capability___check_reachability
     adapters__python__urirun__host__capability___capability_check_for_api --> adapters__python__urirun__host__capability___check_connector
@@ -686,6 +730,106 @@ flowchart TD
     adapters__python__urirun__host__task_planner__plan_chat_request --> adapters__python__urirun__host__task_planner__llm_plan_chat_request
     adapters__python__urirun__host__task_planner__ticket_payload --> adapters__python__urirun__host__task_planner___unique
     adapters__python__urirun__host__task_planner__create_tickets_from_plan --> adapters__python__urirun__host__task_planner__ticket_payload
+    adapters__python__urirun__host__host_dashboard__artifacts_delete --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard__artifacts_dedupe_rows --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard__artifacts_cleanup_orphan_sidecars --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard___service_view_from_query --> adapters__python__urirun__host__host_dashboard__service_live_views
+    adapters__python__urirun__host__host_dashboard___service_view_from_query --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__host_dashboard___service_widget_html --> adapters__python__urirun__host__host_dashboard___service_view_from_query
+    adapters__python__urirun__host__host_dashboard___service_widget_svg --> adapters__python__urirun__host__host_dashboard___service_view_from_query
+    adapters__python__urirun__host__host_dashboard___service_widget_svg --> adapters__python__urirun__host__dashboard_api___first
+    adapters__python__urirun__host__host_dashboard___js_sdk_response --> adapters__python__urirun__host__host_dashboard___json_response
+    adapters__python__urirun__host__host_dashboard___js_sdk_response --> adapters__python__urirun__host__host_dashboard___asset_response
+    adapters__python__urirun__host__host_dashboard___file_response --> adapters__python__urirun__host__host_dashboard___json_response
+    adapters__python__urirun__host__host_dashboard___add_chat_message --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard___extract_document_metadata --> adapters__python__urirun__host__host_dashboard___sync_document_metadata_hooks
+    adapters__python__urirun__host__host_dashboard___local_image_ocr --> adapters__python__urirun__host__host_dashboard___sync_document_metadata_hooks
+    adapters__python__urirun__host__host_dashboard___node_alias_map_from_context --> adapters__python__urirun__host__dashboard_api___host_config
+    adapters__python__urirun__host__host_dashboard___node_url_from_config --> adapters__python__urirun__host__dashboard_api___host_config
+    adapters__python__urirun__host__host_dashboard___node_url_from_config --> adapters__python__urirun__host__dashboard_api___mesh
+    adapters__python__urirun__host__host_dashboard__node_test_routes --> adapters__python__urirun__host__host_dashboard___node_url_from_config
+    adapters__python__urirun__host__host_dashboard__sync_documents_to_node --> adapters__python__urirun__host__host_dashboard___document_sync_deps
+    adapters__python__urirun__host__host_dashboard___latest_scanner_page_status --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard___recent_scanner_artifacts --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard__service_live_views --> adapters__python__urirun__host__host_dashboard___recent_scanner_artifacts
+    adapters__python__urirun__host__host_dashboard__service_live_views --> adapters__python__urirun__host__host_dashboard___latest_scanner_page_status
+    adapters__python__urirun__host__host_dashboard__service_live_views --> adapters__python__urirun__host__host_dashboard___service_contacts
+    adapters__python__urirun__host__host_dashboard___scanner_bridge_deps --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard__uri_event --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard___register_scanner_result --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard__scanner_capture --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard__scanner_best_finish --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard__page_action_enqueue --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard__register_tagged_artifact --> adapters__python__urirun__host__host_dashboard___result_artifact_class
+    adapters__python__urirun__host__host_dashboard__register_tagged_artifact --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard___run_inprocess_connector_uri --> adapters__python__urirun__host__host_dashboard__register_tagged_artifact
+    adapters__python__urirun__host__host_dashboard___run_inprocess_connector_uri --> adapters__python__urirun__host__host_dashboard___result_artifact_class
+    adapters__python__urirun__host__host_dashboard___svc_start_fn --> adapters__python__urirun__host__host_dashboard__ensure_phone_scanner_service
+    adapters__python__urirun__host__host_dashboard___svc_start_fn --> adapters__python__urirun__host__host_dashboard__restart_chat_service
+    adapters__python__urirun__host__host_dashboard___svc_start_fn --> adapters__python__urirun__host__host_dashboard__restart_android_node_service
+    adapters__python__urirun__host__host_dashboard___svc_restart_fn --> adapters__python__urirun__host__host_dashboard__restart_phone_scanner_service
+    adapters__python__urirun__host__host_dashboard___svc_restart_fn --> adapters__python__urirun__host__host_dashboard__restart_chat_service
+    adapters__python__urirun__host__host_dashboard___svc_restart_fn --> adapters__python__urirun__host__host_dashboard__restart_android_node_service
+    adapters__python__urirun__host__host_dashboard___service_lifecycle_dispatch --> adapters__python__urirun__host__host_dashboard___svc_start_fn
+    adapters__python__urirun__host__host_dashboard___service_lifecycle_dispatch --> adapters__python__urirun__host__host_dashboard___svc_restart_fn
+    adapters__python__urirun__host__host_dashboard___service_lifecycle_dispatch --> adapters__python__urirun__host__host_dashboard___svc_port
+    adapters__python__urirun__host__host_dashboard___service_lifecycle_dispatch --> adapters__python__urirun__host__host_dashboard___svc_is_map
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard___service_lifecycle_dispatch
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard__scanner_capture
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard__scanner_best_finish
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard__configured_node_api_request
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard__sync_documents_to_node
+    adapters__python__urirun__host__host_dashboard___uri_invoke_route --> adapters__python__urirun__host__host_dashboard___scanner_bridge_deps
+    adapters__python__urirun__host__host_dashboard___uri_invoke_page_action --> adapters__python__urirun__host__host_dashboard__page_action_enqueue
+    adapters__python__urirun__host__host_dashboard___finalize_uri_result --> adapters__python__urirun__host__host_dashboard___result_artifact_class
+    adapters__python__urirun__host__host_dashboard___uri_invoke_fallback --> adapters__python__urirun__host__host_dashboard___run_inprocess_connector_uri
+    adapters__python__urirun__host__host_dashboard___uri_invoke_fallback --> adapters__python__urirun__host__host_dashboard__configured_node_api_request
+    adapters__python__urirun__host__host_dashboard___uri_invoke_fallback --> adapters__python__urirun__host__host_dashboard___finalize_uri_result
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_mode
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_action_lookup
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_invoke_route
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___finalize_uri_result
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_simulated_result
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_invoke_page_action
+    adapters__python__urirun__host__host_dashboard__uri_invoke --> adapters__python__urirun__host__host_dashboard___uri_invoke_fallback
+    adapters__python__urirun__host__host_dashboard___service_contacts --> adapters__python__urirun__host__scanner_net___phone_scanner_external_status
+    adapters__python__urirun__host__host_dashboard__summary --> adapters__python__urirun__host__dashboard_api___safe_tickets
+    adapters__python__urirun__host__host_dashboard__summary --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard__summary --> adapters__python__urirun__host__dashboard_api___mesh
+    adapters__python__urirun__host__host_dashboard__summary --> adapters__python__urirun__host__host_dashboard___merge_live_webpage_nodes
+    adapters__python__urirun__host__host_dashboard__summary --> adapters__python__urirun__host__host_dashboard___service_contacts
+    adapters__python__urirun__host__host_dashboard__configured_node_api_request --> adapters__python__urirun__host__dashboard_api___host_config
+    adapters__python__urirun__host__host_dashboard___probe_node_token --> adapters__python__urirun__host__host_dashboard___node_url_from_config
+    adapters__python__urirun__host__host_dashboard__node_set_token --> adapters__python__urirun__host__host_dashboard___node_url_from_config
+    adapters__python__urirun__host__host_dashboard__task_action --> adapters__python__urirun__host__dashboard_api___planfile_adapter
+    adapters__python__urirun__host__host_dashboard__connector_test --> adapters__python__urirun__host__host_dashboard__uri_invoke
+    adapters__python__urirun__host__host_dashboard__documents_reconcile --> adapters__python__urirun__host__document_sync__reconcile_document_index
+    adapters__python__urirun__host__host_dashboard__documents_reconcile --> adapters__python__urirun__host__dashboard_api___host_db
+    adapters__python__urirun__host__host_dashboard___handle_events_sse --> adapters__python__urirun__node__server___sse_initial_cursor
+    adapters__python__urirun__host__host_dashboard__create_handler --> adapters__python__urirun__host__host_dashboard___json_response
+    adapters__python__urirun__host__host_dashboard__create_handler --> adapters__python__urirun__host__dashboard_api___dashboard_api_response
+    adapters__python__urirun__host__host_dashboard__create_handler --> adapters__python__urirun__host__host_dashboard___handle_events_sse
+    adapters__python__urirun__host__host_dashboard__create_handler --> adapters__python__urirun__host__host_dashboard___html_response
+    adapters__python__urirun__host__host_dashboard___free_port_from_old_scanner --> adapters__python__urirun__host__host_dashboard___free_port_from_matching_processes
+    adapters__python__urirun__host__host_dashboard___free_port_from_old_chat --> adapters__python__urirun__host__host_dashboard___free_port_from_matching_processes
+    adapters__python__urirun__host__host_dashboard___free_port_from_old_android_node --> adapters__python__urirun__host__host_dashboard___free_port_from_matching_processes
+    adapters__python__urirun__host__host_dashboard__serve --> adapters__python__urirun__node__node_cli___maybe_load_dotenv
+    adapters__python__urirun__host__host_dashboard__serve --> adapters__python__urirun__host__host_dashboard___free_port_from_old_dashboard
+    adapters__python__urirun__host__host_dashboard__serve --> adapters__python__urirun__host__host_dashboard__create_handler
+    adapters__python__urirun__host__host_dashboard__serve --> adapters__python__urirun__host__host_dashboard__startup_phone_qr
+    adapters__python__urirun__host__host_dashboard__command --> adapters__python__urirun__host__host_dashboard__serve
+    adapters__python__urirun__host__scanner_service__startup_phone_qr --> adapters__python__urirun__host__scanner_net___public_base_url
+    adapters__python__urirun__host__scanner_service__startup_phone_qr --> adapters__python__urirun__host__scanner_net___scanner_page_url
+    adapters__python__urirun__host__scanner_service__startup_phone_qr --> adapters__python__urirun__host__scanner_net___write_qr_png
+    adapters__python__urirun__host__scanner_service__phone_node_qr --> adapters__python__urirun__host__scanner_net___lan_host
+    adapters__python__urirun__host__scanner_service__phone_node_qr --> adapters__python__urirun__host__scanner_net___probe_scanner_url
+    adapters__python__urirun__host__scanner_service__phone_node_qr --> adapters__python__urirun__host__scanner_net___write_qr_png
+    adapters__python__urirun__host__scanner_service__ensure_phone_scanner_service --> adapters__python__urirun__host__scanner_net___ensure_tls_cert
+    adapters__python__urirun__host__scanner_service__ensure_phone_scanner_service --> adapters__python__urirun__host__scanner_net___scanner_page_url
+    adapters__python__urirun__host__scanner_service__ensure_phone_scanner_service --> adapters__python__urirun__host__scanner_net___lan_host
+    adapters__python__urirun__host__scanner_service__ensure_phone_scanner_service --> adapters__python__urirun__host__scanner_net___probe_scanner_url
+    adapters__python__urirun__host__scanner_service__restart_phone_scanner_service --> adapters__python__urirun__host__host_dashboard___service_restart_argv
+    adapters__python__urirun__host__scanner_service__restart_phone_scanner_service --> adapters__python__urirun__host__scanner_service__phone_scanner_service_id
     adapters__python__urirun__host__scanner_bridge__scanner_best_update --> adapters__python__urirun__host__scanner_bridge__scanner_live_store_locked
     adapters__python__urirun__host__scanner_bridge__scanner_best_update --> adapters__python__urirun__host__scanner_bridge__public_scanner_candidate
     adapters__python__urirun__host__scanner_bridge__scanner_public_candidate_for_live --> adapters__python__urirun__host__scanner_bridge__public_scanner_candidate
@@ -708,152 +852,8 @@ flowchart TD
     adapters__python__urirun__host__scanner_bridge__torch_enabled_from_prompt --> adapters__python__urirun__host__scanner_bridge__nl_text
     adapters__python__urirun__host__scanner_bridge__frame_visual_metrics --> adapters__python__urirun__host__scanner_bridge__bounded
     adapters__python__urirun__host__scanner_bridge__crop_geometry_score --> adapters__python__urirun__host__scanner_bridge__crop_dimensions
-    adapters__python__urirun__host__scanner_bridge__crop_quality_score --> adapters__python__urirun__host__scanner_bridge__crop_geometry_score
-    adapters__python__urirun__host__scanner_bridge__crop_quality_score --> adapters__python__urirun__host__scanner_bridge__bounded
-    adapters__python__urirun__host__scanner_bridge__document_frame_quality --> adapters__python__urirun__host__scanner_bridge__frame_visual_metrics
-    adapters__python__urirun__host__scanner_bridge__document_frame_quality --> adapters__python__urirun__host__scanner_bridge__visual_quality_score
-    adapters__python__urirun__host__scanner_bridge__document_frame_quality --> adapters__python__urirun__host__scanner_bridge__ocr_quality_score
-    adapters__python__urirun__host__scanner_bridge__document_frame_quality --> adapters__python__urirun__host__scanner_bridge__metadata_quality_score
-    adapters__python__urirun__host__scanner_bridge__cleanup_duplicate_scan_files --> adapters__python__urirun__host__scanner_bridge__scanner_staging_dir
-    adapters__python__urirun__host__scanner_bridge__store_best_finish --> adapters__python__urirun__host__scanner_bridge__scanner_live_store_locked
-    adapters__python__urirun__host__scanner_bridge__best_finish_store_failure --> adapters__python__urirun__host__scanner_bridge__scanner_live_store_locked
-    adapters__python__urirun__host__scanner_bridge__best_finish_store_failure --> adapters__python__urirun__host__scanner_bridge__scanner_public_candidate_for_live
-    adapters__python__urirun__host__scanner_bridge__best_finish_store_failure --> adapters__python__urirun__host__scanner_bridge__public_scanner_candidate
-    adapters__python__urirun__host__scanner_bridge__capture_reject_result --> adapters__python__urirun__host__scanner_bridge__cleanup_duplicate_scan_files
-    adapters__python__urirun__host__scanner_bridge__capture_candidate_result --> adapters__python__urirun__host__scanner_bridge__scanner_best_update
-    adapters__python__urirun__host__scanner_bridge__capture_candidate_result --> adapters__python__urirun__host__scanner_bridge__scanner_public_candidate_for_live
-    adapters__python__urirun__host__scanner_bridge__capture_candidate_result --> adapters__python__urirun__host__scanner_bridge__public_scanner_candidate
-    adapters__python__urirun__host__scanner_bridge__scanner_live_state --> adapters__python__urirun__host__scanner_bridge__scanner_live_state_from_streams
-    adapters__python__urirun__host__scanner_bridge__scanner_crop_overlay --> adapters__python__urirun__host__scanner_bridge__draw_crop_box
-    adapters__python__urirun__host__scanner_bridge__scanner_crop_overlay --> adapters__python__urirun__host__scanner_bridge__draw_overlay_label
-    adapters__python__urirun__host__scanner_bridge__capture_ocr_and_detect --> adapters__python__urirun__host__document_sync__truthy_env
-    adapters__python__urirun__host__scanner_bridge__refresh_best_ocr --> adapters__python__urirun__host__document_sync__truthy_env
-    adapters__python__urirun__host__scanner_bridge__ensure_best_overlay --> adapters__python__urirun__host__scanner_bridge__scanner_crop_overlay
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__prune_scanner_staging
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__capture_display_path
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__capture_ocr_and_detect
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__document_frame_quality
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__scanner_crop_overlay
-    adapters__python__urirun__host__scanner_bridge__scanner_capture --> adapters__python__urirun__host__scanner_bridge__register_scanner_result
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__prune_scanner_staging
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__scanner_best_take
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__resolve_best_candidate
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__best_quality_rejected
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__best_candidate_paths
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__best_crop_and_ocr
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__refresh_best_ocr
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__ensure_best_overlay
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__register_scanner_result
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__store_best_finish
-    adapters__python__urirun__host__scanner_bridge__scanner_best_finish --> adapters__python__urirun__host__scanner_bridge__best_series_not_found
-    adapters__python__urirun__host__scanner_bridge__prune_scanner_staging --> adapters__python__urirun__host__scanner_bridge__staging_keep_paths
-    adapters__python__urirun__host__contracts__file_transfer_verification --> adapters__python__urirun__host__contracts__verification_check
-    adapters__python__urirun__host__contracts___flow_checks --> adapters__python__urirun__host__contracts__verification_check
-    adapters__python__urirun__host__contracts__flow_execution_verification --> adapters__python__urirun__host__contracts___plan_steps
-    adapters__python__urirun__host__contracts__flow_execution_verification --> adapters__python__urirun__host__contracts___ok_step_ids
-    adapters__python__urirun__host__contracts__flow_execution_verification --> adapters__python__urirun__host__contracts___side_effect_steps
-    adapters__python__urirun__host__contracts__flow_execution_verification --> adapters__python__urirun__host__contracts___completed_count
-    adapters__python__urirun__host__contracts__flow_execution_verification --> adapters__python__urirun__host__contracts___flow_checks
-    adapters__python__urirun__host__discovery__add_node_aliases --> adapters__python__urirun__host__discovery__iter_node_alias_values
-    adapters__python__urirun__host__discovery__node_spec_aliases --> adapters__python__urirun__host__discovery__iter_node_alias_values
-    adapters__python__urirun__host__discovery__alias_map_from_dict --> adapters__python__urirun__host__discovery__node_alias_map_from_value
-    adapters__python__urirun__host__discovery__alias_map_from_dict --> adapters__python__urirun__host__discovery__node_spec_aliases
-    adapters__python__urirun__host__discovery__alias_map_from_dict --> adapters__python__urirun__host__discovery__add_node_aliases
-    adapters__python__urirun__host__discovery__alias_map_from_list --> adapters__python__urirun__host__discovery__node_spec_aliases
-    adapters__python__urirun__host__discovery__alias_map_from_list --> adapters__python__urirun__host__discovery__add_node_aliases
-    adapters__python__urirun__host__discovery__node_alias_map_from_value --> adapters__python__urirun__host__discovery___node_map_from_value
-    adapters__python__urirun__host__discovery__url_map_from_dict --> adapters__python__urirun__host__discovery__node_url_map_from_value
-    adapters__python__urirun__host__discovery__url_map_from_dict --> adapters__python__urirun__host__discovery__normalize_known_node_url
-    adapters__python__urirun__host__discovery__url_map_from_list --> adapters__python__urirun__host__discovery__normalize_known_node_url
-    adapters__python__urirun__host__discovery__node_url_map_from_value --> adapters__python__urirun__host__discovery___node_map_from_value
-    adapters__python__urirun__host__discovery__node_alias_map_from_config_doc --> adapters__python__urirun__host__discovery__node_alias_map_from_value
-    adapters__python__urirun__host__discovery__node_alias_map_from_env --> adapters__python__urirun__host__discovery__iter_node_alias_values
-    adapters__python__urirun__host__discovery__node_alias_map_from_known_nodes_file --> adapters__python__urirun__host__discovery__node_alias_map_from_value
-    adapters__python__urirun__host__discovery__node_alias_map_from_known_nodes_file --> adapters__python__urirun__host__discovery__known_nodes_file_data
-    adapters__python__urirun__host__discovery__known_nodes_file_urls --> adapters__python__urirun__host__discovery__node_url_map_from_value
-    adapters__python__urirun__host__discovery__known_nodes_file_urls --> adapters__python__urirun__host__discovery__known_nodes_file_data
-    adapters__python__urirun__host__discovery__merge_known_nodes_into_config --> adapters__python__urirun__host__discovery__node_dicts_from_url_map
-    adapters__python__urirun__host__discovery__merge_known_nodes_into_config --> adapters__python__urirun__host__discovery__known_nodes_file_urls
-    adapters__python__urirun__host__discovery__host_config --> adapters__python__urirun__host__discovery__merge_known_nodes_into_config
-    adapters__python__urirun__host__discovery__node_alias_map_from_context --> adapters__python__urirun__host__discovery__node_alias_map_from_env
-    adapters__python__urirun__host__discovery__node_alias_map_from_context --> adapters__python__urirun__host__discovery__node_alias_map_from_known_nodes_file
-    adapters__python__urirun__host__discovery__node_alias_map_from_context --> adapters__python__urirun__host__discovery__node_alias_map_from_node_urls
-    adapters__python__urirun__host__discovery__node_alias_map_from_context --> adapters__python__urirun__host__discovery__node_alias_map_from_config_doc
-    adapters__python__urirun__host__discovery__classify_route_run --> adapters__python__urirun__host__discovery___classify_not_found
-    adapters__python__urirun__host__discovery___probe_route --> adapters__python__urirun__host__discovery__classify_route_run
-    adapters__python__urirun__host__discovery___probe_route --> adapters__python__urirun__host__discovery__route_inputs_example
-    adapters__python__urirun__host__discovery__node_test_routes --> adapters__python__urirun__host__discovery___route_targets
-    adapters__python__urirun__host__discovery__node_test_routes --> adapters__python__urirun__host__discovery___node_test_summary
-    adapters__python__urirun__host__discovery__node_test_routes --> adapters__python__urirun__host__fs_transfer__node_token_for
-    adapters__python__urirun__host__discovery__node_test_routes --> adapters__python__urirun__host__fs_transfer__node_client
-    adapters__python__urirun__host__discovery__node_test_routes --> adapters__python__urirun__host__discovery___probe_route
-    adapters__python__urirun__host__fs_transfer__node_has_route --> adapters__python__urirun__host__fs_transfer__route_key
-    adapters__python__urirun__host__fs_transfer__fs_file_transfer_fallback_bindings --> adapters__python__urirun__host__fs_transfer__fs_file_transfer_binding
-    adapters__python__urirun__host__fs_transfer__deploy_fs_file_transfer_fallback --> adapters__python__urirun__host__fs_transfer__fs_file_transfer_fallback_bindings
-    adapters__python__urirun__host__fs_transfer__deploy_fs_file_transfer_fallback --> adapters__python__urirun__host__fs_transfer__short_value
-    adapters__python__urirun__host__fs_transfer__ensure_node_uri_routes --> adapters__python__urirun__host__fs_transfer__node_client
-    adapters__python__urirun__host__fs_transfer__ensure_node_uri_routes --> adapters__python__urirun__host__fs_transfer__route_key
-    adapters__python__urirun__host__fs_transfer__ensure_node_uri_routes --> adapters__python__urirun__host__fs_transfer__deploy_fs_file_transfer_fallback
-    adapters__python__urirun__host__fs_transfer__ensure_node_uri_routes --> adapters__python__urirun__host__fs_transfer__node_has_route
-    adapters__python__urirun__host__fs_transfer__compact_remote_run --> adapters__python__urirun__host__fs_transfer__short_value
-    adapters__python__urirun__host__fs_transfer__remote_write_error --> adapters__python__urirun__host__fs_transfer__envelope_error_message
-    adapters__python__urirun__host__fs_transfer__remote_write_error --> adapters__python__urirun__host__fs_transfer__route_not_found_remedy
-    adapters__python__urirun__host__fs_transfer__remote_read_error --> adapters__python__urirun__host__fs_transfer__route_not_found_remedy
-    adapters__python__urirun__host__fs_transfer__remote_read_error --> adapters__python__urirun__host__fs_transfer__envelope_error_message
-    adapters__python__urirun__host__fs_transfer__remote_read_error --> adapters__python__urirun__host__fs_transfer__short_value
-    adapters__python__urirun__host__fs_transfer__run_node_uri --> adapters__python__urirun__host__fs_transfer__node_client
-    adapters__python__urirun__host__planfile_adapter__load_planfile --> adapters__python__urirun__host__planfile_adapter__project_root
-    adapters__python__urirun__host__planfile_adapter__load_planfile --> adapters__python__urirun__host__planfile_adapter___imports
-    adapters__python__urirun__host__planfile_adapter__ticket_to_dict --> adapters__python__urirun__host__planfile_adapter___model_dict
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___imports
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___normalize_labels
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter__normalize_priority
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___build_executor
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___build_execution
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___build_inputs
-    adapters__python__urirun__host__planfile_adapter__build_ticket_payload --> adapters__python__urirun__host__planfile_adapter___build_outputs
-    adapters__python__urirun__host__planfile_adapter__create_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__create_ticket --> adapters__python__urirun__host__planfile_adapter__build_ticket_payload
-    adapters__python__urirun__host__planfile_adapter__create_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__list_tickets --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__list_tickets --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__next_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__next_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__get_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__get_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__claim_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__claim_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__start_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__start_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__complete_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__complete_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__fail_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__fail_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__fail_or_retry --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__fail_or_retry --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__update_ticket --> adapters__python__urirun__host__planfile_adapter__normalize_priority
-    adapters__python__urirun__host__planfile_adapter__update_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__update_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__wait_for_input --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__wait_for_input --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__ready_ticket --> adapters__python__urirun__host__planfile_adapter__ticket_to_dict
-    adapters__python__urirun__host__planfile_adapter__ready_ticket --> adapters__python__urirun__host__planfile_adapter__load_planfile
-    adapters__python__urirun__host__planfile_adapter__run_dsl --> adapters__python__urirun__host__planfile_adapter__project_root
-    adapters__python__urirun__host__planfile_adapter__run_dsl --> adapters__python__urirun__host__planfile_adapter___imports
-    adapters__python__urirun__runtime__v2_service__call --> adapters__python__urirun__runtime__v2_service___post
-    adapters__python__urirun__runtime__v2_service__call --> adapters__python__urirun__runtime__v2_service__service_base
-    adapters__python__urirun__runtime__v2_service__make_dispatch --> adapters__python__urirun__runtime__v2_service__call
-    adapters__python__urirun__runtime__v1__resolve_params --> adapters__python__urirun__runtime__v1___params_spec
-    adapters__python__urirun__runtime__v1__render_command --> adapters__python__urirun__runtime__v1__render_value
-    adapters__python__urirun__runtime__v1___proc_env --> adapters__python__urirun__runtime__v1__render_value
-    adapters__python__urirun__runtime__v1___run_process --> adapters__python__urirun__runtime__v1___run_process_streaming
-    adapters__python__urirun__runtime__v1___run_process --> adapters__python__urirun__runtime__v1___proc_env
-    adapters__python__urirun__runtime__v1___run_process_streaming --> adapters__python__urirun__runtime__v1___proc_env
-    adapters__python__urirun__runtime__v1___env_flags --> adapters__python__urirun__runtime__v1__render_value
-    adapters__python__urirun__runtime__v1__run_spawn --> adapters__python__urirun__runtime__v1__render_command
-    adapters__python__urirun__runtime__v1__run_spawn --> adapters__python__urirun__runtime__v1___has_placeholders
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
-    class adapters__python__urirun__host__document_sync__archive_scanned_document,adapters__python__urirun__node__reversible___uri_rollback,adapters__python__urirun__node__flow___thin_driver,adapters__python__urirun__node__flow___normalize_flow_step,adapters__python__urirun__node__flow___preflight,adapters__python__urirun__host__scanner_service__restart_phone_scanner_service,adapters__python__urirun__host__twin_bridge___step_inverse,adapters__python__urirun__node__node_cli__deploy_command highCC
-    class examples__matrix__verify__main,examples__node_file_transfer__fs_transfer__write_b64,scripts__cc_gate___iter_py,scripts__lint_connectors___lint_exit_code,scripts__repin_connectors__main,adapters__js__parseUri,adapters__python__urirun__exec__main,adapters__python__urirun__testing__smoke,adapters__python__urirun__host__host_db__delete_logs,adapters__python__urirun__host__host_db___run_command_route,adapters__python__urirun__host__domain_monitor__dns_records,adapters__python__urirun__host__domain_monitor__expected_records,adapters__python__urirun__host__domain_monitor__check_domain,adapters__python__urirun__host__domain_monitor___route_dns,adapters__python__urirun__host__domain_monitor___route_log,adapters__python__urirun__host__decision_loop__decision_loop_for_document_sync,adapters__python__urirun__host__decision_loop__general_path_next_intent,adapters__python__urirun__host__routing__selected_nodes_from_targets,adapters__python__urirun__host__routing__route_in_selected_targets,adapters__python__urirun__host__routing__has_screen_capture_route,adapters__python__urirun__host__routing__screen_document_capability_gap,adapters__python__urirun__host__android_node__start_android_node_service,adapters__python__urirun__host__android_node__restart_android_node_service,adapters__python__urirun__host__android_node__webpage_node_dict,adapters__python__urirun__host__android_node__merge_live_webpage_nodes,adapters__python__urirun__host__node_types__node_type_tags,adapters__python__urirun__host__object_registry___route_core_fields,adapters__python__urirun__host__object_registry___node_owner_dict,adapters__python__urirun__host__object_registry__service_object,adapters__python__urirun__host__object_registry__service_contacts medCC
+    class adapters__python__urirun__host__document_sync__archive_scanned_document,adapters__python__urirun__host__scanner_service__restart_phone_scanner_service,adapters__python__urirun__node__node_cli__deploy_command,adapters__python__urirun__host__twin_bridge___step_inverse,adapters__python__urirun__node__reversible___uri_rollback,adapters__python__urirun__node__flow___thin_driver,adapters__python__urirun__node__flow___normalize_flow_step,adapters__python__urirun__node__flow___preflight highCC
+    class examples__matrix__verify__main,examples__node_file_transfer__fs_transfer__write_b64,scripts__cc_gate___iter_py,scripts__lint_connectors___lint_exit_code,scripts__repin_connectors__main,adapters__js__parseUri,adapters__python__urirun__exec__main,adapters__python__urirun___example_payload,adapters__python__urirun__action_space,adapters__python__urirun__result_data,adapters__python__urirun__result_degraded,adapters__python__urirun__run_steps,adapters__python__urirun__Connector___add_route_arguments,adapters__python__urirun__Connector___build_cli_parser,adapters__python__urirun__Connector___dispatch_cli,adapters__python__urirun__Connector__manifest,adapters__python__urirun___connector_cli_routes,adapters__python__urirun___connector_run_command,adapters__python__urirun__testing__smoke,adapters__python__urirun__host__host_db__delete_logs,adapters__python__urirun__host__host_db___run_command_route,adapters__python__urirun__host__domain_monitor__dns_records,adapters__python__urirun__host__domain_monitor__expected_records,adapters__python__urirun__host__domain_monitor__check_domain,adapters__python__urirun__host__domain_monitor___route_dns,adapters__python__urirun__host__domain_monitor___route_log,adapters__python__urirun__host__decision_loop__decision_loop_for_document_sync,adapters__python__urirun__host__decision_loop__general_path_next_intent,adapters__python__urirun__host__routing__selected_nodes_from_targets,adapters__python__urirun__host__routing__route_in_selected_targets medCC

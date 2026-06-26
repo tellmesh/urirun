@@ -439,6 +439,133 @@ def runtime_info(**payload: Any) -> dict:
     return info
 
 
+def _session_type() -> str:
+    """Detect display session type: wayland | x11 | ssh | headless."""
+    import socket as _socket
+    if os.environ.get("SSH_CLIENT") or os.environ.get("SSH_TTY"):
+        return "ssh"
+    if os.environ.get("WAYLAND_DISPLAY"):
+        return "wayland"
+    if os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland":
+        return "wayland"
+    # probe for a live Wayland socket even when env isn't set (node process may lack it)
+    xdg_runtime = os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    for cand in ("wayland-0", "wayland-1"):
+        if os.path.exists(os.path.join(xdg_runtime, cand)):
+            return "wayland"
+    if os.environ.get("DISPLAY"):
+        return "x11"
+    if os.environ.get("XDG_SESSION_TYPE"):
+        return os.environ["XDG_SESSION_TYPE"].lower()
+    return "headless"
+
+
+def _compositor() -> str | None:
+    """Detect the compositor/WM by process name."""
+    try:
+        with open("/proc/self/status", encoding="utf-8") as fh:
+            ppid = int(next(l for l in fh if l.startswith("PPid:")).split()[1])
+    except Exception:
+        ppid = None
+    compositors = ["mutter", "kwin_wayland", "kwin_x11", "sway", "hyprland",
+                   "gnome-shell", "plasmashell", "xfwm4", "openbox", "i3", "bspwm"]
+    try:
+        for entry in os.scandir("/proc"):
+            if not entry.name.isdigit():
+                continue
+            try:
+                comm = open(os.path.join(entry.path, "comm"), encoding="utf-8").read().strip()
+                if comm in compositors:
+                    return comm
+            except OSError:
+                continue
+    except Exception:
+        pass
+    return None
+
+
+def _gpu_info() -> str | None:
+    """Best-effort GPU identification via /proc or lspci."""
+    try:
+        val = open("/proc/driver/nvidia/version", encoding="utf-8").readline().strip()
+        if val:
+            return val
+    except OSError:
+        pass
+    try:
+        import subprocess
+        out = subprocess.run(["lspci", "-mm"], capture_output=True, text=True, timeout=3).stdout
+        for line in out.splitlines():
+            if "VGA" in line or "3D" in line or "Display" in line:
+                parts = line.split('"')
+                return parts[3] if len(parts) > 3 else line.split()[-1]
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def _resolution_info() -> dict | None:
+    """Best-effort display resolution from xrandr."""
+    try:
+        import subprocess
+        out = subprocess.run(
+            ["xrandr", "--nograb", "--current"], capture_output=True, text=True, timeout=2).stdout
+        for line in out.splitlines():
+            if "*" in line:
+                parts = line.split()
+                w, h = parts[0].split("x")
+                return {"width": int(w), "height": int(h)}
+    except Exception:  # noqa: BLE001
+        pass
+    return None
+
+
+def _app_count() -> int:
+    """Count installed .desktop files across standard search paths."""
+    count = 0
+    for search_dir in ["/usr/share/applications", "/usr/local/share/applications",
+                       os.path.expanduser("~/.local/share/applications")]:
+        try:
+            count += sum(1 for e in os.scandir(search_dir) if e.name.endswith(".desktop"))
+        except OSError:
+            pass
+    return count
+
+
+def host_facts(**payload: Any) -> dict:
+    """Lightweight system-capability snapshot for a node.  No KVM / twin connector needed.
+
+    Returns session type, compositor, available capture/input tools, display resolution
+    (if discoverable without X), GPU name, monitor count, app catalog size, and OS info.
+    Intended as the 'ask-before-deploy' endpoint so the host can skip blind probing."""
+    import platform
+    import shutil
+
+    capture_tools = {t: shutil.which(t) is not None
+                     for t in ["scrot", "grim", "gnome-screenshot", "spectacle",
+                                "import", "flameshot", "wlr-randr"]}
+    input_tools = {t: shutil.which(t) is not None
+                   for t in ["xdotool", "ydotool", "wtype", "xte", "dotoolc"]}
+    browser_bins = {b: shutil.which(b) is not None
+                    for b in ["google-chrome-stable", "google-chrome", "chromium",
+                               "chromium-browser", "brave-browser", "firefox"]}
+    return {
+        "ok": True,
+        "sessionType": _session_type(),
+        "compositor": _compositor(),
+        "captureTools": capture_tools,
+        "inputTools": input_tools,
+        "browserBins": browser_bins,
+        "appCount": _app_count(),
+        "gpu": _gpu_info(),
+        "resolution": _resolution_info(),
+        "hostname": platform.node(),
+        "os": platform.system(),
+        "osRelease": platform.release(),
+        "arch": platform.machine(),
+    }
+
+
 _ROUTES = [
     ("package/command/install", "command", "package_install",
      {"spec": {"type": ["string", "array"]}, "upgrade": {"type": "boolean"}}),
@@ -453,6 +580,7 @@ _ROUTES = [
     ("policy/query/show", "query", "install_policy", {}),
     ("package/query/list", "query", "package_list", {"match": {"type": "string"}}),
     ("runtime/query/info", "query", "runtime_info", {}),
+    ("environment/query/facts", "query", "host_facts", {}),
 ]
 
 

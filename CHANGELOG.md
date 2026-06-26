@@ -196,6 +196,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Docker desktop from an NL intent; the desktop driver is a *connector*, the schema in
   the action space is the only core change).
 
+## [0.4.168] - 2026-06-26
+
+### Docs
+- Update README.md
+- Update SUMD.md
+- Update SUMR.md
+- Update TODO.md
+- Update project/README.md
+- Update project/context.md
+
+### Test
+- Update tests/test_host_dashboard.py
+
+### Other
+- Update .urirun/scheme-index.json
+- Update adapters/python/tests/test_capability.py
+- Update adapters/python/tests/test_dashboard_api_characterizing.py
+- Update adapters/python/tests/test_dispatch_protocol.py
+- Update adapters/python/tests/test_event_schema.py
+- Update adapters/python/tests/test_flow_twin.py
+- Update adapters/python/tests/test_proof_cache.py
+- Update adapters/python/tests/test_reversible.py
+- Update adapters/python/urirun/host/artifacts_admin.py
+- Update adapters/python/urirun/host/host_dashboard.py
+- ... and 27 more files
+
 ## [0.4.167] - 2026-06-26
 
 ### Docs

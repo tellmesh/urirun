@@ -130,11 +130,38 @@ def _inverse_from_results(results: dict, step_id: str, step_uri: str = "") -> st
     return None
 
 
+def _step_status(step_ok: bool, degraded: bool) -> str:
+    if not step_ok:
+        return "blocked"
+    if degraded:
+        return "degraded"
+    return "applied"
+
+
+def _step_narration(step: dict, step_uri: str, status: str, degraded_reason: str | None,
+                    reversible: bool) -> str:
+    narration = f"[{step.get('id', '?')}] {step_uri}"
+    if status == "degraded":
+        short = (degraded_reason[:80] + "…" if len(degraded_reason) > 80 else degraded_reason) if degraded_reason else ""
+        narration += f" ⚠ degraded: {short}" if short else " ⚠ degraded"
+    elif status == "applied" and not reversible:
+        narration += " ⚠ irreversible"
+    return narration
+
+
 def _publish_step_event(
     step: dict, node: str, connector_inverse: str | None = None,
     degraded: bool = False, degraded_reason: str | None = None,
+    episode_id: str = "", experience_id: str = "", intent_sig: str = "",
 ) -> None:
+    """Emit a StepEvent to TWIN_EVENT_HUB.
+
+    New fields (episode_id, experience_id, intent_sig, category, proof_key, step_uri)
+    are additive: existing subscribers that only read uri/status/transition keep working.
+    The episode fields default to "" when the caller has not yet wired them — the subscriber
+    MUST tolerate empty strings (Krok 3 wires them; until then the events are pre-Episode)."""
     import time  # noqa: PLC0415
+    from urirun.node.event_schema import step_category  # noqa: PLC0415
     step_uri = step.get("uri") or "?"
     step_ok = step.get("ok", True)
     if connector_inverse is not None:
@@ -147,26 +174,20 @@ def _publish_step_event(
         "node": step.get("target") or node, "os": "linux", "surface": surface,
         "fingerprint": sig, "stateSig": sig, "url": None, "monitors": [], "window": None,
     }
-    narration = f"[{step.get('id', '?')}] {step_uri}"
-    if not step_ok:
-        status = "blocked"
-    elif degraded:
-        status = "degraded"
-        if degraded_reason:
-            short = degraded_reason[:80] + "…" if len(degraded_reason) > 80 else degraded_reason
-            narration += f" ⚠ degraded: {short}"
-        else:
-            narration += " ⚠ degraded"
-    else:
-        status = "applied"
-        if not reversible:
-            narration += " ⚠ irreversible"
+    status = _step_status(step_ok, degraded)
+    narration = _step_narration(step, step_uri, status, degraded_reason, reversible)
     TWIN_EVENT_HUB.publish({
         "uri": "twin://monitor/event",
+        "step_uri": step_uri,
         "narration": narration,
         "status": status,
         "degraded": degraded,
         "degradedReason": degraded_reason,
+        "category": step_category(step_uri),
+        "proof_key": step.get("proof_key") or None,
+        "episode_id": episode_id,
+        "experience_id": experience_id,
+        "intent_sig": intent_sig,
         "transition": {
             "before": _before,
             "forward": step_uri,
@@ -179,13 +200,19 @@ def _publish_step_event(
 
 def append_twin_widget(execute: bool, flow: dict, attachments: list,
                        prompt: str, selected_targets: "list[str]", timeline: list,
-                       results: "dict | None" = None) -> None:
+                       results: "dict | None" = None,
+                       episode_id: str = "", experience_id: str = "",
+                       intent_sig: str = "", outcome_status: str = "",
+                       next_intent: str = "") -> None:
     """Append a twin-monitor widget when the flow touches a desktop node.
 
     ``results`` — the execution results dict keyed by step ID (same shape as
     ``execute_flow`` returns). When provided, connector-returned inverse URIs take
-    priority over the static _step_inverse() classification, making the SSE event
-    and the rollback ledger converge on the same inverse URI."""
+    priority over the static _step_inverse() classification.
+
+    Episode fields (episode_id, experience_id, intent_sig) propagate into every
+    StepEvent so a single EventHub subscriber can group steps by Episode without
+    needing a separate side-channel. Defaults to "" until Krok 3 wires them in."""
     if not flow_has_desktop_step(flow):
         return
     import urllib.parse  # noqa: PLC0415
@@ -207,8 +234,16 @@ def append_twin_widget(execute: bool, flow: dict, attachments: list,
             conn_inv = _inverse_from_results(_results, step_id, step.get("uri") or "")
             deg, deg_reason = _step_info_from_results(_results, step_id)
             _publish_step_event(step, node, connector_inverse=conn_inv,
-                                degraded=deg, degraded_reason=deg_reason)
-    TWIN_EVENT_HUB.publish({"flowCompleted": True, "prompt": prompt})
+                                degraded=deg, degraded_reason=deg_reason,
+                                episode_id=episode_id, experience_id=experience_id,
+                                intent_sig=intent_sig)
+    TWIN_EVENT_HUB.publish({
+        "flowCompleted": True,
+        "prompt": prompt,
+        "episode_id": episode_id,
+        "outcome_status": outcome_status or ("ok" if execute else "demo"),
+        "next_intent": next_intent,
+    })
 
 
 def twin_plan_preview(prompt: str, node: str = "") -> "dict | None":
@@ -285,10 +320,19 @@ def api_twin_state(project: str, db: "str | None", config: "str | None", query: 
         e for e in TWIN_EVENT_HUB.replay_since(0)
         if isinstance(e, dict) and e.get("uri") == "twin://monitor/event"
     ][-50:]
+    # Surface the rest of the durable twin layer so the panels have a single state source:
+    # degraded runs (ran but not known-good), reversibility proofs, and episodic memory.
+    degraded_flows = mem.degraded_flows() if hasattr(mem, "degraded_flows") else []
+    proof_store = getattr(mem, "proof_store", None)
+    proofs = list(proof_store.values()) if hasattr(proof_store, "values") else []
+    episodes = mem.known_good_episodes() if hasattr(mem, "known_good_episodes") else []
     return 200, {
         "ok": True,
         "nodes": nodes,
         "flows": flows[:limit],
         "total": len(flows),
+        "degradedFlows": degraded_flows[:limit],
+        "proofs": proofs[:limit],
+        "episodes": episodes[:limit],
         "events": step_events,
     }

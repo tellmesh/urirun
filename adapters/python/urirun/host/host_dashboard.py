@@ -452,13 +452,15 @@ def _read_json(handler: BaseHTTPRequestHandler) -> dict:
 
 
 def _file_response(handler: BaseHTTPRequestHandler, path: str, project: str) -> None:
+    import tempfile  # noqa: PLC0415
     source = Path(path).expanduser().resolve()
     allowed_roots = [
         Path(project).expanduser().resolve(),
         Path("~/.urirun").expanduser().resolve(),
         Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser().resolve(),
     ]
-    if not any(source == root or source.is_relative_to(root) for root in allowed_roots):
+    in_temp = source.parent == Path(tempfile.gettempdir()) and source.name.startswith("urirun-")
+    if not in_temp and not any(source == root or source.is_relative_to(root) for root in allowed_roots):
         _json_response(handler, 403, {"ok": False, "error": "file is outside dashboard preview roots"})
         return
     if not source.is_file():

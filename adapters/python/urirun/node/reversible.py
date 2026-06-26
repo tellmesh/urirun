@@ -215,8 +215,11 @@ class TwinMemory:
     system re-measures instead of guessing on a moved target. Storage is pluggable via ``store``
     (default in-memory dict; a JSON file or a host_db Artifact backend in production — snapshots
     ARE Artifacts, no new store). Turns guessing into knowledge of a known-good state."""
-    store: dict = field(default_factory=dict)         # node -> {fingerprint, snapshot}
-    flow_store: dict = field(default_factory=dict)    # flow_key -> {prompt, steps, timeline, ts}
+    store: dict = field(default_factory=dict)          # node -> {fingerprint, snapshot}
+    flow_store: dict = field(default_factory=dict)     # flow_key -> {prompt, steps, timeline, ts} (fully-ok only)
+    degraded_store: dict = field(default_factory=dict) # flow_key -> record (ran, but degraded — NOT known-good)
+    episode_store: dict = field(default_factory=dict)  # episode_id -> Episode.to_dict()
+    proof_store: dict = field(default_factory=dict)    # proof_key -> {uri, verdict, ...} (positives only)
 
     def remember(self, node: str, profile: dict) -> dict:
         rec = {"fingerprint": environment_fingerprint(profile), "snapshot": profile}
@@ -239,12 +242,21 @@ class TwinMemory:
                 "reason": "environment changed since the last known-good" if drifted else "matches known-good"}
 
     def remember_flow(self, flow_key: str, record: dict) -> None:
-        """Persist a known-good flow execution (prompt + steps + timeline) keyed by `flow_key`.
+        """Persist a flow execution (prompt + steps + timeline) keyed by `flow_key`.
 
         ``flow_key`` is the canonical step-URI fingerprint so structurally identical flows (same
         URI sequence, different payloads) share one slot — the latest successful run overwrites.
         ``record`` should carry at minimum ``{steps, timeline, prompt}``; callers may add
-        ``nodes``, ``generator``, ``ts`` for richer recall."""
+        ``nodes``, ``generator``, ``ts`` for richer recall.
+
+        DEGRADED runs (``record["degraded"]`` truthy) are NOT known-good: a step succeeded but
+        with reduced quality (e.g. a capture that produced no image because the Wayland portal
+        permission was denied). They are kept in ``degraded_store`` for visibility but never
+        clobber the known-good slot — mirroring the positives-only policy of ``remember_proof``.
+        "Known-good" must mean the flow fully succeeded, not merely that it didn't crash."""
+        if record.get("degraded"):
+            self.degraded_store[flow_key] = record
+            return
         self.flow_store[flow_key] = record
 
     def recall_flow(self, flow_key: str) -> dict | None:
@@ -252,10 +264,62 @@ class TwinMemory:
         return self.flow_store.get(flow_key)
 
     def known_good_flows(self) -> list[dict]:
-        """All remembered flow records, newest-first (by ``ts`` key; missing ts → oldest)."""
+        """All fully-ok flow records, newest-first (by ``ts`` key; missing ts → oldest)."""
         def _ts(r: dict) -> str:
             return str(r.get("ts") or "")
         return sorted(self.flow_store.values(), key=_ts, reverse=True)
+
+    def degraded_flows(self) -> list[dict]:
+        """Flows that ran but completed degraded, newest-first. Excludes any ``flow_key`` already
+        remembered as fully known-good — a clean run supersedes a prior degraded attempt."""
+        good = set(self.flow_store.keys())
+        recs = [r for k, r in self.degraded_store.items() if k not in good]
+        return sorted(recs, key=lambda r: str(r.get("ts") or ""), reverse=True)
+
+    def remember_episode(self, ep: "dict") -> None:
+        """Persist an Episode (as a dict from Episode.to_dict()) keyed by episode_id.
+
+        Append-only by convention: a second call with the same episode_id overwrites,
+        which is safe because episode_id is content-addressed (same content → same key)."""
+        eid = ep.get("episode_id") or ""
+        if eid:
+            self.episode_store[eid] = ep
+
+    def known_good_episodes(self) -> list[dict]:
+        """All Episode dicts, newest-first (by ``ts`` key)."""
+        def _ts(e: dict) -> str:
+            return str(e.get("ts") or "")
+        return sorted(self.episode_store.values(), key=_ts, reverse=True)
+
+    def recall_episode(self, intent_sig: str, env_fingerprint: str) -> "dict | None":
+        """Return the most-recent Episode whose intent and env fingerprint match, or None.
+
+        Linear scan for now (N is small; a proper index is added in Step 5).
+        Only considers Episodes whose outcome.status is "ok" — blocked/failed Episodes
+        do not feed the recall path (they feed the recovery path instead)."""
+        for ep in self.known_good_episodes():
+            outcome = ep.get("outcome") or {}
+            reality = ep.get("reality") or {}
+            if (outcome.get("status") == "ok"
+                    and ep.get("intent_sig") == intent_sig
+                    and reality.get("fingerprint") == env_fingerprint):
+                return ep
+        return None
+
+    def remember_proof(self, key: str, record: dict) -> None:
+        """Persist a reversibility proof keyed by its content-addressed ``proof_key``.
+
+        Only POSITIVE verdicts are cached (``record["verdict"] is True``): a negative is
+        not durable proof — the environment or scenario may simply not have exercised the
+        change, so a later run must re-probe rather than trust a cached "no". The key already
+        binds (uri, scenario, env fingerprint), so a drifted environment yields a new key and
+        misses this cache by construction."""
+        if key and record.get("verdict") is True:
+            self.proof_store[key] = record
+
+    def recall_proof(self, key: str) -> dict | None:
+        """Return the cached positive reversibility verdict for ``proof_key``, or None."""
+        return self.proof_store.get(key)
 
 
 def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool = False,

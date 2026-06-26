@@ -262,6 +262,42 @@ def _thin_goal_verify(dispatch_uri, envelope, timeline: list, results: dict):
     return None
 
 
+def _results_degraded(results: dict) -> tuple[bool, str | None]:
+    """Scan accumulated step results for a DEGRADED outcome — a step that returned ok=True but
+    with reduced quality (e.g. a capture that produced no image because the Wayland portal
+    permission was denied). Mirrors the shape the twin SSE bridge reads (``_step_info_from_results``)
+    so the known-good guard and the panel agree on what 'degraded' means. Returns the first
+    degraded step's (True, reason)."""
+    for r in (results or {}).values():
+        if not isinstance(r, dict):
+            continue
+        res = r.get("result")
+        val = res.get("value") if isinstance(res, dict) else None
+        if not isinstance(val, dict):
+            val = r
+        if isinstance(val, dict) and val.get("degraded"):
+            reason = val.get("degradedReason")
+            return True, (str(reason) if reason else None)
+    return False, None
+
+
+def _enrich_remember_with_degraded(payload: dict, results: dict) -> dict:
+    """Stamp a remember step's ``record`` with the run's degraded outcome before dispatch.
+
+    The thin driver is the only place that holds the accumulated step results, while the memory
+    handler only sees the payload — so the enrichment happens here. A clean run is left untouched
+    (no ``degraded`` key), so ``remember_flow`` records it as known-good as before."""
+    degraded, reason = _results_degraded(results)
+    if not degraded:
+        return payload
+    out = dict(payload)
+    rec = dict(out.get("record") or {})
+    rec["degraded"] = True
+    rec["degradedReason"] = reason
+    out["record"] = rec
+    return out
+
+
 def _thin_driver(
     steps: list[dict],
     envelope: FlowEnvelope,
@@ -296,6 +332,11 @@ def _thin_driver(
         uri = step["uri"]
         sid = step.get("id") or uri
         payload = resolve_step_payload(step.get("payload") or {}, results)
+        if "/memory/command/remember" in uri:
+            # The remember step runs last; stamp it with the run's degraded outcome so the
+            # memory handler keeps a degraded run out of the known-good store (the handler
+            # only sees the payload, not the accumulated results).
+            payload = _enrich_remember_with_degraded(payload, results)
         envelope.record(uri, "call")
 
         r = dispatch_uri(uri, payload)
@@ -1348,13 +1389,18 @@ def _flow_key(flow: dict) -> str:
 def _remember_known_good_flow(
     flow: dict, execution: dict, memory: TwinMemory, prompt: str = "", ts: str = ""
 ) -> None:
-    """Store a successful flow execution in memory.flow_store as a known-good record.
+    """Store a successful flow execution as a flow record (known-good, or degraded-only).
 
     Called once after execute_flow returns ok=True and after _update_known_good so the
     environment profile is already up-to-date when the flow record is written. The record
     is keyed by the step-URI fingerprint (_flow_key) so recall is structure-based, not
-    prompt-string-based — similar prompts that produce the same URI plan share one entry."""
+    prompt-string-based — similar prompts that produce the same URI plan share one entry.
+
+    ``ok=True`` here means the flow did not abort; if any step ran degraded (e.g. a capture
+    blocked by the Wayland portal), the record is flagged ``degraded`` and remember_flow keeps
+    it OUT of the known-good store — known-good must mean fully succeeded, not merely no-crash."""
     key = _flow_key(flow)
+    degraded, reason = _results_degraded(execution.get("results") or {})
     memory.remember_flow(key, {
         "flowKey": key,
         "prompt": prompt,
@@ -1363,6 +1409,8 @@ def _remember_known_good_flow(
         "nodes": sorted({str(s.get("node") or "") for s in (flow.get("steps") or []) if s.get("node")}),
         "ts": ts or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "ok": True,
+        "degraded": degraded,
+        "degradedReason": reason,
     })
 
 
@@ -1497,6 +1545,13 @@ def _orchestrate_steps(flow: dict, registry: dict, execute: bool, recover: bool,
                        rollback_on_failure: bool, memory, dispatch_uri,
                        routes: list, timeline: list, results: dict,
                        recoveries: list) -> dict:
+    # ARCHITECTURE NOTE (P0.3 — Opcja B): two engines coexist intentionally.
+    # _thin_driver (see execute_flow) is the production path when dispatch_uri is set:
+    # steps carry their own next-intent, the driver follows. _orchestrate_steps is the
+    # fallback when dispatch_uri=None — central retry/self-heal logic in the orchestrator
+    # rather than delegated to steps. Callers without dispatch_uri (tests, run_flow_document
+    # without URI) reach this path. Semantic changes that affect both paths MUST be made
+    # in both. Migration of all callers to the thin path is out of scope for this plan.
     start = time.monotonic()
     remediations_used = 0
     if execute and recover:
@@ -1577,8 +1632,10 @@ def _make_memory_dispatch(base_dispatch, memory: TwinMemory, flow: dict, registr
                     memory.remember(node, profile)
             record = dict(payload.get("record") or {})
             record["flowKey"] = flow_key
-            memory.remember_flow(flow_key, record)
-            return {"ok": True, "remembered": True, "flowKey": flow_key}
+            memory.remember_flow(flow_key, record)  # degraded records go to degraded_store, not known-good
+            degraded = bool(record.get("degraded"))
+            return {"ok": True, "remembered": not degraded, "degraded": degraded,
+                    "degradedReason": record.get("degradedReason"), "flowKey": flow_key}
 
         return base_dispatch(uri, payload)
 
@@ -2035,12 +2092,14 @@ def _uri_memory_remember(payload: dict) -> dict:
             pass
     record = dict(payload.get("record") or {})
     remembered = False
+    degraded = bool(record.get("degraded"))
     if flow_key:
         record["flowKey"] = flow_key
-        memory.remember_flow(flow_key, record)
-        remembered = True
-    return urirun.ok(remembered=remembered, nodes=nodes,
-                     flowKey=flow_key if flow_key else None)
+        memory.remember_flow(flow_key, record)  # degraded records go to degraded_store, not known-good
+        remembered = not degraded
+    return urirun.ok(remembered=remembered, degraded=degraded,
+                     degradedReason=record.get("degradedReason"),
+                     nodes=nodes, flowKey=flow_key if flow_key else None)
 
 
 try:

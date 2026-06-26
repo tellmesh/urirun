@@ -80,7 +80,7 @@ def call(uri: str, payload: dict | None = None, registry: dict | None = None, mo
             route_entry = reglib.resolve_route(translation, registry)
         except KeyError:
             envelope["ok"] = False
-            envelope["error"] = {"type": "registry", "message": f"route not found: {descriptor['normalized']}"}
+            envelope["error"] = {"type": "registry", "category": "NOT_FOUND", "message": f"route not found: {descriptor['normalized']}"}
             return envelope
 
     if validate and route_entry is not None:
@@ -130,7 +130,15 @@ def make_dispatch(registry: dict | None, mode: str, fallback=None):
         r = call(uri, payload or {}, registry or {}, mode=mode)
         if r and r.get("ok"):
             return r
-        if fallback is not None and (r.get("error") or {}).get("category") == "NOT_FOUND":
+        _err = (r.get("error") or {})
+        # Trigger in-process fallback for any "route not found" signal:
+        # - category == "NOT_FOUND": set by v2_service.call on local registry miss
+        # - type == "registry": set by node HTTP responses when the served node
+        #   doesn't own that route (no category field in that case)
+        if fallback is not None and (
+            _err.get("category") == "NOT_FOUND"
+            or _err.get("type") == "registry"
+        ):
             fb = fallback(uri, payload or {})
             return fb if fb is not None else r
         return r

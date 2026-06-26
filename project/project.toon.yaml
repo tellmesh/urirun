@@ -1,52 +1,52 @@
-# urirun | 1983 func | 118f | 45778L | python | 2026-06-26
+# urirun | 1941 func | 119f | 45861L | python | 2026-06-26
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.8  critical=265 (limit:10)  dup=2  cycles=0
+  CC̄=4.8  critical=256 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     create_handler = 63 (limit:10)
   !!! high_fan_out     archive_scanned_document = 43 (limit:10)
   !!! high_fan_out     write_document_pdf = 32 (limit:10)
+  !!! high_fan_out     summary = 30 (limit:10)
   !!! high_fan_out     _add_host_subparser = 30 (limit:10)
   !!! high_fan_out     serve = 30 (limit:10)
-  !!! high_fan_out     summary = 30 (limit:10)
   !!! high_fan_out     scanner_best_finish = 26 (limit:10)
   !!! high_fan_out     main = 26 (limit:10)
   !!! high_fan_out     scanner_capture = 25 (limit:10)
   !!! high_fan_out     _build_parser = 25 (limit:10)
 
-MODULES[206] (top by size):
-  M[adapters/python/urirun/host/html_templates.py] 4904L C:0 F:3 CC↑6 D:0 (python)
-  M[adapters/python/urirun/host/host_dashboard.py] 2947L C:0 F:127 CC↑14 D:2 (python)
-  M[adapters/python/urirun/node/flow.py] 2058L C:1 F:94 CC↑15 D:3 (python)
-  M[adapters/python/urirun/runtime/v2.py] 2003L C:1 F:122 CC↑14 D:6 (python)
+MODULES[191] (top by size):
+  M[adapters/python/urirun/host/html_templates.py] 4907L C:0 F:3 CC↑6 D:0 (python)
+  M[adapters/python/urirun/node/flow.py] 2117L C:1 F:96 CC↑16 D:3 (python)
+  M[adapters/python/urirun/runtime/v2.py] 2003L C:1 F:122 CC↑14 D:4 (python)
+  M[adapters/python/urirun/host/host_dashboard.py] 1884L C:0 F:83 CC↑14 D:2 (python)
   M[adapters/python/urirun/host/scanner_bridge.py] 1543L C:1 F:65 CC↑14 D:2 (python)
   M[adapters/python/urirun/host/document_sync.py] 1412L C:2 F:59 CC↑15 D:4 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/host/object_registry.py] 1146L C:0 F:57 CC↑14 D:0 (python)
-  M[adapters/python/urirun/node/server.py] 1010L C:3 F:56 CC↑14 D:3 (python)
+  M[adapters/python/urirun/node/server.py] 1010L C:3 F:56 CC↑14 D:4 (python)
   M[adapters/python/urirun/node/node_cli.py] 897L C:0 F:48 CC↑15 D:1 (python)
   M[adapters/python/urirun/host/chat_orchestrator.py] 864L C:1 F:21 CC↑14 D:0 (python)
-  M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:0 (python)
+  M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:15 (python)
   M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/cli.py] 715L C:0 F:7 CC↑1 D:1 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 714L C:0 F:38 CC↑14 D:1 (python)
-  LANGS: python:143/json:13/shell:10/yaml:5/csharp:4/javascript:3/c:3/txt:3/toml:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/yml:2/pm:1/perl:1/cfg:1
+  LANGS: python:130/json:13/shell:10/yaml:5/csharp:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ create_handler fan=63  // Orchestrates 63 calls
   ★ archive_scanned_document fan=43  // Orchestrates 43 calls
   ★ write_document_pdf fan=32  // Orchestrates 32 calls
+  ★ summary fan=30  // Orchestrates 30 calls
   ★ _add_host_subparser fan=30  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
-  ★ serve fan=30  // Run the daemon: warm registry + worker pool, one Unix socket, one process.
 
 REFACTOR[15]:
-  [1] H/H Split god module adapters/python/urirun/host/document_sync.py (1412L, 2 classes)
-  [2] H/H Split god module adapters/python/urirun/node/flow.py (2058L, 1 classes)
+  [1] H/H Split god module adapters/python/urirun/node/flow.py (2117L, 1 classes)
+  [2] H/H Split god module adapters/python/urirun/host/document_sync.py (1412L, 2 classes)
   [3] H/H Split god module adapters/python/urirun/node/node_cli.py (897L, 0 classes)
-  [4] H/H Split god module adapters/python/urirun/node/reversible.py (597L, 9 classes)
+  [4] H/H Split god module adapters/python/urirun/node/reversible.py (661L, 9 classes)
   [5] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
 
 EVOLUTION:
-  2026-06-26 CC̄=4.8 crit=265 45778L // Automated analysis
+  2026-06-26 CC̄=4.8 crit=256 45861L // Automated analysis

@@ -316,3 +316,39 @@ def test_suggest_recall_different_uri_sequence_returns_none(monkeypatch):
     other_flow = {"steps": [{"id": "s1", "uri": "fs://laptop/file/command/write",
                               "payload": {}}]}
     assert F.suggest_recall(other_flow, mem) is None
+
+
+# ── degraded outcome must not be remembered as known-good ──────────────────────
+
+def test_results_degraded_detects_nested_and_toplevel_shapes():
+    # connector-nested shape: result.value.degraded
+    nested = {"s1": {"result": {"value": {"ok": True, "degraded": True,
+                                          "degradedReason": "portal denied"}}}}
+    assert F._results_degraded(nested) == (True, "portal denied")
+    # top-level shape: {ok, degraded} returned directly
+    top = {"s1": {"ok": True, "degraded": True, "degradedReason": "no wlroots"}}
+    assert F._results_degraded(top) == (True, "no wlroots")
+    # clean run: no degraded marker anywhere
+    assert F._results_degraded({"s1": {"result": {"value": {"ok": True}}}}) == (False, None)
+
+
+def test_enrich_remember_stamps_record_only_when_degraded():
+    results = {"cap": {"result": {"value": {"ok": True, "degraded": True,
+                                            "degradedReason": "portal denied"}}}}
+    out = F._enrich_remember_with_degraded({"record": {"steps": []}}, results)
+    assert out["record"]["degraded"] is True
+    assert out["record"]["degradedReason"] == "portal denied"
+    # clean run is left untouched (no degraded key injected)
+    clean = F._enrich_remember_with_degraded({"record": {"steps": []}}, {})
+    assert "degraded" not in clean["record"]
+
+
+def test_remember_known_good_flow_routes_degraded_run_aside():
+    mem = TwinMemory()
+    flow = _flow()
+    execution = {"timeline": [], "results": {
+        "s1": {"result": {"value": {"ok": True, "degraded": True,
+                                    "degradedReason": "portal denied"}}}}}
+    F._remember_known_good_flow(flow, execution, mem, prompt="cap")
+    assert mem.known_good_flows() == []          # NOT known-good
+    assert len(mem.degraded_flows()) == 1        # visible as a degraded attempt
