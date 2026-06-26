@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import os
 import threading
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 from .scanner_net import (
@@ -11,8 +13,10 @@ from .scanner_net import (
     _phone_scanner_external_status,
     _phone_scanner_url,
     _probe_scanner_url,
+    _public_base_url,
     _scanner_page_url,
     _url_host,
+    _write_qr_png,
 )
 from .service_control import (
     schedule_restart_command as _schedule_restart_command,
@@ -29,6 +33,124 @@ _SERVICE_THREADS: dict[str, threading.Thread] = {}
 
 def phone_scanner_service_id(bind_host: str, port: int) -> str:
     return f"https://{bind_host}:{port}"
+
+
+def startup_phone_qr(
+    project: str,
+    db: "str | None",
+    *,
+    scheme: str,
+    host: str,
+    port: int,
+    qr_url: "str | None" = None,
+    content_prefix: str = "Phone scanner QR ready",
+    host_db_fn: "Callable[[], Any]",
+    preview_url_fn: "Callable[[str, str], str]",
+    chat_message_fn: "Callable[..., dict]",
+    add_chat_message_fn: "Callable[[str | None, dict], dict | None]",
+) -> dict:
+    base_url = _public_base_url(scheme, host, port)
+    scanner_url = _scanner_page_url((qr_url or os.environ.get("URIRUN_DASHBOARD_QR_URL") or f"{base_url}/scanner").strip())
+    digest = hashlib.sha256(scanner_url.encode("utf-8")).hexdigest()
+    root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
+    path = root / f"phone-scanner-{digest[:12]}.png"
+    bind_host = (host or "").strip("[]")
+    reachable_from_phone = bind_host not in {"127.0.0.1", "localhost", "::1"}
+    secure_camera_context = scanner_url.startswith("https://") or scanner_url.startswith("http://127.0.0.1") or scanner_url.startswith("http://localhost")
+    meta = {
+        "url": scanner_url,
+        "dashboardUrl": f"{base_url}/",
+        "scannerUrl": scanner_url,
+        "bindHost": host,
+        "port": port,
+        "scheme": scheme,
+        "reachableFromPhone": reachable_from_phone,
+        "secureCameraContext": secure_camera_context,
+    }
+    uri = f"dashboard://host/qr/{digest[:16]}"
+    attachment = None
+    try:
+        _write_qr_png(scanner_url, path)
+        artifact = host_db_fn().register_artifact(db, "dashboard-qr", uri, str(path), meta)
+        attachment = {
+            "kind": "qr-code",
+            "path": str(path),
+            "uri": uri,
+            "previewUrl": preview_url_fn(str(path), project),
+            "meta": meta,
+        }
+    except Exception as exc:  # noqa: BLE001 - QR is helpful, not required for serving.
+        artifact = {"kind": "dashboard-qr", "uri": uri, "path": None, "meta": {**meta, "error": str(exc)}}
+
+    content = f"{content_prefix}: {scanner_url}"
+    if not reachable_from_phone:
+        content += " (dashboard is bound to loopback; use --host 0.0.0.0 for phone access)"
+    elif not secure_camera_context:
+        content += " (phone camera usually needs HTTPS)"
+    message = chat_message_fn(
+        "system",
+        content,
+        detail={"uri": uri, "url": scanner_url, "selectedTargets": ["service:phone-scanner"], "artifact": artifact, "metadata": meta},
+        attachments=[attachment] if attachment else [],
+    )
+    add_chat_message_fn(db, message)
+    return {"ok": True, "uri": uri, "url": scanner_url, "artifact": artifact, "message": message}
+
+
+def phone_node_qr(
+    project: str,
+    db: "str | None",
+    payload: dict,
+    *,
+    host_db_fn: "Callable[[], Any]",
+    preview_url_fn: "Callable[[str, str], str]",
+    chat_message_fn: "Callable[..., dict]",
+    add_chat_message_fn: "Callable[[str | None, dict], dict | None]",
+) -> dict:
+    payload = payload if isinstance(payload, dict) else {}
+    try:
+        port = int(payload.get("port") or os.environ.get("URIRUN_ANDROID_NODE_PORT") or 8195)
+    except (TypeError, ValueError):
+        port = 8195
+    host = _lan_host()
+    setup_url = str(payload.get("url") or f"http://{host}:{port}/").strip()
+    digest = hashlib.sha256(setup_url.encode("utf-8")).hexdigest()
+    root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
+    path = root / f"smartphone-node-{digest[:12]}.png"
+    reachable_from_phone = not host.startswith("127.")
+    service_reachable = _probe_scanner_url(setup_url, timeout=1.5)
+    meta = {
+        "url": setup_url,
+        "port": port,
+        "host": host,
+        "kind": "smartphone-node",
+        "reachableFromPhone": reachable_from_phone,
+        "serviceReachable": service_reachable,
+    }
+    uri = f"dashboard://host/qr/smartphone-node/{digest[:16]}"
+    preview_url = None
+    try:
+        _write_qr_png(setup_url, path)
+        artifact = host_db_fn().register_artifact(db, "dashboard-qr", uri, str(path), meta)
+        preview_url = preview_url_fn(str(path), project)
+        attachment = {"kind": "qr-code", "path": str(path), "uri": uri, "previewUrl": preview_url, "meta": meta}
+    except Exception as exc:  # noqa: BLE001 - QR is helpful, not required
+        artifact = {"kind": "dashboard-qr", "uri": uri, "path": None, "meta": {**meta, "error": str(exc)}}
+        attachment = None
+    content = f"Smartphone node QR ready: {setup_url}"
+    if not service_reachable:
+        content += " (start the android-node service: urirun-android-node serve)"
+    message = chat_message_fn(
+        "system", content,
+        detail={"uri": uri, "url": setup_url, "selectedTargets": ["service:android-node"], "artifact": artifact, "metadata": meta},
+        attachments=[attachment] if attachment else [],
+    )
+    add_chat_message_fn(db, message)
+    return {
+        "ok": True, "uri": uri, "url": setup_url, "previewUrl": preview_url,
+        "port": port, "reachableFromPhone": reachable_from_phone,
+        "serviceReachable": service_reachable, "artifact": artifact,
+    }
 
 
 def ensure_phone_scanner_service(

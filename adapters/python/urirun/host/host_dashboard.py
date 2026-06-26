@@ -325,6 +325,8 @@ from .scanner_service import (
     _SERVICE_SERVERS,
     _SERVICE_THREADS,
     phone_scanner_service_id as _phone_scanner_service_id,
+    startup_phone_qr as _startup_phone_qr_impl,
+    phone_node_qr as _phone_node_qr_impl,
     ensure_phone_scanner_service as _ensure_phone_scanner_service_impl,
     restart_phone_scanner_service as _restart_phone_scanner_service_impl,
 )
@@ -486,25 +488,6 @@ def _add_chat_message(db: str | None, message: dict) -> dict | None:
         return _host_db().add_log(db, "chat", "message", message)
     except Exception:  # noqa: BLE001
         return None
-
-
-def chat_history(db: str | None, project: str, limit: int = 80) -> dict:
-    host_db = _host_db()
-    fetch_limit = max(limit * 4, limit)
-    logs = list(reversed(host_db.recent_logs(db, stream="chat", limit=fetch_limit)))
-    messages = []
-    for item in logs:
-        if item.get("event") != "message":
-            continue
-        detail = item.get("detail") or {}
-        msg = dict(detail)
-        msg.setdefault("created_at", item.get("created_at"))
-        msg.setdefault("id", item.get("id"))
-        msg["attachments"] = _public_chat_attachments(msg.get("attachments"), project)
-        if isinstance(msg.get("detail"), dict) and isinstance(msg["detail"].get("attachments"), list):
-            msg["detail"] = {**msg["detail"], "attachments": _public_chat_attachments(msg["detail"].get("attachments"), project)}
-        messages.append(msg)
-    return {"ok": True, "messages": messages[-limit:]}
 
 
 def chat_delete_messages(db: str | None, payload: dict) -> dict:
@@ -708,52 +691,14 @@ from .scanner_net import (  # noqa: F401,E402 - re-export shim placed where the 
 
 def startup_phone_qr(project: str, db: str | None, *, scheme: str, host: str, port: int,
                      qr_url: str | None = None, content_prefix: str = "Phone scanner QR ready") -> dict:
-    base_url = _public_base_url(scheme, host, port)
-    scanner_url = _scanner_page_url((qr_url or os.environ.get("URIRUN_DASHBOARD_QR_URL") or f"{base_url}/scanner").strip())
-    digest = hashlib.sha256(scanner_url.encode("utf-8")).hexdigest()
-    root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
-    path = root / f"phone-scanner-{digest[:12]}.png"
-    bind_host = (host or "").strip("[]")
-    reachable_from_phone = bind_host not in {"127.0.0.1", "localhost", "::1"}
-    secure_camera_context = scanner_url.startswith("https://") or scanner_url.startswith("http://127.0.0.1") or scanner_url.startswith("http://localhost")
-    meta = {
-        "url": scanner_url,
-        "dashboardUrl": f"{base_url}/",
-        "scannerUrl": scanner_url,
-        "bindHost": host,
-        "port": port,
-        "scheme": scheme,
-        "reachableFromPhone": reachable_from_phone,
-        "secureCameraContext": secure_camera_context,
-    }
-    uri = f"dashboard://host/qr/{digest[:16]}"
-    attachment = None
-    try:
-        _write_qr_png(scanner_url, path)
-        artifact = _host_db().register_artifact(db, "dashboard-qr", uri, str(path), meta)
-        attachment = {
-            "kind": "qr-code",
-            "path": str(path),
-            "uri": uri,
-            "previewUrl": _preview_url(str(path), project),
-            "meta": meta,
-        }
-    except Exception as exc:  # noqa: BLE001 - QR is helpful, not required for serving.
-        artifact = {"kind": "dashboard-qr", "uri": uri, "path": None, "meta": {**meta, "error": str(exc)}}
-
-    content = f"{content_prefix}: {scanner_url}"
-    if not reachable_from_phone:
-        content += " (dashboard is bound to loopback; use --host 0.0.0.0 for phone access)"
-    elif not secure_camera_context:
-        content += " (phone camera usually needs HTTPS)"
-    message = _chat_message(
-        "system",
-        content,
-        detail={"uri": uri, "url": scanner_url, "selectedTargets": ["service:phone-scanner"], "artifact": artifact, "metadata": meta},
-        attachments=[attachment] if attachment else [],
+    return _startup_phone_qr_impl(
+        project, db,
+        scheme=scheme, host=host, port=port, qr_url=qr_url, content_prefix=content_prefix,
+        host_db_fn=_host_db,
+        preview_url_fn=_preview_url,
+        chat_message_fn=_chat_message,
+        add_chat_message_fn=_add_chat_message,
     )
-    _add_chat_message(db, message)
-    return {"ok": True, "uri": uri, "url": scanner_url, "artifact": artifact, "message": message}
 
 
 def ensure_phone_scanner_service(
@@ -1255,45 +1200,32 @@ def uri_invoke(
     return _finalize_uri_result(result, uri)
 
 
-def _first(query: dict[str, list[str]], name: str, default: str | None = None) -> str | None:
-    return _widget_query_value(query, name, default)
-
-
-def _host_db():
-    from urirun import host_db
-
-    return host_db
-
-
-def _mesh():
-    from urirun import mesh
-
-    return mesh
-
-
-def _planfile_adapter():
-    from urirun import planfile_adapter
-
-    return planfile_adapter
-
-
-def _host_config(config: str | None, node_urls: list[str] | None = None) -> dict:
-    return _host_config_impl(_mesh(), config, node_urls)
-
-
-def _safe_tickets(project: str, sprint: str = "current", status: str | None = None, queue: str | None = None) -> tuple[list[dict], str | None]:
-    try:
-        return _planfile_adapter().list_tickets(project, sprint=sprint, status=status, queue=queue), None
-    except Exception as exc:  # noqa: BLE001 - dashboard should stay up while optional stores are missing.
-        return [], str(exc)
-
-
-def _task_counts(tickets: list[dict]) -> dict[str, int]:
-    counts: dict[str, int] = {}
-    for ticket in tickets:
-        status = str(ticket.get("status") or "unknown")
-        counts[status] = counts.get(status, 0) + 1
-    return counts
+from .dashboard_api import (  # noqa: E402,F401
+    _first,
+    _host_db,
+    _mesh,
+    _planfile_adapter,
+    _host_config,
+    _safe_tickets,
+    _task_counts,
+    _lan_qr_profile,
+    chat_history,
+    _api_summary,
+    _api_objects,
+    _api_node_types,
+    _api_tasks,
+    _api_checks,
+    _api_logs,
+    _api_artifacts,
+    _api_chat_history,
+    _api_services_live,
+    _api_scanner_live,
+    _api_nodes_or_routes,
+    _api_twin_flows,
+    _api_twin_state,
+    _API_ROUTES,
+    _dashboard_api_response,
+)
 
 
 def _service_contacts() -> list[dict]:
@@ -1426,55 +1358,13 @@ def _merge_live_webpage_nodes(nodes: list) -> None:
 
 
 def phone_node_qr(project: str, db: str | None, payload: dict) -> dict:
-    """Generate a QR code that points a smartphone at the android-node setup service (default
-    port 8195). The phone scans it, opens the setup page, downloads the APK / Termux bootstrap,
-    and enrolls as a urirun node — the same model as the Lenovo laptop. Reuses _write_qr_png and
-    the host artifact store; no new QR infrastructure. The android-node service must be running
-    (`urirun-android-node serve`)."""
-    payload = payload if isinstance(payload, dict) else {}
-    try:
-        port = int(payload.get("port") or os.environ.get("URIRUN_ANDROID_NODE_PORT") or 8195)
-    except (TypeError, ValueError):
-        port = 8195
-    host = _lan_host()
-    setup_url = str(payload.get("url") or f"http://{host}:{port}/").strip()
-    digest = hashlib.sha256(setup_url.encode("utf-8")).hexdigest()
-    root = Path(os.environ.get("URIRUN_DASHBOARD_QR_DIR", "~/.urirun/host-dashboard/qr")).expanduser()
-    path = root / f"smartphone-node-{digest[:12]}.png"
-    reachable_from_phone = not host.startswith("127.")
-    service_reachable = _probe_scanner_url(setup_url, timeout=1.5)
-    meta = {
-        "url": setup_url,
-        "port": port,
-        "host": host,
-        "kind": "smartphone-node",
-        "reachableFromPhone": reachable_from_phone,
-        "serviceReachable": service_reachable,
-    }
-    uri = f"dashboard://host/qr/smartphone-node/{digest[:16]}"
-    preview_url = None
-    try:
-        _write_qr_png(setup_url, path)
-        artifact = _host_db().register_artifact(db, "dashboard-qr", uri, str(path), meta)
-        preview_url = _preview_url(str(path), project)
-        attachment = {"kind": "qr-code", "path": str(path), "uri": uri, "previewUrl": preview_url, "meta": meta}
-    except Exception as exc:  # noqa: BLE001 - QR is helpful, not required
-        artifact = {"kind": "dashboard-qr", "uri": uri, "path": None, "meta": {**meta, "error": str(exc)}}
-        attachment = None
-    content = f"Smartphone node QR ready: {setup_url}"
-    if not service_reachable:
-        content += " (start the android-node service: urirun-android-node serve)"
-    message = _chat_message(
-        "system", content,
-        detail={"uri": uri, "url": setup_url, "selectedTargets": ["service:android-node"], "artifact": artifact, "metadata": meta},
-        attachments=[attachment] if attachment else [],
+    return _phone_node_qr_impl(
+        project, db, payload,
+        host_db_fn=_host_db,
+        preview_url_fn=_preview_url,
+        chat_message_fn=_chat_message,
+        add_chat_message_fn=_add_chat_message,
     )
-    _add_chat_message(db, message)
-    return {
-        "ok": True, "uri": uri, "url": setup_url, "previewUrl": preview_url,
-        "port": port, "reachableFromPhone": reachable_from_phone,
-        "serviceReachable": service_reachable, "artifact": artifact,
-    }
 
 
 def _node_envelope_error(envelope: dict) -> str:
@@ -1560,13 +1450,6 @@ def task_create(project: str, payload: dict) -> dict:
 
 
 
-def _lan_qr_profile() -> dict:
-    """LAN-reachable base URL used to build phone QR codes. Phones cannot reach the 127.0.0.1
-    dashboard, so QR targets point at a LAN address (env URIRUN_LAN_QR_BASE, default the android-node
-    service on :8195). secureBase (https) is for views browsers only allow over TLS, e.g. camera."""
-    base = (os.environ.get("URIRUN_LAN_QR_BASE") or "http://192.168.188.212:8195").strip().rstrip("/")
-    secure = base.replace("http://", "https://", 1) if base.startswith("http://") else base
-    return {"base": base, "secureBase": secure}
 def connector_test(project: str, db: str | None, config: str | None, payload: dict, *,
                    node_urls: list[str] | None = None, token: str | None = None,
                    identity: str | None = None) -> dict:
@@ -1600,137 +1483,6 @@ def documents_reconcile(project: str, db: str | None, payload: dict | None = Non
     except Exception:  # noqa: BLE001
         pass
     return result
-
-
-def _api_summary(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    return 200, summary(project, db, config, node_urls=node_urls)
-
-
-def _api_objects(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    data = summary(project, db, config, node_urls=node_urls)
-    return 200, {"ok": True, "objects": data.get("objects") or []}
-
-
-def _api_node_types(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    return 200, {"ok": True, "nodeTypes": _node_type_profiles_impl()}
-
-
-def _api_tasks(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    tickets, error = _safe_tickets(
-        project,
-        sprint=str(_first(query, "sprint", "current")),
-        status=_first(query, "status"),
-        queue=_first(query, "queue") or None,
-    )
-    return 200, {"ok": error is None, "tickets": tickets, "error": error}
-
-
-def _api_checks(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    host_db = _host_db()
-    return 200, {"ok": True, "checks": host_db.recent_checks(db, subject=_first(query, "subject"), limit=int(_first(query, "limit", "20") or 20))}
-
-
-def _api_logs(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    host_db = _host_db()
-    return 200, {"ok": True, "logs": host_db.recent_logs(db, stream=_first(query, "stream"), limit=int(_first(query, "limit", "20") or 20))}
-
-
-def _api_artifacts(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    host_db = _host_db()
-    artifacts = host_db.list_artifacts(db, kind=_first(query, "kind"), limit=int(_first(query, "limit", "20") or 20))
-    include_missing = str(_first(query, "includeMissing", "") or "").lower() in {"1", "true", "yes", "on"}
-    include_duplicates = str(_first(query, "includeDuplicates", "") or "").lower() in {"1", "true", "yes", "on"}
-    return 200, {
-        "ok": True,
-        "artifacts": _visible_public_artifacts(
-            artifacts,
-            project,
-            include_missing=include_missing,
-            include_duplicates=include_duplicates,
-        ),
-    }
-
-
-def _api_chat_history(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    return 200, chat_history(db, project, limit=int(_first(query, "limit", "80") or 80))
-
-
-def _api_services_live(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    return 200, service_live_views(project, db=db, limit=int(_first(query, "limit", "8") or 8))
-
-
-def _api_scanner_live(project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None) -> tuple[int, dict]:
-    return 200, _scanner_live_state_impl(project, limit=int(_first(query, "limit", "8") or 8), preview_url=_preview_url)
-
-
-def _api_nodes_or_routes(path: str, config: str | None, node_urls: list[str] | None) -> tuple[int, dict]:
-    mesh = _mesh()
-    discovered = mesh.discover_mesh(_host_config(config, node_urls))
-    key = "nodes" if path == "/api/nodes" else "routes"
-    return 200, {"ok": True, key: discovered.get(key) or []}
-
-
-def _api_twin_flows(project: str, db: str | None, config: str | None, query: dict,
-                    node_urls: list[str] | None = None) -> tuple[int, dict]:
-    """Return known-good flow records from the durable TwinMemory store, newest-first."""
-    from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
-    mem = _durable_memory()
-    flows = mem.known_good_flows()
-    limit = int((query.get("limit") or [20])[0])
-    return 200, {"ok": True, "flows": flows[:limit], "total": len(flows)}
-
-
-def _api_twin_state(project: str, db: str | None, config: str | None, query: dict,
-                    node_urls: list[str] | None = None) -> tuple[int, dict]:
-    """Single flat state endpoint for the twin panel — replaces polling SSE + /api/twin/flows.
-
-    Returns known-good environment profiles per node and recent successful flow executions.
-    Frontend polls this at 2 s with AbortController; no SSE required."""
-    from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
-    mem = _durable_memory()
-    limit = int((query.get("limit") or [20])[0])
-    flows = mem.known_good_flows()
-    nodes: dict = {}
-    store = mem.store
-    pairs = store.items() if hasattr(store, "items") else []
-    for node_name, rec in pairs:
-        if isinstance(rec, dict):
-            nodes[node_name] = {
-                "fingerprint": rec.get("fingerprint"),
-                "snapshot": rec.get("snapshot"),
-            }
-    return 200, {
-        "ok": True,
-        "nodes": nodes,
-        "flows": flows[:limit],
-        "total": len(flows),
-    }
-
-
-_API_ROUTES = {
-    "/api/summary": _api_summary,
-    "/api/objects": _api_objects,
-    "/api/node-types": _api_node_types,
-    "/api/tasks": _api_tasks,
-    "/api/checks": _api_checks,
-    "/api/logs": _api_logs,
-    "/api/artifacts": _api_artifacts,
-    "/api/chat/history": _api_chat_history,
-    "/api/services/live": _api_services_live,
-    "/api/scanner/live": _api_scanner_live,
-    "/api/twin/flows": _api_twin_flows,
-    "/api/twin/state": _api_twin_state,
-}
-
-
-def _dashboard_api_response(path: str, project: str, db: str | None, config: str | None, query: dict, node_urls: list[str] | None = None) -> tuple[int, dict]:
-    """Resolve a dashboard /api/* path to an (HTTP status, JSON payload) pair."""
-    handler = _API_ROUTES.get(path)
-    if handler is not None:
-        return handler(project, db, config, query, node_urls)
-    if path in {"/api/nodes", "/api/routes"}:
-        return _api_nodes_or_routes(path, config, node_urls)
-    return 404, {"ok": False, "error": "not found"}
 
 
 def _handle_events_sse(handler, parsed):

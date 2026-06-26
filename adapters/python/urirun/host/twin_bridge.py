@@ -70,6 +70,29 @@ def _is_infra_step(step: dict) -> bool:
     )
 
 
+def _step_info_from_results(results: dict, step_id: str) -> tuple[bool, str | None]:
+    """Read (degraded, degradedReason) from the connector result for a step.
+
+    A step is degraded when it succeeded (ok=True) but with reduced quality — e.g.
+    a capture that returned no image because the Wayland portal permission was denied.
+    The flag and reason propagate to the SSE event status so the twin panel shows
+    yellow/degraded instead of green/applied."""
+    step_r = results.get(step_id)
+    if not isinstance(step_r, dict):
+        return False, None
+    res = step_r.get("result")
+    val: dict | None = None
+    if isinstance(res, dict):
+        val = res.get("value")
+    if not isinstance(val, dict):
+        val = step_r  # type: ignore[assignment]
+    if not isinstance(val, dict):
+        return False, None
+    degraded = bool(val.get("degraded"))
+    reason = str(val.get("degradedReason") or "") if degraded else None
+    return degraded, reason or None
+
+
 def _inverse_from_results(results: dict, step_id: str, step_uri: str = "") -> str | None:
     """Read the connector-returned inverse URI from execution results for a step.
 
@@ -107,7 +130,10 @@ def _inverse_from_results(results: dict, step_id: str, step_uri: str = "") -> st
     return None
 
 
-def _publish_step_event(step: dict, node: str, connector_inverse: str | None = None) -> None:
+def _publish_step_event(
+    step: dict, node: str, connector_inverse: str | None = None,
+    degraded: bool = False, degraded_reason: str | None = None,
+) -> None:
     import time  # noqa: PLC0415
     step_uri = step.get("uri") or "?"
     step_ok = step.get("ok", True)
@@ -122,12 +148,25 @@ def _publish_step_event(step: dict, node: str, connector_inverse: str | None = N
         "fingerprint": sig, "stateSig": sig, "url": None, "monitors": [], "window": None,
     }
     narration = f"[{step.get('id', '?')}] {step_uri}"
-    if not reversible and step_ok:
-        narration += " ⚠ irreversible"
+    if not step_ok:
+        status = "blocked"
+    elif degraded:
+        status = "degraded"
+        if degraded_reason:
+            short = degraded_reason[:80] + "…" if len(degraded_reason) > 80 else degraded_reason
+            narration += f" ⚠ degraded: {short}"
+        else:
+            narration += " ⚠ degraded"
+    else:
+        status = "applied"
+        if not reversible:
+            narration += " ⚠ irreversible"
     TWIN_EVENT_HUB.publish({
         "uri": "twin://monitor/event",
         "narration": narration,
-        "status": "applied" if step_ok else "blocked",
+        "status": status,
+        "degraded": degraded,
+        "degradedReason": degraded_reason,
         "transition": {
             "before": _before,
             "forward": step_uri,
@@ -164,9 +203,12 @@ def append_twin_widget(execute: bool, flow: dict, attachments: list,
     _results = results or {}
     for step in timeline:
         if not _is_infra_step(step):
-            conn_inv = _inverse_from_results(
-                _results, step.get("id") or "", step.get("uri") or "")
-            _publish_step_event(step, node, connector_inverse=conn_inv)
+            step_id = step.get("id") or ""
+            conn_inv = _inverse_from_results(_results, step_id, step.get("uri") or "")
+            deg, deg_reason = _step_info_from_results(_results, step_id)
+            _publish_step_event(step, node, connector_inverse=conn_inv,
+                                degraded=deg, degraded_reason=deg_reason)
+    TWIN_EVENT_HUB.publish({"flowCompleted": True, "prompt": prompt})
 
 
 def twin_plan_preview(prompt: str, node: str = "") -> "dict | None":
@@ -221,3 +263,32 @@ def twin_plan_summary(att: dict) -> str:
 def is_desktop_task_prompt(prompt: str) -> bool:
     """True when a chat prompt targets a desktop/browser action that twin can ground."""
     return any(kw in prompt.lower() for kw in _DESKTOP_TASK_KEYWORDS)
+
+
+def api_twin_state(project: str, db: "str | None", config: "str | None", query: dict,
+                   node_urls: "list[str] | None" = None) -> "tuple[int, dict]":
+    from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
+    mem = _durable_memory()
+    limit = int((query.get("limit") or [20])[0])
+    flows = mem.known_good_flows()
+    nodes: dict = {}
+    store = mem.store
+    pairs = store.items() if hasattr(store, "items") else []
+    for node_name, rec in pairs:
+        if isinstance(rec, dict):
+            nodes[node_name] = {
+                "fingerprint": rec.get("fingerprint"),
+                "snapshot": rec.get("snapshot"),
+            }
+    # Ring buffer: last 50 step events for initial panel state (avoids SSE cold-start)
+    step_events = [
+        e for e in TWIN_EVENT_HUB.replay_since(0)
+        if isinstance(e, dict) and e.get("uri") == "twin://monitor/event"
+    ][-50:]
+    return 200, {
+        "ok": True,
+        "nodes": nodes,
+        "flows": flows[:limit],
+        "total": len(flows),
+        "events": step_events,
+    }
