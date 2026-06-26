@@ -26,7 +26,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urirun.node.mesh import EventHub, _sse_initial_cursor, _sse_event_matches, _sse_frame
-TWIN_EVENT_HUB = EventHub(buffer=100)
+from .twin_bridge import (
+    TWIN_EVENT_HUB,
+    flow_has_desktop_step as _flow_has_desktop_step,
+    append_twin_widget as _append_twin_widget,
+    twin_plan_preview as _twin_plan_preview,
+    twin_plan_summary as _twin_plan_summary,
+    is_desktop_task_prompt as _is_desktop_task_prompt,
+    _DESKTOP_TASK_KEYWORDS,
+)
 from urllib.parse import parse_qs, parse_qsl, quote, unquote, urlencode, urlparse, urlsplit, urlunsplit
 
 from .document_sync import (
@@ -2757,115 +2765,6 @@ def _chat_ask_general_planner_failure(
         pass
     return result
 
-
-_DESKTOP_SCHEMES = ("kvm://", "twin://", "browser://")
-
-
-def _flow_has_desktop_step(flow: dict) -> bool:
-    return any(any(sc in str(s.get("uri", "")) for sc in _DESKTOP_SCHEMES) for s in flow.get("steps", []))
-
-
-def _append_twin_widget(execute: bool, flow: dict, attachments: list,
-                        prompt: str, selected_targets: list[str], timeline: list) -> None:
-    """Append a twin-monitor widget when the flow touches a desktop node.
-
-    Shows in dry-run (source=demo, no timeline events) and live (source=live, events
-    published to TWIN_EVENT_HUB). Callers pass execute=False for dry-run — the widget
-    still loads so the user can see the monitor layout before committing to execute."""
-    if not _flow_has_desktop_step(flow):
-        return
-    import time
-    import urllib.parse
-    source = "live" if execute else "demo"
-    qs = urllib.parse.urlencode({
-        "source": source,
-        "execute": "1" if execute else "0",
-        "prompt": prompt,
-        "targets": ",".join(selected_targets),
-    })
-    attachments.append({"kind": "twin-monitor", "uri": f"/twin?{qs}", "path": "Digital Twin Widget"})
-    if not execute:
-        return
-    for step in timeline:
-        if step.get("type") == "preflight":
-            continue
-        sig = f"s{int(time.time() * 1000)}"
-        TWIN_EVENT_HUB.publish({
-            "uri": "twin://monitor/event",
-            "twin": {"node": step.get("target", "laptop"), "stateSig": sig},
-            "after": {"stateSig": f"{sig}-done"},
-            "transition": {"forward": {"uri": step.get("uri"), "args": {}}, "inverse": None, "reversible": False},
-            "narration": f"Krok [{step.get('id', '?')}]: {step.get('uri')} (sukces: {step.get('ok')})",
-        })
-
-
-_DESKTOP_TASK_KEYWORDS = frozenset({
-    "linkedin", "github", "twitter", "facebook", "instagram", "reddit", "notion",
-    "otwórz przeglądarkę", "open browser", "navigate to", "go to",
-    "opublikuj", "publish", "post on", "kliknij", "click on",
-    "wypełnij formularz", "fill form", "fill the",
-    "screenshot", "zrzut ekranu", "scrape", "scraping",
-    "wpisz w", "type into", "wyszukaj na", "search on",
-    "uruchom aplikację", "launch app", "otwórz aplikację",
-})
-
-
-def _is_desktop_task_prompt(prompt: str) -> bool:
-    """True when a chat prompt targets a desktop/browser action that twin can ground."""
-    low = prompt.lower()
-    return any(kw in low for kw in _DESKTOP_TASK_KEYWORDS)
-
-
-def _twin_plan_preview(prompt: str, node: str = "") -> dict | None:
-    """Call twin://host/plan/command/from-prompt in-process and return a twin-plan attachment.
-
-    Soft dependency: returns None gracefully when urirun-connector-twin is not installed
-    or the probe fails.  Never raises — twin preview is always additive, never blocking."""
-    try:
-        from urirun_connector_twin.core import plan_from_prompt_route  # type: ignore  # noqa: PLC0415
-        result = plan_from_prompt_route(
-            prompt=prompt,
-            node=node,
-            include_mock=True,
-            probe_browser=True,
-        )
-    except Exception:  # noqa: BLE001
-        return None
-    if not isinstance(result, dict) or not result.get("ok"):
-        return None
-    return {
-        "kind": "twin-plan",
-        "prompt": prompt,
-        "taskType": result.get("taskType"),
-        "domain": result.get("domain"),
-        "needsAuth": result.get("needsAuth"),
-        "plan": result.get("plan") or {},
-        "environment": result.get("environment") or {},
-        "mock": result.get("mock"),
-        "path": "Digital Twin Plan",
-    }
-
-
-def _twin_plan_summary(att: dict) -> str:
-    """One-line chat bubble text for a twin-plan attachment."""
-    plan = att.get("plan") or {}
-    domain = att.get("domain") or ""
-    task_type = att.get("taskType") or "task"
-    total = plan.get("totalSteps", 0)
-    feasible = plan.get("feasibleSteps", 0)
-    infeasible = plan.get("infeasibleSteps", 0)
-    sel = (plan.get("browserSelection") or {})
-    sel_mode = sel.get("mode") or ""
-    if infeasible:
-        sel_note = f", {infeasible} krok{'i' if infeasible > 1 else ''} nieosiągalne"
-    elif sel_mode == "needs-login":
-        sel_note = " — wymagane logowanie (human-gated)"
-    elif sel_mode == "no-chrome":
-        sel_note = " — brak Chrome z CDP"
-    else:
-        sel_note = ""
-    domain_note = f" [{domain}]" if domain else ""
-    return f"Digital Twin Plan{domain_note}: {task_type}, {total} kroków ({feasible} osiągalnych{sel_note})"
 
 
 def _general_path_complete(
