@@ -236,6 +236,13 @@ from .scanner_bridge import (
     capture_candidate_result as _capture_candidate_result_impl,
     capture_reject_result as _capture_reject_result_impl,
     scanner_live_state as _scanner_live_state_impl,
+    draw_crop_box as _draw_crop_box,
+    draw_overlay_label as _draw_overlay_label,
+    scanner_crop_overlay as _scanner_crop_overlay,
+    auto_crop_receipt as _auto_crop_receipt,
+    capture_ocr_and_detect as _capture_ocr_and_detect_impl,
+    refresh_best_ocr as _refresh_best_ocr_impl,
+    ensure_best_overlay as _ensure_best_overlay_impl,
 )
 from .service_control import (
     chat_service_restart_argv as _chat_service_restart_argv_impl,
@@ -5874,83 +5881,6 @@ def _existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha
 
 
 
-def _draw_crop_box(draw: Any, canvas: Any, color: tuple, box: Any, scale: float,
-                   original_width: int, original_height: int) -> None:
-    if box and len(box) == 4:
-        left, top, right, bottom = (float(v) for v in box)
-        scaled_box = (
-            int(max(0, min(original_width, left)) * scale),
-            int(max(0, min(original_height, top)) * scale),
-            int(max(0, min(original_width, right)) * scale),
-            int(max(0, min(original_height, bottom)) * scale),
-        )
-        for offset in range(4):
-            draw.rectangle(
-                (scaled_box[0] - offset, scaled_box[1] - offset,
-                 scaled_box[2] + offset, scaled_box[3] + offset),
-                outline=color,
-            )
-    else:
-        draw.rectangle((3, 3, canvas.size[0] - 4, canvas.size[1] - 4), outline=color, width=4)
-
-
-def _draw_overlay_label(draw: Any, canvas: Any, crop: dict, quality: dict | None, ok: bool) -> None:
-    from PIL import ImageFont
-    score = (quality or {}).get("score")
-    label_parts = [
-        "crop:ok" if ok else "crop:rejected",
-        str(crop.get("method") or crop.get("reason") or ""),
-        f"score={score}" if score is not None else "",
-    ]
-    label = " | ".join(part for part in label_parts if part)[:180]
-    font = ImageFont.load_default()
-    try:
-        text_box = draw.textbbox((0, 0), label, font=font)
-        text_width, text_height = text_box[2] - text_box[0], text_box[3] - text_box[1]
-    except Exception:  # noqa: BLE001
-        text_width = min(canvas.size[0] - 16, max(80, len(label) * 6))
-        text_height = 12
-    draw.rectangle((6, 6, min(canvas.size[0] - 6, text_width + 18), text_height + 18), fill=(0, 0, 0))
-    draw.text((12, 10), label, fill=(255, 255, 255), font=font)
-
-
-def _scanner_crop_overlay(original_path: str | Path, crop: dict, quality: dict | None = None) -> dict:
-    """Write a diagnostic image with the detected crop box drawn over the raw frame."""
-    try:
-        from PIL import Image, ImageDraw, ImageOps
-
-        source = Path(original_path).expanduser().resolve()
-        if not source.is_file():
-            return {"ok": False, "reason": "source image missing"}
-        with Image.open(source) as opened:
-            image = ImageOps.exif_transpose(opened).convert("RGB")
-        original_width, original_height = image.size
-        max_side = int(os.environ.get("URIRUN_SCANNER_OVERLAY_MAX_SIDE", "1100") or "1100")
-        scale = min(1.0, max(240, max_side) / max(original_width, original_height))
-        canvas = image.resize((max(1, int(original_width * scale)), max(1, int(original_height * scale)))) if scale < 1.0 else image.copy()
-        draw = ImageDraw.Draw(canvas)
-        ok = bool(crop.get("ok"))
-        partial = bool(crop.get("partialEdge"))
-        color = (48, 214, 126) if ok else (239, 68, 68) if partial else (245, 158, 11)
-        box = crop.get("box") if isinstance(crop.get("box"), (list, tuple)) else None
-        _draw_crop_box(draw, canvas, color, box, scale, original_width, original_height)
-        _draw_overlay_label(draw, canvas, crop, quality, ok)
-        target = source.with_name(f"{source.stem}-crop-overlay.jpg")
-        canvas.save(target, format="JPEG", quality=88, optimize=True)
-        return {
-            "ok": True,
-            "path": str(target),
-            "width": canvas.size[0],
-            "height": canvas.size[1],
-            "scale": round(scale, 6),
-        }
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "reason": str(exc)}
-
-
-_LAST_STAGING_PRUNE = 0.0
-
-
 def _staging_keep_paths() -> set[str]:
     """Resolved paths that pruning must never remove: files of an archived document and of any
     active (not-yet-finished) best-frame series. Best-effort; a read failure just keeps less."""
@@ -6627,15 +6557,6 @@ def ensure_phone_scanner_service(
     return {"ok": True, **meta, "qr": qr, "message": qr.get("message")}
 
 
-def _auto_crop_receipt(path: Path) -> dict:
-    try:
-        from urirun_connector_smart_crop import detect_document_crop
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "reason": f"smart-crop connector unavailable: {exc}", "originalPath": str(path)}
-    return detect_document_crop(path, output_path=path.with_name(f"{path.stem}-receipt-crop.jpg"))
-
-
-
 def _latest_scanner_page_status(db: str | None) -> dict:
     try:
         logs = _host_db().recent_logs(db, stream="page-action", limit=80)
@@ -6749,25 +6670,6 @@ def _register_scanner_result(
     )
 
 
-def _capture_ocr_and_detect(path: Path, display_path: Path, payload: dict, archive: bool) -> tuple[dict, dict]:
-    """OCR the frame and extract document metadata for a capture.
-
-    OCRs the full original frame, not the crop: PaddleOCR handles the background and the crop
-    tended to cut the header/footer (losing seller name / "Do zapłaty" total). The crop is kept
-    only as the display thumbnail. Set URIRUN_SCANNER_OCR_FULLFRAME=0 to OCR the crop (legacy).
-    Transient candidates (archive=False) use the cheap tesseract read + regex path; only a kept
-    document pays for the full backend and the optional LLM/vision metadata pass."""
-    ocr_source = path if _truthy_env("URIRUN_SCANNER_OCR_FULLFRAME", "1") else display_path
-    ocr = _local_image_ocr(str(ocr_source), backend=None if archive else "tesseract")
-    detected_document = _extract_document_metadata(
-        str(ocr.get("text") or ""),
-        captured_at=payload.get("capturedAt"),
-        image_path=str(path) if archive else None,
-        use_llm=archive,
-    )
-    return ocr, detected_document
-
-
 def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     _prune_scanner_staging()
     mode = str(payload.get("mode") or "").lower()
@@ -6780,7 +6682,7 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     path.write_bytes(raw)
     crop = _auto_crop_receipt(path)
     display_path = _capture_display_path(crop, path)
-    ocr, detected_document = _capture_ocr_and_detect(path, display_path, payload, archive)
+    ocr, detected_document = _capture_ocr_and_detect_impl(path, display_path, payload, archive, local_image_ocr=_local_image_ocr, extract_document_metadata=_extract_document_metadata, truthy_env=_truthy_env)
     quality = _document_frame_quality(crop, ocr, detected_document, display_path)
     overlay = _scanner_crop_overlay(path, crop, quality)
     overlay_path = str(overlay.get("path") or "") if overlay.get("ok") else ""
@@ -6863,27 +6765,6 @@ def scanner_capture(project: str, db: str | None, payload: dict) -> dict:
     }
 
 
-def _refresh_best_ocr(fallback_ocr: dict, original_path: Path, display_path: Path) -> dict:
-    """Re-OCR the kept frame with the accurate full backend, falling back to the cheap read."""
-    ocr_source = original_path if _truthy_env("URIRUN_SCANNER_OCR_FULLFRAME", "1") else display_path
-    refreshed = _local_image_ocr(str(ocr_source))
-    if refreshed.get("ok") and str(refreshed.get("text") or "").strip():
-        return refreshed
-    return fallback_ocr
-
-
-def _ensure_best_overlay(best: dict, crop: dict, quality: dict, original_path: Path) -> tuple[dict, str]:
-    """Reuse the candidate's crop overlay if its file still exists, else render a fresh one."""
-    overlay = best.get("overlay") if isinstance(best.get("overlay"), dict) else {}
-    overlay_path = str(best.get("overlayPath") or overlay.get("path") or "")
-    if not overlay_path or not Path(overlay_path).expanduser().is_file():
-        overlay = _scanner_crop_overlay(original_path, crop, quality)
-        overlay_path = str(overlay.get("path") or "") if overlay.get("ok") else ""
-        best["overlay"] = overlay
-        best["overlayPath"] = overlay_path
-    return overlay, overlay_path
-
-
 def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
     _prune_scanner_staging()
     series_id = str(payload.get("seriesId") or "").strip()
@@ -6914,7 +6795,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
     # Candidates were scored with the cheap OCR backend; pay for the accurate full read
     # (paddle full-frame) once, on the single frame we are about to keep. Falls back to the
     # candidate's OCR if the re-read fails.
-    ocr = _refresh_best_ocr(ocr, original_path, display_path)
+    ocr = _refresh_best_ocr_impl(ocr, original_path, display_path, local_image_ocr=_local_image_ocr, truthy_env=_truthy_env)
     digest = str(best.get("sha256") or _file_sha256(original_path))
     detected_document = best.get("detectedDocument") or {}
     try:
@@ -6929,7 +6810,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
     except Exception as exc:  # noqa: BLE001
         document = {"ok": False, "error": str(exc), "metadata": detected_document}
     uri = str(best.get("uri") or f"scanner://host/capture/{digest[:16]}")
-    overlay, overlay_path = _ensure_best_overlay(best, crop, quality, original_path)
+    overlay, overlay_path = _ensure_best_overlay_impl(best, crop, quality, original_path)
     meta = {
         "source": "phone-best",
         "seriesId": series_id,
