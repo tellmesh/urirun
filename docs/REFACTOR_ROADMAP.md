@@ -220,23 +220,30 @@ genuine drift:
 - `urirun-connector-linkedin/connector.manifest.json`: updated all routes from
   `linkedin://me/` → `linkedin://host/`.
 
-## Landed (2026-06-26): document_sync — second extraction batch
+## Landed (2026-06-26): document_sync — batches 2–4
 
-**Phase R progress (2026-06-26), document_sync.py:**
-Extracted 8 independent functions from `host_dashboard.py` → `host/document_sync.py`:
-config readers (`document_archive_root`, `document_index_path`,
+**Phase R progress (2026-06-26), document_sync.py (three incremental commits):**
+
+Batch 2 (8 functions): config readers (`document_archive_root`, `document_index_path`,
 `document_sync_default_dest_root`, `document_sync_default_node`), pure utilities
 (`archive_month`, `pdf_text`, `pdf_stream`, `document_files_exist`).
-`host_dashboard.py` imports them back as `_private` aliases — zero call-site changes.
-host_dashboard: 11820 → 11785 L; document_sync: 403 → 458 L. 681 tests green.
 
-Remaining in `_document*` cluster in host_dashboard (next batch):
-`_document_sync_deps`, `_document_sync_verification` (shim), `_document_archive_pdfs` (shim),
-`_document_filename_with_id`, `_document_schema_fields`, `_document_matches`,
-`_document_frame_quality`, `_document_sync_auto_retry_enabled`,
-`_document_sync_retry_payload_from_urifix`, `_document_sync_node_from_prompt`,
-`_document_sync_dest_from_prompt`; `reconcile_document_index`, `_archive_redundant_duplicate`,
-`_archive_scanned_document` (these have host_dashboard dependencies and need more prep).
+Batch 3 (7 items): constant `DOCUMENT_SYNC_URI`, `truthy_env`, `document_sync_auto_retry_enabled`,
+`_urifix_auto_retry`, `_validated_sync_retry_payload`, `document_sync_retry_payload_from_urifix`,
+`document_sync_dest_from_prompt`; plus removed the now-redundant `_document_sync_verification` and
+`_document_archive_pdfs` shims from host_dashboard (deps factory now uses `_impl` directly).
+
+Batch 4 (6 functions): `filename_part`, `canonical_document_filename`, `document_filename_with_id`,
+`artifact_schema_known`, `document_schema_fields`, `needs_screen_document_capture`.
+
+All re-imported into host_dashboard as `_private` aliases — zero call-site changes.
+host_dashboard: 11820 → 11697 L (−123); document_sync: 403 → 575 L (+172). 785 tests green.
+
+Remaining in host_dashboard with deep host_dashboard deps (need more prep before extraction):
+`_document_sync_deps`, `_is_document_sync_prompt`, `_document_sync_node_from_prompt`
+(depend on `_node_alias_map_from_context`, `_prompt_node_match`, `_selected_nodes_from_targets`);
+`reconcile_document_index`, `_archive_redundant_duplicate`, `_archive_scanned_document`,
+`_document_frame_quality` (depend on host DB / write / run infrastructure).
 
 ## Phase R: host_dashboard decomposition (the one remaining structural debt)
 

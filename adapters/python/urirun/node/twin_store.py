@@ -64,7 +64,54 @@ class JsonFileStore:
                 pass
 
 
+class _NamespacedStore:
+    """Wraps a JsonFileStore so all reads/writes go through a named sub-key.
+
+    ``store["_flows"]["abc"]`` becomes ``namespaced_store["abc"]`` — one JSON file, two
+    namespaces (env-profiles under their node-name keys, flow records under ``_flows``).
+    Writes propagate to the parent store which flushes atomically."""
+
+    def __init__(self, parent: JsonFileStore, namespace: str) -> None:
+        self._parent = parent
+        self._ns = namespace
+        if self._ns not in parent:
+            parent[self._ns] = {}
+
+    def _bucket(self) -> dict:
+        return self._parent._data.get(self._ns) or {}
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self._bucket().get(key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._bucket()[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._bucket()
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        bucket = dict(self._parent._data.get(self._ns) or {})
+        bucket[key] = value
+        self._parent._data[self._ns] = bucket
+        self._parent._flush()
+
+    def values(self) -> list:
+        return list(self._bucket().values())
+
+    def items(self) -> list:
+        return list(self._bucket().items())
+
+    def keys(self) -> list:
+        return list(self._bucket().keys())
+
+
 def durable_memory(path: str | None = None):
-    """A reversible.TwinMemory backed by a JSON file — known-good snapshots persist across runs."""
+    """A reversible.TwinMemory backed by a JSON file — known-good snapshots persist across runs.
+
+    Environment profiles are stored at top-level keys (node name → fingerprint+snapshot).
+    Known-good flow records are stored under the ``_flows`` sub-key so both namespaces
+    share one atomic JSON file without collision."""
     from urirun.node.reversible import TwinMemory
-    return TwinMemory(store=JsonFileStore(path))
+    file_store = JsonFileStore(path)
+    flow_store = _NamespacedStore(file_store, "_flows")
+    return TwinMemory(store=file_store, flow_store=flow_store)

@@ -293,6 +293,30 @@ PLAYBOOK: list[_Rule] = [
         confidence=0.85,
     ),
     _Rule(
+        "unreachable-node",
+        [r"node not reachable at",
+         r"is [`']?urirun node serve[`']? running",
+         r"node\(s\).*offline or unreachable",
+         r"offline or unreachable.*node",
+         r"node.*did not answer.*urirun.*health",
+         r"urirun node serve.*running there"],
+        "A named urirun node is not responding — the `urirun node serve` process is not running on that "
+        "host (or the host itself is down / not on the network). This is different from a service like "
+        "the scanner or chat being stopped: it is the *node daemon itself* that is absent. "
+        "Fix: SSH to the target host and start `urirun node serve --host 0.0.0.0 --port PORT`; "
+        "or run `urirun host nodes` to see which nodes are reachable from this host.",
+        lambda t: [
+            {"id": "check-node-list", "kind": "diagnostic", "automatic": False,
+             "uri": f"dashboard://host/node/query/list",
+             "label": "Run 'urirun host nodes' — shows URL, reachability and route count per node."},
+            {"id": "start-node-serve", "kind": "provision", "automatic": False,
+             "label": "SSH to the target host and run: urirun node serve --host 0.0.0.0 --port 8765"},
+            {"id": "check-network", "kind": "diagnostic", "automatic": False,
+             "label": "Verify network path: ping / nmap the node's host:port from this machine."},
+        ],
+        confidence=0.92,
+    ),
+    _Rule(
         "no-routes-discovered",
         [r"no uri steps",
          r"discovered 0 safe route",

@@ -7,15 +7,15 @@
 - **Primary Language**: python
 - **Languages**: python: 113, json: 13, shell: 10, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1852
-- **Total Classes**: 44
+- **Total Functions**: 1869
+- **Total Classes**: 45
 - **Modules**: 173
-- **Entry Points**: 619
+- **Entry Points**: 636
 
 ## Architecture by Module
 
 ### adapters.python.urirun.host.host_dashboard
-- **Functions**: 352
+- **Functions**: 343
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.runtime.v2
@@ -33,7 +33,7 @@
 - **File**: `urirun-v1.js`
 
 ### adapters.python.urirun.node.flow
-- **Functions**: 55
+- **Functions**: 57
 - **File**: `flow.py`
 
 ### adapters.python.urirun
@@ -66,6 +66,16 @@
 - **Functions**: 31
 - **File**: `errors.py`
 
+### adapters.python.urirun.host.document_sync
+- **Functions**: 31
+- **Classes**: 2
+- **File**: `document_sync.py`
+
+### adapters.python.urirun.node.reversible
+- **Functions**: 30
+- **Classes**: 9
+- **File**: `reversible.py`
+
 ### adapters.python.urirun.host.discovery
 - **Functions**: 29
 - **File**: `discovery.py`
@@ -78,11 +88,6 @@
 ### adapters.python.urirun.node.manage
 - **Functions**: 29
 - **File**: `manage.py`
-
-### adapters.python.urirun.node.reversible
-- **Functions**: 27
-- **Classes**: 9
-- **File**: `reversible.py`
 
 ### adapters.python.urirun.host.planfile_adapter
 - **Functions**: 26
@@ -98,10 +103,6 @@
 - **Functions**: 25
 - **Classes**: 1
 - **File**: `scanner_bridge.py`
-
-### adapters.python.urirun.runtime.v1
-- **Functions**: 25
-- **File**: `v1.py`
 
 ## Key Entry Points
 
@@ -307,6 +308,13 @@ Connector authors can declare the package once and
 - **Methods**: 16
 - **Key Methods**: adapters.python.urirun.Connector.__post_init__, adapters.python.urirun.Connector.uri, adapters.python.urirun.Connector._meta, adapters.python.urirun.Connector.command, adapters.python.urirun.Connector.shell, adapters.python.urirun.Connector.cli, adapters.python.urirun.Connector._add_route_arguments, adapters.python.urirun.Connector._build_cli_parser, adapters.python.urirun.Connector._dispatch_cli, adapters.python.urirun.Connector.handler
 
+### adapters.python.urirun.node.twin_store._NamespacedStore
+> Wraps a JsonFileStore so all reads/writes go through a named sub-key.
+
+``store["_flows"]["abc"]`` be
+- **Methods**: 9
+- **Key Methods**: adapters.python.urirun.node.twin_store._NamespacedStore.__init__, adapters.python.urirun.node.twin_store._NamespacedStore._bucket, adapters.python.urirun.node.twin_store._NamespacedStore.get, adapters.python.urirun.node.twin_store._NamespacedStore.__getitem__, adapters.python.urirun.node.twin_store._NamespacedStore.__contains__, adapters.python.urirun.node.twin_store._NamespacedStore.__setitem__, adapters.python.urirun.node.twin_store._NamespacedStore.values, adapters.python.urirun.node.twin_store._NamespacedStore.items, adapters.python.urirun.node.twin_store._NamespacedStore.keys
+
 ### adapters.python.urirun.node.mesh.EventHub
 > In-memory pub/sub for a node's live event stream (SSE). Each subscriber gets a
 bounded queue; publis
@@ -323,6 +331,12 @@ bounded queue; publis
 returns the plaintext (cal
 - **Methods**: 6
 - **Key Methods**: adapters.python.urirun.runtime.secrets.SecretStr.__init__, adapters.python.urirun.runtime.secrets.SecretStr.reveal, adapters.python.urirun.runtime.secrets.SecretStr.ref, adapters.python.urirun.runtime.secrets.SecretStr.__str__, adapters.python.urirun.runtime.secrets.SecretStr.__repr__, adapters.python.urirun.runtime.secrets.SecretStr.__bool__
+
+### adapters.python.urirun.node.reversible.TwinMemory
+> Remembers the KNOWN-GOOD environment fingerprint per node (snapshot-on-success), so a later
+run dete
+- **Methods**: 6
+- **Key Methods**: adapters.python.urirun.node.reversible.TwinMemory.remember, adapters.python.urirun.node.reversible.TwinMemory.known_good, adapters.python.urirun.node.reversible.TwinMemory.drift, adapters.python.urirun.node.reversible.TwinMemory.remember_flow, adapters.python.urirun.node.reversible.TwinMemory.recall_flow, adapters.python.urirun.node.reversible.TwinMemory.known_good_flows
 
 ### adapters.python.urirun.node.twin_store.JsonFileStore
 > A dict-like store that persists every write to a single JSON file (atomic replace), so a
@@ -368,6 +382,10 @@ child processes t
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun.connectors.backend_registry.Backend.missing, adapters.python.urirun.connectors.backend_registry.Backend.platform_ok, adapters.python.urirun.connectors.backend_registry.Backend.available
 
+### adapters.csharp.Urirun.Connector
+- **Methods**: 3
+- **Key Methods**: adapters.csharp.Urirun.Connector.Connector, adapters.csharp.Urirun.Connector.Command, adapters.csharp.Urirun.Connector.BindingsJson
+
 ### adapters.python.urirun.node.reversible.Connector
 > The ADOPTION CONTRACT. A connector enters the engine by providing these three.
 - **Methods**: 3
@@ -379,22 +397,6 @@ child processes t
 knows NO connecto
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun.node.reversible.ReversibleProcess.execute, adapters.python.urirun.node.reversible.ReversibleProcess.rollback, adapters.python.urirun.node.reversible.ReversibleProcess.rollback_flow
-
-### adapters.python.urirun.node.reversible.TwinMemory
-> Remembers the KNOWN-GOOD environment fingerprint per node (snapshot-on-success), so a later
-run dete
-- **Methods**: 3
-- **Key Methods**: adapters.python.urirun.node.reversible.TwinMemory.remember, adapters.python.urirun.node.reversible.TwinMemory.known_good, adapters.python.urirun.node.reversible.TwinMemory.drift
-
-### adapters.csharp.Urirun.Connector
-- **Methods**: 3
-- **Key Methods**: adapters.csharp.Urirun.Connector.Connector, adapters.csharp.Urirun.Connector.Command, adapters.csharp.Urirun.Connector.BindingsJson
-
-### adapters.python.urirun.node.reversible.CallableTransport
-> Adapt any ``fn(uri, payload) -> dict`` into a Transport (e.g. a NodeClient.run bound
-method, or a te
-- **Methods**: 2
-- **Key Methods**: adapters.python.urirun.node.reversible.CallableTransport.__init__, adapters.python.urirun.node.reversible.CallableTransport.call
 
 ## Data Transformation Functions
 
@@ -427,6 +429,25 @@ Key functions that process and transform data:
 
 ### adapters.python.urirun.host.host_db._validate_record
 - **Output to**: None.validate, dataset.get, Draft202012Validator
+
+### adapters.python.urirun.host.service_control.process_cmdline
+- **Output to**: open, None.decode, None.replace, fh.read
+
+### adapters.python.urirun.host.service_control.is_dashboard_process
+> True only for a urirun host dashboard serve process.
+- **Output to**: adapters.python.urirun.host.service_control._cmdline_contains
+
+### adapters.python.urirun.host.service_control.is_scanner_process
+- **Output to**: adapters.python.urirun.host.service_control._cmdline_contains
+
+### adapters.python.urirun.host.service_control.is_chat_process
+- **Output to**: adapters.python.urirun.host.service_control._cmdline_contains
+
+### adapters.python.urirun.host.service_control.is_android_node_process
+- **Output to**: adapters.python.urirun.host.service_control._cmdline_contains
+
+### adapters.python.urirun.host.service_control.free_port_from_matching_processes
+- **Output to**: getpid_fn, holders, targets, adapters.python.urirun.host.service_control._signal_pids, holders
 
 ### adapters.python.urirun.host.document_metadata._parse_document_date
 - **Output to**: re.findall, re.findall, time.strftime, None.isoformat, re.search
@@ -465,26 +486,6 @@ verify/new/smoke/from-spe
 ### adapters.python.urirun.runtime.cli._add_host_subparser
 > The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboard/data/monitor/task/
 - **Output to**: subparsers.add_parser, host_parser.add_subparsers, argparse.ArgumentParser, host_common.add_argument, host_common.add_argument
-
-### adapters.python.urirun.runtime.cli._build_parser
-- **Output to**: argparse.ArgumentParser, parser.add_argument, parser.add_subparsers, subparsers.add_parser, doctor_parser.add_argument
-
-### adapters.python.urirun.runtime.v1._run_process
-- **Output to**: config.get, config.get, subprocess.run, policy.get, progress.active
-
-### adapters.python.urirun.runtime.v1._run_process_streaming
-- **Output to**: subprocess.Popen, progress.register_proc, threading.Timer, timer.start, enumerate
-
-### adapters.python.urirun.runtime.v2.validate_input
-- **Output to**: adapters.python.urirun.runtime.v2._input_values, adapters.python.urirun.runtime.v2._schema_for, Draft202012Validator.check_schema, set, adapters.python.urirun.runtime.v2._apply_defaults
-
-### adapters.python.urirun.runtime.v2.run_local_function_subprocess
-> Run a ``local-function`` handler in a fresh process via the shared
-``python -m urirun.exec`` runner 
-- **Output to**: subprocess.run, None.get, py.get, py.get, runtime.PolicyError
-
-### adapters.python.urirun.runtime.v2._run_parse
-- **Output to**: reglib.parse_uri, reglib.translate, _RunAbort, str, str
 
 ## Behavioral Patterns
 
@@ -596,10 +597,10 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.host.host_dashboard.node_add` - 25 calls
 - `adapters.python.urirun.runtime.v2.run_local_function_subprocess` - 24 calls
 - `adapters.python.urirun.runtime.v2.validate_binding_document` - 24 calls
+- `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun.connectors.resolver.resolve` - 24 calls
 - `adapters.python.urirun.node.mesh.watch_command` - 24 calls
 - `adapters.python.urirun.host.host_dashboard.startup_phone_qr` - 24 calls
-- `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.host.document_sync.sync_documents_to_node` - 23 calls

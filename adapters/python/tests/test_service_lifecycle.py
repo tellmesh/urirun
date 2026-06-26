@@ -179,3 +179,56 @@ def test_dispatch_unknown_uri_returns_sentinel():
     sentinel = _hd._service_lifecycle_dispatch(
         "dashboard://host/service/unknown/query/status", ".", None, None, None, None, None, {})
     assert sentinel is _hd._UNROUTED
+
+
+def test_dispatch_restart_calls_restart_fn():
+    """command/restart must reach _svc_restart_fn for all three services."""
+    import urirun.host.host_dashboard as _hd
+    for svc in ("chat", "phone-scanner", "android-node"):
+        called = []
+        def fake_restart(name, *a, **kw):
+            called.append(name)
+            return {"ok": True, "service": name, "restarted": True}
+        with mock.patch.object(_hd, "_svc_restart_fn", side_effect=fake_restart):
+            r = _hd._service_lifecycle_dispatch(
+                f"dashboard://host/service/{svc}/command/restart",
+                ".", None, None, None, None, None, {})
+        assert called == [svc], f"restart fn not called for {svc}"
+        assert r["ok"] is True
+
+
+def test_dispatch_start_when_not_running_calls_start_fn():
+    """command/start when the service is NOT running must call _svc_start_fn."""
+    import urirun.host.host_dashboard as _hd
+    called = []
+    def fake_start(name, *a, **kw):
+        called.append(name)
+        return {"ok": True, "service": name, "started": True}
+    with mock.patch.object(_hd, "_service_status_impl",
+                           return_value={"ok": True, "running": False, "pids": [], "pid_count": 0, "port": 8194}), \
+         mock.patch.object(_hd, "_svc_start_fn", side_effect=fake_start):
+        r = _hd._service_lifecycle_dispatch(
+            "dashboard://host/service/chat/command/start",
+            ".", None, None, None, None, None, {})
+    assert called == ["chat"]
+    assert r["started"] is True
+
+
+def test_dispatch_all_four_verbs_for_every_service():
+    """Each service must handle status, stop, start, restart without returning _UNROUTED."""
+    import urirun.host.host_dashboard as _hd
+    verbs = ("query/status", "command/stop", "command/start", "command/restart")
+    for svc in ("chat", "phone-scanner", "android-node"):
+        for verb in verbs:
+            uri = f"dashboard://host/service/{svc}/{verb}"
+            with mock.patch.object(_hd, "_service_status_impl",
+                                   return_value={"ok": True, "running": False, "pids": [], "pid_count": 0, "port": 8194}), \
+                 mock.patch.object(_hd, "_stop_service_pids_impl",
+                                   return_value={"ok": True, "stopped": 0, "pids": []}), \
+                 mock.patch.object(_hd, "_svc_start_fn",
+                                   return_value={"ok": True, "service": svc, "started": True}), \
+                 mock.patch.object(_hd, "_svc_restart_fn",
+                                   return_value={"ok": True, "service": svc, "restarted": True}):
+                result = _hd._service_lifecycle_dispatch(uri, ".", None, None, None, None, None, {})
+            assert result is not _hd._UNROUTED, f"{uri} returned _UNROUTED — not handled"
+            assert result.get("ok") is True, f"{uri} returned ok=False: {result}"

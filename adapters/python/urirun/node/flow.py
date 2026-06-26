@@ -6,6 +6,7 @@
 # without loading the whole node HTTP stack.
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -817,6 +818,37 @@ def _kvm_targets(flow: dict) -> list[str]:
     return seen
 
 
+def _flow_key(flow: dict) -> str:
+    """Stable key for a flow: SHA-1 of its step-URI sequence (scheme+path, no payloads).
+
+    Structurally identical flows (same URI order, different payloads or nodes) share one
+    slot in the flow_store — the latest successful run overwrites. Payload-independent so
+    the known-good is matched when the same PLAN is re-used with a different input text."""
+    uris = "|".join(str(s.get("uri") or "") for s in (flow.get("steps") or []))
+    return hashlib.sha1(uris.encode("utf-8", "replace")).hexdigest()[:16]
+
+
+def _remember_known_good_flow(
+    flow: dict, execution: dict, memory: TwinMemory, prompt: str = "", ts: str = ""
+) -> None:
+    """Store a successful flow execution in memory.flow_store as a known-good record.
+
+    Called once after execute_flow returns ok=True and after _update_known_good so the
+    environment profile is already up-to-date when the flow record is written. The record
+    is keyed by the step-URI fingerprint (_flow_key) so recall is structure-based, not
+    prompt-string-based — similar prompts that produce the same URI plan share one entry."""
+    key = _flow_key(flow)
+    memory.remember_flow(key, {
+        "flowKey": key,
+        "prompt": prompt,
+        "steps": flow.get("steps") or [],
+        "timeline": execution.get("timeline") or [],
+        "nodes": sorted({str(s.get("node") or "") for s in (flow.get("steps") or []) if s.get("node")}),
+        "ts": ts or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "ok": True,
+    })
+
+
 def _capture_known_good(flow: dict, registry: dict, memory: TwinMemory) -> None:
     """Snapshot-on-success, but only on the FIRST run: read each target's live environment profile
     once and remember it as the known-good fingerprint. On later runs this is a no-op — the
@@ -951,10 +983,11 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
         result = {"ok": True, "timeline": timeline, "results": results}
         if recoveries:
             result["recovery"] = recoveries
-        # Post-success: advance the known-good to the current environment so drift is always
-        # measured against the LAST successfully executed state, not just the first-ever baseline.
+        # Post-success: advance the known-good environment fingerprint and record the flow
+        # sequence so the Twin can surface it as a known-good plan for similar future tasks.
         if memory is not None:
             _update_known_good(flow, registry, memory)
+            _remember_known_good_flow(flow, result, memory)
         return result
     finally:
         if old_map is None:

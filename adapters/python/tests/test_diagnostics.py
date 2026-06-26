@@ -489,5 +489,60 @@ class NoRoutesTests(unittest.TestCase):
         self.assertEqual(plan["diagnosis"]["rule"], "no-routes-discovered")
 
 
+class UnreachableNodeDiagnosisTests(unittest.TestCase):
+    """Rule: unreachable-node — urirun node daemon not running on the target host."""
+
+    def test_node_not_reachable_transport_message(self):
+        # exact message from transport.py line 365
+        d = diagnose(
+            _err("node not reachable at http://127.0.0.1:8766 — is `urirun node serve` running there?"),
+            step={"uri": "kvm://laptop/ui/command/click"},
+        )
+        self.assertIsNotNone(d)
+        self.assertEqual(d["rule"], "unreachable-node")
+
+    def test_node_not_reachable_beats_service_stopped(self):
+        # transport.py message also contains "connection refused" phrasing indirectly,
+        # but the more-specific rule should win
+        d = diagnose(
+            _err("node not reachable at http://192.168.1.10:8765 — is `urirun node serve` running there?"),
+            step={"uri": "browser://office/cdp/session/command/ensure"},
+        )
+        self.assertEqual(d["rule"], "unreachable-node")
+        self.assertGreaterEqual(d["confidence"], 0.9)
+
+    def test_dashboard_offline_message(self):
+        # message from host_dashboard.py early-exit path
+        d = diagnose(
+            _err("Discovered 0 safe route(s) on node(s) []; selected ['laptop']. "
+                 "Node(s) ['laptop'] are offline or unreachable."),
+            step={"uri": "flow://host/planner/command/make"},
+        )
+        self.assertIsNotNone(d)
+        self.assertEqual(d["rule"], "unreachable-node")
+
+    def test_check_node_list_and_start_node_in_remediation(self):
+        d = diagnose(
+            _err("node not reachable at http://127.0.0.1:8766 — is `urirun node serve` running there?"),
+            step={"uri": "kvm://laptop/ui/command/click"},
+        )
+        ids = [a["id"] for a in d["remediation"]]
+        self.assertIn("check-node-list", ids)
+        self.assertIn("start-node-serve", ids)
+        self.assertIn("check-network", ids)
+
+    def test_no_automatic_actions_node_start_requires_human(self):
+        d = diagnose(
+            _err("node not reachable at http://127.0.0.1:8766 — is `urirun node serve` running there?"),
+            step={"uri": "kvm://laptop/ui/command/click"},
+        )
+        # starting a node on a remote host cannot be automatic — requires SSH/human
+        self.assertEqual(d["autoApplicable"], [])
+
+    def test_unrelated_error_does_not_match(self):
+        d = diagnose(_err("element not found for role=button"), step={"uri": "kvm://laptop/ui/command/click"})
+        self.assertNotEqual((d or {}).get("rule"), "unreachable-node")
+
+
 if __name__ == "__main__":
     unittest.main()

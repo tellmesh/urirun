@@ -216,6 +216,7 @@ class TwinMemory:
     (default in-memory dict; a JSON file or a host_db Artifact backend in production — snapshots
     ARE Artifacts, no new store). Turns guessing into knowledge of a known-good state."""
     store: dict = field(default_factory=dict)         # node -> {fingerprint, snapshot}
+    flow_store: dict = field(default_factory=dict)    # flow_key -> {prompt, steps, timeline, ts}
 
     def remember(self, node: str, profile: dict) -> dict:
         rec = {"fingerprint": environment_fingerprint(profile), "snapshot": profile}
@@ -236,6 +237,25 @@ class TwinMemory:
         drifted = kg["fingerprint"] != fp
         return {"known": True, "drifted": drifted, "knownGood": kg["fingerprint"], "current": fp,
                 "reason": "environment changed since the last known-good" if drifted else "matches known-good"}
+
+    def remember_flow(self, flow_key: str, record: dict) -> None:
+        """Persist a known-good flow execution (prompt + steps + timeline) keyed by `flow_key`.
+
+        ``flow_key`` is the canonical step-URI fingerprint so structurally identical flows (same
+        URI sequence, different payloads) share one slot — the latest successful run overwrites.
+        ``record`` should carry at minimum ``{steps, timeline, prompt}``; callers may add
+        ``nodes``, ``generator``, ``ts`` for richer recall."""
+        self.flow_store[flow_key] = record
+
+    def recall_flow(self, flow_key: str) -> dict | None:
+        """Return the last known-good execution record for ``flow_key``, or None."""
+        return self.flow_store.get(flow_key)
+
+    def known_good_flows(self) -> list[dict]:
+        """All remembered flow records, newest-first (by ``ts`` key; missing ts → oldest)."""
+        def _ts(r: dict) -> str:
+            return str(r.get("ts") or "")
+        return sorted(self.flow_store.values(), key=_ts, reverse=True)
 
 
 def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool = False,
