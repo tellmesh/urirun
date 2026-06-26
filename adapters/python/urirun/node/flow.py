@@ -189,97 +189,6 @@ def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: 
     return entry
 
 
-def _evaluate_step_next(
-    step: dict, entry: dict, routes: list[dict], execute: bool,
-    attempt: int, max_retries: int, healed: bool, dispatch_uri,
-) -> str:
-    """Return 'retry' | 'heal' | 'rollback'.
-
-    When dispatch_uri is set the decision goes through
-    twin://{node}/step/command/evaluate (observable, switchable).
-    When None: identical in-process logic — no behaviour change.
-    """
-    if dispatch_uri is not None:
-        node = route_target(step.get("uri") or "") or "host"
-        r = dispatch_uri(
-            f"twin://{node}/step/command/evaluate",
-            {"step": step, "entry": entry, "routes": routes,
-             "execute": execute, "attempt": attempt,
-             "max_retries": max_retries, "healed": healed},
-        ) or {}
-        return str(r.get("next") or "rollback")
-    error = entry.get("error") or {}
-    if can_retry_step(error, step=step, routes=routes, execute=execute,
-                      attempt=attempt, max_retries=max_retries):
-        return "retry"
-    if execute and not healed:
-        diag = (entry.get("recovery") or {}).get("diagnosis") or {}
-        if diag.get("autoApplicable"):
-            return "heal"
-    return "rollback"
-
-
-def _run_step(
-    step: dict,
-    payload: dict,
-    registry: dict,
-    execute: bool,
-    routes: list[dict],
-    recover: bool,
-    max_retries: int,
-    dispatch_uri=None,
-) -> tuple[dict, list[dict], list[dict], bool]:
-    """Execute one flow step with retry logic.
-
-    Returns (final_env, timeline_entries, recovery_entries, aborted).
-    When aborted=True the caller should halt the flow and return an error envelope.
-    """
-    timeline_entries: list[dict] = []
-    recovery_entries: list[dict] = []
-    attempt = 0
-    healed = False
-    while True:
-        try:
-            env = v2_service.call(
-                step["uri"],
-                payload,
-                registry,
-                mode="execute" if execute else "dry-run",
-            )
-        except Exception as exc:  # noqa: BLE001 - normalize unexpected connector/runtime failures.
-            env = {"uri": step["uri"], "ok": False, "error": exception_error(exc, uri=step["uri"])}
-        entry = _flow_timeline_entry(step, env, routes, attempt=attempt)
-        timeline_entries.append(entry)
-        if entry["ok"]:
-            return env, timeline_entries, recovery_entries, False
-        recovery_entries.append({"stepId": step["id"], "uri": step["uri"], "error": entry["error"], "plan": entry["recovery"]})
-        if recover:
-            nxt = _evaluate_step_next(step, entry, routes, execute,
-                                      attempt, max_retries, healed, dispatch_uri)
-            if nxt == "retry":
-                timeline_entries.append({
-                    "id": f"{step['id']}:recovery:{attempt + 1}",
-                    "uri": step["uri"],
-                    "target": route_target(step["uri"]),
-                    "ok": True,
-                    "type": "recovery",
-                    "action": "retry",
-                    "reason": entry["error"].get("category"),
-                })
-                attempt += 1
-                continue
-            # SELF-HEAL: a diagnosed failure with auto-applicable remediation gets FIXED once,
-            # then the step retried — so the loop repairs the cause instead of just aborting.
-            if nxt == "heal":
-                heal_entry, healed_ok = _attempt_self_heal(step, entry, registry, routes,
-                                                            dispatch_uri=dispatch_uri)
-                if heal_entry is not None:
-                    timeline_entries.append(heal_entry)
-                    healed = True
-                    if healed_ok:
-                        attempt = 0
-                        continue
-        return env, timeline_entries, recovery_entries, True
 
 
 def _self_heal_via_uri(step: dict, entry: dict, routes: list, env_profile: dict | None,
@@ -623,6 +532,20 @@ def _thin_remember_record(flow: dict, nodes: list[str]) -> dict:
             "nodes": list(nodes), "ok": True}
 
 
+def _kvm_step_targets(steps: list[dict]) -> list[str]:
+    targets = {route_target(str(s.get("uri") or ""))
+               for s in steps if str(s.get("uri") or "").startswith("kvm://")}
+    return [t for t in sorted(targets) if t]
+
+
+def _drift_steps_for(kvm_targets: list[str], routes_list: list) -> list[dict]:
+    return [
+        {"id": f"twin:drift:{t}", "uri": f"twin://{t}{_THIN_DRIFT_SUFFIX}",
+         "payload": {"node": t, "routes": routes_list}, "depends_on": [], "optional": True}
+        for t in kvm_targets
+    ]
+
+
 def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
                      memory: "TwinMemory | None" = None,
                      routes: list[dict] | None = None) -> list[dict]:
@@ -641,18 +564,11 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
     plan = _plan_with_preflight(steps, execute=execute)
     if not execute:
         return plan
-    kvm_targets = sorted({route_target(str(s.get("uri") or ""))
-                          for s in steps if str(s.get("uri") or "").startswith("kvm://")})
-    kvm_targets = [t for t in kvm_targets if t]
+    kvm_targets = _kvm_step_targets(steps)
     if not kvm_targets:
         return plan
     routes_list = routes or []
     flow_key = _flow_key(flow)
-    drift_steps = [
-        {"id": f"twin:drift:{t}", "uri": f"twin://{t}{_THIN_DRIFT_SUFFIX}",
-         "payload": {"node": t, "routes": routes_list}, "depends_on": [], "optional": True}
-        for t in kvm_targets
-    ]
     remember_step = {
         "id": "memory:remember",
         "uri": _THIN_REMEMBER_URI,
@@ -661,7 +577,31 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
                     "record": _thin_remember_record(flow, kvm_targets)},
         "depends_on": [], "optional": True,
     }
-    return drift_steps + plan + [remember_step]
+    return _drift_steps_for(kvm_targets, routes_list) + plan + [remember_step]
+
+
+def _default_dispatch_uri(execute: bool, registry: dict):
+    _mode = "execute" if execute else "dry-run"
+    return lambda u, p=None: v2_service.call(u, p or {}, registry or {}, mode=_mode)  # noqa: E731
+
+
+def _make_flow_envelope(flow: dict, envelope: "FlowEnvelope | None") -> "FlowEnvelope":
+    if envelope is not None:
+        return envelope
+    return FlowEnvelope(
+        flow_id=str(flow.get("task", {}).get("id") or ""),
+        goal=flow.get("task") or {},
+    )
+
+
+def _resolve_dispatch(dispatch_uri, memory, flow: dict, registry: dict):
+    if memory is None:
+        return dispatch_uri
+    return _make_memory_dispatch(dispatch_uri, memory, flow, registry)
+
+
+def _mesh_routes(mesh: dict) -> list:
+    return (mesh or {}).get("routes") or []
 
 
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
@@ -674,21 +614,12 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
     # get one backed by v2_service.call, so the same observable envelope-aware
     # path is always used — no second engine, no silent fallback.
     if dispatch_uri is None:
-        _mode = "execute" if execute else "dry-run"
-        dispatch_uri = lambda u, p=None: v2_service.call(  # noqa: E731
-            u, p or {}, registry or {}, mode=_mode)
-    if envelope is None:
-        envelope = FlowEnvelope(
-            flow_id=str(flow.get("task", {}).get("id") or ""),
-            goal=flow.get("task") or {},
-        )
+        dispatch_uri = _default_dispatch_uri(execute, registry)
+    envelope = _make_flow_envelope(flow, envelope)
     old_map = _set_service_map(mesh)
     try:
-        _dispatch = (
-            _make_memory_dispatch(dispatch_uri, memory, flow, registry)
-            if memory is not None else dispatch_uri
-        )
-        routes = (mesh or {}).get("routes") or []
+        _dispatch = _resolve_dispatch(dispatch_uri, memory, flow, registry)
+        routes = _mesh_routes(mesh)
         steps = _build_thin_plan(flow.get("steps") or [], flow,
                                  execute=execute, memory=memory, routes=routes)
         return _thin_driver(steps, envelope, _dispatch,
@@ -698,6 +629,22 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
                             max_wall_clock=max_wall_clock)
     finally:
         _restore_service_map(old_map)
+
+
+def _should_compensate(ok: bool, execute: bool, rollback_on_failure: bool, document: dict) -> bool:
+    return not ok and execute and (rollback_on_failure or bool(document.get("rollbackOnFailure")))
+
+
+def _apply_compensation(result: dict, execution: dict, mesh: dict, scan_uri, dispatch_uri) -> None:
+    if dispatch_uri is not None:
+        rollback_result = dispatch_uri(
+            "twin://host/flow/command/rollback",
+            {"execution": execution, "mesh": mesh, "scan_uri": scan_uri},
+        )
+        result["compensation"] = {k: v for k, v in rollback_result.items() if k != "ok"}
+        result["compensation"]["ok"] = rollback_result.get("ok", False)
+    else:
+        result["compensation"] = rollback_flow(execution, mesh, scan_uri=scan_uri)
 
 
 def _apply_reversibility(
@@ -717,18 +664,9 @@ def _apply_reversibility(
     }
     # SAGA compensation: flow FAILED yet left mutations — unwind them LIFO so a failed run
     # leaves no partial mess (opt-in: only when explicitly requested).
-    if not ok and execute and (rollback_on_failure or document.get("rollbackOnFailure")):
+    if _should_compensate(ok, execute, rollback_on_failure, document):
         scan_uri = (document.get("verification") or {}).get("scan_uri")
-        if dispatch_uri is not None:
-            node = "host"
-            rollback_result = dispatch_uri(
-                f"twin://{node}/flow/command/rollback",
-                {"execution": execution, "mesh": mesh, "scan_uri": scan_uri},
-            )
-            result["compensation"] = {k: v for k, v in rollback_result.items() if k != "ok"}
-            result["compensation"]["ok"] = rollback_result.get("ok", False)
-        else:
-            result["compensation"] = rollback_flow(execution, mesh, scan_uri=scan_uri)
+        _apply_compensation(result, execution, mesh, scan_uri, dispatch_uri)
     return result
 
 
@@ -941,6 +879,17 @@ def _uri_env_drift(payload: dict) -> dict:
     return result
 
 
+def _remember_node_profile(memory, node: str, registry: dict) -> None:
+    try:
+        prof_r = v2_service.call(f"kvm://{node}/environment/query/profile",
+                                 {}, registry, mode="execute")
+        val = (prof_r.get("result") or {}).get("value")
+        if isinstance(val, dict) and val:
+            memory.remember(node, val)
+    except Exception:  # noqa: BLE001 - best-effort; a missing route is not fatal
+        pass
+
+
 def _uri_memory_remember(payload: dict) -> dict:
     """Handler for twin://host/memory/command/remember.
 
@@ -961,14 +910,7 @@ def _uri_memory_remember(payload: dict) -> dict:
     flow_key = str(payload.get("flow_key") or payload.get("flowKey") or "")
     memory = durable_memory()
     for node in nodes:
-        try:
-            prof_r = v2_service.call(f"kvm://{node}/environment/query/profile",
-                                     {}, registry, mode="execute")
-            val = (prof_r.get("result") or {}).get("value")
-            if isinstance(val, dict) and val:
-                memory.remember(node, val)
-        except Exception:  # noqa: BLE001 - best-effort; a missing route is not fatal
-            pass
+        _remember_node_profile(memory, node, registry)
     record = dict(payload.get("record") or {})
     record.setdefault("ts", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     remembered = False
