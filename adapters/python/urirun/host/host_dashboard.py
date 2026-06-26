@@ -5001,10 +5001,6 @@ def _service_view_from_query(project: str, query: dict[str, list[str]]) -> dict:
     return _select_service_view_impl(data, target=target, view_id=view_id, utc_now=_utc_now)
 
 
-def _service_widget_summary(view: dict) -> dict[str, str]:
-    return _service_widget_summary_impl(view)
-
-
 def _service_widget_html(project: str, query: dict[str, list[str]]) -> str:
     view = _service_view_from_query(project, query)
     target = str(view.get("target") or view.get("serviceId") or "service:phone-scanner")
@@ -5090,7 +5086,7 @@ def _service_widget_html(project: str, query: dict[str, list[str]]) -> str:
 
 def _service_widget_svg(project: str, query: dict[str, list[str]]) -> str:
     view = _service_view_from_query(project, query)
-    summary = _service_widget_summary(view)
+    summary = _service_widget_summary_impl(view)
     width = max(320, min(1200, int(_first(query, "width", "720") or 720)))
     height = max(120, min(600, int(_first(query, "height", "180") or 180)))
     status = summary["status"]
@@ -5430,10 +5426,6 @@ def _local_image_ocr(path: str, backend: str | None = None) -> dict:
 
 
 
-def _iter_node_alias_values(value: Any) -> list[str]:
-    return _iter_node_alias_values_impl(value)
-
-
 def _add_node_aliases(out: dict[str, str], name: str, aliases: Any = None) -> None:
     _add_node_aliases_impl(out, name, aliases)
 
@@ -5511,14 +5503,6 @@ def _run_node_uri(
     }
 
 
-def _route_inputs_example(route: dict) -> dict:
-    return _route_inputs_example_impl(route)
-
-
-def _classify_route_run(envelope: Any, value: Any) -> tuple[str, str]:
-    return _classify_route_run_impl(envelope, value)
-
-
 def node_test_routes(project: str, db: str | None, config: str | None, payload: dict, *,
                      node_urls: list[str] | None = None, token: str | None = None,
                      identity: str | None = None) -> dict:
@@ -5530,26 +5514,6 @@ def node_test_routes(project: str, db: str | None, config: str | None, payload: 
         token=token,
         identity=identity,
     )
-
-
-def _route_key(uri: str) -> tuple[str, str]:
-    return _route_key_impl(uri)
-
-
-def _node_has_route(routes: list[dict], uri: str) -> bool:
-    return _node_has_route_impl(routes, uri)
-
-
-def _fs_file_transfer_binding(uri: str) -> dict:
-    return _fs_file_transfer_binding_impl(uri)
-
-
-def _fs_file_transfer_fallback_bindings(required_uris: list[str]) -> dict:
-    return _fs_file_transfer_fallback_bindings_impl(required_uris)
-
-
-def _deploy_fs_file_transfer_fallback(client: Any, required_uris: list[str], *, timeout: float) -> dict:
-    return _deploy_fs_file_transfer_fallback_impl(client, required_uris, timeout=timeout)
 
 
 def _ensure_node_uri_routes(
@@ -6775,26 +6739,6 @@ def startup_phone_qr(project: str, db: str | None, *, scheme: str, host: str, po
 
 
 
-def _nl_text(text: str) -> str:
-    return _nl_text_impl(text)
-
-
-def _is_phone_scanner_prompt(prompt: str) -> bool:
-    return _is_phone_scanner_prompt_impl(prompt)
-
-
-def _is_autonomous_scanner_prompt(prompt: str) -> bool:
-    return _is_autonomous_scanner_prompt_impl(prompt)
-
-
-def _is_camera_start_prompt(prompt: str) -> bool:
-    return _is_camera_start_prompt_impl(prompt)
-
-
-def _torch_enabled_from_prompt(prompt: str) -> bool | None:
-    return _torch_enabled_from_prompt_impl(prompt)
-
-
 def ensure_phone_scanner_service(
     project: str,
     db: str | None,
@@ -7523,10 +7467,6 @@ def _service_restart_argv(payload: dict, *, service: str, env_prefix: str, defau
     )
 
 
-def _schedule_restart_command(argv: list[str], payload: dict, meta: dict) -> dict:
-    return _schedule_restart_command_impl(argv, payload, meta)
-
-
 def _chat_service_restart_argv(
     project: str,
     db: str | None,
@@ -7583,7 +7523,7 @@ def restart_phone_scanner_service(
     )
     meta.setdefault("exampleUri", "dashboard://host/service/phone-scanner/command/restart")
     if argv:
-        return _schedule_restart_command(argv, payload, meta)
+        return _schedule_restart_command_impl(argv, payload, meta)
 
     bind_host = str(payload.get("host") or os.environ.get("URIRUN_PHONE_SCANNER_HOST", "0.0.0.0"))
     scanner_port = int(payload.get("port") or os.environ.get("URIRUN_PHONE_SCANNER_PORT", "8196"))
@@ -8008,10 +7948,6 @@ def _service_contacts() -> list[dict]:
     )
 
 
-def _host_registry_routes() -> list[dict]:
-    return _host_registry_routes_impl(_uri_action_catalog())
-
-
 def summary(project: str, db: str | None, config: str | None, node_urls: list[str] | None = None) -> dict:
     tickets, task_error = _safe_tickets(project, sprint="all")
     host_db = _host_db()
@@ -8030,7 +7966,7 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     _merge_live_webpage_nodes(nodes)
     routes = discovered.get("routes") or []
     services = _service_contacts()
-    host_routes = _host_registry_routes()
+    host_routes = _host_registry_routes_impl(_uri_action_catalog())
     host = _host_object_impl(project, host_routes)
     objects = _uri_objects_impl(
         project=project,
@@ -8223,7 +8159,7 @@ def restart_android_node_service(payload: dict | None = None) -> dict:
     )
     meta.setdefault("exampleUri", "dashboard://host/service/android-node/command/restart")
     if argv:
-        return _schedule_restart_command(argv, payload, meta)
+        return _schedule_restart_command_impl(argv, payload, meta)
 
     port = int(payload.get("port") or os.environ.get("URIRUN_ANDROID_NODE_PORT") or 8195)
     replaced = _free_port_from_old_android_node(port, force=force_port_kill)
@@ -8716,8 +8652,8 @@ def _chat_ask_phone_scanner(
     camera_click_uri = "scanner://page/ui/button/start-camera/command/click"
     camera_autonomous_uri = "scanner://page/camera/command/autonomous"
     torch_click_uri = "scanner://page/ui/button/torch/command/click"
-    torch_enabled = _torch_enabled_from_prompt(prompt)
-    autonomous_scan = _is_autonomous_scanner_prompt(prompt)
+    torch_enabled = _torch_enabled_from_prompt_impl(prompt)
+    autonomous_scan = _is_autonomous_scanner_prompt_impl(prompt)
     camera_action_uri = camera_autonomous_uri if autonomous_scan else camera_click_uri
     camera_payload = {
         "target": "scanner",
@@ -8727,7 +8663,7 @@ def _chat_ask_phone_scanner(
         "minScore": float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45")),
         "interval": float(os.environ.get("URIRUN_PHONE_SCANNER_INTERVAL", "3")),
     }
-    if autonomous_scan or _is_camera_start_prompt(prompt) or torch_enabled is not None:
+    if autonomous_scan or _is_camera_start_prompt_impl(prompt) or torch_enabled is not None:
         queued_camera = page_action_enqueue(
             db, target="scanner", uri=camera_action_uri, payload=camera_payload,
             mode="execute", source="chat",
@@ -9520,7 +9456,7 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         selected_nodes=selected_nodes, selected_targets=selected_targets,
         execute=execute, no_llm=no_llm, node_urls=node_urls, token=token, identity=identity,
     )
-    if _is_phone_scanner_prompt(prompt):
+    if _is_phone_scanner_prompt_impl(prompt):
         return _chat_phone_scanner_response(**_dispatch)
     if _is_document_sync_prompt(prompt, selected_nodes, selected_targets, config, node_urls):
         return _chat_document_sync_response(**_dispatch)
@@ -10349,30 +10285,10 @@ def create_handler(
     return Handler
 
 
-def _port_holder_pids(port: int) -> list[int]:
-    return _port_holder_pids_impl(port)
-
-
-def _process_cmdline(pid: int) -> str:
-    return _process_cmdline_impl(pid)
-
-
 def _is_dashboard_process(pid: int) -> bool:
     """True only if `pid` is a urirun host dashboard serve process (cmdline check). The guard
     that keeps auto-replace from ever killing an unrelated service that owns the port."""
     return _is_dashboard_process_impl(pid, process_cmdline_fn=_process_cmdline)
-
-
-def _is_scanner_process(pid: int) -> bool:
-    return _is_scanner_process_impl(pid, process_cmdline_fn=_process_cmdline)
-
-
-def _is_chat_process(pid: int) -> bool:
-    return _is_chat_process_impl(pid, process_cmdline_fn=_process_cmdline)
-
-
-def _is_android_node_process(pid: int) -> bool:
-    return _is_android_node_process_impl(pid, process_cmdline_fn=_process_cmdline)
 
 
 def _free_port_from_matching_processes(
@@ -10389,8 +10305,8 @@ def _free_port_from_matching_processes(
         emit=emit,
         is_target=is_target,
         event_prefix=event_prefix,
-        port_holder_pids_fn=_port_holder_pids,
-        process_cmdline_fn=_process_cmdline,
+        port_holder_pids_fn=_port_holder_pids_impl,
+        process_cmdline_fn=_process_cmdline_impl,
         kill_fn=os.kill,
         getpid_fn=os.getpid,
         sleep_fn=time.sleep,
@@ -10409,7 +10325,7 @@ def _free_port_from_old_scanner(port: int, *, force: bool = False, emit: bool = 
         port,
         force=force,
         emit=emit,
-        is_target=_is_scanner_process,
+        is_target=_is_scanner_process_impl,
         event_prefix="urirun.service_scanner",
     )
 
@@ -10420,7 +10336,7 @@ def _free_port_from_old_chat(port: int, *, force: bool = False, emit: bool = Fal
         port,
         force=force,
         emit=emit,
-        is_target=_is_chat_process,
+        is_target=_is_chat_process_impl,
         event_prefix="urirun.service_chat",
     )
 
@@ -10431,7 +10347,7 @@ def _free_port_from_old_android_node(port: int, *, force: bool = False, emit: bo
         port,
         force=force,
         emit=emit,
-        is_target=_is_android_node_process,
+        is_target=_is_android_node_process_impl,
         event_prefix="urirun.service_android_node",
     )
 
@@ -10443,7 +10359,7 @@ def _free_port_from_old_dashboard(port: int) -> None:
     _free_port_from_old_dashboard_impl(
         port,
         is_dashboard_process_fn=_is_dashboard_process,
-        port_holder_pids_fn=_port_holder_pids,
+        port_holder_pids_fn=_port_holder_pids_impl,
         kill_fn=os.kill,
         getpid_fn=os.getpid,
         sleep_fn=time.sleep,
