@@ -296,12 +296,18 @@ class TwinMemory:
 
         Linear scan for now (N is small; a proper index is added in Step 5).
         Only considers Episodes whose outcome.status is "ok" — blocked/failed Episodes
-        do not feed the recall path (they feed the recovery path instead)."""
+        do not feed the recall path (they feed the recovery path instead).
+
+        The intent is matched on a stamped ``intent_sig`` when present, otherwise DERIVED from
+        the stored ``goal`` via ``intent_signature`` — make_episode/Episode.to_dict() do not emit
+        ``intent_sig``, so without this fallback a stored Episode could never be recalled."""
+        from urirun.node.episode import intent_signature  # noqa: PLC0415 — avoid import cycle at load
         for ep in self.known_good_episodes():
             outcome = ep.get("outcome") or {}
             reality = ep.get("reality") or {}
+            ep_intent = ep.get("intent_sig") or intent_signature(ep.get("goal") or "")
             if (outcome.get("status") == "ok"
-                    and ep.get("intent_sig") == intent_sig
+                    and ep_intent == intent_sig
                     and reality.get("fingerprint") == env_fingerprint):
                 return ep
         return None

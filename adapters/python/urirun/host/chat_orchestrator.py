@@ -29,7 +29,7 @@ from .scanner_bridge import (
     is_camera_start_prompt,
     is_phone_scanner_prompt,
 )
-from .twin_bridge import append_twin_widget, twin_plan_preview, twin_plan_summary, is_desktop_task_prompt
+from .twin_bridge import append_twin_widget, capture_episode, twin_plan_preview, twin_plan_summary, is_desktop_task_prompt
 from .discovery import prompt_node_match
 
 
@@ -536,8 +536,18 @@ def _general_path_complete(
     content = f"{status}: {len(timeline)} URI step(s)"
     if result.get("recovery"):
         content += f", {len(result.get('recovery') or [])} recovery action(s)"
+    _ep_ids = capture_episode(
+        execute=execute, flow=flow, prompt=prompt, selected_targets=selected_targets,
+        timeline=timeline, results=result.get("results") or {}, status=status,
+        next_intent=result.get("nextIntent"), recovery=result.get("recovery") or [],
+    ) or {}
     append_twin_widget(execute, flow, attachments, prompt, selected_targets, timeline,
-                        results=result.get("results") or {})
+                        results=result.get("results") or {},
+                        episode_id=_ep_ids.get("episode_id", ""),
+                        experience_id=_ep_ids.get("experience_id", ""),
+                        intent_sig=_ep_ids.get("intent_sig", ""),
+                        outcome_status=_ep_ids.get("outcome_status", status),
+                        next_intent=_ep_ids.get("next_intent", ""))
     if attachments:
         content += f", {len(attachments)} attachment(s)"
     deps.add_chat_message_fn(db, chat_message(

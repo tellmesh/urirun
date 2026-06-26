@@ -198,6 +198,71 @@ def _publish_step_event(
     })
 
 
+def _episode_artifacts(results: dict) -> list[dict]:
+    """Pull artifact atoms ({uri, sha256, kind, path}) out of execution results, if any.
+
+    Reuses what connectors already return — sha256 / path / kind on a step result — so the
+    Episode references artifacts by content-address without re-hashing anything."""
+    arts: list[dict] = []
+    for r in (results or {}).values():
+        cand = r.get("value") if isinstance(r, dict) and isinstance(r.get("value"), dict) else (r if isinstance(r, dict) else {})
+        sha = cand.get("sha256") or cand.get("file_sha256") or ""
+        path = cand.get("path") or cand.get("artifactPath") or ""
+        if sha or (path and cand.get("kind")):
+            arts.append({"uri": cand.get("uri") or "", "sha256": sha,
+                         "kind": cand.get("kind") or "", "path": path})
+    return arts
+
+
+def _coerce_next_intent(ni) -> str:
+    """An Episode's next_intent is a string; a nextIntent dict collapses to its uri/id."""
+    if isinstance(ni, dict):
+        return str(ni.get("uri") or ni.get("id") or "")
+    return str(ni or "")
+
+
+def capture_episode(*, execute: bool, flow: dict, prompt: str, selected_targets: list,
+                    timeline: list, results: dict, status: str,
+                    next_intent=None, recovery: "list | None" = None,
+                    experience_id: str = "") -> "dict | None":
+    """Assemble + persist an Episode for a completed run; return the ids to stamp on its
+    StepEvents (episode_id, experience_id, intent_sig, outcome_status, next_intent), or None.
+
+    This is the core CAPTURE seam (Krok 3): it observes a finished run and HOLDS it as a
+    content-addressed Episode (reality + plan + execution + artifacts + outcome) via
+    make_episode + remember_episode, so a later run with the same intent x env can recall it
+    (recall_episode keys on the top-level intent_sig + reality.fingerprint set here). Demo /
+    dry-run (execute=False) is not episodic memory. Atoms are reused, not re-derived: env
+    fingerprint + snapshot from the node's known-good baseline, plan key from _flow_key,
+    artifacts from the execution results."""
+    if not execute or not flow:
+        return None
+    import time  # noqa: PLC0415
+    from urirun.node.episode import intent_signature, make_episode  # noqa: PLC0415
+    from urirun.node.flow import _flow_key  # noqa: PLC0415
+    from urirun.node.twin_store import durable_memory  # noqa: PLC0415
+    node = (selected_targets[0] if selected_targets else None) or "host"
+    mem = durable_memory()
+    kg = mem.known_good(node) or {}
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    ep = make_episode(
+        experience_id=experience_id, goal=prompt, ts=ts,
+        env_fingerprint=kg.get("fingerprint") or "", env_snapshot=kg.get("snapshot") or {},
+        flow=flow, flow_key=_flow_key(flow),
+        execution={"timeline": timeline, "results": results},
+        artifacts=_episode_artifacts(results),
+        outcome_status=status, next_intent=_coerce_next_intent(next_intent),
+        recovery=recovery or [],
+    )
+    intent_sig = intent_signature(prompt)
+    ep_dict = ep.to_dict()
+    ep_dict["intent_sig"] = intent_sig          # recall_episode reads this top-level key
+    mem.remember_episode(ep_dict)
+    return {"episode_id": ep.episode_id, "experience_id": experience_id,
+            "intent_sig": intent_sig, "outcome_status": status,
+            "next_intent": ep.outcome.next_intent}
+
+
 def append_twin_widget(execute: bool, flow: dict, attachments: list,
                        prompt: str, selected_targets: "list[str]", timeline: list,
                        results: "dict | None" = None,
