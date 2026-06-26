@@ -734,6 +734,119 @@ def _fetch_planner_environments_for_nodes(mesh: Any, selected_nodes: list[str], 
     return mesh.fetch_planner_environments(ground, registry, discovered, memory=memory) if (execute and ground) else []
 
 
+def _find_human_node(discovered: dict) -> tuple[str, str] | tuple[None, None]:
+    """Return (node_name, node_url) for the first reachable node that serves human://*/task/create."""
+    for route in (discovered.get("routes") or []):
+        uri = str(route.get("uri") or "")
+        if uri.startswith("human://") and "task/create" in uri:
+            node = route.get("node") or ""
+            url = route.get("nodeUrl") or ""
+            if url:
+                return node, url
+    return None, None
+
+
+def _escalate_offline_to_human(
+    offline_nodes: list[str],
+    prompt: str,
+    discovered: dict,
+    execute: bool,
+) -> dict | None:
+    """Create a human:// task on any reachable node that can serve it.
+
+    Returns a pending-escalation envelope or None if no human node is found.
+    """
+    import json as _json
+    import urllib.request as _ur
+
+    human_node, human_url = _find_human_node(discovered)
+    if not human_node or not human_url:
+        return None
+
+    node_name = offline_nodes[0]
+    title = f"Uruchom node urirun na {node_name}"
+    instruction = (
+        f"Node '{node_name}' jest offline.\n"
+        f"Zadanie: \"{prompt}\"\n\n"
+        f"Uruchom node:\n"
+        f"  urirun node serve --name {node_name}\n"
+        f"Naciśnij Done po uruchomieniu."
+    )
+
+    if not execute:
+        return {
+            "ok": False,
+            "humanEscalation": True,
+            "dryRun": True,
+            "offlineNodes": offline_nodes,
+            "message": (
+                f"Node(s) {offline_nodes!r} są offline. "
+                f"W trybie execute zostałoby stworzone zadanie dla człowieka na '{human_node}'."
+            ),
+        }
+
+    run_payload = {
+        "uri": f"human://{human_node}/task/create",
+        "payload": {
+            "title": title,
+            "instruction": instruction,
+            "node": human_node,
+            "kind": "action",
+            "scope": "per-instance",
+            "env": human_node,
+        },
+        "mode": "execute",
+    }
+    try:
+        body = _json.dumps(run_payload).encode()
+        req = _ur.Request(
+            f"{human_url}/run",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        with _ur.urlopen(req, timeout=5) as r:
+            resp = _json.loads(r.read())
+    except Exception:
+        return None
+
+    if not resp.get("ok"):
+        return None
+
+    val = (resp.get("result") or {}).get("value") or {}
+    task = val.get("task") or {}
+    surface = val.get("surface") or {}
+    return {
+        "ok": False,
+        "humanEscalation": True,
+        "offlineNode": node_name,
+        "offlineNodes": offline_nodes,
+        "humanTask": {
+            "id": task.get("id"),
+            "title": title,
+            "node": human_node,
+            "surfaceUrl": surface.get("queueUrl"),
+        },
+        "next": val.get("next"),
+        "error": {
+            "type": "NodeOffline",
+            "message": (
+                f"Node '{node_name}' jest offline. "
+                f"Zadanie dla człowieka zostało stworzone — otwórz {surface.get('url')} aby wykonać."
+            ),
+            "offlineNodes": offline_nodes,
+            "humanTaskId": task.get("id"),
+        },
+        "selectedTargets": [f"node:{node_name}"],
+        "timeline": [{
+            "id": "human:offline-escalation",
+            "uri": f"human://{human_node}/task/create",
+            "ok": True,
+            "target": human_node,
+            "reversible": False,
+        }],
+    }
+
+
 def _chat_ask_general_check_offline(
     selected_nodes: list[str],
     discovered: dict,
@@ -743,13 +856,16 @@ def _chat_ask_general_check_offline(
     selected_targets: list[str],
     deps: ChatDeps,
 ) -> dict | None:
-    """Return a planner-failure dict when ALL targeted nodes are offline; None when ≥1 is reachable."""
+    """Return a planner-failure (or human-escalation) dict when ALL targeted nodes are offline."""
     if not selected_nodes:
         return None
     reachable_names = {n.get("name") for n in (discovered.get("nodes") or []) if n.get("reachable")}
     offline = [n for n in selected_nodes if n not in reachable_names]
     if not offline or reachable_names.intersection(selected_nodes):
         return None
+    human_result = _escalate_offline_to_human(offline, prompt, discovered, execute)
+    if human_result:
+        return human_result
     exc = ValueError(
         f"NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
         f"selected {selected_nodes!r}. "
@@ -962,6 +1078,13 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
     selected_targets = list(requested_targets)
     if not selected_targets:
         selected_targets = ["host", *[f"node:{name}" for name in selected_nodes]]
+    # NL node inference — when the user did not explicitly pick a target and the
+    # prompt names a known mesh node (e.g. "screenshot on lenovo"), route there.
+    if not requested_targets and not requested_nodes:
+        alias_map = deps.node_alias_map_fn(config, node_urls)
+        matched_node = prompt_node_match(prompt, alias_map)
+        if matched_node and matched_node != "host":
+            selected_targets = [f"node:{matched_node}"]
     selected_nodes = selected_nodes_from_targets(selected_nodes, selected_targets)
     execute = bool(payload.get("execute"))
     no_llm = bool(payload.get("no_llm") or payload.get("noLlm"))
