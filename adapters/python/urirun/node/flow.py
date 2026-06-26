@@ -72,8 +72,10 @@ class FlowEnvelope:
     def record(self, uri: str, phase: str, **kwargs) -> None:
         self.events.append({"uri": uri, "phase": phase, "pos": self.position, **kwargs})
 
-    def push_inverse(self, uri: str, inverse_uri: str, before: str = "", after: str = "") -> None:
-        self.ledger.append({"uri": uri, "inverse": inverse_uri, "before": before, "after": after})
+    def push_inverse(self, uri: str, inverse_uri: str, before: str = "", after: str = "",
+                     inverse_args: dict | None = None) -> None:
+        self.ledger.append({"uri": uri, "inverse": inverse_uri,
+                            "args": inverse_args or {}, "before": before, "after": after})
 
 
 def _next_kind(result: dict) -> str:
@@ -81,7 +83,37 @@ def _next_kind(result: dict) -> str:
     return (result.get("next") or {}).get("kind") or ("continue" if result.get("ok", True) else "rollback")
 
 
-_THIN_ROLLBACK_URI = "twin://host/flow/command/rollback"
+def _extract_inverse(r: dict) -> dict | None:
+    """Extract the inverse dict from a step result.
+    Handles both direct `r["inverse"]` and envelope-wrapped `r["result"]["value"]["inverse"]`."""
+    if isinstance(r.get("inverse"), dict):
+        return r["inverse"]
+    res = r.get("result")
+    if isinstance(res, dict):
+        val = res.get("value")
+        if isinstance(val, dict) and isinstance(val.get("inverse"), dict):
+            return val["inverse"]
+        if isinstance(res.get("inverse"), dict):
+            return res["inverse"]
+    return None
+
+
+def _resolve_inverse_uri(forward_uri: str, inv: dict) -> str | None:
+    """Resolve the full inverse URI.
+    Connector may return a full `uri` (knows its node) or a node-less `path`
+    (rebased onto the forward step's scheme://node so the inverse targets the same node)."""
+    if inv.get("uri"):
+        return str(inv["uri"])
+    if inv.get("path"):
+        try:
+            scheme, rest = forward_uri.split("://", 1)
+            node = rest.split("/")[0]
+            return f"{scheme}://{node}/{str(inv['path']).lstrip('/')}"
+        except Exception:  # noqa: BLE001
+            return None
+    return None
+
+
 _THIN_GOAL_URI = "flow://host/goal/query/verify"
 _THIN_PREFLIGHT_URI = "twin://host/flow/command/preflight"
 
@@ -102,11 +134,26 @@ def _thin_circuit_break(envelope: FlowEnvelope, timeline: list, results: dict,
     return None
 
 
-def _thin_rollback(dispatch_uri, envelope, timeline, results, kind: str) -> dict:
-    rb = dispatch_uri(_THIN_ROLLBACK_URI, {"ledger": envelope.ledger})
-    envelope.record(_THIN_ROLLBACK_URI, "call")
+def _thin_rollback(dispatch_uri, envelope: "FlowEnvelope", timeline: list, results: dict, kind: str) -> dict:
+    """Apply envelope.ledger inverses LIFO through the same dispatch_uri that ran the steps.
+    No connector hop: the thin driver already has the transport wired; routing through
+    twin://…/rollback would need a registry the driver doesn't carry."""
+    undone: list[str] = []
+    for entry in reversed(envelope.ledger):
+        inv_uri = entry.get("inverse")
+        if not inv_uri:
+            continue
+        envelope.record(inv_uri, "call")
+        rb = dispatch_uri(inv_uri, entry.get("args") or {})
+        envelope.record(inv_uri, "return", ok=rb.get("ok", True))
+        if not rb.get("ok", True):
+            return {"ok": False, "timeline": timeline, "results": results,
+                    "rollback": {"ok": False, "undone": undone, "stuck": inv_uri,
+                                 "reason": rb.get("error", "inverse failed")},
+                    "next": {"kind": kind}}
+        undone.append(inv_uri)
     return {"ok": False, "timeline": timeline, "results": results,
-            "rollback": rb, "next": {"kind": kind}}
+            "rollback": {"ok": True, "undone": undone}, "next": {"kind": kind}}
 
 
 def _thin_handle_non_continue(kind: str, r: dict, step: dict, sid: str, uri: str, payload: dict,
@@ -179,6 +226,20 @@ def _thin_driver(
         r = dispatch_uri(uri, payload)
         kind = _next_kind(r)
         envelope.record(uri, "return", ok=r.get("ok", True), next=kind)
+
+        # ── Fill ledger: if the step returned an inverse, record it for SAGA rollback.
+        # We read it from the result here — not from a route schema — so the driver stays
+        # schema-free. A step that mutates and is reversible returns `inverse: {uri, args}`;
+        # a query or irreversible step simply doesn't, and the ledger stays silent about it.
+        if r.get("ok", True):
+            _inv = _extract_inverse(r)
+            if _inv:
+                _inv_uri = _resolve_inverse_uri(uri, _inv)
+                if _inv_uri:
+                    envelope.push_inverse(uri, _inv_uri,
+                                          before=str(r.get("stateBefore") or ""),
+                                          after=str(r.get("stateAfter") or ""),
+                                          inverse_args=_inv.get("args") or {})
 
         entry: dict = {"id": sid, "uri": uri, "ok": r.get("ok", True), "target": route_target(uri)}
         if not r.get("ok"):
