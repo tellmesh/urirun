@@ -822,3 +822,59 @@ def write_document_pdf(image_path: str | Path, pdf_path: str | Path, *, metadata
     target.write_bytes(bytes(pdf))
 
 
+
+
+def sidecar_text(item: dict) -> str:
+    """OCR text for an archived record, read from its JSON sidecar (the index omits it)."""
+    json_path = item.get("jsonPath")
+    if not json_path:
+        return ""
+    try:
+        path = Path(str(json_path)).expanduser()
+        if not path.is_file():
+            return ""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return str(data.get("text") or "") if isinstance(data, dict) else ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+
+
+def unique_document_path(directory: Path, filename: str, doc_id: str) -> Path:
+    candidate = directory / filename
+    if not candidate.exists():
+        return candidate
+    suffix = filename_part(doc_id[-10:], default="doc", max_len=12)
+    alternative = directory / f"{candidate.stem}_{suffix}{candidate.suffix}"
+    counter = 2
+    while alternative.exists():
+        alternative = directory / f"{candidate.stem}_{suffix}-{counter}{candidate.suffix}"
+        counter += 1
+    return alternative
+
+
+
+
+def existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha256: str) -> dict | None:
+    for item in index.get("documents", []):
+        if not isinstance(item, dict):
+            continue
+        same_doc = item.get("docId") == doc_id
+        same_source = bool(source_sha256 and item.get("sourceSha256") == source_sha256)
+        same_text = bool(text_sha256 and item.get("textSha256") == text_sha256)
+        if same_doc or same_source or same_text:
+            return item
+    return None
+
+
+
+
+
+def existing_document_meta(duplicate: dict) -> dict:
+    """The duplicate record's metadata dict, or a flat projection of its top-level fields."""
+    if isinstance(duplicate.get("metadata"), dict):
+        return duplicate["metadata"]
+    return {key: duplicate.get(key) for key in ("type", "date", "contractor", "amount", "currency")}
+
+

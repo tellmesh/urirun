@@ -64,6 +64,10 @@ from .document_sync import (
     pdf_stream as _pdf_stream,
     pdf_text as _pdf_text,
     write_document_pdf as _write_document_pdf,
+    sidecar_text as _sidecar_text,
+    unique_document_path as _unique_document_path,
+    existing_document as _existing_document,
+    existing_document_meta as _existing_document_meta,
     sync_documents_to_node as _sync_documents_to_node_impl,
 )
 from .discovery import (
@@ -1091,36 +1095,6 @@ def _docid_for_file(path: str | Path, ocr_text: str) -> dict:
 
 
 
-
-
-
-
-def _unique_document_path(directory: Path, filename: str, doc_id: str) -> Path:
-    candidate = directory / filename
-    if not candidate.exists():
-        return candidate
-    suffix = _filename_part(doc_id[-10:], default="doc", max_len=12)
-    alternative = directory / f"{candidate.stem}_{suffix}{candidate.suffix}"
-    counter = 2
-    while alternative.exists():
-        alternative = directory / f"{candidate.stem}_{suffix}-{counter}{candidate.suffix}"
-        counter += 1
-    return alternative
-
-
-def _existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha256: str) -> dict | None:
-    for item in index.get("documents", []):
-        if not isinstance(item, dict):
-            continue
-        same_doc = item.get("docId") == doc_id
-        same_source = bool(source_sha256 and item.get("sourceSha256") == source_sha256)
-        same_text = bool(text_sha256 and item.get("textSha256") == text_sha256)
-        if same_doc or same_source or same_text:
-            return item
-    return None
-
-
-
 def _is_blank_metadata(value: Any) -> bool:
     return str(value or "").strip().lower() in _BLANK_METADATA_MARKERS
 
@@ -1206,23 +1180,6 @@ def _enrich_archived_record(existing: dict, fused: dict, enriched_fields: list[s
         )
     except Exception:  # noqa: BLE001
         pass
-
-
-def _sidecar_text(item: dict) -> str:
-    """OCR text for an archived record, read from its JSON sidecar (the index omits it)."""
-    json_path = item.get("jsonPath")
-    if not json_path:
-        return ""
-    try:
-        path = Path(str(json_path)).expanduser()
-        if not path.is_file():
-            return ""
-        data = json.loads(path.read_text(encoding="utf-8"))
-        return str(data.get("text") or "") if isinstance(data, dict) else ""
-    except Exception:  # noqa: BLE001
-        return ""
-
-
 def _find_duplicate_document(index: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
                              fingerprint: dict, dhash: str, phash: str = "",
                              metadata: dict | None = None, text: str = "") -> dict | None:
@@ -1345,15 +1302,6 @@ def _supersede_archived_document(*, duplicate: dict, existing_meta: dict, extrac
         if isinstance(item, dict) and item.get("docId") != superseded_of
     ]
     return extracted, month, archive_dir, filename, superseded_of, merged_fields
-
-
-def _existing_document_meta(duplicate: dict) -> dict:
-    """The duplicate record's metadata dict, or a flat projection of its top-level fields."""
-    if isinstance(duplicate.get("metadata"), dict):
-        return duplicate["metadata"]
-    return {key: duplicate.get(key) for key in ("type", "date", "contractor", "amount", "currency")}
-
-
 def _archive_scanned_document(
     *,
     display_path: Path,
