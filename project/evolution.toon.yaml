@@ -1,5 +1,5 @@
-# code2llm/evolution | 1357 func | 91f | 2026-06-26
-# generated in 0.01s
+# code2llm/evolution | 1310 func | 87f | 2026-06-26
+# generated in 0.00s
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/html_templates.py
@@ -23,7 +23,7 @@ RISKS[3]:
 METRICS-TARGET:
   CC̄:          4.7 → ≤3.3
   max-CC:      14 → ≤7
-  god-modules: 20 → 0
+  god-modules: 19 → 0
   high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 

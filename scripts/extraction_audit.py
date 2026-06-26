@@ -87,8 +87,9 @@ PRESETS: dict[str, dict] = {
         "package": set(),
         "package_prefixes": ("urirun.node.",),
         # node sits on the kernel + connector toolkit + public facade; host edges are blockers.
+        # allow_exact includes "urirun.runtime" (the package __init__, e.g. result_data) — see G/H.
         "allow_outward": ("urirun.runtime.", "urirun.connectors."),
-        "allow_exact": ("urirun",),
+        "allow_exact": ("urirun", "urirun.runtime"),
     },
     "G": {
         "name": "flow",

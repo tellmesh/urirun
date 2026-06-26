@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 142, json: 13, shell: 10, yaml: 5, csharp: 4
+- **Languages**: python: 141, json: 13, shell: 10, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1398
-- **Total Classes**: 49
-- **Modules**: 202
-- **Entry Points**: 541
+- **Total Functions**: 1351
+- **Total Classes**: 48
+- **Modules**: 201
+- **Entry Points**: 522
 
 ## Architecture by Module
 
@@ -26,11 +26,6 @@
 - **Functions**: 55
 - **Classes**: 3
 - **File**: `server.py`
-
-### adapters.python.urirun.node.reversible
-- **Functions**: 55
-- **Classes**: 9
-- **File**: `reversible.py`
 
 ### adapters.python.urirun
 - **Functions**: 53
@@ -49,6 +44,11 @@
 - **Functions**: 42
 - **File**: `flow.py`
 
+### adapters.python.urirun.node.twin_store
+- **Functions**: 41
+- **Classes**: 3
+- **File**: `twin_store.py`
+
 ### adapters.python.urirun.connectors.connector_lint
 - **Functions**: 38
 - **File**: `connector_lint.py`
@@ -66,6 +66,11 @@
 - **Functions**: 33
 - **File**: `host_db.py`
 
+### adapters.python.urirun.node.reversible
+- **Functions**: 33
+- **Classes**: 8
+- **File**: `reversible.py`
+
 ### adapters.python.urirun.node.flow_planner
 - **Functions**: 31
 - **File**: `flow_planner.py`
@@ -78,11 +83,6 @@
 - **Functions**: 27
 - **Classes**: 1
 - **File**: `planfile_adapter.py`
-
-### adapters.python.urirun.host.domain_monitor
-- **Functions**: 26
-- **Classes**: 1
-- **File**: `domain_monitor.py`
 
 ### adapters.python.urirun.host.chat_orchestrator
 - **Functions**: 26
@@ -125,12 +125,12 @@ Main execution flows into the system:
 ### adapters.python.urirun.node.server.NodeHandler._handle_deploy
 - **Calls**: adapters.python.urirun.node.server.read_raw, body.get, print, adapters.python.urirun.node.server.send_json, adapters.python.urirun.node.server.send_json, self._admin_ok, adapters.python.urirun.node.server.send_json, json.loads
 
+### adapters.python.urirun.node.server.NodeHandler._handle_run
+- **Calls**: adapters.python.urirun.node.server.read_raw, self._validate_run_request, str, self._dispatch_control_uri, self._run_target, _normalize_request, progress.RunControl, adapters.python.urirun.node.server.send_json
+
 ### adapters.python.urirun.Connector._build_cli_parser
 > Build the connector argparse parser (one subcommand per route).
 - **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
-
-### adapters.python.urirun.node.server.NodeHandler._handle_run
-- **Calls**: adapters.python.urirun.node.server.read_raw, self._validate_run_request, str, self._dispatch_control_uri, self._run_target, _normalize_request, progress.RunControl, adapters.python.urirun.node.server.send_json
 
 ### adapters.python.urirun.node.client.NodeClient.resolve_refs
 > Chain steps: replace "$ref:<i>.<field.path>" with an earlier step's output.
@@ -148,7 +148,7 @@ Main execution flows into the system:
 Payload: {nodes: [str], routes?: [{…}], flow_key?: str,
           record: {steps: […], …}}
 Returns: 
-- **Calls**: adapters.python.urirun.node.routing.registry_from_routes, str, adapters.python.urirun.node.twin_store.durable_memory, dict, record.setdefault, bool, urirun.ok, payload.get
+- **Calls**: adapters.python.urirun.node.routing.registry_from_routes, str, adapters.python.urirun.node.reversible.durable_memory, dict, record.setdefault, bool, urirun.ok, payload.get
 
 ### adapters.python.urirun.node.manage.connector_install
 > Install a connector from ANY source into the node's venv:
@@ -159,9 +159,6 @@ Returns:
 ### examples.matrix.verify.main
 - **Calls**: contracts.get, sorted, None.removesuffix, adapters.python.urirun.validate_binding_document, examples.matrix.verify.essential, contracts.items, json.load, print
 
-### adapters.python.urirun.host.domain_monitor._route_flow
-- **Calls**: str, adapters.python.urirun.host.domain_monitor.check_domain, adapters.python.urirun.host.domain_monitor.run_daily, rc.payload.get, rc.payload.get, adapters.python.urirun.host.domain_monitor.expected_records, adapters.python.urirun.host.domain_monitor._db, adapters.python.urirun.host.domain_monitor._project
-
 ### adapters.python.urirun.host.contracts.file_transfer_verification
 > Return the standard verification contract for file-copy style URI flows.
 
@@ -170,11 +167,6 @@ Returns:
 
 ### adapters.python.urirun.connectors.connect_catalog._cmd_list
 - **Calls**: adapters.python.urirun.connectors.connect_catalog.fetch_catalog, adapters.python.urirun.connectors.connect_catalog._connectors, getattr, max, adapters.python.urirun.connectors.connect_catalog._emit_json, print, None.join, print
-
-### adapters.python.urirun.connectors.inputs.uinput.abs_click
-> Position (and optionally click) at pixel (x,y) via a fresh raw absolute uinput device.
-``sw``/``sh`` default to the injected screen-size resolver; ``c
-- **Calls**: adapters.python.urirun.connectors.inputs.uinput.compute_abs, adapters.python.urirun.connectors.inputs.uinput._create_abs, adapters.python.urirun.connectors.inputs.uinput.uinput_available, BackendError, float, float, os.write, time.sleep
 
 ### adapters.python.urirun.host.twin_bridge.api_twin_state
 - **Calls**: _durable_memory, int, mem.known_good_flows, adapters.python.urirun.host.twin_bridge._nodes_from_store, getattr, adapters.python.urirun.host.twin_bridge._split_episodes, hasattr, mem.degraded_flows
@@ -195,15 +187,15 @@ Returns ``{"violations": [...], "ok": bool}`` where each violat
 ### examples.node-file-transfer.fs_transfer.write_b64
 - **Calls**: examples.node-file-transfer.fs_transfer._expand_path, final.with_name, tmp.write_bytes, tmp.replace, target.parent.mkdir, examples.node-file-transfer.fs_transfer._unique_path, base64.b64decode, str
 
+### adapters.python.urirun.host.node_cli.node_command
+- **Calls**: adapters.python.urirun.node.config.load_node_config, dict, adapters.python.urirun.host.node_cli._resolve_registry_source, v2.load_registry_arg, reglib._emit_json, adapters.python.urirun.host.node_cli.node_list_command, adapters.python.urirun.host.node_cli.node_stop_command, reglib._emit_json
+
 ### adapters.python.urirun.host.android_node.restart_android_node_service
 - **Calls**: adapters.python.urirun.host.host_dashboard._service_restart_argv, meta.setdefault, int, adapters.python.urirun.host.android_node.start_android_node_service, isinstance, None.lower, _schedule_restart_command, free_port_fn
 
 ### adapters.python.urirun.host.discovery.node_test_routes
 > Probe a node's URIs and report which respond.
 - **Calls**: None.strip, node_url_from_config, adapters.python.urirun.host.discovery._route_targets, adapters.python.urirun.host.discovery._node_test_summary, None.strip, adapters.python.urirun.host.fs_transfer.node_token_for, adapters.python.urirun.host.fs_transfer.node_client, adapters.python.urirun.host.discovery._probe_route
-
-### adapters.python.urirun.host.node_cli.node_command
-- **Calls**: adapters.python.urirun.node.config.load_node_config, dict, adapters.python.urirun.host.node_cli._resolve_registry_source, v2.load_registry_arg, reglib._emit_json, adapters.python.urirun.host.node_cli.node_list_command, adapters.python.urirun.host.node_cli.node_stop_command, reglib._emit_json
 
 ### adapters.python.urirun.host.object_registry.node_set_token
 > Store a node's management token (X-Urirun-Token) the user typed in the Nodes view — into the
@@ -225,6 +217,14 @@ set, or raising ``BackendError`` with per-backend diagnost
 > Host-side: find a folder (abs path, or a dir named `name_or_path` under roots /
 ~/github) and push its text files to the node's deploy dir (flat, by b
 - **Calls**: os.path.expanduser, os.path.isdir, self._read_folder_files, self.deploy, str, dep.get, sorted, dep.get
+
+### adapters.python.urirun.node.client.NodeClient.watch
+> Yield the node's SSE events live, each tagged with its `_id`. `scheme`/`run`
+filter server-side; `last_event_id` replays what was missed (resume after
+- **Calls**: urlencode, self._auth, self._watch_query_params, str, urllib.request.urlopen, urllib.request.Request, None.strip, line.startswith
+
+### scripts.repin_connectors.main
+- **Calls**: argparse.ArgumentParser, ap.add_argument, ap.add_argument, ap.add_argument, ap.add_argument, ap.parse_args, scripts.repin_connectors.find_root, sorted
 
 ## Process Flows
 
@@ -269,15 +269,15 @@ _handle_deploy [adapters.python.urirun.node.server.NodeHandler]
   └─ →> send_json
 ```
 
-### Flow 7: _build_cli_parser
-```
-_build_cli_parser [adapters.python.urirun.Connector]
-```
-
-### Flow 8: _handle_run
+### Flow 7: _handle_run
 ```
 _handle_run [adapters.python.urirun.node.server.NodeHandler]
   └─ →> read_raw
+```
+
+### Flow 8: _build_cli_parser
+```
+_build_cli_parser [adapters.python.urirun.Connector]
 ```
 
 ### Flow 9: resolve_refs
@@ -306,11 +306,11 @@ so this is a normal
 - **Key Methods**: adapters.python.urirun.node.server.NodeHandler.ctx, adapters.python.urirun.node.server.NodeHandler.do_OPTIONS, adapters.python.urirun.node.server.NodeHandler._guarded, adapters.python.urirun.node.server.NodeHandler.do_GET, adapters.python.urirun.node.server.NodeHandler.do_POST, adapters.python.urirun.node.server.NodeHandler._health_payload, adapters.python.urirun.node.server.NodeHandler._routes_payload, adapters.python.urirun.node.server.NodeHandler._get, adapters.python.urirun.node.server.NodeHandler._get_errors, adapters.python.urirun.node.server.NodeHandler._post
 - **Inherits**: BaseHTTPRequestHandler
 
-### adapters.python.urirun.node.reversible.TwinMemory
+### adapters.python.urirun.node.twin_store.TwinMemory
 > Remembers the KNOWN-GOOD environment fingerprint per node (snapshot-on-success), so a later
 run dete
 - **Methods**: 21
-- **Key Methods**: adapters.python.urirun.node.reversible.TwinMemory.remember, adapters.python.urirun.node.reversible.TwinMemory.known_good, adapters.python.urirun.node.reversible.TwinMemory.drift, adapters.python.urirun.node.reversible.TwinMemory.remember_flow, adapters.python.urirun.node.reversible.TwinMemory.recall_flow, adapters.python.urirun.node.reversible.TwinMemory.known_good_flows, adapters.python.urirun.node.reversible.TwinMemory.degraded_flows, adapters.python.urirun.node.reversible.TwinMemory.remember_episode, adapters.python.urirun.node.reversible.TwinMemory.known_good_episodes, adapters.python.urirun.node.reversible.TwinMemory.recall_episode
+- **Key Methods**: adapters.python.urirun.node.twin_store.TwinMemory.remember, adapters.python.urirun.node.twin_store.TwinMemory.known_good, adapters.python.urirun.node.twin_store.TwinMemory.drift, adapters.python.urirun.node.twin_store.TwinMemory.remember_flow, adapters.python.urirun.node.twin_store.TwinMemory.recall_flow, adapters.python.urirun.node.twin_store.TwinMemory.known_good_flows, adapters.python.urirun.node.twin_store.TwinMemory.degraded_flows, adapters.python.urirun.node.twin_store.TwinMemory.remember_episode, adapters.python.urirun.node.twin_store.TwinMemory.known_good_episodes, adapters.python.urirun.node.twin_store.TwinMemory.recall_episode
 
 ### adapters.python.urirun.Connector
 > Small convention helper for connector packages.
@@ -387,19 +387,19 @@ knows NO connecto
 - **Methods**: 2
 - **Key Methods**: adapters.python.urirun.node.diagnostics._Rule.__init__, adapters.python.urirun.node.diagnostics._Rule.matches
 
-### adapters.python.urirun.node.episode.Episode
-> Atomic record of one prompt→outcome URI run.
-
-Atoms are content-addressed: ``reality`` by ``env_fing
-- **Methods**: 2
-- **Key Methods**: adapters.python.urirun.node.episode.Episode.to_dict, adapters.python.urirun.node.episode.Episode.from_dict
-
 ### adapters.python.urirun.node.flow_thin.FlowEnvelope
 > Carries flow awareness through every `invoke()` hop.
 
 A step that is flow-aware reads `goal` / `posi
 - **Methods**: 2
 - **Key Methods**: adapters.python.urirun.node.flow_thin.FlowEnvelope.record, adapters.python.urirun.node.flow_thin.FlowEnvelope.push_inverse
+
+### adapters.python.urirun.node.episode.Episode
+> Atomic record of one prompt→outcome URI run.
+
+Atoms are content-addressed: ``reality`` by ``env_fing
+- **Methods**: 2
+- **Key Methods**: adapters.python.urirun.node.episode.Episode.to_dict, adapters.python.urirun.node.episode.Episode.from_dict
 
 ### adapters.python.urirun.node.reversible.CallableTransport
 > Adapt any ``fn(uri, payload) -> dict`` into a Transport (e.g. a NodeClient.run bound
@@ -425,36 +425,20 @@ Key functions that process and transform data:
 
 ### adapters.c.urirun.urirun_parse
 
-### adapters.python.urirun.parse_uri
-- **Output to**: URI_RE.match, str, ValueError, m.group, unquote
-
-### adapters.python.urirun.validate_binding_document
-> Validate a v2 binding document through the stable top-level API.
-- **Output to**: _validate_binding_document
-
-### adapters.python.urirun.Connector._build_cli_parser
-> Build the connector argparse parser (one subcommand per route).
-- **Output to**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser
-
 ### adapters.python.urirun.host.host_db._validate_record
 - **Output to**: None.validate, dataset.get, Draft202012Validator
+
+### adapters.python.urirun.host.node_cli._parse_api_json_args
+> Parse ``--api`` JSON strings into a list of dicts.
+
+Returns ``(apis, error_rc)`` where *error_rc* is
+- **Output to**: getattr, apis.append, json.loads, isinstance, reglib._emit_json
 
 ### adapters.python.urirun.host.object_registry._node_add_parse_payload
 > Extract and normalise scalar fields from a node-add payload.
 
 Returns (name, raw_url, kind, meta, ta
 - **Output to**: None.strip, None.strip, payload.get, payload.get, payload.get
-
-### adapters.python.urirun.host.dispatch._inprocess_run
-> Tier 2a+2b: run uri via entry-point discovery, then decorated bindings on NOT_FOUND.
-Returns the raw
-- **Output to**: discovery.registry_for_uri, urirun.run, None.get, urirun.compile_registry, urirun.run
-
-### adapters.python.urirun.host.dispatch.inprocess_fallback
-> Call an installed connector URI in-process via the urirun runtime.
-
-Returns None when no connector o
-- **Output to**: uri.startswith, adapters.python.urirun.host.dispatch._env_to_result, adapters.python.urirun.host.dispatch._flow_scheme_dispatch, adapters.python.urirun.host.dispatch._inprocess_run, dict
 
 ### adapters.python.urirun.host.connector_admin.parse_bindings_output
 > Parse the ``BINDINGS:<count>:<names>`` smoke marker into (count, names).
@@ -500,7 +484,31 @@ urirun runtime
 ### adapters.python.urirun.connectors.connector_lint._format_duplication
 - **Output to**: lines.append, None.join
 
+### adapters.python.urirun.connectors.connector_lint._format_report
+- **Output to**: lines.append, lines.extend, lines.append, lines.append, lines.extend
+
+### adapters.python.urirun.connectors.connector_contract.ConnectorContractSuite.test_bindings_validate
+> The bindings document must pass urirun.validate_binding_document.
+- **Output to**: urirun.validate_binding_document, result.get, result.get
+
+### adapters.python.urirun.node._util._parse_json_option
+> Parse an optional JSON CLI argument; return ``default`` when unset.
+- **Output to**: json.loads
+
+### adapters.python.urirun.node.doctor._parse_non_http_address
+- **Output to**: urllib.parse.urlparse, _DEFAULT_PORT.get
+
 ## Behavioral Patterns
+
+### recursion__uri_action_lookup
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
+
+### recursion_short_value
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.host.fs_transfer.short_value
 
 ### recursion_command
 - **Type**: recursion
@@ -517,16 +525,6 @@ urirun runtime
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.Connector.handler
 
-### recursion__uri_action_lookup
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
-
-### recursion_short_value
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.host.fs_transfer.short_value
-
 ### state_machine_Urirun
 - **Type**: state_machine
 - **Confidence**: 0.70
@@ -541,11 +539,6 @@ urirun runtime
 - **Type**: state_machine
 - **Confidence**: 0.70
 - **Functions**: adapters.php.Urirun.Connector.__construct, adapters.php.Urirun.Connector.target, adapters.php.Urirun.Connector.command, adapters.php.Urirun.Connector.bindings, adapters.php.Urirun.Connector.bindingsJson
-
-### state_machine_Connector
-- **Type**: state_machine
-- **Confidence**: 0.70
-- **Functions**: adapters.python.urirun.Connector.__post_init__, adapters.python.urirun.Connector.uri, adapters.python.urirun.Connector._meta, adapters.python.urirun.Connector.command, adapters.python.urirun.Connector.shell
 
 ### state_machine_Backend
 - **Type**: state_machine
@@ -570,6 +563,11 @@ urirun runtime
 ### state_machine_Connector
 - **Type**: state_machine
 - **Confidence**: 0.70
+- **Functions**: adapters.python.urirun.Connector.__post_init__, adapters.python.urirun.Connector.uri, adapters.python.urirun.Connector._meta, adapters.python.urirun.Connector.command, adapters.python.urirun.Connector.shell
+
+### state_machine_Connector
+- **Type**: state_machine
+- **Confidence**: 0.70
 - **Functions**: adapters.python.urirun.node.reversible.Connector.call, adapters.python.urirun.node.reversible.Connector.scan_uri, adapters.python.urirun.node.reversible.Connector.schema
 
 ## Public API Surface
@@ -578,8 +576,8 @@ Functions exposed as public API (no underscore prefix):
 
 - `adapters.python.urirun.host.host_dashboard.summary` - 38 calls
 - `scripts.extraction_audit.print_report` - 36 calls
-- `adapters.python.urirun.node.recovery.normalize_error` - 30 calls
 - `adapters.python.urirun.host.node_cli.copy_id_command` - 30 calls
+- `adapters.python.urirun.node.recovery.normalize_error` - 30 calls
 - `scripts.transport_swap_proof.main` - 29 calls
 - `adapters.python.urirun.host.connector_admin.connector_install` - 29 calls
 - `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 29 calls
@@ -587,33 +585,33 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.host.discovery.node_alias_map_from_env` - 26 calls
 - `adapters.python.urirun.node.client.NodeClient.resolve_refs` - 26 calls
 - `adapters.python.urirun.node.server.apply_deploy` - 25 calls
+- `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun.connectors.resolver.resolve` - 24 calls
-- `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
-- `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
+- `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
 - `adapters.python.urirun.connectors.resolver.index_local` - 22 calls
 - `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
+- `adapters.python.urirun.host.node_cli.probe_command` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
 - `adapters.python.urirun.host.host_dashboard.uri_invoke` - 21 calls
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
-- `adapters.python.urirun.host.node_cli.probe_command` - 21 calls
 - `examples.matrix.verify.main` - 20 calls
+- `adapters.python.urirun.host.node_cli.run_command` - 20 calls
 - `adapters.python.urirun.host.connector_admin.connector_env_check` - 20 calls
 - `adapters.python.urirun.host.contracts.file_transfer_verification` - 20 calls
 - `adapters.python.urirun.connectors.connector_smoke.smoke` - 20 calls
-- `adapters.python.urirun.connectors.inputs.uinput.abs_click` - 20 calls
 - `scripts.extraction_audit.audit` - 20 calls
-- `adapters.python.urirun.host.node_cli.run_command` - 20 calls
+- `adapters.python.urirun.host.node_cli.monitor_command` - 19 calls
 - `adapters.python.urirun.host.twin_bridge.api_twin_state` - 19 calls
 - `adapters.python.urirun.host.fs_transfer.ensure_node_uri_routes` - 19 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_kernel_symbols` - 19 calls
 - `adapters.python.urirun.node.recovery.apply_auto_remediation` - 19 calls
-- `adapters.python.urirun.host.node_cli.monitor_command` - 19 calls
 - `examples.node-file-transfer.fs_transfer.write_b64` - 18 calls
+- `adapters.python.urirun.host.node_cli.node_command` - 18 calls
 - `adapters.python.urirun.host.decision_loop.general_path_next_intent` - 18 calls
 - `adapters.python.urirun.host.android_node.restart_android_node_service` - 18 calls
 
@@ -648,11 +646,11 @@ graph TD
     _handle_deploy --> get
     _handle_deploy --> print
     _handle_deploy --> send_json
-    _build_cli_parser --> ArgumentParser
-    _build_cli_parser --> add_subparsers
-    _build_cli_parser --> add_parser
     _handle_run --> read_raw
     _handle_run --> _validate_run_reques
+    _handle_run --> str
+    _handle_run --> _dispatch_control_ur
+    _handle_run --> _run_target
 ```
 
 ## Reverse Engineering Guidelines
