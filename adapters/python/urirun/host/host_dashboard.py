@@ -140,6 +140,21 @@ from .object_registry import (
     node_remove_kind as _node_remove_kind,
     annotate_node_kinds as _annotate_node_kinds,
 )
+from .artifacts_admin import (
+    artifact_delete_roots as _artifact_delete_roots,
+    artifact_file_delete_allowed as _artifact_file_delete_allowed,
+    payload_bool as _payload_bool,
+    global_document_metadata_paths as _global_document_metadata_paths,
+    safe_artifact_sidecar_path as _safe_artifact_sidecar_path,
+    artifact_delete_candidate_paths as _artifact_delete_candidate_paths,
+    delete_one_artifact_file as _delete_one_artifact_file,
+    delete_artifact_files as _delete_artifact_files,
+    artifact_visual_path as _artifact_visual_path,
+    artifact_file_exists as _artifact_file_exists,
+    artifact_dedupe_key as _artifact_dedupe_key,
+    artifact_dedupe_rank as _artifact_dedupe_rank,
+    merge_artifact_group as _merge_artifact_group,
+)
 from .scanner_bridge import (
     PAGE_ACTION_LOCK as _SCANNER_PAGE_ACTION_LOCK,
     PAGE_ACTION_QUEUES as _SCANNER_PAGE_ACTION_QUEUES,
@@ -5164,23 +5179,6 @@ def _is_image_path(path: str) -> bool:
     return Path(path).suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 
 
-def _artifact_visual_path(artifact: dict) -> str:
-    path = str(artifact.get("path") or "")
-    meta = artifact.get("meta") if isinstance(artifact.get("meta"), dict) else {}
-    if path.lower().endswith(".pdf"):
-        return str(meta.get("displayImage") or meta.get("displayPath") or meta.get("previewImage") or meta.get("image") or "")
-    return path
-
-
-def _artifact_file_exists(path: str) -> bool:
-    if not path:
-        return False
-    try:
-        return Path(path).expanduser().resolve().is_file()
-    except Exception:  # noqa: BLE001
-        return False
-
-
 def _public_artifact(artifact: dict, project: str) -> dict:
     path = str(artifact.get("path") or "")
     visual_path = _artifact_visual_path(artifact)
@@ -5239,46 +5237,6 @@ def _public_chat_attachments(attachments: Any, project: str) -> list[dict]:
     if not isinstance(attachments, list):
         return []
     return [_public_chat_attachment(item, project) for item in attachments if isinstance(item, dict)]
-
-
-def _artifact_dedupe_key(item: dict) -> tuple[str, str]:
-    path = str(item.get("path") or item.get("visualPath") or "")
-    if path:
-        try:
-            return ("path", str(Path(path).expanduser().resolve()))
-        except Exception:  # noqa: BLE001
-            return ("path", str(Path(path).expanduser()))
-    uri = str(item.get("uri") or item.get("id") or "")
-    return ("uri", uri)
-
-
-def _artifact_dedupe_rank(item: dict) -> tuple[int, int, str]:
-    kind_rank = {
-        "document-pdf": 0,
-        "camera-scan": 1,
-        "receipt-crop": 2,
-        "dashboard-qr": 3,
-    }
-    missing_rank = 0 if item.get("fileExists") or item.get("previewExists") else 10
-    return (missing_rank, kind_rank.get(str(item.get("kind") or ""), 5), str(item.get("created_at") or ""))
-
-
-def _merge_artifact_group(group: list[dict]) -> dict:
-    """Collapse one group of same-identity artifacts to the best-ranked one, annotated with
-    the ids/uris of the duplicates it absorbed."""
-    if len(group) == 1:
-        return group[0]
-    keep = sorted(group, key=_artifact_dedupe_rank)[0].copy()
-    keep_id = str(keep.get("id") or "")
-    keep["duplicateCount"] = len(group)
-    keep["duplicateIds"] = [str(item.get("id")) for item in group if item.get("id") and str(item.get("id")) != keep_id]
-    keep["duplicateArtifactIds"] = [str(item.get("id")) for item in group if item.get("id")]
-    keep["duplicateUris"] = [
-        str(item.get("uri"))
-        for item in group
-        if item.get("uri") and str(item.get("uri")) != str(keep.get("uri") or "")
-    ]
-    return keep
 
 
 def _dedupe_public_artifacts(public: list[dict]) -> list[dict]:
@@ -9928,127 +9886,6 @@ def connector_env_check(payload: dict) -> dict:
             "returncode": proc.returncode, "bindings": bindings, "bindingCount": count,
             "command": " ".join(cmd), "log": tail,
             "error": _env_check_error(ok, image, proc.returncode, tail)}
-
-
-def _artifact_delete_roots(project: str) -> list[Path]:
-    roots = [
-        Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser(),
-        Path(os.environ.get("URIRUN_DOCUMENT_DIR", "~/.urirun/documents")).expanduser(),
-        Path("~/.urirun/host-dashboard").expanduser(),
-    ]
-    out: list[Path] = []
-    for root in roots:
-        try:
-            out.append(root.resolve())
-        except OSError:
-            continue
-    return out
-
-
-def _artifact_file_delete_allowed(path: str, project: str) -> bool:
-    if not path:
-        return False
-    try:
-        resolved = Path(path).expanduser().resolve()
-    except OSError:
-        return False
-    roots = _artifact_delete_roots(project)
-    return any(resolved == root or root in resolved.parents for root in roots)
-
-
-def _payload_bool(payload: dict, name: str, default: bool) -> bool:
-    if name not in payload:
-        return default
-    value = payload.get(name)
-    if isinstance(value, bool):
-        return value
-    if value is None:
-        return default
-    if isinstance(value, (int, float)):
-        return bool(value)
-    return str(value).strip().lower() in {"1", "true", "yes", "on"}
-
-
-def _global_document_metadata_paths() -> set[Path]:
-    paths: set[Path] = set()
-    for candidate in (_document_index_path(), _scanned_id_log_path()):
-        try:
-            paths.add(candidate.expanduser().resolve())
-        except OSError:
-            continue
-    return paths
-
-
-def _safe_artifact_sidecar_path(path: str | None, project: str) -> str | None:
-    if not path:
-        return None
-    try:
-        target = Path(str(path)).expanduser().resolve()
-    except OSError:
-        return None
-    if target.suffix.lower() != ".json":
-        return None
-    if target in _global_document_metadata_paths():
-        return None
-    if not _artifact_file_delete_allowed(str(target), project):
-        return None
-    return str(target)
-
-
-def _artifact_delete_candidate_paths(item: dict, project: str) -> list[tuple[str, str]]:
-    out: list[tuple[str, str]] = []
-    artifact_path = str(item.get("path") or "")
-    if artifact_path:
-        out.append((artifact_path, "artifact"))
-        try:
-            sibling = Path(artifact_path).expanduser().resolve().with_suffix(".json")
-            if sibling.is_file():
-                sidecar = _safe_artifact_sidecar_path(str(sibling), project)
-                if sidecar:
-                    out.append((sidecar, "sidecar"))
-        except OSError:
-            pass
-
-    meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
-    document = meta.get("document") if isinstance(meta.get("document"), dict) else {}
-    for candidate in (meta.get("jsonPath"), document.get("jsonPath")):
-        sidecar = _safe_artifact_sidecar_path(str(candidate or ""), project)
-        if sidecar:
-            out.append((sidecar, "sidecar"))
-    return out
-
-
-def _delete_one_artifact_file(artifact_path: str, role: str, project: str) -> dict:
-    """Delete one artifact file (if inside an allowed root) and return its delete-info record."""
-    info = {"path": artifact_path, "role": role, "deleted": False, "skipped": False, "error": ""}
-    if not _artifact_file_delete_allowed(artifact_path, project):
-        info["skipped"] = True
-        info["error"] = "path is outside allowed artifact roots"
-        return info
-    try:
-        target = Path(artifact_path).expanduser().resolve()
-        if target.is_file():
-            target.unlink()
-            info["deleted"] = True
-        else:
-            info["skipped"] = True
-            info["error"] = "file missing"
-    except OSError as exc:
-        info["error"] = str(exc)
-    return info
-
-
-def _delete_artifact_files(artifacts: list, project: str) -> list[dict]:
-    """Delete the on-disk files backing the given artifacts (deduped by path)."""
-    files: list[dict] = []
-    seen_paths: set[str] = set()
-    for item in artifacts:
-        for artifact_path, role in _artifact_delete_candidate_paths(item, project):
-            if not artifact_path or artifact_path in seen_paths:
-                continue
-            seen_paths.add(artifact_path)
-            files.append(_delete_one_artifact_file(artifact_path, role, project))
-    return files
 
 
 def artifacts_delete(project: str, db: str | None, payload: dict) -> dict:
