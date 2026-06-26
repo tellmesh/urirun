@@ -1,9 +1,9 @@
-# code2llm | 176f 43260L | python:115,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
+# code2llm | 178f 43437L | python:117,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
 # generated in 0.08s
-# CC̅=4.7 | critical:3/1876 | dups:0 | cycles:0
+# CC̅=4.8 | critical:3/1839 | dups:0 | cycles:0
 
 HEALTH[4]:
-  🔴 GOD   adapters/python/urirun/node/reversible.py = 500L, 9 classes, 35m, max CC=14
+  🔴 GOD   adapters/python/urirun/node/reversible.py = 526L, 9 classes, 36m, max CC=14
   🟡 CC    _normalize_flow_step CC=15 (limit:15)
   🟡 CC    _preflight CC=15 (limit:15)
   🟡 CC    execute_flow CC=15 (limit:15)
@@ -12,7 +12,7 @@ REFACTOR[2]:
   1. split adapters/python/urirun/node/reversible.py  (god module)
   2. split 3 high-CC methods  (CC>15)
 
-PIPELINES[612]:
+PIPELINES[596]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -122,40 +122,42 @@ LAYERS:
   │ release-bump.sh             29L  0C    0m  CC=0.0    ←0
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
-  adapters/                       CC̄=4.7    ←in:10  →out:0
-  │ !! host_dashboard           10758L  0C  268m  CC=14     ←0
+  adapters/                       CC̄=4.8    ←in:10  →out:0
+  │ !! host_dashboard            5262L  0C  186m  CC=14     ←0
+  │ !! html_templates            4723L  0C    0m  CC=0.0    ←0
   │ !! v2                        2003L  1C  122m  CC=14     ←4
-  │ !! flow                      1292L  0C   66m  CC=15     ←2
-  │ !! scanner_bridge            1146L  1C   54m  CC=12     ←0
+  │ !! flow                      1342L  0C   66m  CC=15     ←2
+  │ !! scanner_bridge            1265L  1C   61m  CC=12     ←0
   │ !! server                     991L  3C   56m  CC=14     ←4
+  │ !! object_registry            971L  0C   51m  CC=14     ←0
   │ !! node_cli                   894L  0C   48m  CC=14     ←1
-  │ !! object_registry            749L  0C   50m  CC=14     ←0
   │ !! __init__                   737L  1C   51m  CC=14     ←15
+  │ !! document_sync              721L  2C   42m  CC=14     ←2
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! cli                        715L  0C    7m  CC=1      ←1
   │ !! connector_lint             714L  0C   38m  CC=14     ←1
   │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! _runtime                   584L  1C   29m  CC=13     ←2
-  │ !! document_sync              580L  2C   32m  CC=14     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! client                     558L  1C   35m  CC=12     ←0
+  │ !! diagnostics                550L  1C   16m  CC=14     ←2
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! host_db                    527L  0C   33m  CC=11     ←0
-  │ !! diagnostics                519L  1C   15m  CC=14     ←2
+  │ !! reversible                 526L  9C   36m  CC=14     ←1
   │ !! document_metadata          515L  0C   21m  CC=14     ←1
-  │ !! reversible                 500L  9C   35m  CC=14     ←1
   │ domain_monitor             487L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←1
   │ service_control            462L  0C   23m  CC=11     ←0
   │ manage                     443L  0C   29m  CC=12     ←0
   │ codegen                    438L  0C   19m  CC=14     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
+  │ recovery                   372L  0C   18m  CC=14     ←2
   │ task_planner               366L  2C   16m  CC=12     ←3
   │ discovery                  362L  0C   29m  CC=14     ←0
   │ host_integrations          356L  0C   15m  CC=8      ←0
-  │ recovery                   346L  0C   17m  CC=14     ←2
   │ task_cli                   342L  0C   25m  CC=11     ←1
   │ cdp                        339L  1C   24m  CC=8      ←0
+  │ artifacts_admin            335L  0C   24m  CC=12     ←1
   │ planfile_adapter           281L  1C   26m  CC=9      ←0
   │ mesh                       274L  0C    0m  CC=0.0    ←0
   │ worker                     266L  3C   20m  CC=13     ←0
@@ -320,8 +322,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: adapters/ (fan-in=10)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=10)
   SMELL: adapters.python/ fan-out=18 → split needed
 
 EXTERNAL:

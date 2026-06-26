@@ -517,3 +517,34 @@ def fit_to_environment(diagnosis: dict, environment: dict) -> dict:
             "label": "This environment cannot drive a UI: install tesseract / grant /dev/uinput, "
                      "or launch a CDP Chrome (env/query/profile shows what's missing)."})
     return diagnosis
+
+
+# ── URI surface: diag://host/error/command/classify ───────────────────────────
+# Exposes `diagnose` + `fit_to_environment` as an addressable URI capability.
+# Callers (flow.py, dashboard, remote nodes) reach this by URI, not by import,
+# so the capability is observable, gateable, and remotable without changing callers.
+def _uri_classify(payload: dict) -> dict:
+    """Handler for diag://<node>/error/command/classify.
+
+    Payload: {error, step?, routes?, environment?, surface?}
+    Returns: {ok, diagnosis?, unrecognized?, rule?}"""
+    import urirun  # noqa: PLC0415
+    error = payload.get("error") or {}
+    step = payload.get("step")
+    routes = payload.get("routes")
+    environment = payload.get("environment")
+    surface = payload.get("surface")
+    result = diagnose(error, step=step, routes=routes, environment=environment, surface=surface)
+    if result is None:
+        return urirun.ok(diagnosis=None, rule=None, unrecognized=True,
+                         autoApplicable=[], message="no playbook rule matched")
+    return urirun.ok(diagnosis=result, rule=result.get("rule"),
+                     autoApplicable=result.get("autoApplicable") or [])
+
+
+try:
+    import urirun as _urirun  # noqa: PLC0415
+    _diag_conn = _urirun.connector("diag", scheme="diag")
+    _diag_conn.handler("error/command/classify", meta={"label": "Diagnose error against playbook"})(_uri_classify)
+except Exception:  # noqa: BLE001 - connector registration is optional (not available in lean test envs)
+    pass

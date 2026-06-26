@@ -498,3 +498,29 @@ def ledger_from_execution(execution: dict) -> list[Transition]:
             ledger.append(Transition(before="", forward=Action(fwd, {}),
                                      inverse=Action(inv_uri, inv.get("args", {})), after=""))
     return ledger
+
+
+# ── URI surface: twin://host/flow/command/rollback ────────────────────────────
+# Exposes rollback as an addressable URI capability so remote nodes and the bus
+# can trigger a rollback without importing flow.py.
+def _uri_rollback(payload: dict) -> dict:
+    """Handler for twin://<node>/flow/command/rollback.
+
+    Payload: {execution, mesh?, scan_uri?}
+    Returns: {ok, undone[], proof?, stuck?}"""
+    import urirun  # noqa: PLC0415
+    execution = payload.get("execution") or {}
+    mesh = payload.get("mesh") or {}
+    scan_uri = payload.get("scan_uri") or payload.get("scanUri")
+    from urirun.node.flow import rollback_flow  # noqa: PLC0415 - lazy to avoid circular import
+    result = rollback_flow(execution, mesh, scan_uri=scan_uri or None)
+    return {**urirun.ok(), **result}
+
+
+try:
+    import urirun as _urirun  # noqa: PLC0415
+    _rev_conn = _urirun.connector("reversible-flow", scheme="twin")
+    _rev_conn.handler("flow/command/rollback",
+                      meta={"label": "Rollback a completed flow via its registered inverses"})(_uri_rollback)
+except Exception:  # noqa: BLE001 - connector registration is optional
+    pass

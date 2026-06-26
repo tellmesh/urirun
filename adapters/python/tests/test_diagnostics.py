@@ -544,5 +544,219 @@ class UnreachableNodeDiagnosisTests(unittest.TestCase):
         self.assertNotEqual((d or {}).get("rule"), "unreachable-node")
 
 
+class SelfHealUriDispatchTests(unittest.TestCase):
+    """Regression tests proving that _attempt_self_heal works identically through the
+    URI dispatch seam (dispatch_uri= path) as it does through direct function calls
+    (dispatch_uri=None, the existing path) — AND that the URI path makes diagnosis
+    visible in the event stream, which the direct path never did."""
+
+    def _make_step(self):
+        return {"id": "click", "uri": "kvm://laptop/ui/command/click"}
+
+    def _make_entry_with_diagnosis(self):
+        from urirun.node.diagnostics import diagnose
+        error = {"message": "ui-click: target not located (text='Post')", "category": "UNKNOWN"}
+        diagnosis = diagnose(error, step=self._make_step())
+        return {
+            "ok": False,
+            "error": error,
+            "recovery": {"diagnosis": diagnosis},
+        }
+
+    def test_direct_path_self_heals(self):
+        """Baseline: existing dispatch_uri=None path still works (no regression)."""
+        from urirun.node.flow import _attempt_self_heal
+        step = self._make_step()
+        entry = self._make_entry_with_diagnosis()
+        applied_calls = []
+
+        def fake_dispatch(uri):
+            applied_calls.append(uri)
+            return {"ok": True}
+
+        registry = {}
+        # Inject dispatch into apply_auto_remediation via monkeypatch-style kwarg already
+        # supported by apply_auto_remediation itself (dispatch= param).
+        # We test the _attempt_self_heal outer shape here; apply_auto_remediation tests
+        # cover the inner dispatch separately.
+        import urirun.node.flow as _flow
+        orig = _flow.apply_auto_remediation
+
+        def _fake_apply(diagnosis, reg, *, dispatch=None):
+            applied_calls.append("apply_auto_remediation")
+            return [{"id": "ensure-cdp-dom", "uri": "kvm://laptop/cdp/session/command/ensure", "ok": True}]
+
+        _flow.apply_auto_remediation = _fake_apply
+        try:
+            heal_entry, healed_ok = _attempt_self_heal(step, entry, registry, [], dispatch_uri=None)
+        finally:
+            _flow.apply_auto_remediation = orig
+
+        self.assertIsNotNone(heal_entry)
+        self.assertTrue(healed_ok)
+        self.assertIn("apply_auto_remediation", applied_calls)
+        self.assertEqual(heal_entry["action"], "self-heal")
+        self.assertEqual(heal_entry["rule"], "ui-target-not-located")
+
+    def test_uri_path_self_heals_identically(self):
+        """URI path (dispatch_uri=bus) produces the same heal_entry shape as direct path."""
+        from urirun.node.flow import _attempt_self_heal
+        from urirun.node.diagnostics import diagnose
+        from urirun.node.recovery import apply_auto_remediation
+        step = self._make_step()
+        entry = self._make_entry_with_diagnosis()
+        events = []
+        calls = []
+
+        def bus(uri, payload):
+            calls.append(uri)
+            events.append({"uri": uri, "phase": "call"})
+            if "error/command/classify" in uri:
+                # in-process: real classify
+                result = diagnose(
+                    payload["error"], step=payload.get("step"),
+                    routes=payload.get("routes"), environment=payload.get("environment"),
+                    surface=payload.get("surface"),
+                )
+                return {"ok": True, "diagnosis": result}
+            if "error/command/remediate" in uri:
+                # in-process: real remediation
+                applied = apply_auto_remediation(
+                    payload["diagnosis"], payload.get("registry") or {},
+                    dispatch=lambda _uri: {"ok": True},
+                )
+                return {"ok": True, "applied": applied}
+            return {"ok": False}
+
+        heal_entry, healed_ok = _attempt_self_heal(step, entry, {}, [], dispatch_uri=bus)
+
+        self.assertIsNotNone(heal_entry)
+        self.assertEqual(heal_entry["action"], "self-heal")
+        self.assertEqual(heal_entry["rule"], "ui-target-not-located")
+        # KEY assertion: diagnosis is now visible in the event stream
+        classify_calls = [e["uri"] for e in events if "classify" in e["uri"]]
+        remediate_calls = [e["uri"] for e in events if "remediate" in e["uri"]]
+        self.assertTrue(classify_calls, "diag:// classify must appear in event stream")
+        self.assertTrue(remediate_calls, "fix:// remediate must appear in event stream")
+        self.assertIn("diag://", classify_calls[0])
+        self.assertIn("fix://", remediate_calls[0])
+
+    def test_uri_path_matches_direct_path_shape(self):
+        """Both paths return the same heal_entry keys and healed_ok value."""
+        from urirun.node.flow import _attempt_self_heal
+        from urirun.node.diagnostics import diagnose
+        from urirun.node.recovery import apply_auto_remediation
+        step = self._make_step()
+
+        def bus(uri, payload):
+            if "classify" in uri:
+                d = diagnose(payload["error"], step=payload.get("step"))
+                return {"ok": True, "diagnosis": d}
+            if "remediate" in uri:
+                applied = apply_auto_remediation(
+                    payload["diagnosis"], {},
+                    dispatch=lambda _uri: {"ok": True},
+                )
+                return {"ok": True, "applied": applied}
+            return {"ok": False}
+
+        import urirun.node.flow as _flow
+        orig = _flow.apply_auto_remediation
+
+        def _fake_apply(diagnosis, reg, *, dispatch=None):
+            return [{"id": "ensure-cdp-dom", "uri": "kvm://laptop/cdp/session/command/ensure", "ok": True}]
+
+        _flow.apply_auto_remediation = _fake_apply
+        try:
+            entry = self._make_entry_with_diagnosis()
+            direct_heal, direct_ok = _attempt_self_heal(step, entry, {}, [], dispatch_uri=None)
+        finally:
+            _flow.apply_auto_remediation = orig
+
+        entry2 = self._make_entry_with_diagnosis()
+        uri_heal, uri_ok = _attempt_self_heal(step, entry2, {}, [], dispatch_uri=bus)
+
+        self.assertEqual(direct_ok, uri_ok)
+        self.assertEqual(direct_heal["action"], uri_heal["action"])
+        self.assertEqual(direct_heal["rule"], uri_heal["rule"])
+        self.assertEqual(set(direct_heal.keys()), set(uri_heal.keys()))
+
+
+class RollbackUriDispatchTests(unittest.TestCase):
+    """Regression: twin://host/flow/command/rollback handler produces the same shape
+    as calling rollback_flow() directly, and the URI path makes the rollback visible
+    in the event stream."""
+
+    def _make_execution_with_inverse(self):
+        return {
+            "ok": False,
+            "timeline": [
+                {"id": "navigate", "uri": "kvm://laptop/cdp/page/command/navigate",
+                 "ok": True,
+                 "result": {"inverse": {"uri": "kvm://laptop/cdp/page/command/navigate",
+                                         "args": {"url": "about:blank"}}}},
+            ],
+            "results": {
+                "navigate": {"ok": True,
+                              "result": {"value": {"inverse": {"uri": "kvm://laptop/cdp/page/command/navigate",
+                                                               "args": {"url": "about:blank"}}}}}
+            },
+        }
+
+    def test_uri_handler_rollback_matches_direct(self):
+        """_uri_rollback handler in reversible.py produces same shape as direct rollback_flow."""
+        from urirun.node.reversible import _uri_rollback
+        from urirun.node.flow import rollback_flow
+        execution = self._make_execution_with_inverse()
+        mesh = {"routes": [], "serviceMap": {}}
+
+        def fake_transport_call(uri, args):
+            return {"ok": True}
+
+        import urirun.node.flow as _flow
+        orig_transport = _flow._flow_transport
+
+        def _stub_transport(m):
+            class T:
+                def call(self, uri, args):
+                    return fake_transport_call(uri, args)
+            return T()
+
+        _flow._flow_transport = _stub_transport
+        try:
+            direct = rollback_flow(execution, mesh)
+            uri_result = _uri_rollback({"execution": execution, "mesh": mesh})
+        finally:
+            _flow._flow_transport = orig_transport
+
+        self.assertEqual(direct["ok"], uri_result.get("ok"))
+        self.assertEqual(set(direct["undone"]), set(uri_result.get("undone", [])))
+
+    def test_dispatch_uri_rollback_visible_in_stream(self):
+        """When dispatch_uri is provided to _apply_reversibility, rollback goes through the bus."""
+        from urirun.node.flow import _apply_reversibility
+        events = []
+        execution = self._make_execution_with_inverse()
+        mesh = {"routes": [], "serviceMap": {}}
+
+        def bus(uri, payload):
+            events.append({"uri": uri, "phase": "call"})
+            if "rollback" in uri:
+                return {"ok": True, "undone": ["kvm://laptop/cdp/page/command/navigate"]}
+            return {"ok": False}
+
+        result = {"ok": False}
+        _apply_reversibility(
+            result, execution, ok=False, execute=True,
+            rollback_on_failure=True, document={}, mesh=mesh,
+            dispatch_uri=bus,
+        )
+
+        rollback_calls = [e["uri"] for e in events if "rollback" in e["uri"]]
+        self.assertTrue(rollback_calls, "twin://…/flow/command/rollback must appear in event stream")
+        self.assertIn("twin://", rollback_calls[0])
+        self.assertIn("compensation", result)
+
+
 if __name__ == "__main__":
     unittest.main()

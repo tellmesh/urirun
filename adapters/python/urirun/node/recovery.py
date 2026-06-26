@@ -344,3 +344,29 @@ def planner_failure(exc: BaseException, *, prompt: str, selected_nodes: list[str
         "error": error,
         "recovery": [{"stepId": "plan", "uri": step["uri"], "error": error, "plan": recovery_plan(error, step=step)}],
     }
+
+
+# ── URI surface: fix://host/error/command/remediate ───────────────────────────
+# Exposes `apply_auto_remediation` as an addressable URI capability.
+# Human-gated remediation actions are SKIPPED here (the bus policy enforces the gate
+# on `fix://` itself; this handler applies only the automatic subset).
+def _uri_remediate(payload: dict) -> dict:
+    """Handler for fix://<node>/error/command/remediate.
+
+    Payload: {diagnosis, registry?}
+    Returns: {ok, applied[{id,uri,ok}]}"""
+    import urirun  # noqa: PLC0415
+    diagnosis = payload.get("diagnosis") or {}
+    registry = payload.get("registry") or {}
+    dispatch = payload.get("_dispatch")  # injectable for tests
+    applied = apply_auto_remediation(diagnosis, registry, dispatch=dispatch)
+    healed_ok = any(a.get("ok") for a in applied)
+    return urirun.ok(applied=applied, healedOk=healed_ok, count=len(applied))
+
+
+try:
+    import urirun as _urirun  # noqa: PLC0415
+    _fix_conn = _urirun.connector("fix", scheme="fix")
+    _fix_conn.handler("error/command/remediate", meta={"label": "Apply auto remediation actions"})(_uri_remediate)
+except Exception:  # noqa: BLE001 - connector registration is optional
+    pass

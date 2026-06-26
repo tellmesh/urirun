@@ -788,6 +788,7 @@ def _run_step(
     routes: list[dict],
     recover: bool,
     max_retries: int,
+    dispatch_uri=None,
 ) -> tuple[dict, list[dict], list[dict], bool]:
     """Execute one flow step with retry logic.
 
@@ -835,7 +836,8 @@ def _run_step(
         # SELF-HEAL: a diagnosed failure with auto-applicable remediation gets FIXED once, then
         # the step retried — so the loop repairs the cause instead of just aborting.
         if recover and execute and not healed:
-            heal_entry, healed_ok = _attempt_self_heal(step, entry, registry, routes)
+            heal_entry, healed_ok = _attempt_self_heal(step, entry, registry, routes,
+                                                        dispatch_uri=dispatch_uri)
             if heal_entry is not None:
                 timeline_entries.append(heal_entry)
                 healed = True
@@ -845,24 +847,59 @@ def _run_step(
         return env, timeline_entries, recovery_entries, True
 
 
-def _attempt_self_heal(step: dict, entry: dict, registry: dict, routes: list[dict]) -> tuple[dict | None, bool]:
+def _attempt_self_heal(
+    step: dict,
+    entry: dict,
+    registry: dict,
+    routes: list[dict],
+    *,
+    dispatch_uri=None,
+) -> tuple[dict | None, bool]:
     """Re-diagnose with the node's LIVE capabilities + foreground surface, apply the auto
     remediation ONCE, and return (self-heal timeline entry, healed_ok). Re-contextualising avoids
     futile round-trips: a CDP fix where no Chrome exists, an OCR retry where no tesseract, or
     looping ensure-CDP against a LOGIN page (really not-logged-in). (None, False) when there is
-    nothing auto-applicable to try."""
+    nothing auto-applicable to try.
+
+    `dispatch_uri` is the seam: when provided it routes every capability call (diag://, fix://)
+    through a bus or stub (e.g. in tests), making the diagnosis visible in the event stream.
+    When None the function falls back to direct in-process calls (identical behaviour, keeps all
+    existing tests green without modification)."""
     diagnosis = (entry.get("recovery") or {}).get("diagnosis")
     if not (diagnosis and diagnosis.get("autoApplicable")):
         return None, False
     env_profile = _fetch_env_profile(step, registry)
     surface = _fetch_surface(step, registry)
-    recontext = diagnose(entry["error"], step=step, routes=routes, environment=env_profile, surface=surface)
-    if recontext:
-        diagnosis = recontext
-    elif env_profile:
-        diagnosis = fit_to_environment(diagnosis, env_profile)
-    applied = apply_auto_remediation(diagnosis, registry)
-    healed_ok = any(a["ok"] for a in applied)
+
+    if dispatch_uri is not None:
+        # URI path: classify goes through the bus → observable, gateable, remotable
+        node = route_target(step.get("uri") or "") or "host"
+        classify_result = dispatch_uri(
+            f"diag://{node}/error/command/classify",
+            {"error": entry["error"], "step": step, "routes": routes,
+             "environment": env_profile, "surface": surface},
+        )
+        if classify_result.get("ok") and classify_result.get("diagnosis"):
+            diagnosis = classify_result["diagnosis"]
+        elif env_profile:
+            diagnosis = fit_to_environment(diagnosis, env_profile)
+
+        remediate_result = dispatch_uri(
+            f"fix://{node}/error/command/remediate",
+            {"diagnosis": diagnosis, "registry": registry},
+        )
+        applied = remediate_result.get("applied") or []
+    else:
+        # Direct path: same behaviour as before; no new dependency
+        recontext = diagnose(entry["error"], step=step, routes=routes,
+                             environment=env_profile, surface=surface)
+        if recontext:
+            diagnosis = recontext
+        elif env_profile:
+            diagnosis = fit_to_environment(diagnosis, env_profile)
+        applied = apply_auto_remediation(diagnosis, registry)
+
+    healed_ok = any(a.get("ok") for a in applied)
     heal_entry = {"id": f"{step['id']}:self-heal", "uri": step["uri"],
                   "target": route_target(step["uri"]), "ok": healed_ok, "type": "recovery",
                   "action": "self-heal", "rule": diagnosis.get("rule"), "applied": applied}
@@ -1063,7 +1100,8 @@ def _abort_envelope(step: dict, step_timeline: list, step_recoveries: list, time
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
                  max_retries: int = 1, max_wall_clock: float = 180.0, max_remediations: int = 6,
                  rollback_on_failure: bool = True,
-                 memory: TwinMemory | None = None) -> dict:
+                 memory: TwinMemory | None = None,
+                 dispatch_uri=None) -> dict:
     old_map = os.environ.get("URI_SERVICE_MAP")
     os.environ["URI_SERVICE_MAP"] = json.dumps(mesh.get("serviceMap") or {})
     results = {}
@@ -1090,7 +1128,8 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
             if fail is not None:
                 return fail
             env, step_timeline, step_recoveries, aborted = _run_step(
-                step, payload, registry, execute, routes, recover, max_retries
+                step, payload, registry, execute, routes, recover, max_retries,
+                dispatch_uri=dispatch_uri,
             )
             timeline.extend(step_timeline)
             recoveries.extend(step_recoveries)
@@ -1215,6 +1254,7 @@ def verify_flow_execution(document: dict, execution: dict, *, executed: bool, di
 def _apply_reversibility(
     result: dict, execution: dict, ok: bool, execute: bool,
     rollback_on_failure: bool, document: dict, mesh: dict,
+    dispatch_uri=None,
 ) -> dict:
     """Attach the reversible-transitions ledger and, when eligible, run SAGA compensation.
     Mutates and returns `result`."""
@@ -1230,7 +1270,16 @@ def _apply_reversibility(
     # leaves no partial mess (opt-in: only when explicitly requested).
     if not ok and execute and (rollback_on_failure or document.get("rollbackOnFailure")):
         scan_uri = (document.get("verification") or {}).get("scan_uri")
-        result["compensation"] = rollback_flow(execution, mesh, scan_uri=scan_uri)
+        if dispatch_uri is not None:
+            node = "host"
+            rollback_result = dispatch_uri(
+                f"twin://{node}/flow/command/rollback",
+                {"execution": execution, "mesh": mesh, "scan_uri": scan_uri},
+            )
+            result["compensation"] = {k: v for k, v in rollback_result.items() if k != "ok"}
+            result["compensation"]["ok"] = rollback_result.get("ok", False)
+        else:
+            result["compensation"] = rollback_flow(execution, mesh, scan_uri=scan_uri)
     return result
 
 
@@ -1248,7 +1297,8 @@ def run_flow_document(document: dict, mesh: dict, *, execute: bool, rollback_on_
         result["source"] = document.get("source")
     if verification is not None:
         result["verification"] = verification
-    return _apply_reversibility(result, execution, ok, execute, rollback_on_failure, document, mesh)
+    return _apply_reversibility(result, execution, ok, execute, rollback_on_failure, document, mesh,
+                                dispatch_uri=None)
 
 
 def _flow_transport(mesh: dict) -> CallableTransport:
