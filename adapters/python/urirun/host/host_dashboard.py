@@ -6898,9 +6898,6 @@ def _auto_crop_receipt(path: Path) -> dict:
     return detect_document_crop(path, output_path=path.with_name(f"{path.stem}-receipt-crop.jpg"))
 
 
-def _scanner_public_candidate_for_live(candidate: dict | None, project: str) -> dict | None:
-    return _scanner_public_candidate_for_live_impl(candidate, project, preview_url=_preview_url)
-
 
 def scanner_live_state(project: str, limit: int = 8) -> dict:
     with _SCANNER_BEST_LOCK:
@@ -7246,7 +7243,7 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
     return {
         "ok": True,
         "seriesId": series_id,
-        "best": _scanner_public_candidate_for_live(best, project),
+        "best": _scanner_public_candidate_for_live_impl(best, project, preview_url=_preview_url),
         "uri": uri,
         "artifact": registered["artifact"],
         "scanArtifact": registered["scanArtifact"],
@@ -7261,9 +7258,6 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
         "message": registered["message"],
     }
 
-
-def scanner_session(db: str | None, payload: dict) -> dict:
-    return _scanner_session_impl(_scanner_bridge_deps(), db, payload)
 
 
 def uri_event(db: str | None, query: dict[str, list[str]]) -> dict:
@@ -7882,7 +7876,7 @@ def _uri_invoke_route(effective_uri: str, *, project: str, db: str | None, confi
     if effective_uri in {"scanner://host/best/command/finish", "scanner://host/best/finish"}:
         return scanner_best_finish(project, db, action_payload)
     if effective_uri in {"scanner://host/session/command/log", "scanner://host/session"}:
-        return scanner_session(db, action_payload)
+        return _scanner_session_impl(_scanner_bridge_deps(), db, action_payload)
     # Legacy alias: dashboard://host/phone-scanner/command/start → canonical start URI
     if effective_uri == "dashboard://host/phone-scanner/command/start":
         effective_uri = "dashboard://host/service/phone-scanner/command/start"
@@ -9262,33 +9256,6 @@ def _decision_loop_for_document_sync(prompt: str, *, execute: bool, sync_node: s
     }
 
 
-def _scanner_flow_result(
-    service: dict,
-    autonomous_scan: bool,
-    camera_action_uri: str,
-    camera_payload: dict,
-    torch_click_uri: str,
-    torch_enabled: bool | None,
-    queued_camera: dict | None,
-    queued_torch: dict | None,
-    prompt: str,
-    selected_nodes: list[str],
-    selected_targets: list[str],
-) -> dict:
-    return _scanner_flow_result_impl(
-        service,
-        autonomous_scan,
-        camera_action_uri,
-        camera_payload,
-        torch_click_uri,
-        torch_enabled,
-        queued_camera,
-        queued_torch,
-        prompt,
-        selected_nodes,
-        selected_targets,
-    )
-
 
 def _chat_ask_phone_scanner(
     project: str,
@@ -9357,7 +9324,7 @@ def _chat_ask_phone_scanner(
                 "scannerUrl": service.get("url"),
             },
         ))
-    result = _scanner_flow_result(
+    result = _scanner_flow_result_impl(
         service, autonomous_scan, camera_action_uri, camera_payload,
         torch_click_uri, torch_enabled, queued_camera, queued_torch,
         prompt, selected_nodes, selected_targets,
@@ -11041,7 +11008,7 @@ def create_handler(
                     return
                 if parsed.path == "/api/scanner/session":
                     payload = _read_json(self)
-                    _json_response(self, 200, scanner_session(db, payload))
+                    _json_response(self, 200, _scanner_session_impl(_scanner_bridge_deps(), db, payload))
                     return
                 _json_response(self, 404, {"ok": False, "error": "not found"})
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
