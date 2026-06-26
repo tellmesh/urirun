@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from urirun import _registry as reglib, v2
+from urirun import _registry as reglib, v2, v2_service
 from urirun.node import keyauth
 from urirun.node._artifacts import compact_result_artifacts
 from urirun.node._util import _parse_json_option, json_load
@@ -542,7 +542,9 @@ def _host_cmd_ask(args: argparse.Namespace, config: dict, mesh: dict) -> int:
     if getattr(args, "flow_out", None):
         write_flow_document(args.flow_out, flow_document(flow, prompt=prompt, generator=generator), getattr(args, "flow_format", None))
     registry = registry_from_routes(mesh["routes"])
-    execution = execute_flow(flow, mesh, registry, execute=args.execute)
+    _run_mode = "execute" if args.execute else "dry-run"
+    _dispatch = lambda _uri, _payload: v2_service.call(_uri, _payload, registry, mode=_run_mode)
+    execution = execute_flow(flow, mesh, registry, execute=args.execute, dispatch_uri=_dispatch)
     result = {"ok": execution["ok"], "prompt": prompt, "generator": generator, "flow": flow, **execution}
     if getattr(args, "flow_out", None):
         result["flowOut"] = args.flow_out

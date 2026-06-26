@@ -254,6 +254,11 @@ def _thin_driver(
 
     envelope.record(_THIN_GOAL_URI, "call")
     goal_r = dispatch_uri(_THIN_GOAL_URI, {"goal": envelope.goal, "results": results}) or {}
+    # Treat "route not found" (registry error) as pass — the goal-verify handler is optional;
+    # when the twin connector isn't loaded the flow still completes normally.
+    _goal_err_type = (goal_r.get("error") or {}).get("type")
+    if not goal_r.get("ok", True) and _goal_err_type == "registry":
+        goal_r = {"ok": True, "goalMet": True, "skipped": "no-verify-handler"}
     goal_ok = goal_r.get("ok", True)
     envelope.record(_THIN_GOAL_URI, "return", ok=goal_ok, next=_next_kind(goal_r))
     if not goal_ok:
@@ -1092,6 +1097,27 @@ def _run_step(
         return env, timeline_entries, recovery_entries, True
 
 
+def _self_heal_via_uri(step: dict, entry: dict, routes: list, env_profile: dict | None,
+                       surface: dict | None, registry: dict, dispatch_uri,
+                       diagnosis: dict) -> tuple[dict, list[dict]]:
+    """Classify + remediate through dispatch_uri (observable URI bus path)."""
+    node = route_target(step.get("uri") or "") or "host"
+    cls = dispatch_uri(
+        f"diag://{node}/error/command/classify",
+        {"error": entry["error"], "step": step, "routes": routes,
+         "environment": env_profile, "surface": surface},
+    ) or {}
+    if cls.get("ok") and cls.get("diagnosis"):
+        diagnosis = cls["diagnosis"]
+    elif env_profile:
+        diagnosis = fit_to_environment(diagnosis, env_profile)
+    rem = dispatch_uri(
+        f"fix://{node}/error/command/remediate",
+        {"diagnosis": diagnosis, "registry": registry},
+    ) or {}
+    return diagnosis, rem.get("applied") or []
+
+
 def _attempt_self_heal(
     step: dict,
     entry: dict,
@@ -1115,27 +1141,10 @@ def _attempt_self_heal(
         return None, False
     env_profile = _fetch_env_profile(step, registry)
     surface = _fetch_surface(step, registry)
-
     if dispatch_uri is not None:
-        # URI path: classify goes through the bus → observable, gateable, remotable
-        node = route_target(step.get("uri") or "") or "host"
-        classify_result = dispatch_uri(
-            f"diag://{node}/error/command/classify",
-            {"error": entry["error"], "step": step, "routes": routes,
-             "environment": env_profile, "surface": surface},
-        ) or {}
-        if classify_result.get("ok") and classify_result.get("diagnosis"):
-            diagnosis = classify_result["diagnosis"]
-        elif env_profile:
-            diagnosis = fit_to_environment(diagnosis, env_profile)
-
-        remediate_result = dispatch_uri(
-            f"fix://{node}/error/command/remediate",
-            {"diagnosis": diagnosis, "registry": registry},
-        ) or {}
-        applied = remediate_result.get("applied") or []
+        diagnosis, applied = _self_heal_via_uri(
+            step, entry, routes, env_profile, surface, registry, dispatch_uri, diagnosis)
     else:
-        # Direct path: same behaviour as before; no new dependency
         recontext = diagnose(entry["error"], step=step, routes=routes,
                              environment=env_profile, surface=surface)
         if recontext:
@@ -1143,7 +1152,6 @@ def _attempt_self_heal(
         elif env_profile:
             diagnosis = fit_to_environment(diagnosis, env_profile)
         applied = apply_auto_remediation(diagnosis, registry)
-
     healed_ok = any(a.get("ok") for a in applied)
     heal_entry = {"id": f"{step['id']}:self-heal", "uri": step["uri"],
                   "target": route_target(step["uri"]), "ok": healed_ok, "type": "recovery",

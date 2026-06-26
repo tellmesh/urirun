@@ -3613,7 +3613,11 @@ def _chat_ask_general(
             _recall = _suggest_recall(flow, twin_memory)
         else:
             _recall = None
-        execution = mesh.execute_flow(flow, discovered, registry, execute=execute, memory=twin_memory)
+        from urirun import v2_service as _v2  # noqa: PLC0415
+        _run_mode = "execute" if execute else "dry-run"
+        _dispatch = lambda _uri, _payload: _v2.call(_uri, _payload, registry, mode=_run_mode)
+        execution = mesh.execute_flow(flow, discovered, registry, execute=execute, memory=twin_memory,
+                                      dispatch_uri=_dispatch)
     finally:
         _restore_run_credentials(old_token, old_identity)
     result = _chat_ask_general_build_result(

@@ -12,7 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
-from urirun import _registry as reglib, v2
+from urirun import _registry as reglib, v2, v2_service
 from urirun.node._util import _parse_json_option
 from urirun.node.config import host_config_for_args
 from urirun.node.flow import execute_flow, make_flow
@@ -109,7 +109,9 @@ def _run_task_flow(args: argparse.Namespace, ticket: dict, *, mutate: bool) -> d
         mesh = discover_mesh(config)
         flow, generator = make_flow(prompt, mesh, selected_nodes=args.node, use_llm=not args.no_llm)
         registry = registry_from_routes(mesh["routes"])
-        execution = execute_flow(flow, mesh, registry, execute=args.execute)
+        _run_mode = "execute" if args.execute else "dry-run"
+        _dispatch = lambda _uri, _payload: v2_service.call(_uri, _payload, registry, mode=_run_mode)
+        execution = execute_flow(flow, mesh, registry, execute=args.execute, dispatch_uri=_dispatch)
 
     result = {
         "ok": execution["ok"],
