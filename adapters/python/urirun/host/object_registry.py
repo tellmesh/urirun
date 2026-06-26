@@ -969,3 +969,62 @@ def uri_action_catalog() -> list[dict]:
     ]
 
 
+
+
+def node_add(config: "str | None", payload: dict, *, normalize_node_type: "Any" = None,
+             node_type_tags: "Any" = None) -> dict:
+    """Persist a node (name + URL) to the host config so the host resolves it for real runs, and
+    mirror it to ~/.urirun/nodes.json so urifix can auto-repair node_url."""
+    from urirun.node import config as node_config  # noqa: PLC0415
+    payload = payload if isinstance(payload, dict) else {}
+    name = str(payload.get("name") or "").strip()
+    raw_url = str(payload.get("url") or "").strip()
+    kind = normalize_node_type(payload.get("kind") or payload.get("type") or payload.get("nodeType")) if normalize_node_type else None
+    if not name or not raw_url:
+        return {"ok": False, "error": "name and url are required"}
+    try:
+        url = node_config._coerce_node_url(raw_url)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    apis, api_error = normalize_node_apis(name, url, kind, payload)
+    if api_error:
+        return {"ok": False, "error": api_error}
+    capabilities = derive_node_capabilities(payload, apis)
+    meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else None
+    tags = node_type_tags(kind, payload.get("tags")) if (node_type_tags and kind) else None
+    updated, persist_error = persist_node_to_config(
+        node_config, config, name, url, tags=tags, apis=apis, capabilities=capabilities, meta=meta,
+    )
+    if persist_error:
+        return {"ok": False, "error": persist_error}
+    if kind:
+        set_node_kind(name, kind)
+    mirror_node_to_nodes_file(name, url)
+    return {"ok": True, "node": build_node_entry(name, url, kind, apis, capabilities), "nodes": updated.get("nodes", [])}
+
+
+def node_remove(config: "str | None", payload: dict, *, forget_webpage: "Any" = None) -> dict:
+    """Remove a node from host config, nodes.json mirror, kind sidecar, and optionally the
+    android-node service for transient webpage nodes."""
+    from urirun.node import config as node_config  # noqa: PLC0415
+    payload = payload if isinstance(payload, dict) else {}
+    name = str(payload.get("name") or "").strip()
+    transient = bool(payload.get("transient"))
+    if not name:
+        return {"ok": False, "error": "name is required"}
+    removed = False
+    try:
+        cfg = node_config.load_host_config(config)
+        nodes = cfg.get("nodes", [])
+        kept = [n for n in nodes if n.get("name") != name]
+        if len(kept) != len(nodes):
+            cfg["nodes"] = kept
+            node_config.save_host_config(cfg, config)
+            removed = True
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "error": f"could not update host config: {exc}"}
+    if node_remove_from_mirror(name):
+        removed = True
+    node_remove_kind(name)
+    forgot = forget_webpage(name) if (forget_webpage and (transient or not removed)) else False
+    return {"ok": True, "name": name, "removed": removed, "forgot": forgot, "transient": transient}

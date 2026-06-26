@@ -174,6 +174,8 @@ from .object_registry import (
     set_node_kind as _set_node_kind,
     node_remove_kind as _node_remove_kind,
     annotate_node_kinds as _annotate_node_kinds,
+    node_add as _node_add_impl,
+    node_remove as _node_remove_impl,
 )
 from .connector_admin import (
     CONNECTOR_DOCKER_TIMEOUT as _CONNECTOR_DOCKER_TIMEOUT,
@@ -348,6 +350,16 @@ def _prune_scanner_staging(*, min_interval: float = 60.0) -> int:
 def _archive_scanned_document(**kwargs):
     """Wrapper: injects the patchable _docid_for_file so tests can monkeypatch it."""
     return _archive_scanned_document_impl(**kwargs, docid_fn=_docid_for_file)
+
+
+def node_add(config, payload):
+    return _node_add_impl(config, payload,
+                          normalize_node_type=_normalize_node_type_impl,
+                          node_type_tags=_node_type_tags_impl)
+
+
+def node_remove(config, payload):
+    return _node_remove_impl(config, payload)
 
 
 def artifacts_delete(project, artifact_dir, payload, db=None):
@@ -1890,37 +1902,12 @@ def _compact_chat_result(result: dict, payload: dict) -> dict:
         compacted["artifacts"] = artifacts
     return compacted
 
-
 def node_add(config: str | None, payload: dict) -> dict:
-    """Persist a node (name + URL) to the host config so the host resolves it for real runs, and
-    mirror it to ~/.urirun/nodes.json so urifix can auto-repair node_url. Reuses the canonical
-    node/config.add_node helper (same path as `urirun host add-node`) — no bespoke writer."""
-    from urirun.node import config as node_config
-    payload = payload if isinstance(payload, dict) else {}
-    name = str(payload.get("name") or "").strip()
-    raw_url = str(payload.get("url") or "").strip()
-    kind = _normalize_node_type_impl(payload.get("kind") or payload.get("type") or payload.get("nodeType"))
-    if not name or not raw_url:
-        return {"ok": False, "error": "name and url are required"}
-    try:
-        url = node_config._coerce_node_url(raw_url)  # accepts URL or host[:port], defaults :8765
-    except ValueError as exc:
-        return {"ok": False, "error": str(exc)}
-    apis, api_error = _normalize_node_apis(name, url, kind, payload)
-    if api_error:
-        return {"ok": False, "error": api_error}
-    capabilities = _derive_node_capabilities(payload, apis)
-    meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else None
-    tags = _node_type_tags_impl(kind, payload.get("tags")) if kind else None
-    updated, persist_error = _persist_node_to_config(
-        node_config, config, name, url, tags=tags, apis=apis, capabilities=capabilities, meta=meta,
-    )
-    if persist_error:
-        return {"ok": False, "error": persist_error}
-    if kind:
-        _set_node_kind(name, kind)  # sidecar so the dashboard can badge the node type
-    _mirror_node_to_nodes_file(name, url)
-    return {"ok": True, "node": _build_node_entry(name, url, kind, apis, capabilities), "nodes": updated.get("nodes", [])}
+    return _node_add_impl(config, payload, normalize_node_type=_normalize_node_type_impl, node_type_tags=_node_type_tags_impl)
+
+
+def node_remove(config: str | None, payload: dict) -> dict:
+    return _node_remove_impl(config, payload, forget_webpage=_node_forget_webpage)
 
 
 def configured_node_api_request(config: str | None, node_urls: list[str] | None, payload: dict,
@@ -1953,41 +1940,6 @@ def _node_forget_webpage(name: str) -> bool:
             return bool(json.loads(resp.read() or "{}").get("ok"))
     except Exception:  # noqa: BLE001 - service may be down or lack the endpoint
         return False
-
-
-def node_remove(config: str | None, payload: dict) -> dict:
-    """Remove a node. Persistent nodes are dropped from host config + the nodes.json mirror +
-    the kind sidecar. Transient (live webpage) nodes aren't in config — they are forgotten in
-    the android-node service (port 8195) so they stop reappearing on the next summary poll."""
-    from urirun.node import config as node_config
-    payload = payload if isinstance(payload, dict) else {}
-    name = str(payload.get("name") or "").strip()
-    transient = bool(payload.get("transient"))
-    if not name:
-        return {"ok": False, "error": "name is required"}
-
-    removed = False
-    # 1. host config
-    try:
-        cfg = node_config.load_host_config(config)
-        nodes = cfg.get("nodes", [])
-        kept = [n for n in nodes if n.get("name") != name]
-        if len(kept) != len(nodes):
-            cfg["nodes"] = kept
-            node_config.save_host_config(cfg, config)
-            removed = True
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "error": f"could not update host config: {exc}"}
-
-    # 2. nodes.json mirror (urifix)  3. kind sidecar  4. transient webpage forget
-    if _node_remove_from_mirror(name):
-        removed = True
-    _node_remove_kind(name)
-    forgot = _node_forget_webpage(name) if (transient or not removed) else False
-
-    return {"ok": True, "name": name, "removed": removed, "forgot": forgot, "transient": transient}
-
-
 def _android_node_service_url() -> str:
     host = _lan_host()
     port = int(os.environ.get("URIRUN_ANDROID_NODE_PORT") or 8195)
@@ -3637,11 +3589,11 @@ def create_handler(
                     return
                 if parsed.path in {"/api/nodes/add", "/api/nodes/api/add"}:
                     payload = _read_json(self)
-                    _json_response(self, 200, node_add(config, payload))
+                    _json_response(self, 200, _node_add_impl(config, payload, normalize_node_type=_normalize_node_type_impl, node_type_tags=_node_type_tags_impl))
                     return
                 if parsed.path in {"/api/nodes/remove", "/api/nodes/delete"}:
                     payload = _read_json(self)
-                    _json_response(self, 200, node_remove(config, payload))
+                    _json_response(self, 200, _node_remove_impl(config, payload, forget_webpage=_node_forget_webpage))
                     return
                 if parsed.path == "/api/nodes/api/request":
                     payload = _read_json(self)
