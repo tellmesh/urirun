@@ -725,6 +725,49 @@ def _restore_run_credentials(old_token: str | None, old_identity: str | None) ->
         os.environ["URIRUN_RUN_IDENTITY"] = old_identity
 
 
+def _sync_targets_from_flow(
+    flow: dict,
+    discovered: dict,
+    selected_nodes: list[str],
+    selected_targets: list[str],
+) -> tuple[list[str], list[str]]:
+    """Return (nodes, targets) updated to reflect nodes that make_flow actually scheduled.
+
+    When NL inference was skipped or selected_targets defaulted to ["host"], the planner
+    may still route steps to a specific remote node (e.g. env://lenovo/...). This function
+    reads the discovered route table to find the real serving node for each step URI and:
+    - adds newly discovered nodes to selected_nodes / selected_targets
+    - removes the "host" default when ALL steps run on remote nodes (so the result envelope
+      stays consistent with what actually executed and doesn't mislead twin/reporting)."""
+    routes_by_uri = {str(r.get("uri") or ""): r for r in (discovered.get("routes") or []) if r.get("uri")}
+    actual: list[str] = []
+    seen_actual: set[str] = set()
+    has_local = False
+    for step in (flow.get("steps") or []):
+        uri = str(step.get("uri") or "")
+        route = routes_by_uri.get(uri)
+        node = str((route or {}).get("node") or "") if route else ""
+        if not node or node == "host":
+            has_local = True
+        elif node not in seen_actual:
+            actual.append(node)
+            seen_actual.add(node)
+    new_nodes = [n for n in selected_nodes if n not in seen_actual]
+    new_nodes.extend(actual)
+    if set(new_nodes) == set(selected_nodes):
+        return selected_nodes, selected_targets
+    # Rebuild targets: keep explicitly requested non-host targets; keep "host" only if
+    # some steps are local; add node: entries for newly discovered remote nodes.
+    existing_remote = {t.split(":", 1)[1] for t in selected_targets if t.startswith("node:")}
+    targets: list[str] = [t for t in selected_targets if t.startswith("node:")]
+    if has_local:
+        targets = ["host"] + targets
+    for node in actual:
+        if node not in existing_remote:
+            targets.append(f"node:{node}")
+    return new_nodes, targets
+
+
 def _fetch_planner_environments_for_nodes(mesh: Any, selected_nodes: list[str], execute: bool,
                                           registry: Any, discovered: dict, *, memory: Any = None) -> list:
     """Fetch grounded env/surface contexts for reachable selected nodes (only when executing).
@@ -1012,6 +1055,8 @@ def _chat_ask_general(
             if flow is None:
                 flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes,
                                                  use_llm=not no_llm, environments=environments)
+            selected_nodes, selected_targets = _sync_targets_from_flow(
+                flow, discovered, selected_nodes, selected_targets)
         except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
             return _chat_ask_general_planner_failure(exc, db, prompt, execute, selected_nodes, selected_targets, deps)
         if twin_memory is not None:
