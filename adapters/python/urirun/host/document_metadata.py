@@ -23,9 +23,7 @@ try:
 except Exception:  # noqa: BLE001 - docid is optional; metadata still works without it.
     _dedup_normalize_text = None
 
-
-def _truthy_env(name: str, default: str = "0") -> bool:
-    return str(os.environ.get(name, default)).strip().lower() in {"1", "true", "yes", "on"}
+from urirun.host.document_sync import truthy_env as _truthy_env
 
 def _local_image_ocr_tesseract(path: str) -> dict:
     if not shutil_which("tesseract"):

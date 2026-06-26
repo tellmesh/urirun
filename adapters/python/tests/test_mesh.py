@@ -1612,7 +1612,8 @@ def test_deploy_command_uses_transient_node_url(tmp_path, monkeypatch, capsys):
         seen["merge"] = kwargs.get("merge")
         return {"ok": True, "url": url}
 
-    monkeypatch.setattr(nodemesh, "deploy_to_node", fake_deploy)
+    from urirun.node import node_cli as _node_cli
+    monkeypatch.setattr(_node_cli, "deploy_to_node", fake_deploy)
     args = argparse.Namespace(config=str(config_path), node="laptop",
                               node_url=["laptop=http://192.168.188.201:8766"],
                               bindings=str(bindings_path), code=[], allow=[], env=[],

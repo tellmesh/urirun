@@ -41,6 +41,7 @@ from .document_sync import (
     document_filename_with_id as _document_filename_with_id,
     document_files_exist as _document_files_exist,
     document_index_path as _document_index_path,
+    scanned_id_log_path as _scanned_id_log_path,
     document_schema_fields as _document_schema_fields,
     document_sync_auto_retry_enabled as _document_sync_auto_retry_enabled,
     document_sync_default_dest_root as _document_sync_default_dest_root,
@@ -5559,11 +5560,6 @@ def _prompt_node_match(prompt: str, alias_map: dict[str, str]) -> str:
     return _prompt_node_match_impl(prompt, alias_map)
 
 
-def _scanned_id_log_path() -> Path:
-    configured = os.environ.get("URIRUN_SCANNED_ID_LOG")
-    return Path(configured).expanduser().resolve() if configured else _document_archive_root() / "scanned.id.jsonl"
-
-
 def _utc_now() -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 
@@ -6207,6 +6203,46 @@ def _existing_document(index: dict, *, doc_id: str, source_sha256: str, text_sha
             return item
     return None
 
+
+
+def _draw_crop_box(draw: Any, canvas: Any, color: tuple, box: Any, scale: float,
+                   original_width: int, original_height: int) -> None:
+    if box and len(box) == 4:
+        left, top, right, bottom = (float(v) for v in box)
+        scaled_box = (
+            int(max(0, min(original_width, left)) * scale),
+            int(max(0, min(original_height, top)) * scale),
+            int(max(0, min(original_width, right)) * scale),
+            int(max(0, min(original_height, bottom)) * scale),
+        )
+        for offset in range(4):
+            draw.rectangle(
+                (scaled_box[0] - offset, scaled_box[1] - offset,
+                 scaled_box[2] + offset, scaled_box[3] + offset),
+                outline=color,
+            )
+    else:
+        draw.rectangle((3, 3, canvas.size[0] - 4, canvas.size[1] - 4), outline=color, width=4)
+
+
+def _draw_overlay_label(draw: Any, canvas: Any, crop: dict, quality: dict | None, ok: bool) -> None:
+    from PIL import ImageFont
+    score = (quality or {}).get("score")
+    label_parts = [
+        "crop:ok" if ok else "crop:rejected",
+        str(crop.get("method") or crop.get("reason") or ""),
+        f"score={score}" if score is not None else "",
+    ]
+    label = " | ".join(part for part in label_parts if part)[:180]
+    font = ImageFont.load_default()
+    try:
+        text_box = draw.textbbox((0, 0), label, font=font)
+        text_width, text_height = text_box[2] - text_box[0], text_box[3] - text_box[1]
+    except Exception:  # noqa: BLE001
+        text_width = min(canvas.size[0] - 16, max(80, len(label) * 6))
+        text_height = 12
+    draw.rectangle((6, 6, min(canvas.size[0] - 6, text_width + 18), text_height + 18), fill=(0, 0, 0))
+    draw.text((12, 10), label, fill=(255, 255, 255), font=font)
 
 
 def _scanner_crop_overlay(original_path: str | Path, crop: dict, quality: dict | None = None) -> dict:

@@ -1,48 +1,78 @@
-# redup/duplication | 15 groups | 104f 37616L | 2026-06-26
+# redup/duplication | 25 groups | 106f 38084L | 2026-06-26
 
 SUMMARY:
-  files_scanned: 104
-  total_lines:   37616
-  dup_groups:    15
-  dup_fragments: 37
-  saved_lines:   135
-  scan_ms:       1181
+  files_scanned: 106
+  total_lines:   38084
+  dup_groups:    25
+  dup_fragments: 57
+  saved_lines:   241
+  scan_ms:       1095
 
 HOTSPOTS[7] (files with most duplication):
-  host/host_dashboard.py  dup=70L  groups=5  frags=11  (0.2%)
+  host/host_dashboard.py  dup=174L  groups=14  frags=20  (0.5%)
+  host/artifacts_admin.py  dup=106L  groups=10  frags=10  (0.3%)
   __init__.py  dup=38L  groups=1  frags=3  (0.1%)
   runtime/v2.py  dup=35L  groups=4  frags=9  (0.1%)
   host/service_control.py  dup=20L  groups=1  frags=2  (0.1%)
   runtime/worker.py  dup=8L  groups=1  frags=2  (0.0%)
-  host/planfile_adapter.py  dup=6L  groups=1  frags=2  (0.0%)
-  node/config.py  dup=6L  groups=1  frags=2  (0.0%)
+  host/document_sync.py  dup=6L  groups=1  frags=2  (0.0%)
 
-DUPLICATES[15] (ranked by impact):
+DUPLICATES[25] (ranked by impact):
   [a58866334f01e99a] ! STRU  command  L=16 N=3 saved=32 sim=1.00
       __init__.py:47-62  (command)
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=3 saved=26 sim=1.00
-      host/host_dashboard.py:11353-11365  (_free_port_from_old_scanner)
-      host/host_dashboard.py:11368-11376  (_free_port_from_old_chat)
-      host/host_dashboard.py:11379-11387  (_free_port_from_old_android_node)
+      host/host_dashboard.py:10633-10645  (_free_port_from_old_scanner)
+      host/host_dashboard.py:10648-10656  (_free_port_from_old_chat)
+      host/host_dashboard.py:10659-10667  (_free_port_from_old_android_node)
+  [6a3052825d5fdd2d]   STRU  artifact_delete_candidate_paths  L=20 N=2 saved=20 sim=1.00
+      host/artifacts_admin.py:74-93  (artifact_delete_candidate_paths)
+      host/host_dashboard.py:9998-10018  (_artifact_delete_candidate_paths)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
       runtime/v2.py:1533-1536  (_cmd_add_openapi)
       runtime/v2.py:1539-1542  (_cmd_gen)
       runtime/v2.py:1772-1775  (_cmd_agent)
       runtime/v2.py:1850-1853  (_cmd_host)
       runtime/v2.py:1856-1859  (_cmd_node)
+  [2ea85b249508e4bc]   STRU  safe_artifact_sidecar_path  L=14 N=2 saved=14 sim=1.00
+      host/artifacts_admin.py:58-71  (safe_artifact_sidecar_path)
+      host/host_dashboard.py:9982-9995  (_safe_artifact_sidecar_path)
+  [bcebcc2e3d49858c]   STRU  artifact_delete_roots  L=13 N=2 saved=13 sim=1.00
+      host/artifacts_admin.py:9-21  (artifact_delete_roots)
+      host/host_dashboard.py:9933-9945  (_artifact_delete_roots)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:8235-8238  (_host_db)
-      host/host_dashboard.py:8241-8244  (_mesh)
-      host/host_dashboard.py:8247-8250  (_planfile_adapter)
+      host/host_dashboard.py:8063-8066  (_host_db)
+      host/host_dashboard.py:8069-8072  (_mesh)
+      host/host_dashboard.py:8075-8078  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
+  [aa6965110dc4d4dd]   STRU  payload_bool  L=11 N=2 saved=11 sim=1.00
+      host/artifacts_admin.py:35-45  (payload_bool)
+      host/host_dashboard.py:9959-9969  (_payload_bool)
   [19899f9cfc86ca65]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
+  [8fa9e488d5245c81]   STRU  artifact_file_delete_allowed  L=9 N=2 saved=9 sim=1.00
+      host/artifacts_admin.py:24-32  (artifact_file_delete_allowed)
+      host/host_dashboard.py:9948-9956  (_artifact_file_delete_allowed)
+  [6f21e54489b56da6]   STRU  artifact_dedupe_key  L=9 N=2 saved=9 sim=1.00
+      host/artifacts_admin.py:144-152  (artifact_dedupe_key)
+      host/host_dashboard.py:5244-5252  (_artifact_dedupe_key)
+  [4e533b3e944837c5]   STRU  artifact_dedupe_rank  L=9 N=2 saved=9 sim=1.00
+      host/artifacts_admin.py:155-163  (artifact_dedupe_rank)
+      host/host_dashboard.py:5255-5263  (_artifact_dedupe_rank)
   [926b8a3d766222d9]   STRU  _chat_document_sync_response  L=9 N=2 saved=9 sim=1.00
-      host/host_dashboard.py:10270-10278  (_chat_document_sync_response)
-      host/host_dashboard.py:10281-10289  (_chat_generic_response)
+      host/host_dashboard.py:9550-9558  (_chat_document_sync_response)
+      host/host_dashboard.py:9561-9569  (_chat_generic_response)
+  [a654cbdf4c02e98a]   STRU  global_document_metadata_paths  L=8 N=2 saved=8 sim=1.00
+      host/artifacts_admin.py:48-55  (global_document_metadata_paths)
+      host/host_dashboard.py:9972-9979  (_global_document_metadata_paths)
+  [41877551257aa5a0]   STRU  artifact_file_exists  L=7 N=2 saved=7 sim=1.00
+      host/artifacts_admin.py:135-141  (artifact_file_exists)
+      host/host_dashboard.py:5175-5181  (_artifact_file_exists)
+  [03ce3a74953d9beb]   STRU  artifact_visual_path  L=6 N=2 saved=6 sim=1.00
+      host/artifacts_admin.py:127-132  (artifact_visual_path)
+      host/host_dashboard.py:5167-5172  (_artifact_visual_path)
   [3fed59bde8ae1620]   EXAC  replace  L=5 N=2 saved=5 sim=1.00
       runtime/v1.py:68-72  (replace)
       runtime/v2.py:507-511  (replace)
@@ -51,10 +81,10 @@ DUPLICATES[15] (ranked by impact):
       runtime/worker.py:187-190  (close)
   [cdb2ba2d3a97a0f6]   STRU  document_index_path  L=3 N=2 saved=3 sim=1.00
       host/document_sync.py:24-26  (document_index_path)
-      host/host_dashboard.py:5497-5499  (_scanned_id_log_path)
+      host/document_sync.py:578-580  (scanned_id_log_path)
   [bed22d936aabe8e2]   STRU  _api_checks  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:10961-10963  (_api_checks)
-      host/host_dashboard.py:10966-10968  (_api_logs)
+      host/host_dashboard.py:10241-10243  (_api_checks)
+      host/host_dashboard.py:10246-10248  (_api_logs)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
@@ -65,91 +95,129 @@ DUPLICATES[15] (ranked by impact):
       node/doctor.py:74-76  (_api_id)
       node/transport.py:407-409  (_configured_api_id)
   [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
-      node/mesh.py:252-254  (_data_artifact_register)
-      node/mesh.py:261-263  (_data_check_add)
+      node/node_cli.py:96-98  (_data_artifact_register)
+      node/node_cli.py:105-107  (_data_check_add)
   [79640e1194086855]   STRU  planfile_task_bindings  L=3 N=2 saved=3 sim=1.00
       runtime/v2.py:640-642  (planfile_task_bindings)
       runtime/v2.py:649-651  (host_data_bindings)
 
-REFACTOR[15] (ranked by priority):
+REFACTOR[25] (ranked by priority):
   [1] ○ extract_function   → utils/command.py
       WHY: 3 occurrences of 16-line block across 1 files — saves 32 lines
       FILES: __init__.py
   [2] ○ extract_function   → host/utils/_free_port_from_old_scanner.py
       WHY: 3 occurrences of 13-line block across 1 files — saves 26 lines
       FILES: host/host_dashboard.py
-  [3] ○ extract_function   → runtime/utils/_cmd_add_openapi.py
+  [3] ○ extract_function   → host/utils/artifact_delete_candidate_paths.py
+      WHY: 2 occurrences of 20-line block across 2 files — saves 20 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [4] ○ extract_function   → runtime/utils/_cmd_add_openapi.py
       WHY: 5 occurrences of 4-line block across 1 files — saves 16 lines
       FILES: runtime/v2.py
-  [4] ○ extract_function   → utils/_host_db.py
+  [5] ○ extract_function   → host/utils/safe_artifact_sidecar_path.py
+      WHY: 2 occurrences of 14-line block across 2 files — saves 14 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [6] ○ extract_function   → host/utils/artifact_delete_roots.py
+      WHY: 2 occurrences of 13-line block across 2 files — saves 13 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [7] ○ extract_function   → utils/_host_db.py
       WHY: 4 occurrences of 4-line block across 2 files — saves 12 lines
       FILES: host/host_dashboard.py, runtime/v2.py
-  [5] ○ extract_function   → host/utils/is_scanner_process.py
+  [8] ○ extract_function   → host/utils/payload_bool.py
+      WHY: 2 occurrences of 11-line block across 2 files — saves 11 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [9] ○ extract_function   → host/utils/is_scanner_process.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: host/service_control.py
-  [6] ○ extract_function   → host/utils/_chat_document_sync_response.py
+  [10] ○ extract_function   → host/utils/artifact_file_delete_allowed.py
+      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [11] ○ extract_function   → host/utils/artifact_dedupe_key.py
+      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [12] ○ extract_function   → host/utils/artifact_dedupe_rank.py
+      WHY: 2 occurrences of 9-line block across 2 files — saves 9 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [13] ○ extract_function   → host/utils/_chat_document_sync_response.py
       WHY: 2 occurrences of 9-line block across 1 files — saves 9 lines
       FILES: host/host_dashboard.py
-  [7] ○ extract_function   → runtime/utils/replace.py
+  [14] ○ extract_function   → host/utils/global_document_metadata_paths.py
+      WHY: 2 occurrences of 8-line block across 2 files — saves 8 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [15] ○ extract_function   → host/utils/artifact_file_exists.py
+      WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [16] ○ extract_function   → host/utils/artifact_visual_path.py
+      WHY: 2 occurrences of 6-line block across 2 files — saves 6 lines
+      FILES: host/artifacts_admin.py, host/host_dashboard.py
+  [17] ○ extract_function   → runtime/utils/replace.py
       WHY: 2 occurrences of 5-line block across 2 files — saves 5 lines
       FILES: runtime/v1.py, runtime/v2.py
-  [8] ○ extract_function   → runtime/utils/close.py
+  [18] ○ extract_function   → runtime/utils/close.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: runtime/worker.py
-  [9] ○ extract_function   → host/utils/document_index_path.py
-      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
-      FILES: host/document_sync.py, host/host_dashboard.py
-  [10] ○ extract_function   → host/utils/_api_checks.py
+  [19] ○ extract_function   → host/utils/document_index_path.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: host/document_sync.py
+  [20] ○ extract_function   → host/utils/_api_checks.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/host_dashboard.py
-  [11] ○ extract_function   → host/utils/start_ticket.py
+  [21] ○ extract_function   → host/utils/start_ticket.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/planfile_adapter.py
-  [12] ○ extract_function   → node/utils/save_host_config.py
+  [22] ○ extract_function   → node/utils/save_host_config.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/config.py
-  [13] ○ extract_function   → node/utils/_api_id.py
+  [23] ○ extract_function   → node/utils/_api_id.py
       WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
       FILES: node/doctor.py, node/transport.py
-  [14] ○ extract_function   → node/utils/_data_artifact_register.py
+  [24] ○ extract_function   → node/utils/_data_artifact_register.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
-      FILES: node/mesh.py
-  [15] ○ extract_function   → runtime/utils/planfile_task_bindings.py
+      FILES: node/node_cli.py
+  [25] ○ extract_function   → runtime/utils/planfile_task_bindings.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: runtime/v2.py
 
-QUICK_WINS[6] (low risk, high savings — do first):
+QUICK_WINS[16] (low risk, high savings — do first):
   [1] extract_function   saved=32L  → utils/command.py
       FILES: __init__.py
   [2] extract_function   saved=26L  → host/utils/_free_port_from_old_scanner.py
       FILES: host_dashboard.py
-  [3] extract_function   saved=16L  → runtime/utils/_cmd_add_openapi.py
+  [3] extract_function   saved=20L  → host/utils/artifact_delete_candidate_paths.py
+      FILES: artifacts_admin.py, host_dashboard.py
+  [4] extract_function   saved=16L  → runtime/utils/_cmd_add_openapi.py
       FILES: v2.py
-  [4] extract_function   saved=12L  → utils/_host_db.py
+  [5] extract_function   saved=14L  → host/utils/safe_artifact_sidecar_path.py
+      FILES: artifacts_admin.py, host_dashboard.py
+  [6] extract_function   saved=13L  → host/utils/artifact_delete_roots.py
+      FILES: artifacts_admin.py, host_dashboard.py
+  [7] extract_function   saved=12L  → utils/_host_db.py
       FILES: host_dashboard.py, v2.py
-  [5] extract_function   saved=10L  → host/utils/is_scanner_process.py
+  [8] extract_function   saved=11L  → host/utils/payload_bool.py
+      FILES: artifacts_admin.py, host_dashboard.py
+  [9] extract_function   saved=10L  → host/utils/is_scanner_process.py
       FILES: service_control.py
-  [6] extract_function   saved=9L  → host/utils/_chat_document_sync_response.py
-      FILES: host_dashboard.py
+  [10] extract_function   saved=9L  → host/utils/artifact_file_delete_allowed.py
+      FILES: artifacts_admin.py, host_dashboard.py
 
 DEPENDENCY_RISK[1] (duplicates spanning multiple packages):
   _host_db  packages=2  files=2
       host/host_dashboard.py
       runtime/v2.py
 
-EFFORT_ESTIMATE (total ≈ 4.9h):
+EFFORT_ESTIMATE (total ≈ 8.4h):
   medium command                             saved=32L  ~64min
   medium _free_port_from_old_scanner         saved=26L  ~52min
+  medium artifact_delete_candidate_paths     saved=20L  ~40min
   medium _cmd_add_openapi                    saved=16L  ~32min
+  easy   safe_artifact_sidecar_path          saved=14L  ~28min
+  easy   artifact_delete_roots               saved=13L  ~26min
   medium _host_db                            saved=12L  ~48min
+  easy   payload_bool                        saved=11L  ~22min
   easy   is_scanner_process                  saved=10L  ~20min
-  easy   _chat_document_sync_response        saved=9L  ~18min
-  easy   replace                             saved=5L  ~10min
-  easy   close                               saved=4L  ~8min
-  easy   document_index_path                 saved=3L  ~6min
-  easy   _api_checks                         saved=3L  ~6min
-  ... +5 more (~30min)
+  easy   artifact_file_delete_allowed        saved=9L  ~18min
+  ... +15 more (~156min)
 
 METRICS-TARGET:
-  dup_groups:  15 → 0
-  saved_lines: 135 lines recoverable
+  dup_groups:  25 → 0
+  saved_lines: 241 lines recoverable

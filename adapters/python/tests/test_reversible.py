@@ -379,6 +379,34 @@ class PlannerContextTests(unittest.TestCase):
         type_rule = [g for g in ctx["guidance"] if "TYPE" in g and "NOT EXECUTABLE" in g]
         self.assertFalse(type_rule, "no type-ban when actionMatrix is absent")
 
+    def test_planner_context_emits_constraints_key(self):
+        """planner_context always returns a 'constraints' list (may be empty)."""
+        ctx = planner_context("lap", self.CDP)
+        self.assertIn("constraints", ctx)
+        self.assertIsInstance(ctx["constraints"], list)
+
+    def test_planner_context_constraints_infeasible_for_wayland_type(self):
+        """When atspi/uinput type=not_executable, constraints contain infeasible entries for type paths."""
+        matrix = {
+            "atspi":  {"type": "not_executable"},
+            "uinput": {"type": "not_executable"},
+            "cdp":    {"type": "executable"},
+        }
+        ctx = planner_context("lap", {**self.CDP, "actionMatrix": matrix})
+        infeasible = [c for c in ctx["constraints"] if c.get("kind") == "infeasible"]
+        self.assertTrue(infeasible, "should have infeasible constraints when atspi/uinput type=not_executable")
+        kinds = {c["what"] for c in infeasible}
+        self.assertTrue(any("/input/command/type" in w for w in kinds),
+                        "must cover /input/command/type path")
+        for c in infeasible:
+            self.assertEqual(c["fix"], "/cdp/page/command/fill")
+
+    def test_planner_context_constraints_empty_when_no_wayland_block(self):
+        """When CDP is the only surface and type is executable, no infeasible constraints."""
+        ctx = planner_context("lap", self.CDP)  # no actionMatrix → no Wayland blocks
+        infeasible = [c for c in ctx["constraints"] if c.get("kind") == "infeasible"]
+        self.assertEqual(infeasible, [])
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -293,12 +293,45 @@ def _uri_is_available(uri: str, allowed_uris: set[str]) -> bool:
     return any(_uri_matches_template(uri, allowed) for allowed in allowed_uris if "{" in allowed)
 
 
-def _normalize_flow_step(step: dict, index: int, allowed_uris: set[str], used: set[str], routes: list[dict] | None = None) -> dict:
+def _infeasibility_error(uri: str, c: dict) -> str:
+    """Format the ValueError message for an infeasible step — mirrors 'URI is not available'."""
+    return (
+        f"URI '{uri}' is infeasible on this environment: "
+        f"{c['what']} via surface '{c['surface']}' — {c['reason']} "
+        f"(use '{c['fix']}' instead)"
+    )
+
+
+def _step_is_infeasible(uri: str, infeasible_constraints: list[dict]) -> dict | None:
+    """Return the first infeasible constraint that matches this URI's action suffix, or None.
+
+    A constraint matches when the URI's path contains the forbidden suffix (e.g.
+    '/input/command/type') AND there is no better surface available — detected by checking
+    whether the URI belongs to a blocked OS surface path. This is a structural check:
+    `browser://host/cdp/page/command/fill` does NOT contain '/input/command/type', so CDP
+    fill is never blocked. Only OS-surface routes that share a path suffix with `what`."""
+    for c in infeasible_constraints:
+        if c.get("kind") != "infeasible":
+            continue
+        what = c.get("what") or ""
+        if what and what in uri:
+            return c
+    return None
+
+
+def _normalize_flow_step(step: dict, index: int, allowed_uris: set[str], used: set[str],
+                         routes: list[dict] | None = None,
+                         infeasible_constraints: list[dict] | None = None) -> dict:
     """Validate and canonicalize one flow step; `used` tracks taken ids to keep them unique."""
     uri = str(step.get("uri", ""))
     if not _uri_is_available(uri, allowed_uris):
         raise ValueError(f"URI is not available: {uri}")
-    
+
+    if infeasible_constraints:
+        c = _step_is_infeasible(uri, infeasible_constraints)
+        if c is not None:
+            raise ValueError(_infeasibility_error(uri, c))
+
     payload = step.get("payload") if isinstance(step.get("payload"), dict) else {}
     if routes:
         route = next((r for r in routes if r.get("uri") == uri), None)
@@ -382,13 +415,27 @@ def _inject_cdp_ready_probes(steps: list[dict], allowed_uris: set[str],
     return out
 
 
-def normalize_flow(flow: dict, allowed_uris: set[str], routes: list[dict] | None = None) -> dict:
+def _collect_infeasible_constraints(environments: list[dict] | None) -> list[dict]:
+    """Flatten `constraints` entries with kind='infeasible' from all planner environments."""
+    if not environments:
+        return []
+    result = []
+    for env in environments:
+        for c in (env.get("constraints") or []):
+            if c.get("kind") == "infeasible":
+                result.append(c)
+    return result
+
+
+def normalize_flow(flow: dict, allowed_uris: set[str], routes: list[dict] | None = None,
+                   infeasible_constraints: list[dict] | None = None) -> dict:
     task = flow.get("task") if isinstance(flow.get("task"), dict) else {}
     raw_steps = flow.get("steps")
     if not isinstance(raw_steps, list) or not raw_steps:
         raise ValueError("flow must contain non-empty steps")
     used: set[str] = set()
-    steps = [_normalize_flow_step(step, index, allowed_uris, used, routes=routes)
+    steps = [_normalize_flow_step(step, index, allowed_uris, used, routes=routes,
+                                  infeasible_constraints=infeasible_constraints)
              for index, step in enumerate(raw_steps, start=1)]
     steps = _inject_cdp_ready_probes(steps, allowed_uris, used, routes=routes)
     return {"task": _normalize_flow_task(task), "steps": steps}
@@ -401,9 +448,12 @@ def normalize_flow_or_explain(
     routes: list[dict],
     selected_nodes: list[str] | None = None,
     planner_reason: str = "",
+    environments: list[dict] | None = None,
 ) -> dict:
+    infeasible = _collect_infeasible_constraints(environments)
     try:
-        return normalize_flow(flow, allowed_uris, routes=routes)
+        return normalize_flow(flow, allowed_uris, routes=routes,
+                              infeasible_constraints=infeasible or None)
     except ValueError as exc:
         if str(exc) != "flow must contain non-empty steps":
             raise
@@ -488,6 +538,11 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
                 "Check 'actionMatrix' per node: if an action's value for a surface is 'not_executable' "
                 "or 'blocked', do NOT plan that action on that surface — use the surface where the same "
                 "action is 'executable' instead (e.g. type → cdp only). "
+                "Check 'sessionMap' per node: if the task involves a service (linkedin, google, github…) "
+                "and that service appears in sessionMap with running=false or throwaway=true or cdp_port=null, "
+                "the FIRST step must be cdp/session/command/ensure with copy_from set to the profile path "
+                "from sessionMap — this copies the real session cookies to the CDP profile so navigation "
+                "lands on the logged-in page, NOT the login page. NEVER skip this step for service tasks. "
                 "Use the foreground page's REAL on-screen labels (its language), "
                 "and refuse UI steps where controllable is false."
             ),
@@ -513,6 +568,42 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
     return json_from_text(response.choices[0].message.content)
 
 
+def _build_session_map(browser_sessions: list) -> dict:
+    """Build service→{browser,profile,cdp_port,running,throwaway} from raw browser session list."""
+    session_map: dict[str, dict] = {}
+    for entry in browser_sessions:
+        for svc, active in (entry.get("sessions") or {}).items():
+            if active and svc not in session_map:
+                session_map[svc] = {
+                    "browser": entry.get("browser"),
+                    "profile": entry.get("profile"),
+                    "cdp_port": entry.get("cdp_port"),
+                    "running": entry.get("running", False),
+                    "throwaway": entry.get("throwaway", False),
+                }
+    return session_map
+
+
+def _append_session_guidance(ctx: dict, session_map: dict) -> None:
+    """Append planner guidance lines for each discovered session."""
+    for svc, info in session_map.items():
+        if not info["running"] or info["throwaway"] or info["cdp_port"] is None:
+            profile_path = info.get("profile") or "unknown profile"
+            ctx["guidance"].append(
+                f"SERVICE SESSION '{svc}': session cookies found in {info['browser']} "
+                f"profile '{profile_path}' but that browser is NOT running with CDP. "
+                f"To use this session: launch Chrome with copy_from='{profile_path}' "
+                f"via cdp/session/command/ensure (copies auth files to CDP profile), "
+                f"then proceed with CDP steps. Do NOT navigate to {svc}.com in the "
+                f"throwaway CDP profile — it will show a login page."
+            )
+        elif info["cdp_port"]:
+            ctx["guidance"].append(
+                f"SERVICE SESSION '{svc}': active in {info['browser']} on CDP port "
+                f"{info['cdp_port']}. Use that CDP endpoint for {svc} tasks directly."
+            )
+
+
 def fetch_planner_environments(node_names: list[str], registry: dict, mesh: dict | None = None,
                                *, memory: "TwinMemory | None" = None) -> list[dict]:
     """Best-effort live capability profile + foreground surface per node, formatted as
@@ -531,7 +622,17 @@ def fetch_planner_environments(node_names: list[str], registry: dict, mesh: dict
             if not prof:
                 continue
             surf = _fetch_kvm_query({"uri": f"kvm://{name}/x"}, registry, "surface/query/current", "kind")
-            out.append(planner_context(name, prof, surf, memory=memory))
+            ctx = planner_context(name, prof, surf, memory=memory)
+            # Task-aware session discovery: scan running browsers and installed profiles so the
+            # planner knows which browser/profile is logged in to which service. Cheap, non-blocking.
+            browser_sess = _fetch_kvm_query({"uri": f"kvm://{name}/x"}, registry, "browser/query/sessions", "browsers")
+            if browser_sess is not None:
+                raw = browser_sess.get("browsers", []) if isinstance(browser_sess, dict) else browser_sess
+                ctx["browserSessions"] = raw if isinstance(raw, list) else []
+                session_map = _build_session_map(ctx["browserSessions"])
+                ctx["sessionMap"] = session_map
+                _append_session_guidance(ctx, session_map)
+            out.append(ctx)
     finally:
         if mesh is not None:
             if old_map is None:
@@ -552,6 +653,7 @@ def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, 
                 allowed,
                 routes=routes,
                 selected_nodes=selected_nodes,
+                environments=environments,
             ), {"provider": "litellm", "fallback": False}
         except Exception as exc:  # noqa: BLE001 - host should still be usable without an LLM.
             flow = heuristic_flow(prompt, routes, mesh["nodes"], selected_nodes)
@@ -561,6 +663,7 @@ def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, 
                 routes=routes,
                 selected_nodes=selected_nodes,
                 planner_reason=str(exc),
+                environments=environments,
             ), {"provider": "heuristic", "fallback": True, "reason": str(exc)}
     flow = heuristic_flow(prompt, routes, mesh["nodes"], selected_nodes)
     return normalize_flow_or_explain(
@@ -569,6 +672,7 @@ def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, 
         routes=routes,
         selected_nodes=selected_nodes,
         planner_reason="LLM disabled",
+        environments=environments,
     ), {"provider": "heuristic", "fallback": True, "reason": "LLM disabled"}
 
 

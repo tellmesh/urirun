@@ -1342,7 +1342,7 @@ def test_public_scanner_candidate_exposes_overlay_preview(tmp_path):
     for path in (display, original, overlay):
         path.write_bytes(b"jpg")
 
-    public = host_dashboard._scanner_public_candidate_for_live(
+    public = host_dashboard._scanner_public_candidate_for_live_impl(
         {
             "displayPath": str(display),
             "originalPath": str(original),
@@ -1351,6 +1351,7 @@ def test_public_scanner_candidate_exposes_overlay_preview(tmp_path):
             "crop": {"ok": True},
         },
         str(tmp_path),
+        preview_url=host_dashboard._preview_url,
     )
 
     assert public["previewUrl"].startswith("/api/file?path=")
@@ -1536,10 +1537,11 @@ def test_chat_history_limit_ignores_technical_ask_logs(monkeypatch):
 def test_scanner_live_state_groups_best_candidates(tmp_path):
     image = tmp_path / "candidate.jpg"
     image.write_bytes(b"jpg")
-    host_dashboard._SCANNER_BEST_SESSIONS.clear()
-    host_dashboard._SCANNER_LIVE_STREAMS.clear()
+    from urirun.host import scanner_bridge as _scanner_bridge
+    _scanner_bridge.SCANNER_BEST_SESSIONS.clear()
+    _scanner_bridge.SCANNER_LIVE_STREAMS.clear()
 
-    host_dashboard._scanner_best_update("series-1", {
+    _scanner_bridge.scanner_best_update("series-1", {
         "seriesId": "series-1",
         "frameIndex": 1,
         "displayPath": str(image),
@@ -1550,7 +1552,7 @@ def test_scanner_live_state_groups_best_candidates(tmp_path):
         "ocr": {"ok": True, "chars": 42},
     })
 
-    result = host_dashboard.scanner_live_state(str(tmp_path))
+    result = _scanner_bridge.scanner_live_state(str(tmp_path), preview_url=host_dashboard._preview_url)
 
     assert result["ok"] is True
     stream = result["streams"][0]
@@ -1731,13 +1733,15 @@ def test_scanner_session_adds_chat_message(monkeypatch):
     fake_db = FakeHostDb()
     monkeypatch.setattr(host_dashboard, "_host_db", lambda: fake_db)
 
-    result = host_dashboard.scanner_session(":memory:", {
-        "event": "open",
-        "href": "https://host/scanner",
-        "width": 390,
-        "height": 844,
-        "userAgent": "phone",
-    })
+    result = host_dashboard._scanner_session_impl(
+        host_dashboard._scanner_bridge_deps(), ":memory:", {
+            "event": "open",
+            "href": "https://host/scanner",
+            "width": 390,
+            "height": 844,
+            "userAgent": "phone",
+        }
+    )
 
     assert result["ok"] is True
     assert result["uri"].startswith("scanner://host/session/")

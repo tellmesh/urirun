@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.156', 'javascript').
+project_metadata('urirun', '0.4.157', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -14,6 +14,7 @@ project_file('adapters/python/conftest.py', 24, 'python').
 project_file('adapters/python/tests/test_adopt_pack.py', 103, 'python').
 project_file('adapters/python/tests/test_adopt_tree.py', 39, 'python').
 project_file('adapters/python/tests/test_agent_command.py', 78, 'python').
+project_file('adapters/python/tests/test_artifacts.py', 132, 'python').
 project_file('adapters/python/tests/test_backend_registry.py', 91, 'python').
 project_file('adapters/python/tests/test_capability.py', 65, 'python').
 project_file('adapters/python/tests/test_capability_doctor.py', 196, 'python').
@@ -21,6 +22,7 @@ project_file('adapters/python/tests/test_cdp_surface.py', 104, 'python').
 project_file('adapters/python/tests/test_cli_parser.py', 72, 'python').
 project_file('adapters/python/tests/test_codegen.py', 164, 'python').
 project_file('adapters/python/tests/test_compat.py', 104, 'python').
+project_file('adapters/python/tests/test_config.py', 147, 'python').
 project_file('adapters/python/tests/test_connect_catalog.py', 166, 'python').
 project_file('adapters/python/tests/test_connector_handler.py', 161, 'python').
 project_file('adapters/python/tests/test_connector_lint.py', 156, 'python').
@@ -40,17 +42,21 @@ project_file('adapters/python/tests/test_document_sync.py', 118, 'python').
 project_file('adapters/python/tests/test_domain_monitor.py', 162, 'python').
 project_file('adapters/python/tests/test_errors.py', 291, 'python').
 project_file('adapters/python/tests/test_exec.py', 147, 'python').
+project_file('adapters/python/tests/test_flow.py', 199, 'python').
 project_file('adapters/python/tests/test_flow_reversible.py', 118, 'python').
 project_file('adapters/python/tests/test_flow_rollup.py', 220, 'python').
-project_file('adapters/python/tests/test_flow_twin.py', 267, 'python').
+project_file('adapters/python/tests/test_flow_twin.py', 319, 'python').
 project_file('adapters/python/tests/test_formatting.py', 130, 'python').
 project_file('adapters/python/tests/test_fs_transfer.py', 105, 'python').
 project_file('adapters/python/tests/test_gap5_authoring.py', 105, 'python').
 project_file('adapters/python/tests/test_host_dashboard.py', 479, 'python').
 project_file('adapters/python/tests/test_host_db.py', 113, 'python').
+project_file('adapters/python/tests/test_host_integrations.py', 108, 'python').
 project_file('adapters/python/tests/test_install_upgrade.py', 109, 'python').
 project_file('adapters/python/tests/test_introspect.py', 76, 'python').
-project_file('adapters/python/tests/test_kernel_adoption.py', 129, 'python').
+project_file('adapters/python/tests/test_kernel_adoption.py', 236, 'python').
+project_file('adapters/python/tests/test_keyauth.py', 109, 'python').
+project_file('adapters/python/tests/test_manage.py', 52, 'python').
 project_file('adapters/python/tests/test_mesh.py', 1789, 'python').
 project_file('adapters/python/tests/test_minimal_imports.py', 91, 'python').
 project_file('adapters/python/tests/test_no_urirun_shadow.py', 15, 'python').
@@ -58,25 +64,33 @@ project_file('adapters/python/tests/test_node_client.py', 335, 'python').
 project_file('adapters/python/tests/test_node_diagnostics.py', 46, 'python').
 project_file('adapters/python/tests/test_node_extracted.py', 253, 'python').
 project_file('adapters/python/tests/test_node_types.py', 197, 'python').
+project_file('adapters/python/tests/test_object_registry.py', 119, 'python').
 project_file('adapters/python/tests/test_openapi_import.py', 49, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 344, 'python').
 project_file('adapters/python/tests/test_public_api.py', 191, 'python').
 project_file('adapters/python/tests/test_recovery.py', 185, 'python').
-project_file('adapters/python/tests/test_refactor_helpers.py', 151, 'python').
+project_file('adapters/python/tests/test_refactor_helpers.py', 201, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
-project_file('adapters/python/tests/test_reversible.py', 378, 'python').
+project_file('adapters/python/tests/test_reversible.py', 420, 'python').
 project_file('adapters/python/tests/test_routing.py', 158, 'python').
+project_file('adapters/python/tests/test_runtime.py', 173, 'python').
 project_file('adapters/python/tests/test_scanner_bridge.py', 158, 'python').
 project_file('adapters/python/tests/test_scanner_net.py', 139, 'python').
 project_file('adapters/python/tests/test_scheduler.py', 62, 'python').
 project_file('adapters/python/tests/test_secrets.py', 168, 'python').
+project_file('adapters/python/tests/test_server.py', 177, 'python').
 project_file('adapters/python/tests/test_service_lifecycle.py', 235, 'python').
+project_file('adapters/python/tests/test_task_planner.py', 138, 'python').
+project_file('adapters/python/tests/test_transport.py', 139, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
 project_file('adapters/python/tests/test_twin_store.py', 164, 'python').
 project_file('adapters/python/tests/test_uinput.py', 70, 'python').
 project_file('adapters/python/tests/test_urihandler.py', 350, 'python').
+project_file('adapters/python/tests/test_util.py', 110, 'python').
 project_file('adapters/python/tests/test_v2_mcp.py', 49, 'python').
+project_file('adapters/python/tests/test_version.py', 74, 'python').
+project_file('adapters/python/tests/test_widgets.py', 128, 'python').
 project_file('adapters/python/tests/test_worker.py', 66, 'python').
 project_file('adapters/python/tests/test_worker_pool.py', 84, 'python').
 project_file('adapters/python/urirun/__init__.py', 738, 'python').
@@ -91,7 +105,7 @@ project_file('adapters/python/urirun/connector_smoke.py', 6, 'python').
 project_file('adapters/python/urirun/connectors/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/connectors/backend_registry.py', 130, 'python').
 project_file('adapters/python/urirun/connectors/connect_catalog.py', 256, 'python').
-project_file('adapters/python/urirun/connectors/connector_lint.py', 604, 'python').
+project_file('adapters/python/urirun/connectors/connector_lint.py', 715, 'python').
 project_file('adapters/python/urirun/connectors/connector_scaffold.py', 414, 'python').
 project_file('adapters/python/urirun/connectors/connector_sdk.py', 88, 'python').
 project_file('adapters/python/urirun/connectors/connector_smoke.py', 82, 'python').
@@ -113,17 +127,17 @@ project_file('adapters/python/urirun/host/document_metadata.py', 518, 'python').
 project_file('adapters/python/urirun/host/document_sync.py', 576, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 488, 'python').
 project_file('adapters/python/urirun/host/fs_transfer.py', 210, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 11709, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 11299, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 528, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 357, 'python').
 project_file('adapters/python/urirun/host/node_types.py', 266, 'python').
 project_file('adapters/python/urirun/host/object_registry.py', 226, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 282, 'python').
-project_file('adapters/python/urirun/host/scanner_bridge.py', 671, 'python').
+project_file('adapters/python/urirun/host/scanner_bridge.py', 1043, 'python').
 project_file('adapters/python/urirun/host/scanner_net.py', 141, 'python').
 project_file('adapters/python/urirun/host/scheduler.py', 136, 'python').
 project_file('adapters/python/urirun/host/service_control.py', 463, 'python').
-project_file('adapters/python/urirun/host/task_planner.py', 375, 'python').
+project_file('adapters/python/urirun/host/task_planner.py', 367, 'python').
 project_file('adapters/python/urirun/host/widgets.py', 65, 'python').
 project_file('adapters/python/urirun/host_dashboard.py', 6, 'python').
 project_file('adapters/python/urirun/host_db.py', 6, 'python').
@@ -137,15 +151,16 @@ project_file('adapters/python/urirun/node/client.py', 559, 'python').
 project_file('adapters/python/urirun/node/config.py', 227, 'python').
 project_file('adapters/python/urirun/node/diagnostics.py', 520, 'python').
 project_file('adapters/python/urirun/node/doctor.py', 218, 'python').
-project_file('adapters/python/urirun/node/flow.py', 1174, 'python').
+project_file('adapters/python/urirun/node/flow.py', 1230, 'python').
 project_file('adapters/python/urirun/node/formatting.py', 81, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
 project_file('adapters/python/urirun/node/manage.py', 444, 'python').
-project_file('adapters/python/urirun/node/mesh.py', 2005, 'python').
+project_file('adapters/python/urirun/node/mesh.py', 1083, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
 project_file('adapters/python/urirun/node/recovery.py', 347, 'python').
-project_file('adapters/python/urirun/node/reversible.py', 416, 'python').
+project_file('adapters/python/urirun/node/reversible.py', 501, 'python').
 project_file('adapters/python/urirun/node/routing.py', 174, 'python').
+project_file('adapters/python/urirun/node/server.py', 992, 'python').
 project_file('adapters/python/urirun/node/task_cli.py', 343, 'python').
 project_file('adapters/python/urirun/node/transport.py', 541, 'python').
 project_file('adapters/python/urirun/node/twin_store.py', 118, 'python').
@@ -240,6 +255,22 @@ python_function('adapters/python/tests/test_agent_command.py', 'test_action_spac
 python_function('adapters/python/tests/test_agent_command.py', 'test_run_plan_runs_query_and_gates_command', 0, 3, 2).
 python_function('adapters/python/tests/test_agent_command.py', 'test_run_plan_allows_command_with_permission', 0, 2, 2).
 python_function('adapters/python/tests/test_agent_command.py', 'test_load_planner_resolves_module_function', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_from_mime_png', 0, 3, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_from_mime_jpeg', 0, 3, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_from_mime_with_charset', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_detected_from_magic_png', 0, 3, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_detected_from_magic_jpeg', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_detected_from_magic_gif', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_extension_unknown_binary', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_decode_plain_base64', 0, 4, 3).
+python_function('adapters/python/tests/test_artifacts.py', 'test_decode_data_url', 0, 3, 3).
+python_function('adapters/python/tests/test_artifacts.py', 'test_decode_too_short_returns_none', 0, 2, 3).
+python_function('adapters/python/tests/test_artifacts.py', 'test_decode_invalid_base64_returns_none', 0, 2, 1).
+python_function('adapters/python/tests/test_artifacts.py', 'test_materialize_replaces_large_png', 0, 5, 7).
+python_function('adapters/python/tests/test_artifacts.py', 'test_materialize_deduplicates_identical_content', 0, 3, 5).
+python_function('adapters/python/tests/test_artifacts.py', 'test_materialize_ignores_non_artifact_keys', 0, 3, 4).
+python_function('adapters/python/tests/test_artifacts.py', 'test_materialize_walks_nested_lists', 0, 2, 4).
+python_function('adapters/python/tests/test_artifacts.py', 'test_materialize_passthrough_when_not_base64', 0, 3, 2).
 python_function('adapters/python/tests/test_backend_registry.py', 'test_decorator_registers_and_highest_priority_available_wins', 0, 3, 3).
 python_function('adapters/python/tests/test_backend_registry.py', 'test_dispatch_falls_through_on_failure', 0, 2, 3).
 python_function('adapters/python/tests/test_backend_registry.py', 'test_no_backends_and_all_failed_raise_backend_error', 0, 1, 4).
@@ -291,6 +322,24 @@ python_function('adapters/python/tests/test_codegen.py', 'test_invariant_checker
 python_function('adapters/python/tests/test_codegen.py', 'test_route_named_run_does_not_collide_with_carrier', 0, 6, 7).
 python_function('adapters/python/tests/test_codegen.py', 'test_openapi_and_client_still_generate', 0, 5, 4).
 python_function('adapters/python/tests/test_compat.py', '_healthy_importable', 1, 5, 2).
+python_function('adapters/python/tests/test_config.py', 'test_default_host_config_structure', 0, 4, 2).
+python_function('adapters/python/tests/test_config.py', 'test_default_host_config_uses_hostname_when_no_name', 0, 2, 2).
+python_function('adapters/python/tests/test_config.py', 'test_host_config_path_uses_given_path', 1, 2, 3).
+python_function('adapters/python/tests/test_config.py', 'test_load_missing_config_returns_default', 1, 3, 2).
+python_function('adapters/python/tests/test_config.py', 'test_save_then_load_roundtrip', 1, 2, 4).
+python_function('adapters/python/tests/test_config.py', 'test_load_fills_missing_fields', 1, 3, 4).
+python_function('adapters/python/tests/test_config.py', 'test_init_host_writes_config', 1, 3, 4).
+python_function('adapters/python/tests/test_config.py', 'test_add_node_adds_entry', 1, 3, 4).
+python_function('adapters/python/tests/test_config.py', 'test_add_node_replaces_existing_name', 1, 5, 5).
+python_function('adapters/python/tests/test_config.py', 'test_add_node_sorted_alphabetically', 1, 3, 5).
+python_function('adapters/python/tests/test_config.py', 'test_coerce_node_url_full_url', 0, 2, 1).
+python_function('adapters/python/tests/test_config.py', 'test_coerce_node_url_host_with_port', 0, 2, 1).
+python_function('adapters/python/tests/test_config.py', 'test_coerce_node_url_host_without_port', 0, 2, 2).
+python_function('adapters/python/tests/test_config.py', 'test_coerce_node_url_empty_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_config.py', 'test_coerce_node_url_strips_trailing_slash', 0, 2, 1).
+python_function('adapters/python/tests/test_config.py', 'test_node_name_from_url_simple', 0, 2, 1).
+python_function('adapters/python/tests/test_config.py', 'test_node_name_from_url_includes_port', 0, 2, 1).
+python_function('adapters/python/tests/test_config.py', 'test_node_name_from_url_bad_url_uses_index', 0, 2, 1).
 python_function('adapters/python/tests/test_connect_catalog.py', '_args', 0, 1, 2).
 python_function('adapters/python/tests/test_connect_catalog.py', 'test_resolve_install_buckets', 0, 5, 1).
 python_function('adapters/python/tests/test_connect_catalog.py', 'test_pip_install_command_uses_current_interpreter', 0, 2, 1).
@@ -430,6 +479,38 @@ python_function('adapters/python/tests/test_exec.py', 'test_subprocess_cwd_does_
 python_function('adapters/python/tests/test_exec.py', 'test_crash_is_contained', 2, 4, 6).
 python_function('adapters/python/tests/test_exec.py', 'test_subprocess_route_dry_run_does_not_call_handler', 2, 5, 5).
 python_function('adapters/python/tests/test_exec.py', 'test_handler_isolated_flag_sets_subprocess_adapter', 0, 4, 4).
+python_function('adapters/python/tests/test_flow.py', 'test_first_url_extracts_https', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_first_url_extracts_http', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_first_url_returns_none_when_absent', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_first_url_returns_first_only', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_nl_key_lowercases', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_nl_key_strips_diacritics', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_nl_key_collapses_whitespace', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_requested_folder_path_downloads', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_requested_folder_path_default', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_screen', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_browser', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_health', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_default_processes', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_invoices', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_segments_basic', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_segments_no_path', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_exact', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_with_param', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_different_scheme', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_different_length', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_multi_param', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_json_from_text_plain', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_json_from_text_fenced', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_json_from_text_embedded', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_json_from_text_invalid_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_flow.py', 'test_dig_path_nested_dict', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_dig_path_list_index', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_dig_path_missing_key_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_from_reference', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_passthrough', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_mixed', 0, 3, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_none_safe', 0, 2, 1).
 python_function('adapters/python/tests/test_flow_reversible.py', '_execution_with_inverses', 0, 1, 0).
 python_function('adapters/python/tests/test_flow_reversible.py', '_mesh', 0, 1, 0).
 python_function('adapters/python/tests/test_flow_reversible.py', 'test_ledger_from_execution_skips_queries_and_recovery_markers', 0, 3, 2).
@@ -473,6 +554,10 @@ python_function('adapters/python/tests/test_flow_twin.py', 'test_execute_flow_re
 python_function('adapters/python/tests/test_flow_twin.py', 'test_execute_flow_does_not_remember_on_failure', 1, 3, 7).
 python_function('adapters/python/tests/test_flow_twin.py', 'test_execute_flow_remember_flow_key_is_uri_stable', 1, 2, 7).
 python_function('adapters/python/tests/test_flow_twin.py', 'test_execute_flow_no_memory_is_noop_for_flow_store', 1, 2, 4).
+python_function('adapters/python/tests/test_flow_twin.py', 'test_suggest_recall_returns_none_when_flow_not_remembered', 0, 2, 3).
+python_function('adapters/python/tests/test_flow_twin.py', 'test_suggest_recall_returns_record_after_successful_run', 1, 4, 8).
+python_function('adapters/python/tests/test_flow_twin.py', 'test_suggest_recall_same_uris_different_payloads_hits_same_slot', 1, 2, 6).
+python_function('adapters/python/tests/test_flow_twin.py', 'test_suggest_recall_different_uri_sequence_returns_none', 1, 2, 7).
 python_function('adapters/python/tests/test_formatting.py', 'test_format_table_empty', 0, 2, 1).
 python_function('adapters/python/tests/test_formatting.py', 'test_format_table_header_and_separator', 0, 6, 5).
 python_function('adapters/python/tests/test_formatting.py', 'test_format_table_column_width_matches_longest', 0, 2, 1).
@@ -509,6 +594,23 @@ python_function('adapters/python/tests/test_gap5_authoring.py', 'test_connector_
 python_function('adapters/python/tests/test_gap5_authoring.py', 'test_connector_main_namespaces_clashing_route_names', 1, 3, 6).
 python_function('adapters/python/tests/test_host_dashboard.py', 'get_json', 1, 1, 4).
 python_function('adapters/python/tests/test_host_dashboard.py', 'post_json', 2, 1, 7).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_list_param_none', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_list_param_list', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_list_param_csv_string', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_list_param_single_string', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_list_param_int_in_list', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_ticket_id_from_payload', 0, 3, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_ticket_id_from_args', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_ticket_id_missing_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_host_integrations.py', '_ctx', 4, 2, 0).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_action_from_args', 0, 2, 2).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_action_list_default', 0, 2, 2).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_action_dsl', 0, 2, 2).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_action_no_args_no_known_raises', 0, 1, 3).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_project_from_payload', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_project_from_config', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_project_default', 0, 2, 1).
+python_function('adapters/python/tests/test_host_integrations.py', 'test_simulate_planfile_fields', 0, 5, 1).
 python_function('adapters/python/tests/test_install_upgrade.py', '_capture', 2, 1, 6).
 python_function('adapters/python/tests/test_install_upgrade.py', '_install', 0, 1, 3).
 python_function('adapters/python/tests/test_install_upgrade.py', '_upgrade', 0, 1, 3).
@@ -534,7 +636,39 @@ python_function('adapters/python/tests/test_kernel_adoption.py', 'test_cdp_surfa
 python_function('adapters/python/tests/test_kernel_adoption.py', 'test_cdp_surface_configure_accepts_endpoint_and_env', 0, 3, 1).
 python_function('adapters/python/tests/test_kernel_adoption.py', 'test_cdp_surface_callables_are_callable', 0, 3, 2).
 python_function('adapters/python/tests/test_kernel_adoption.py', 'test_cdp_surface_CdpError_is_exception', 0, 2, 1).
+python_function('adapters/python/tests/test_kernel_adoption.py', '_write_py', 3, 1, 3).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_clean_connector_ok', 0, 3, 3).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_bad_direct_import_caught', 0, 3, 4).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_bad_attribute_access_caught', 0, 3, 4).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_good_attribute_access_passes', 0, 3, 3).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_backend_registry_checked', 0, 3, 5).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_kvm_connector_is_clean', 0, 3, 6).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_lint_kernel_symbols_scanned_count_matches_files', 0, 2, 3).
+python_function('adapters/python/tests/test_kernel_adoption.py', 'test_fleet_kernel_symbols_all_connectors_clean', 0, 5, 10).
 python_function('adapters/python/tests/test_kernel_adoption.py', 'test_injected_platform_gates_a_connectors_backend', 0, 3, 3).
+python_function('adapters/python/tests/test_keyauth.py', 'test_enroll_token_default_length', 0, 2, 2).
+python_function('adapters/python/tests/test_keyauth.py', 'test_enroll_token_custom_length', 0, 3, 2).
+python_function('adapters/python/tests/test_keyauth.py', 'test_enroll_token_alphanumeric_uppercase', 0, 3, 4).
+python_function('adapters/python/tests/test_keyauth.py', 'test_enroll_token_unique', 0, 3, 3).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_exact', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_case_insensitive', 0, 3, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_strips_leading_trailing_spaces', 0, 3, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_wrong_value', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_none', 0, 4, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_token_matches_empty', 0, 3, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_normalize_strips_comment', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_normalize_already_two_parts', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_normalize_single_word', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_fingerprint_format', 0, 3, 3).
+python_function('adapters/python/tests/test_keyauth.py', 'test_fingerprint_stable', 0, 2, 1).
+python_function('adapters/python/tests/test_keyauth.py', 'test_fingerprint_invalid_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_manage.py', 'test_classify_git_url', 0, 4, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_classify_catalog_url', 0, 3, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_classify_local_path', 0, 4, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_classify_catalog_name', 0, 3, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_connector_match_by_name', 0, 3, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_connector_match_no_hit', 0, 2, 1).
+python_function('adapters/python/tests/test_manage.py', 'test_connector_match_non_dict', 0, 3, 1).
 python_function('adapters/python/tests/test_mesh.py', '_wait_healthy', 3, 4, 6).
 python_function('adapters/python/tests/test_mesh.py', '_wait_subscribers', 4, 4, 8).
 python_function('adapters/python/tests/test_mesh.py', '_post_run', 3, 3, 6).
@@ -605,6 +739,17 @@ python_function('adapters/python/tests/test_node_types.py', 'test_annotate_node_
 python_function('adapters/python/tests/test_node_types.py', 'test_annotate_node_type_unknown_sets_empty_defaults', 0, 4, 1).
 python_function('adapters/python/tests/test_node_types.py', 'test_annotate_node_types_mutates_in_place', 0, 4, 1).
 python_function('adapters/python/tests/test_node_types.py', 'test_annotate_node_type_alias_resolves_label', 0, 3, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_host_registry_routes_filters_by_layer', 0, 5, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_host_registry_routes_safe_from_side_effects', 0, 4, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_uri_target_extracts_host_segment', 0, 3, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_uri_target_no_scheme', 0, 2, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_route_owner_route_copies_owner_fields', 0, 6, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_route_owner_route_infers_target_from_uri', 0, 2, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_dedupe_routes_removes_exact_duplicates', 0, 2, 2).
+python_function('adapters/python/tests/test_object_registry.py', 'test_dedupe_routes_keeps_different_kind', 0, 2, 2).
+python_function('adapters/python/tests/test_object_registry.py', 'test_dedupe_routes_drops_missing_uri', 0, 3, 2).
+python_function('adapters/python/tests/test_object_registry.py', 'test_dedupe_routes_preserves_order', 0, 2, 1).
+python_function('adapters/python/tests/test_object_registry.py', 'test_phone_scanner_contact_fields', 0, 7, 2).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_import_maps_paths_and_methods', 0, 9, 1).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_import_validates_and_compiles', 0, 4, 5).
 python_function('adapters/python/tests/test_openapi_import.py', 'test_base_url_override', 0, 2, 4).
@@ -647,6 +792,31 @@ python_function('adapters/python/tests/test_routing.py', 'test_route_class_class
 python_function('adapters/python/tests/test_routing.py', 'test_routes_from_registry_includes_routeClass', 0, 4, 2).
 python_function('adapters/python/tests/test_routing.py', 'test_discover_mesh_stamps_route_class_on_routes_without_it', 0, 5, 3).
 python_function('adapters/python/tests/test_routing.py', 'test_discover_mesh_preserves_routeClass_from_live_node_routes', 0, 5, 3).
+python_function('adapters/python/tests/test_runtime.py', 'test_default_policy_keys', 0, 4, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_merge_policy_none', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_merge_policy_overrides', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_merge_policy_execute_lists', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_merge_policy_execute_defaults_to_empty_lists', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_matches_any_exact', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_matches_any_glob', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_matches_any_no_match', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_truncate_short', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_truncate_none', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_truncate_long', 0, 3, 3).
+python_function('adapters/python/tests/test_runtime.py', 'test_looks_destructive_rm', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_looks_destructive_safe', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_looks_destructive_in_args', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_allow_route_policy', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_allow_glob', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_allow_default_deny', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_denial_route_denies', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_denial_pattern', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_denial_too_many_args', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_denial_shell_blocked', 0, 3, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_policy_denial_none_when_ok', 0, 2, 1).
+python_function('adapters/python/tests/test_runtime.py', 'test_evaluate_policy_allowed', 0, 2, 2).
+python_function('adapters/python/tests/test_runtime.py', 'test_evaluate_policy_denied_explicit', 0, 2, 2).
+python_function('adapters/python/tests/test_runtime.py', 'test_evaluate_policy_default_deny', 0, 3, 2).
 python_function('adapters/python/tests/test_scanner_bridge.py', 'test_result_content_with_crop_and_pdf_and_ocr', 0, 4, 1).
 python_function('adapters/python/tests/test_scanner_bridge.py', 'test_result_content_duplicate_pdf', 0, 2, 1).
 python_function('adapters/python/tests/test_scanner_bridge.py', 'test_result_content_document_error', 0, 2, 1).
@@ -692,6 +862,28 @@ python_function('adapters/python/tests/test_secrets.py', 'test_vault_provider', 
 python_function('adapters/python/tests/test_secrets.py', 'test_oauth_provider_returns_cached_then_refreshes', 1, 3, 11).
 python_function('adapters/python/tests/test_secrets.py', 'test_browser_provider_refuses', 1, 2, 3).
 python_function('adapters/python/tests/test_secrets.py', 'test_run_fetch_secret_denied_without_allow', 1, 1, 3).
+python_function('adapters/python/tests/test_server.py', 'test_parse_sse_query_basic', 0, 3, 1).
+python_function('adapters/python/tests/test_server.py', 'test_parse_sse_query_url_encoded', 0, 3, 1).
+python_function('adapters/python/tests/test_server.py', 'test_parse_sse_query_empty', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_parse_sse_query_no_value_key_skipped', 0, 3, 1).
+python_function('adapters/python/tests/test_server.py', 'test_sse_event_matches_no_filter', 0, 2, 2).
+python_function('adapters/python/tests/test_server.py', 'test_sse_event_matches_scheme_filter', 0, 3, 2).
+python_function('adapters/python/tests/test_server.py', 'test_sse_event_matches_run_filter', 0, 3, 2).
+python_function('adapters/python/tests/test_server.py', 'test_sse_event_matches_both_filters', 0, 3, 1).
+python_function('adapters/python/tests/test_server.py', 'test_sse_frame_format', 0, 5, 3).
+python_function('adapters/python/tests/test_server.py', 'test_sse_frame_json_payload', 0, 5, 5).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_env_sets_env', 1, 3, 3).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_env_blocks_denied_keys', 1, 3, 2).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_env_none_safe', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_allow_replaces', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_allow_merge', 0, 4, 2).
+python_function('adapters/python/tests/test_server.py', 'test_apply_deploy_allow_no_allow_noop', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_resolve_admin_token_explicit', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_resolve_admin_token_config', 0, 2, 1).
+python_function('adapters/python/tests/test_server.py', 'test_resolve_admin_token_env', 1, 2, 2).
+python_function('adapters/python/tests/test_server.py', 'test_resolve_admin_token_none_when_disabled', 1, 2, 2).
+python_function('adapters/python/tests/test_server.py', 'test_registry_to_bindings_extracts_uri', 0, 5, 1).
+python_function('adapters/python/tests/test_server.py', 'test_registry_to_bindings_empty', 0, 3, 1).
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_canonical_service_uri_command', 0, 3, 1).
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_canonical_service_uri_query', 0, 2, 1).
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_service_lifecycle_uris_has_four_verbs', 0, 6, 2).
@@ -716,6 +908,49 @@ python_function('adapters/python/tests/test_service_lifecycle.py', 'test_dispatc
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_dispatch_restart_calls_restart_fn', 0, 4, 3).
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_dispatch_start_when_not_running_calls_start_fn', 0, 3, 3).
 python_function('adapters/python/tests/test_service_lifecycle.py', 'test_dispatch_all_four_verbs_for_every_service', 0, 5, 3).
+python_function('adapters/python/tests/test_task_planner.py', 'test_normalize_text_lowercases', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_normalize_text_strips_diacritics', 0, 3, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_normalize_text_collapses_whitespace', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_slug_basic', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_slug_strips_special_chars', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_slug_fallback', 0, 3, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_ambiguous_few_words', 0, 3, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_ambiguous_enough_words', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_ambiguous_known_phrase', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_destructive_delete_keyword', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_destructive_drop_database', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_destructive_normal_prompt', 0, 3, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_unique_removes_duplicates', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_unique_preserves_order', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_unique_filters_empty', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_short_name_daily_domains', 0, 3, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_short_name_domains_no_daily', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_short_name_plain_prompt', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_short_name_truncated', 0, 2, 2).
+python_function('adapters/python/tests/test_task_planner.py', 'test_json_from_text_plain', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_json_from_text_fenced_block', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_json_from_text_embedded', 0, 2, 1).
+python_function('adapters/python/tests/test_task_planner.py', 'test_json_from_text_invalid_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_ports_single', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_ports_csv', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_ports_range', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_ports_mixed', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_ports_single_range_endpoint', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_deploy_allow_list_from_top_level', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_deploy_allow_list_from_policy', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_deploy_allow_list_none_when_absent', 0, 4, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_annotate_no_warning_when_all_present', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_annotate_warns_when_merge_drops_entry', 0, 3, 3).
+python_function('adapters/python/tests/test_transport.py', 'test_annotate_skips_when_merge_false', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_annotate_skips_when_not_ok', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_sse_line_data', 0, 4, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_sse_line_id_updates_cursor', 0, 3, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_sse_line_blank_no_event', 0, 3, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_sse_line_malformed_json_ignored', 0, 3, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_parse_sse_line_empty_data_ignored', 0, 2, 1).
+python_function('adapters/python/tests/test_transport.py', 'test_event_topic_includes_prefix_node_event_scheme', 0, 3, 2).
+python_function('adapters/python/tests/test_transport.py', 'test_event_topic_fallbacks_when_missing', 0, 3, 2).
+python_function('adapters/python/tests/test_transport.py', 'test_event_topic_uses_service_when_no_node', 0, 2, 1).
 python_function('adapters/python/tests/test_tree.py', 'test_tree_from_bindings_shape', 0, 3, 1).
 python_function('adapters/python/tests/test_tree.py', 'test_tree_from_registry_equals_bindings', 0, 2, 2).
 python_function('adapters/python/tests/test_tree.py', 'test_collect_uris_handles_list_and_dict', 0, 3, 2).
@@ -726,8 +961,47 @@ python_function('adapters/python/tests/test_uinput.py', 'test_compute_abs_zero_s
 python_function('adapters/python/tests/test_uinput.py', 'test_calib_from_env', 1, 3, 2).
 python_function('adapters/python/tests/test_uinput.py', 'test_abs_click_raises_cleanly_without_uinput', 1, 2, 4).
 python_function('adapters/python/tests/test_uinput.py', 'test_configure_injects_screen_size_resolver', 1, 3, 4).
+python_function('adapters/python/tests/test_util.py', 'test_now_id_is_numeric_string', 0, 3, 3).
+python_function('adapters/python/tests/test_util.py', 'test_now_id_monotonically_non_decreasing', 0, 2, 2).
+python_function('adapters/python/tests/test_util.py', 'test_slug_lowercases', 0, 2, 1).
+python_function('adapters/python/tests/test_util.py', 'test_slug_replaces_special_chars', 0, 2, 1).
+python_function('adapters/python/tests/test_util.py', 'test_slug_strips_leading_trailing_underscores', 0, 2, 1).
+python_function('adapters/python/tests/test_util.py', 'test_slug_truncates_to_64', 0, 2, 2).
+python_function('adapters/python/tests/test_util.py', 'test_slug_empty_returns_step', 0, 3, 1).
+python_function('adapters/python/tests/test_util.py', 'test_parse_json_option_none_returns_default', 0, 3, 1).
+python_function('adapters/python/tests/test_util.py', 'test_parse_json_option_parses_dict', 0, 2, 1).
+python_function('adapters/python/tests/test_util.py', 'test_parse_json_option_parses_list', 0, 2, 1).
+python_function('adapters/python/tests/test_util.py', 'test_parse_json_option_invalid_raises', 0, 1, 2).
+python_function('adapters/python/tests/test_util.py', 'test_json_write_then_read_roundtrip', 0, 3, 5).
+python_function('adapters/python/tests/test_util.py', 'test_json_write_creates_parent_dirs', 0, 2, 4).
+python_function('adapters/python/tests/test_util.py', 'test_json_write_uses_utf8', 0, 2, 4).
+python_function('adapters/python/tests/test_util.py', 'test_json_write_is_indented', 0, 2, 4).
 python_function('adapters/python/tests/test_v2_mcp.py', 'test_v2_mcp_tool_names_are_unique_for_cqrs_uri_args', 0, 5, 4).
 python_function('adapters/python/tests/test_v2_mcp.py', 'test_v2_mcp_preserves_single_route_tool_name', 0, 2, 2).
+python_function('adapters/python/tests/test_version.py', 'test_vtuple_simple', 0, 2, 1).
+python_function('adapters/python/tests/test_version.py', 'test_vtuple_single', 0, 2, 1).
+python_function('adapters/python/tests/test_version.py', 'test_vtuple_pre_release', 0, 3, 1).
+python_function('adapters/python/tests/test_version.py', 'test_vtuple_ordering', 0, 3, 1).
+python_function('adapters/python/tests/test_version.py', 'test_current_version_returns_string', 0, 3, 2).
+python_function('adapters/python/tests/test_version.py', 'test_current_version_not_crashes', 0, 2, 1).
+python_function('adapters/python/tests/test_version.py', 'test_version_status_no_check', 0, 4, 1).
+python_function('adapters/python/tests/test_version.py', 'test_version_status_keys', 0, 2, 2).
+python_function('adapters/python/tests/test_version.py', 'test_version_line_offline', 0, 3, 1).
+python_function('adapters/python/tests/test_version.py', 'test_version_line_contains_version_number', 0, 3, 2).
+python_function('adapters/python/tests/test_widgets.py', 'test_query_value_found', 0, 2, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_query_value_first_of_multiple', 0, 2, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_query_value_missing_returns_default', 0, 3, 1).
+python_function('adapters/python/tests/test_widgets.py', '_utc', 0, 1, 0).
+python_function('adapters/python/tests/test_widgets.py', 'test_select_service_view_by_id', 0, 3, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_select_service_view_by_target', 0, 2, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_select_service_view_default_when_not_found', 0, 4, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_select_service_view_default_uses_view_id', 0, 2, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_scanner_stream_summary_with_document', 0, 6, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_scanner_stream_summary_fallback_to_series_id', 0, 2, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_scanner_stream_summary_empty_stream', 0, 3, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_service_widget_summary_with_streams', 0, 3, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_service_widget_summary_no_streams', 0, 4, 1).
+python_function('adapters/python/tests/test_widgets.py', 'test_service_widget_summary_fallback_title', 0, 2, 1).
 python_function('adapters/python/tests/test_worker.py', 'test_render_argv_fills_and_drops_empty_flags', 0, 3, 1).
 python_function('adapters/python/tests/test_worker.py', '_pool', 1, 1, 5).
 python_function('adapters/python/tests/test_worker.py', 'test_worker_roundtrip_and_reuse', 1, 3, 3).
@@ -816,6 +1090,10 @@ python_function('adapters/python/urirun/connectors/connector_lint.py', '_env_rea
 python_function('adapters/python/urirun/connectors/connector_lint.py', '_scan_secret_env_reads', 1, 7, 8).
 python_function('adapters/python/urirun/connectors/connector_lint.py', '_uses_resolve_secret', 1, 8, 1).
 python_function('adapters/python/urirun/connectors/connector_lint.py', 'lint_connector', 1, 9, 19).
+python_function('adapters/python/urirun/connectors/connector_lint.py', '_collect_kernel_imports', 1, 11, 3).
+python_function('adapters/python/urirun/connectors/connector_lint.py', '_kernel_attribute_accesses', 2, 5, 3).
+python_function('adapters/python/urirun/connectors/connector_lint.py', '_kernel_direct_imports', 1, 6, 3).
+python_function('adapters/python/urirun/connectors/connector_lint.py', 'lint_kernel_symbols', 1, 7, 13).
 python_function('adapters/python/urirun/connectors/connector_lint.py', '_desired_machine_fields', 1, 6, 2).
 python_function('adapters/python/urirun/connectors/connector_lint.py', '_changed_machine_fields', 2, 5, 1).
 python_function('adapters/python/urirun/connectors/connector_lint.py', 'sync_manifest', 2, 7, 13).
@@ -1033,7 +1311,6 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_html_response
 python_function('adapters/python/urirun/host/host_dashboard.py', '_docs_nodes_html', 0, 3, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_asset_response', 3, 1, 6).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_service_view_from_query', 2, 4, 5).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_stream_summary', 3, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_service_widget_summary', 1, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_service_widget_html', 2, 6, 6).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_service_widget_svg', 2, 7, 9).
@@ -1123,10 +1400,6 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_docid_for_fil
 python_function('adapters/python/urirun/host/host_dashboard.py', '_write_document_pdf', 2, 9, 28).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_unique_document_path', 3, 3, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_existing_document', 1, 8, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_staging_dir', 0, 1, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_cleanup_duplicate_scan_files', 1, 9, 10).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_draw_crop_box', 7, 5, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_draw_overlay_label', 5, 9, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_crop_overlay', 3, 8, 22).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_staging_keep_paths', 0, 13, 11).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_prune_scanner_staging', 0, 11, 13).
@@ -1147,51 +1420,21 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_is_camera_sta
 python_function('adapters/python/urirun/host/host_dashboard.py', '_torch_enabled_from_prompt', 1, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'ensure_phone_scanner_service', 6, 10, 14).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_auto_crop_receipt', 1, 2, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_bounded', 3, 1, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_frame_visual_metrics', 1, 7, 20).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_crop_dimensions', 1, 5, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_crop_geometry_score', 2, 8, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_crop_quality_score', 2, 6, 6).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_doctype_quality_score', 2, 4, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_metadata_quality_score', 2, 3, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_ocr_quality_score', 3, 3, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_visual_quality_score', 2, 5, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_document_frame_quality', 4, 7, 13).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_public_scanner_candidate', 1, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_live_store_locked', 2, 10, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_public_candidate_for_live', 2, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_live_state', 2, 2, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_status_from_log', 1, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_latest_scanner_page_status', 1, 2, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_artifact_doc_meta', 1, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_is_scanner_artifact', 3, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_artifact_item', 7, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_recent_scanner_artifacts', 3, 14, 13).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'service_live_views', 3, 3, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_update', 2, 3, 9).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_best_take', 1, 3, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_bridge_deps', 0, 1, 4).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_crop_overlay_attachment', 6, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_register_document_artifact', 2, 1, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_scanner_result_content', 4, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_register_scanner_result', 2, 1, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_orientation_summary', 1, 8, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_decode_capture_image', 1, 4, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_quality_ok', 3, 4, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_reject_result', 0, 5, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_candidate_result', 2, 3, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_display_path', 2, 3, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_capture_ocr_and_detect', 4, 5, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_capture', 3, 12, 23).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_best_series_not_found', 1, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_resolve_best_candidate', 1, 7, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_best_quality_rejected', 2, 5, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_best_candidate_paths', 1, 3, 5).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_best_finish_store_failure', 2, 4, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_refresh_best_ocr', 3, 5, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_ensure_best_overlay', 4, 8, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_store_best_finish', 5, 6, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_best_crop_and_ocr', 1, 3, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_best_finish', 3, 14, 23).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'scanner_session', 2, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'uri_event', 2, 1, 2).
@@ -1310,7 +1553,7 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_restore_run_c
 python_function('adapters/python/urirun/host/host_dashboard.py', '_fetch_planner_environments_for_nodes', 5, 9, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_ask_general_check_offline', 6, 9, 4).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_ask_general_build_result', 11, 7, 8).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_ask_general', 12, 6, 16).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_ask_general', 12, 10, 18).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_phone_scanner_response', 4, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_document_sync_response', 4, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_generic_response', 4, 1, 1).
@@ -1468,6 +1711,10 @@ python_function('adapters/python/urirun/host/planfile_adapter.py', 'wait_for_inp
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'ready_ticket', 3, 2, 3).
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'run_dsl', 2, 1, 4).
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'loads_json', 2, 2, 1).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_live_store_locked', 2, 10, 11).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_best_update', 2, 3, 10).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_best_take', 1, 3, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_staging_dir', 0, 1, 4).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'crop_overlay_attachment', 1, 1, 3).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'register_document_artifact', 3, 7, 6).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_result_content', 4, 9, 2).
@@ -1493,6 +1740,28 @@ python_function('adapters/python/urirun/host/scanner_bridge.py', 'is_phone_scann
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'is_autonomous_scanner_prompt', 1, 6, 2).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'is_camera_start_prompt', 1, 4, 2).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'torch_enabled_from_prompt', 1, 7, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'bounded', 3, 1, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'frame_visual_metrics', 1, 7, 20).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'crop_dimensions', 1, 5, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'crop_geometry_score', 2, 8, 7).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'crop_quality_score', 2, 6, 6).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'doctype_quality_score', 2, 4, 1).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'metadata_quality_score', 2, 3, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'ocr_quality_score', 3, 3, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'visual_quality_score', 2, 5, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'document_frame_quality', 4, 7, 13).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'orientation_summary', 1, 8, 4).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'decode_capture_image', 1, 4, 7).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'capture_quality_ok', 3, 4, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'capture_display_path', 2, 3, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'cleanup_duplicate_scan_files', 1, 8, 9).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'resolve_best_candidate', 1, 7, 4).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'best_quality_rejected', 2, 5, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'best_candidate_paths', 1, 3, 5).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'best_crop_and_ocr', 1, 3, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'best_series_not_found', 1, 1, 2).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'store_best_finish', 5, 6, 3).
+python_function('adapters/python/urirun/host/scanner_bridge.py', 'best_finish_store_failure', 2, 5, 4).
 python_function('adapters/python/urirun/host/scanner_net.py', '_lan_host', 0, 8, 7).
 python_function('adapters/python/urirun/host/scanner_net.py', '_url_host', 1, 3, 1).
 python_function('adapters/python/urirun/host/scanner_net.py', '_public_base_url', 3, 4, 5).
@@ -1534,7 +1803,6 @@ python_function('adapters/python/urirun/host/service_control.py', 'service_statu
 python_function('adapters/python/urirun/host/service_control.py', 'stop_service_pids', 2, 5, 5).
 python_function('adapters/python/urirun/host/task_planner.py', 'normalize_text', 1, 3, 6).
 python_function('adapters/python/urirun/host/task_planner.py', 'slug', 1, 2, 3).
-python_function('adapters/python/urirun/host/task_planner.py', '_json_from_text', 1, 5, 7).
 python_function('adapters/python/urirun/host/task_planner.py', 'is_ambiguous', 1, 2, 3).
 python_function('adapters/python/urirun/host/task_planner.py', 'is_destructive', 1, 4, 4).
 python_function('adapters/python/urirun/host/task_planner.py', '_has_any', 2, 2, 2).
@@ -1635,7 +1903,7 @@ python_function('adapters/python/urirun/node/flow.py', '_inject_cdp_ready_probes
 python_function('adapters/python/urirun/node/flow.py', 'normalize_flow', 3, 5, 8).
 python_function('adapters/python/urirun/node/flow.py', 'normalize_flow_or_explain', 2, 10, 7).
 python_function('adapters/python/urirun/node/flow.py', 'llm_flow', 4, 8, 7).
-python_function('adapters/python/urirun/node/flow.py', 'fetch_planner_environments', 3, 8, 6).
+python_function('adapters/python/urirun/node/flow.py', 'fetch_planner_environments', 3, 21, 8).
 python_function('adapters/python/urirun/node/flow.py', 'make_flow', 5, 6, 5).
 python_function('adapters/python/urirun/node/flow.py', '_dig_path', 2, 4, 4).
 python_function('adapters/python/urirun/node/flow.py', 'resolve_step_payload', 2, 5, 5).
@@ -1652,6 +1920,7 @@ python_function('adapters/python/urirun/node/flow.py', '_circuit_break', 4, 2, 0
 python_function('adapters/python/urirun/node/flow.py', '_preflight', 2, 15, 8).
 python_function('adapters/python/urirun/node/flow.py', '_rollback_partial', 3, 1, 3).
 python_function('adapters/python/urirun/node/flow.py', '_kvm_targets', 1, 10, 5).
+python_function('adapters/python/urirun/node/flow.py', 'suggest_recall', 2, 1, 2).
 python_function('adapters/python/urirun/node/flow.py', '_flow_key', 1, 4, 6).
 python_function('adapters/python/urirun/node/flow.py', '_remember_known_good_flow', 5, 8, 7).
 python_function('adapters/python/urirun/node/flow.py', '_capture_known_good', 3, 4, 5).
@@ -1762,33 +2031,9 @@ python_function('adapters/python/urirun/node/mesh.py', '_warn_dropped_routes', 1
 python_function('adapters/python/urirun/node/mesh.py', 'deploy_command', 1, 14, 15).
 python_function('adapters/python/urirun/node/mesh.py', '_maybe_load_dotenv', 1, 11, 9).
 python_function('adapters/python/urirun/node/mesh.py', 'host_command', 1, 3, 6).
-python_function('adapters/python/urirun/node/mesh.py', 'send_json', 3, 1, 8).
-python_function('adapters/python/urirun/node/mesh.py', 'read_raw', 1, 3, 4).
-python_function('adapters/python/urirun/node/mesh.py', 'read_json', 1, 2, 3).
-python_function('adapters/python/urirun/node/mesh.py', '_pool_executors', 1, 1, 5).
 python_function('adapters/python/urirun/node/mesh.py', '_probe_one_route', 5, 13, 10).
 python_function('adapters/python/urirun/node/mesh.py', '_render_probe_report', 1, 10, 4).
 python_function('adapters/python/urirun/node/mesh.py', 'probe_command', 1, 14, 11).
-python_function('adapters/python/urirun/node/mesh.py', 'resolve_admin_token', 3, 11, 11).
-python_function('adapters/python/urirun/node/mesh.py', '_write_pushed_code', 2, 10, 14).
-python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_env', 2, 4, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_registry_to_bindings', 1, 5, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_deploy_registry', 2, 8, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_reimport_pushed_code', 2, 3, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_surface', 2, 9, 3).
-python_function('adapters/python/urirun/node/mesh.py', '_apply_deploy_allow', 3, 6, 4).
-python_function('adapters/python/urirun/node/mesh.py', 'apply_deploy', 2, 12, 15).
-python_function('adapters/python/urirun/node/mesh.py', '_parse_sse_query', 1, 3, 3).
-python_function('adapters/python/urirun/node/mesh.py', '_sse_initial_cursor', 3, 4, 3).
-python_function('adapters/python/urirun/node/mesh.py', '_sse_event_matches', 3, 4, 3).
-python_function('adapters/python/urirun/node/mesh.py', '_sse_frame', 1, 3, 4).
-python_function('adapters/python/urirun/node/mesh.py', '_warn_unauthenticated_node', 5, 4, 2).
-python_function('adapters/python/urirun/node/mesh.py', '_start_enroll_token_rotation', 2, 2, 6).
-python_function('adapters/python/urirun/node/mesh.py', '_announce_node_started', 5, 4, 7).
-python_function('adapters/python/urirun/node/mesh.py', 'serve_node', 18, 13, 17).
-python_function('adapters/python/urirun/node/mesh.py', '_serve_opts_merged', 2, 14, 5).
-python_function('adapters/python/urirun/node/mesh.py', '_resolve_serve_opts', 2, 7, 9).
-python_function('adapters/python/urirun/node/mesh.py', '_node_serve', 4, 3, 6).
 python_function('adapters/python/urirun/node/mesh.py', 'node_list_command', 1, 7, 7).
 python_function('adapters/python/urirun/node/mesh.py', 'node_stop_command', 1, 14, 9).
 python_function('adapters/python/urirun/node/mesh.py', '_resolve_registry_source', 2, 6, 4).
@@ -1819,7 +2064,12 @@ python_function('adapters/python/urirun/node/reversible.py', 'sig', 1, 1, 4).
 python_function('adapters/python/urirun/node/reversible.py', '_step_kind', 1, 2, 0).
 python_function('adapters/python/urirun/node/reversible.py', 'environment_fingerprint', 1, 2, 3).
 python_function('adapters/python/urirun/node/reversible.py', 'plausibility', 1, 14, 7).
-python_function('adapters/python/urirun/node/reversible.py', 'planner_context', 4, 13, 4).
+python_function('adapters/python/urirun/node/reversible.py', '_planner_facts', 3, 5, 1).
+python_function('adapters/python/urirun/node/reversible.py', '_best_surface_hint', 1, 3, 0).
+python_function('adapters/python/urirun/node/reversible.py', '_action_matrix_hints', 1, 11, 3).
+python_function('adapters/python/urirun/node/reversible.py', '_infeasible_constraints', 1, 6, 2).
+python_function('adapters/python/urirun/node/reversible.py', '_planner_surface_guidance', 1, 6, 5).
+python_function('adapters/python/urirun/node/reversible.py', 'planner_context', 4, 6, 7).
 python_function('adapters/python/urirun/node/reversible.py', 'local_transport', 1, 1, 3).
 python_function('adapters/python/urirun/node/reversible.py', 'durable_memory', 1, 1, 1).
 python_function('adapters/python/urirun/node/reversible.py', 'rollback_partial_flow', 4, 2, 3).
@@ -1837,6 +2087,30 @@ python_function('adapters/python/urirun/node/routing.py', 'binding_for_remote_ro
 python_function('adapters/python/urirun/node/routing.py', 'registry_from_routes', 1, 3, 3).
 python_function('adapters/python/urirun/node/routing.py', 'target_nodes', 3, 10, 2).
 python_function('adapters/python/urirun/node/routing.py', 'route_targets_for_nodes', 2, 14, 5).
+python_function('adapters/python/urirun/node/server.py', 'send_json', 3, 1, 8).
+python_function('adapters/python/urirun/node/server.py', 'read_raw', 1, 3, 4).
+python_function('adapters/python/urirun/node/server.py', 'read_json', 1, 2, 3).
+python_function('adapters/python/urirun/node/server.py', '_pool_executors', 1, 1, 5).
+python_function('adapters/python/urirun/node/server.py', 'resolve_admin_token', 3, 11, 11).
+python_function('adapters/python/urirun/node/server.py', '_write_pushed_code', 2, 10, 14).
+python_function('adapters/python/urirun/node/server.py', '_apply_deploy_env', 2, 4, 4).
+python_function('adapters/python/urirun/node/server.py', '_registry_to_bindings', 1, 5, 4).
+python_function('adapters/python/urirun/node/server.py', '_deploy_registry', 2, 8, 4).
+python_function('adapters/python/urirun/node/server.py', '_reimport_pushed_code', 2, 3, 4).
+python_function('adapters/python/urirun/node/server.py', '_apply_deploy_surface', 2, 9, 3).
+python_function('adapters/python/urirun/node/server.py', '_apply_deploy_allow', 3, 6, 4).
+python_function('adapters/python/urirun/node/server.py', 'apply_deploy', 2, 12, 15).
+python_function('adapters/python/urirun/node/server.py', '_parse_sse_query', 1, 3, 3).
+python_function('adapters/python/urirun/node/server.py', '_sse_initial_cursor', 3, 4, 3).
+python_function('adapters/python/urirun/node/server.py', '_sse_event_matches', 3, 4, 3).
+python_function('adapters/python/urirun/node/server.py', '_sse_frame', 1, 3, 4).
+python_function('adapters/python/urirun/node/server.py', '_warn_unauthenticated_node', 5, 4, 2).
+python_function('adapters/python/urirun/node/server.py', '_start_enroll_token_rotation', 2, 2, 6).
+python_function('adapters/python/urirun/node/server.py', '_announce_node_started', 5, 4, 7).
+python_function('adapters/python/urirun/node/server.py', 'serve_node', 18, 13, 17).
+python_function('adapters/python/urirun/node/server.py', '_serve_opts_merged', 2, 14, 5).
+python_function('adapters/python/urirun/node/server.py', '_resolve_serve_opts', 2, 7, 9).
+python_function('adapters/python/urirun/node/server.py', '_node_serve', 4, 3, 6).
 python_function('adapters/python/urirun/node/task_cli.py', '_task_prompt', 1, 7, 2).
 python_function('adapters/python/urirun/node/task_cli.py', '_ticket_payload', 1, 7, 4).
 python_function('adapters/python/urirun/node/task_cli.py', '_host_local_registry', 1, 4, 7).
@@ -2934,6 +3208,9 @@ python_method('DecisionLoopTests', 'test_recovered_records_initial_error', 0, 1,
 python_class('adapters/python/tests/test_refactor_helpers.py', 'DashboardApiRoutingTests').
 python_method('DashboardApiRoutingTests', 'test_unknown_path_is_404', 0, 1, 3).
 python_method('DashboardApiRoutingTests', 'test_route_table_covers_expected_endpoints', 0, 2, 1).
+python_method('DashboardApiRoutingTests', 'test_api_twin_flows_returns_ok_and_empty_list_when_no_flows', 1, 1, 5).
+python_method('DashboardApiRoutingTests', 'test_api_twin_flows_returns_stored_flows', 0, 1, 6).
+python_method('DashboardApiRoutingTests', 'test_api_twin_flows_respects_limit', 0, 2, 8).
 python_class('adapters/python/tests/test_reversible.py', 'KvmFake').
 python_method('KvmFake', '__init__', 1, 1, 0).
 python_method('KvmFake', 'scan_uri', 1, 1, 0).
@@ -2970,6 +3247,9 @@ python_method('PlannerContextTests', 'test_cdp_env_guides_to_dom', 0, 2, 4).
 python_method('PlannerContextTests', 'test_uncontrollable_env_refuses_ui', 0, 2, 3).
 python_method('PlannerContextTests', 'test_foreground_url_demands_real_labels', 0, 2, 5).
 python_method('PlannerContextTests', 'test_drift_warns_to_remeasure', 0, 2, 5).
+python_method('PlannerContextTests', 'test_planner_context_exposes_action_matrix', 0, 1, 2).
+python_method('PlannerContextTests', 'test_planner_context_wayland_type_rule_in_guidance', 0, 4, 3).
+python_method('PlannerContextTests', 'test_planner_context_no_type_rule_when_matrix_absent', 0, 4, 2).
 python_class('adapters/python/tests/test_reversible.py', 'PlausibilityTests').
 python_method('PlausibilityTests', 'test_reversible_on_known_good_env_is_auto', 0, 1, 2).
 python_method('PlausibilityTests', 'test_irreversible_action_always_hitl', 0, 1, 2).
@@ -3084,42 +3364,6 @@ python_method('NodeClient', 'stream_run', 3, 8, 5).
 python_class('adapters/python/urirun/node/diagnostics.py', '_Rule').
 python_method('_Rule', '__init__', 4, 2, 1).
 python_method('_Rule', 'matches', 3, 6, 2).
-python_class('adapters/python/urirun/node/mesh.py', 'EventHub').
-python_method('EventHub', '__init__', 1, 1, 3).
-python_method('EventHub', 'publish', 1, 3, 4).
-python_method('EventHub', 'subscribe', 0, 1, 2).
-python_method('EventHub', 'unsubscribe', 1, 1, 1).
-python_method('EventHub', 'replay_since', 1, 3, 1).
-python_method('EventHub', 'current_id', 0, 1, 0).
-python_method('EventHub', 'count', 0, 1, 1).
-python_class('adapters/python/urirun/node/mesh.py', 'NodeContext').
-python_method('NodeContext', '__init__', 0, 1, 1).
-python_class('adapters/python/urirun/node/mesh.py', 'NodeHandler').
-python_method('NodeHandler', 'ctx', 0, 1, 0).
-python_method('NodeHandler', 'do_OPTIONS', 0, 1, 1).
-python_method('NodeHandler', '_guarded', 1, 3, 3).
-python_method('NodeHandler', 'do_GET', 0, 1, 1).
-python_method('NodeHandler', 'do_POST', 0, 1, 1).
-python_method('NodeHandler', '_health_payload', 0, 4, 9).
-python_method('NodeHandler', '_routes_payload', 0, 2, 4).
-python_method('NodeHandler', '_get', 0, 12, 11).
-python_method('NodeHandler', '_get_errors', 2, 8, 12).
-python_method('NodeHandler', '_post', 0, 6, 6).
-python_method('NodeHandler', '_run_target', 2, 6, 6).
-python_method('NodeHandler', '_publish_run', 2, 5, 4).
-python_method('NodeHandler', '_validate_run_request', 1, 10, 7).
-python_method('NodeHandler', '_dispatch_control_uri', 3, 6, 5).
-python_method('NodeHandler', '_respond_async', 4, 1, 11).
-python_method('NodeHandler', '_handle_run', 0, 14, 21).
-python_method('NodeHandler', '_handle_adopt', 2, 9, 7).
-python_method('NodeHandler', '_handle_need', 2, 9, 6).
-python_method('NodeHandler', '_handle_run_control', 1, 8, 5).
-python_method('NodeHandler', '_stream_events', 0, 14, 18).
-python_method('NodeHandler', '_admin_ok', 1, 5, 4).
-python_method('NodeHandler', '_run_ok', 1, 5, 4).
-python_method('NodeHandler', '_handle_deploy', 0, 11, 20).
-python_method('NodeHandler', '_handle_enroll', 0, 11, 14).
-python_method('NodeHandler', 'log_message', 1, 1, 0).
 python_class('adapters/python/urirun/node/reversible.py', 'CallSpec').
 python_class('adapters/python/urirun/node/reversible.py', 'Action').
 python_class('adapters/python/urirun/node/reversible.py', 'Transition').
@@ -3146,6 +3390,42 @@ python_method('TwinMemory', 'drift', 2, 3, 2).
 python_method('TwinMemory', 'remember_flow', 2, 1, 0).
 python_method('TwinMemory', 'recall_flow', 1, 1, 1).
 python_method('TwinMemory', 'known_good_flows', 0, 1, 4).
+python_class('adapters/python/urirun/node/server.py', 'EventHub').
+python_method('EventHub', '__init__', 1, 1, 3).
+python_method('EventHub', 'publish', 1, 3, 4).
+python_method('EventHub', 'subscribe', 0, 1, 2).
+python_method('EventHub', 'unsubscribe', 1, 1, 1).
+python_method('EventHub', 'replay_since', 1, 3, 1).
+python_method('EventHub', 'current_id', 0, 1, 0).
+python_method('EventHub', 'count', 0, 1, 1).
+python_class('adapters/python/urirun/node/server.py', 'NodeContext').
+python_method('NodeContext', '__init__', 0, 1, 1).
+python_class('adapters/python/urirun/node/server.py', 'NodeHandler').
+python_method('NodeHandler', 'ctx', 0, 1, 0).
+python_method('NodeHandler', 'do_OPTIONS', 0, 1, 1).
+python_method('NodeHandler', '_guarded', 1, 3, 3).
+python_method('NodeHandler', 'do_GET', 0, 1, 1).
+python_method('NodeHandler', 'do_POST', 0, 1, 1).
+python_method('NodeHandler', '_health_payload', 0, 4, 9).
+python_method('NodeHandler', '_routes_payload', 0, 2, 4).
+python_method('NodeHandler', '_get', 0, 12, 11).
+python_method('NodeHandler', '_get_errors', 2, 8, 12).
+python_method('NodeHandler', '_post', 0, 6, 6).
+python_method('NodeHandler', '_run_target', 2, 6, 6).
+python_method('NodeHandler', '_publish_run', 2, 5, 4).
+python_method('NodeHandler', '_validate_run_request', 1, 10, 7).
+python_method('NodeHandler', '_dispatch_control_uri', 3, 6, 5).
+python_method('NodeHandler', '_respond_async', 4, 1, 11).
+python_method('NodeHandler', '_handle_run', 0, 14, 21).
+python_method('NodeHandler', '_handle_adopt', 2, 9, 7).
+python_method('NodeHandler', '_handle_need', 2, 9, 6).
+python_method('NodeHandler', '_handle_run_control', 1, 8, 5).
+python_method('NodeHandler', '_stream_events', 0, 14, 18).
+python_method('NodeHandler', '_admin_ok', 1, 5, 4).
+python_method('NodeHandler', '_run_ok', 1, 5, 4).
+python_method('NodeHandler', '_handle_deploy', 0, 11, 20).
+python_method('NodeHandler', '_handle_enroll', 0, 11, 14).
+python_method('NodeHandler', 'log_message', 1, 1, 0).
 python_class('adapters/python/urirun/node/twin_store.py', 'JsonFileStore').
 python_method('JsonFileStore', '__init__', 1, 2, 5).
 python_method('JsonFileStore', 'get', 2, 1, 1).

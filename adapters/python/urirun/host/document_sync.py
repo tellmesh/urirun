@@ -573,3 +573,8 @@ def sync_documents_to_node(
     reason_suffix = f" ({top_reason})" if top_reason else ""
     content = f"Document sync to {params.node} {status}: {copied}/{len(files)} PDFs -> {params.dest_root}{reason_suffix}"
     return _log_and_chat_report(db, deps, report, node=params.node, content=content)
+
+
+def scanned_id_log_path() -> Path:
+    configured = os.environ.get("URIRUN_SCANNED_ID_LOG")
+    return Path(configured).expanduser().resolve() if configured else document_archive_root() / "scanned.id.jsonl"

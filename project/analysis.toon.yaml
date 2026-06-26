@@ -1,15 +1,18 @@
-# code2llm | 175f 42860L | python:114,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
-# generated in 0.09s
-# CC̅=4.6 | critical:2/1870 | dups:0 | cycles:0
+# code2llm | 176f 43260L | python:115,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
+# generated in 0.08s
+# CC̅=4.7 | critical:3/1876 | dups:0 | cycles:0
 
-HEALTH[2]:
+HEALTH[4]:
+  🔴 GOD   adapters/python/urirun/node/reversible.py = 500L, 9 classes, 35m, max CC=14
+  🟡 CC    _normalize_flow_step CC=15 (limit:15)
   🟡 CC    _preflight CC=15 (limit:15)
   🟡 CC    execute_flow CC=15 (limit:15)
 
-REFACTOR[1]:
-  1. split 2 high-CC methods  (CC>15)
+REFACTOR[2]:
+  1. split adapters/python/urirun/node/reversible.py  (god module)
+  2. split 3 high-CC methods  (CC>15)
 
-PIPELINES[587]:
+PIPELINES[612]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -120,46 +123,47 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.7    ←in:10  →out:0
-  │ !! host_dashboard           11478L  0C  322m  CC=14     ←0
+  │ !! host_dashboard           10758L  0C  268m  CC=14     ←0
   │ !! v2                        2003L  1C  122m  CC=14     ←4
-  │ !! flow                      1188L  0C   61m  CC=15     ←2
-  │ !! mesh                      1082L  0C   48m  CC=14     ←1
-  │ !! server                     991L  3C   56m  CC=14     ←3
-  │ !! scanner_bridge             899L  1C   40m  CC=12     ←0
+  │ !! flow                      1292L  0C   66m  CC=15     ←2
+  │ !! scanner_bridge            1146L  1C   54m  CC=12     ←0
+  │ !! server                     991L  3C   56m  CC=14     ←4
+  │ !! node_cli                   894L  0C   48m  CC=14     ←1
+  │ !! object_registry            749L  0C   50m  CC=14     ←0
   │ !! __init__                   737L  1C   51m  CC=14     ←15
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! cli                        715L  0C    7m  CC=1      ←1
+  │ !! connector_lint             714L  0C   38m  CC=14     ←1
   │ !! _scan                      659L  0C   34m  CC=14     ←0
-  │ !! connector_lint             603L  0C   34m  CC=14     ←1
   │ !! _runtime                   584L  1C   29m  CC=13     ←2
-  │ !! document_sync              575L  2C   31m  CC=14     ←0
+  │ !! document_sync              580L  2C   32m  CC=14     ←0
   │ !! errors                     563L  0C   31m  CC=13     ←1
   │ !! client                     558L  1C   35m  CC=12     ←0
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! host_db                    527L  0C   33m  CC=11     ←0
   │ !! diagnostics                519L  1C   15m  CC=14     ←2
-  │ !! document_metadata          517L  0C   22m  CC=14     ←1
+  │ !! document_metadata          515L  0C   21m  CC=14     ←1
+  │ !! reversible                 500L  9C   35m  CC=14     ←1
   │ domain_monitor             487L  1C   25m  CC=11     ←1
   │ v1                         471L  0C   25m  CC=14     ←1
   │ service_control            462L  0C   23m  CC=11     ←0
-  │ reversible                 455L  9C   34m  CC=14     ←1
   │ manage                     443L  0C   29m  CC=12     ←0
   │ codegen                    438L  0C   19m  CC=14     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
-  │ task_planner               366L  2C   16m  CC=12     ←1
+  │ task_planner               366L  2C   16m  CC=12     ←3
   │ discovery                  362L  0C   29m  CC=14     ←0
   │ host_integrations          356L  0C   15m  CC=8      ←0
   │ recovery                   346L  0C   17m  CC=14     ←2
   │ task_cli                   342L  0C   25m  CC=11     ←1
   │ cdp                        339L  1C   24m  CC=8      ←0
   │ planfile_adapter           281L  1C   26m  CC=9      ←0
+  │ mesh                       274L  0C    0m  CC=0.0    ←0
   │ worker                     266L  3C   20m  CC=13     ←0
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
   │ connect_catalog            255L  0C   17m  CC=13     ←0
   │ adopt_pack                 245L  0C   12m  CC=13     ←0
   │ config                     226L  0C   17m  CC=9      ←3
-  │ object_registry            225L  0C   14m  CC=14     ←0
   │ doctor                     217L  0C   13m  CC=9      ←1
   │ fs_transfer                209L  0C    7m  CC=14     ←0
   │ v2_mcp                     209L  0C   11m  CC=9      ←0
@@ -208,7 +212,7 @@ LAYERS:
   │ urirun.rb                   39L  1C    4m  CC=4      ←0
   │ Urirun.java                 38L  1C    3m  CC=1      ←1
   │ paths                       38L  0C    3m  CC=5      ←4
-  │ _util                       37L  0C    5m  CC=2      ←5
+  │ _util                       37L  0C    5m  CC=2      ←4
   │ index.js                    33L  0C   11m  CC=8      ←9
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ main.go                     24L  0C    1m  CC=1      ←0

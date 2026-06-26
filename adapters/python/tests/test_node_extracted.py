@@ -179,6 +179,86 @@ def test_normalize_flow_does_not_inject_across_different_targets():
     ]
 
 
+# --- infeasibility gate -------------------------------------------------------
+
+_WAYLAND_INFEASIBLE = [
+    {"kind": "infeasible", "what": "/input/command/type", "surface": "atspi",
+     "reason": "Wayland withholds keyboard focus", "fix": "/cdp/page/command/fill"},
+    {"kind": "infeasible", "what": "/input/command/fill", "surface": "atspi",
+     "reason": "Wayland withholds keyboard focus", "fix": "/cdp/page/command/fill"},
+]
+
+_WAYLAND_ALLOWED = {
+    "kvm://laptop/input/command/type",
+    "kvm://laptop/input/command/fill",
+    "kvm://laptop/cdp/page/command/fill",
+}
+
+
+def test_normalize_flow_infeasible_step_raises():
+    """A step whose URI suffix is in infeasible_constraints must be rejected before execution."""
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "type", "uri": "kvm://laptop/input/command/type", "payload": {"text": "hello"}},
+    ]}
+    with pytest.raises(ValueError, match="infeasible"):
+        flow.normalize_flow(flow_doc, _WAYLAND_ALLOWED,
+                            infeasible_constraints=_WAYLAND_INFEASIBLE)
+
+
+def test_normalize_flow_cdp_fill_not_blocked_by_infeasible_constraints():
+    """CDP fill does NOT contain an OS-type path suffix, so it passes through."""
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "fill", "uri": "kvm://laptop/cdp/page/command/fill", "payload": {"role": "textbox", "text": "hi"}},
+    ]}
+    out = flow.normalize_flow(flow_doc, _WAYLAND_ALLOWED,
+                              infeasible_constraints=_WAYLAND_INFEASIBLE)
+    assert out["steps"][0]["uri"] == "kvm://laptop/cdp/page/command/fill"
+
+
+def test_normalize_flow_no_infeasible_constraints_is_noop():
+    """Without constraints, the old paths still work (backwards-compat)."""
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "type", "uri": "kvm://laptop/input/command/type", "payload": {"text": "hello"}},
+    ]}
+    out = flow.normalize_flow(flow_doc, _WAYLAND_ALLOWED, infeasible_constraints=None)
+    assert out["steps"][0]["uri"] == "kvm://laptop/input/command/type"
+
+
+def test_normalize_flow_infeasible_error_names_fix():
+    """Infeasibility error message must name the fix (cdp fill path) so the caller can re-plan."""
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "type", "uri": "kvm://laptop/input/command/type", "payload": {"text": "x"}},
+    ]}
+    with pytest.raises(ValueError) as exc_info:
+        flow.normalize_flow(flow_doc, _WAYLAND_ALLOWED,
+                            infeasible_constraints=_WAYLAND_INFEASIBLE)
+    assert "/cdp/page/command/fill" in str(exc_info.value)
+
+
+def test_normalize_flow_or_explain_propagates_environments_constraints():
+    """normalize_flow_or_explain pulls infeasible constraints from environments param."""
+    environments = [{"constraints": _WAYLAND_INFEASIBLE}]
+    flow_doc = {"task": {"id": "t"}, "steps": [
+        {"id": "type", "uri": "kvm://laptop/input/command/type", "payload": {"text": "x"}},
+    ]}
+    with pytest.raises(ValueError, match="infeasible"):
+        flow.normalize_flow_or_explain(
+            flow_doc, _WAYLAND_ALLOWED, routes=[], environments=environments)
+
+
+def test_normalize_flow_fallback_cdp_down_type_is_blocked():
+    """Regression: when CDP is down and heuristic fallback picks input/command/type for web,
+    the infeasibility gate must reject the step — not silently pass it to the runner."""
+    # Simulate: CDP unavailable, heuristic emits type via OS surface
+    fallback_flow = {"task": {"id": "t"}, "steps": [
+        {"id": "type", "uri": "kvm://laptop/input/command/type", "payload": {"text": "hello LI"}},
+    ]}
+    with pytest.raises(ValueError, match="infeasible"):
+        flow.normalize_flow_or_explain(
+            fallback_flow, _WAYLAND_ALLOWED,
+            routes=[], environments=[{"constraints": _WAYLAND_INFEASIBLE}])
+
+
 # --- config.node_url ---------------------------------------------------------
 
 def test_node_url_resolves_name_then_bare_then_url():

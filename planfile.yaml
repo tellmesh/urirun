@@ -446,19 +446,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-49bb5c3c
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in adapters/python/urirun/host/task_planner.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/host/task_planner.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-b3386cd3
     name: Fix unused-imports issues
     description: Resolve 2 unused-imports issues in adapters/python/urirun/host/task_planner.py
@@ -1314,6 +1301,19 @@ sprints:
     - adapters/python/urirun/host/discovery.py
     rule_id: unused-imports
     count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-3145ffbd
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in adapters/python/urirun/connectors/backend_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/connectors/backend_registry.py
+    rule_id: string-concat
+    count: 1
     model_hints:
       planning: balanced
       implementation: balanced

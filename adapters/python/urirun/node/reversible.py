@@ -341,6 +341,49 @@ def _action_matrix_hints(am: dict) -> list[str]:
     return hints
 
 
+# URI path fragments that are "type/fill" actions on OS-level surfaces.
+# These are the routes that are infeasible when a Wayland compositor withholds
+# keyboard focus from os-level input surfaces for web content.
+_OS_TYPE_PATHS = frozenset({
+    "/input/command/type", "/input/command/fill",
+    "/screen/command/type", "/screen/command/fill",
+    "/atspi/command/type", "/atspi/command/fill",
+})
+
+# Surfaces that withhold keyboard focus under Wayland for web inputs.
+_WAYLAND_BLOCKED_TYPE_SURFACES = frozenset({"atspi", "uinput", "vision"})
+
+
+def _infeasible_constraints(am: dict) -> list[dict]:
+    """Return `constraints` entries with kind='infeasible' derived from the action matrix.
+
+    Each entry is:
+        {kind: 'infeasible', what: '<URI suffix>', surface: '<surface>',
+         reason: '<why>', fix: '<preferred alternative URI suffix>'}
+
+    These are machine-readable — the normalizer reads them to reject steps
+    whose URI suffix matches `what` and whose target node only has `surface`
+    available, before the flow runs. Callers also forward them to the LLM
+    prompt for context (but the normalizer gate does not rely on LLM compliance)."""
+    constraints: list[dict] = []
+    type_not_exe = [s for s in _WAYLAND_BLOCKED_TYPE_SURFACES
+                    if (am.get(s) or {}).get("type") == "not_executable"]
+    for surface in type_not_exe:
+        for path in _OS_TYPE_PATHS:
+            constraints.append({
+                "kind": "infeasible",
+                "what": path,
+                "surface": surface,
+                "reason": (
+                    f"Wayland compositor withholds keyboard focus from '{surface}' "
+                    "surface for web inputs — type/fill via this surface will silently "
+                    "fail or target the wrong element."
+                ),
+                "fix": "/cdp/page/command/fill",
+            })
+    return constraints
+
+
 def _planner_surface_guidance(facts: dict) -> list[str]:
     am = facts.get("actionMatrix") or {}
     guidance: list[str] = []
@@ -375,7 +418,9 @@ def planner_context(node: str, profile: dict, surface: dict | None = None,
         guidance.append(f"Action confidence is '{confidence['level']}' ({confidence['reason']}) — add a "
                         "verify/goal step after each mutating action, and for any IRREVERSIBLE or public "
                         "action (post/publish/send/delete/pay) require explicit user confirmation first.")
-    return {"facts": facts, "guidance": guidance, "confidence": confidence}
+    constraints = _infeasible_constraints(facts.get("actionMatrix") or {})
+    return {"facts": facts, "guidance": guidance, "confidence": confidence,
+            "constraints": constraints}
 
 
 def local_transport(by_scheme: dict[str, Connector]) -> CallableTransport:
