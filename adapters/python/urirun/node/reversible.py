@@ -30,6 +30,8 @@ import json
 from dataclasses import dataclass, field
 from typing import Any, Callable, Protocol, runtime_checkable
 
+from urirun.node.twin_store import TwinMemory, environment_fingerprint  # noqa: F401 — re-exported
+
 
 def parse(uri: str) -> tuple[str, str, str]:
     """``scheme://node/path`` -> (scheme, node, path)."""

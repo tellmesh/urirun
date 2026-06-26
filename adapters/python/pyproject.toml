@@ -35,7 +35,6 @@ uri-copy-id = "urirun.node.mesh:copy_id_cli"
 [project.entry-points."urirun.bindings"]
 skill = "urirun.node.skill:skill_bindings"
 session = "urirun.node.skill:session_bindings"
-flow = "urirun.node.flow_uri:flow_bindings"
 ready = "urirun.node.preconditions:ready_bindings"
 
 [tool.setuptools.packages.find]
