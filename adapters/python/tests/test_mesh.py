@@ -16,6 +16,21 @@ from unittest import mock
 from urirun import mesh
 from urirun.node import flow, keyauth, manage
 
+from contextlib import contextmanager
+from unittest.mock import patch
+
+
+@contextmanager
+def _with_intents(**kwargs):
+    """Patch _flow_intents to return a fixed intent map for one heuristic_flow call.
+    LLM classification is mocked here; the test verifies step-building logic.""",
+    from urirun.node.flow import _INTENT_NAMES
+    base = {k: False for k in _INTENT_NAMES}
+    base.update(kwargs)
+    with patch("urirun.node.flow._flow_intents", return_value=base):
+        yield
+
+
 
 def _wait_healthy(base, tries=120, delay=0.1):
     """Poll /health until it actually answers 200 (not merely 'no exception'), with a
@@ -1204,7 +1219,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "env://pc2/runtime/query/health", "safe": True},
             {"uri": "proc://pc2/process/query/list", "safe": True},
         ]
-        flow = mesh.heuristic_flow("pokaz procesy na wszystkich komputerach", routes, nodes)
+        with _with_intents(processes=True):
+            flow = mesh.heuristic_flow("pokaz procesy na wszystkich komputerach", routes, nodes)
         uris = [step["uri"] for step in flow["steps"]]
         self.assertIn("proc://pc1/process/query/list", uris)
         self.assertIn("proc://pc2/process/query/list", uris)
@@ -1216,7 +1232,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "proc://laptop/process/query/list", "node": "lenovo", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("sprawdz procesy na lenovo", routes, nodes, selected_nodes=["lenovo"])
+        with _with_intents(processes=True):
+            flow = mesh.heuristic_flow("sprawdz procesy na lenovo", routes, nodes, selected_nodes=["lenovo"])
 
         uris = [step["uri"] for step in flow["steps"]]
         self.assertEqual(uris, ["env://laptop/runtime/query/health", "proc://laptop/process/query/list"])
@@ -1230,7 +1247,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "browser://laptop/cdp/page/query/tabs", "node": "laptop", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("sprawdź czy na ekranie jest LinkedIn", routes, nodes, selected_nodes=["laptop"])
+        with _with_intents(screen=True):
+            flow = mesh.heuristic_flow("sprawdź czy na ekranie jest LinkedIn", routes, nodes, selected_nodes=["laptop"])
 
         self.assertEqual(flow["steps"][0]["uri"], "screen://laptop/portal/query/capture")
 
@@ -1241,7 +1259,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "screen://laptop/portal/query/capture", "node": "laptop", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("sprawdź ekran laptop", routes, nodes, selected_nodes=["laptop"])
+        with _with_intents(screen=True):
+            flow = mesh.heuristic_flow("sprawdź ekran laptop", routes, nodes, selected_nodes=["laptop"])
 
         self.assertEqual([step["uri"] for step in flow["steps"]], ["screen://laptop/portal/query/capture"])
 
@@ -1253,7 +1272,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "browser://laptop/cdp/page/query/tabs", "node": "laptop", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("sprawdź linkedin w przeglądarce", routes, nodes, selected_nodes=["laptop"])
+        with _with_intents(browser=True):
+            flow = mesh.heuristic_flow("sprawdź linkedin w przeglądarce", routes, nodes, selected_nodes=["laptop"])
 
         uris = [step["uri"] for step in flow["steps"]]
         self.assertEqual(uris, [
@@ -1331,7 +1351,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "fs://host/dir/query/list", "node": "lenovo", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("pokaz liste faktur z folderu downloads", routes, nodes, selected_nodes=["lenovo"])
+        with _with_intents(files=True):
+            flow = mesh.heuristic_flow("pokaz liste faktur z folderu downloads", routes, nodes, selected_nodes=["lenovo"])
 
         self.assertEqual([step["uri"] for step in flow["steps"]], ["fs://host/dir/query/list"])
         self.assertEqual(flow["steps"][0]["payload"], {"path": "~/Downloads"})
@@ -1371,7 +1392,8 @@ class MeshTests(unittest.TestCase):
             {"uri": "env://laptop/runtime/query/health", "node": "lenovo", "safe": True},
         ]
 
-        flow = mesh.heuristic_flow("sprawdź health węzła laptop", routes, nodes, selected_nodes=["lenovo"])
+        with _with_intents(health=True):
+            flow = mesh.heuristic_flow("sprawdź health węzła laptop", routes, nodes, selected_nodes=["lenovo"])
 
         self.assertEqual([step["uri"] for step in flow["steps"]], ["env://laptop/runtime/query/health"])
 

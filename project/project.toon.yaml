@@ -1,8 +1,8 @@
-# urirun | 1872 func | 110f | 44184L | python | 2026-06-26
+# urirun | 1880 func | 111f | 44427L | python | 2026-06-26
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.8  critical=247 (limit:10)  dup=2  cycles=0
+  CC̄=4.8  critical=250 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
   !!! high_fan_out     create_handler = 63 (limit:10)
@@ -16,23 +16,23 @@ ALERTS[20]:
   !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
 
-MODULES[183] (top by size):
-  M[adapters/python/urirun/host/html_templates.py] 4723L C:0 F:0 CC↑0 D:0 (python)
-  M[adapters/python/urirun/host/host_dashboard.py] 3509L C:0 F:130 CC↑14 D:1 (python)
+MODULES[184] (top by size):
+  M[adapters/python/urirun/host/html_templates.py] 4745L C:0 F:0 CC↑0 D:0 (python)
+  M[adapters/python/urirun/host/host_dashboard.py] 3266L C:0 F:127 CC↑14 D:1 (python)
+  M[adapters/python/urirun/node/flow.py] 2051L C:1 F:94 CC↑15 D:3 (python)
   M[adapters/python/urirun/runtime/v2.py] 2003L C:1 F:122 CC↑14 D:4 (python)
-  M[adapters/python/urirun/node/flow.py] 1931L C:1 F:89 CC↑15 D:3 (python)
-  M[adapters/python/urirun/host/document_sync.py] 1387L C:2 F:58 CC↑15 D:2 (python)
-  M[adapters/python/urirun/host/scanner_bridge.py] 1333L C:1 F:63 CC↑13 D:1 (python)
+  M[adapters/python/urirun/host/scanner_bridge.py] 1534L C:1 F:65 CC↑14 D:1 (python)
+  M[adapters/python/urirun/host/document_sync.py] 1412L C:2 F:59 CC↑15 D:3 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
   M[adapters/python/urirun/host/object_registry.py] 1044L C:0 F:54 CC↑14 D:0 (python)
-  M[adapters/python/urirun/node/server.py] 991L C:3 F:56 CC↑14 D:4 (python)
+  M[adapters/python/urirun/node/server.py] 997L C:3 F:56 CC↑14 D:3 (python)
   M[adapters/python/urirun/node/node_cli.py] 896L C:0 F:48 CC↑14 D:1 (python)
   M[adapters/python/urirun/__init__.py] 737L C:1 F:51 CC↑14 D:15 (python)
   M[adapters/python/urirun/runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/cli.py] 715L C:0 F:7 CC↑1 D:1 (python)
   M[adapters/python/urirun/connectors/connector_lint.py] 714L C:0 F:38 CC↑14 D:1 (python)
   M[adapters/python/urirun/runtime/_scan.py] 659L C:0 F:34 CC↑14 D:0 (python)
-  LANGS: python:122/json:13/shell:10/yaml:5/csharp:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
+  LANGS: python:123/json:13/shell:10/yaml:5/csharp:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ create_handler fan=63  // Orchestrates 63 calls
@@ -42,11 +42,11 @@ HOTSPOTS[10]:
   ★ serve fan=30  // Run the daemon: warm registry + worker pool, one Unix socket, one process.
 
 REFACTOR[15]:
-  [1] H/H Split god module adapters/python/urirun/host/document_sync.py (1387L, 2 classes)
-  [2] H/H Split god module adapters/python/urirun/node/flow.py (1931L, 1 classes)
+  [1] H/H Split god module adapters/python/urirun/host/document_sync.py (1412L, 2 classes)
+  [2] H/H Split god module adapters/python/urirun/node/flow.py (2051L, 1 classes)
   [3] H/H Split god module adapters/python/urirun/node/reversible.py (597L, 9 classes)
   [4] H/H Split god module adapters/python/urirun/__init__.py (737L, 1 classes)
   [5] H/H Split god module adapters/python/urirun/connectors/connector_lint.py (714L, 0 classes)
 
 EVOLUTION:
-  2026-06-26 CC̄=4.8 crit=247 44184L // Automated analysis
+  2026-06-26 CC̄=4.8 crit=250 44427L // Automated analysis

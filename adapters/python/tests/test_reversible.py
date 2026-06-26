@@ -445,3 +445,71 @@ class PlausibilityTests(unittest.TestCase):
         self.assertTrue(any("confidence is 'verify'" in g for g in ctx["guidance"]))
 
 
+
+
+# ─── _normalize_stuck contract ────────────────────────────────────────────────
+
+class NormalizeStuckTests(unittest.TestCase):
+    """_normalize_stuck converts Transition/tuple 'stuck' and 'undone' to URI strings."""
+
+    def setUp(self):
+        from urirun.node.reversible import Action, Transition
+        self.tr = Transition(
+            before="state-a",
+            forward=Action("kvm://host/window/command/open", {}),
+            inverse=Action("kvm://host/window/command/close", {}),
+            after="state-b",
+        )
+
+    def test_string_stuck_unchanged(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": False, "stuck": "kvm://host/x", "undone": []})
+        assert r["stuck"] == "kvm://host/x"
+
+    def test_transition_stuck_becomes_uri(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": False, "stuck": self.tr, "undone": []})
+        assert r["stuck"] == "kvm://host/window/command/close"
+
+    def test_tuple_undone_becomes_uri_list(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": True, "undone": [(self.tr, None)]})
+        assert r["undone"] == ["kvm://host/window/command/close"]
+
+    def test_string_undone_preserved(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": True, "undone": ["kvm://host/x"]})
+        assert r["undone"] == ["kvm://host/x"]
+
+    def test_mixed_undone_normalized(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": True, "undone": [(self.tr, None), "kvm://host/y"]})
+        assert r["undone"] == ["kvm://host/window/command/close", "kvm://host/y"]
+
+    def test_none_stuck_unchanged(self):
+        from urirun.node.reversible import _normalize_stuck
+        r = _normalize_stuck({"ok": True, "undone": []})
+        assert r.get("stuck") is None
+
+    def test_uri_rollback_emits_string_stuck_on_failure(self):
+        """_uri_rollback normalises stuck through _normalize_stuck — result is always a string."""
+        from urirun.node.reversible import _uri_rollback
+        from urirun.node import flow as _flow_mod
+        from urirun.node.reversible import CallableTransport
+
+        inv_uri = "kvm://host/window/command/close"
+        ledger = [{"uri": "kvm://host/window/command/open", "inverse": inv_uri, "args": {}}]
+
+        def _bad_transport(mesh):
+            return CallableTransport(lambda u, a: {"ok": False, "error": "fail"})
+
+        _orig = _flow_mod._flow_transport
+        _flow_mod._flow_transport = _bad_transport
+        try:
+            r = _uri_rollback({"ledger": ledger, "mesh": {}})
+        finally:
+            _flow_mod._flow_transport = _orig
+
+        assert r["ok"] is False
+        assert isinstance(r.get("stuck"), str), f"stuck should be str, got {type(r.get('stuck'))}"
+        assert r["stuck"] == inv_uri

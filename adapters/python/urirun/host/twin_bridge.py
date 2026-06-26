@@ -21,6 +21,17 @@ def flow_has_desktop_step(flow: dict) -> bool:
     return any(any(sc in str(s.get("uri", "")) for sc in _DESKTOP_SCHEMES) for s in flow.get("steps", []))
 
 
+def _is_infra_step(step: dict) -> bool:
+    """Return True for infrastructure steps not shown in twin monitor."""
+    step_id = step.get("id") or ""
+    return (
+        step.get("type") == "preflight"
+        or step_id.startswith("preflight")
+        or step_id.startswith("twin:drift:")
+        or step_id == "memory:remember"
+    )
+
+
 def append_twin_widget(execute: bool, flow: dict, attachments: list,
                        prompt: str, selected_targets: "list[str]", timeline: list) -> None:
     """Append a twin-monitor widget when the flow touches a desktop node."""
@@ -38,16 +49,37 @@ def append_twin_widget(execute: bool, flow: dict, attachments: list,
     attachments.append({"kind": "twin-monitor", "uri": f"/twin?{qs}", "path": "Digital Twin Widget"})
     if not execute:
         return
+    node = (selected_targets[0] if selected_targets else None) or "host"
     for step in timeline:
-        if step.get("type") == "preflight":
+        if _is_infra_step(step):
             continue
-        sig = f"s{int(time.time() * 1000)}"
+        sig_before = f"s{int(time.time() * 1000)}"
+        sig_after = f"{sig_before}-done"
+        step_uri = step.get("uri") or "?"
+        step_ok = step.get("ok", True)
+        # Minimal TwinState — real state capture requires kvm surface probe
+        _before: dict = {
+            "node": step.get("target") or node,
+            "os": "linux",
+            "surface": "cdp" if "cdp" in step_uri or "browser" in step_uri else "kvm",
+            "fingerprint": sig_before,
+            "stateSig": sig_before,
+            "url": None,
+            "monitors": [],
+            "window": None,
+        }
+        _after: dict = {**_before, "fingerprint": sig_after, "stateSig": sig_after}
         TWIN_EVENT_HUB.publish({
             "uri": "twin://monitor/event",
-            "twin": {"node": step.get("target", "laptop"), "stateSig": sig},
-            "after": {"stateSig": f"{sig}-done"},
-            "transition": {"forward": {"uri": step.get("uri"), "args": {}}, "inverse": None, "reversible": False},
-            "narration": f"Krok [{step.get('id', '?')}]: {step.get('uri')} (sukces: {step.get('ok')})",
+            "narration": f"[{step.get('id', '?')}] {step_uri}",
+            "status": "applied" if step_ok else "blocked",
+            "transition": {
+                "before": _before,
+                "forward": step_uri,
+                "inverse": None,
+                "after": _after,
+                "reversible": False,
+            },
         })
 
 

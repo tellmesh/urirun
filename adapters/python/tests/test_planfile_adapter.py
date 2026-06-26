@@ -105,9 +105,11 @@ class PlanfileAdapterTests(unittest.TestCase):
                 "timeline": [{"id": "proc", "uri": "proc://pc1/process/query/list", "target": "pc1", "ok": True}],
                 "results": {"proc": {"ok": True}},
             }
+            fake_flow = {"steps": [{"id": "proc", "uri": "proc://pc1/process/query/list", "payload": {}}]}
             with (
                 patch.object(task_cli, "host_config_for_args", return_value={}),
                 patch.object(task_cli, "discover_mesh", return_value=fake_mesh),
+                patch.object(task_cli, "make_flow", return_value=(fake_flow, {"provider": "test"})),
                 patch.object(task_cli, "execute_flow", return_value=fake_execution),
                 contextlib.redirect_stdout(io.StringIO()),
             ):

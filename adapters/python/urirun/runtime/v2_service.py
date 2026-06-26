@@ -113,3 +113,25 @@ def call(uri: str, payload: dict | None = None, registry: dict | None = None, mo
     envelope["result"] = data.get("result")
     envelope["ok"] = bool(data.get("ok", status < 400))
     return envelope
+
+
+def make_dispatch(registry: dict | None, mode: str, fallback=None):
+    """Return a two-tier ``dispatch(uri, payload)`` callable.
+
+    Tier 1 — mesh (v2_service.call): fast, covers served nodes in *registry*.
+    Tier 2 — *fallback(uri, payload)*: called only when Tier 1 returns
+    ``error.category == NOT_FOUND``.  Pass ``None`` to skip Tier 2.
+
+    This is the canonical factory for dispatch callables that flow.execute_flow,
+    twin connector handlers, and the dashboard all share — a single seam to swap
+    the routing strategy (e.g. inject a test stub or a remote node transport)
+    without touching the call sites."""
+    def _dispatch(uri: str, payload: dict | None = None) -> dict | None:
+        r = call(uri, payload or {}, registry or {}, mode=mode)
+        if r and r.get("ok"):
+            return r
+        if fallback is not None and (r.get("error") or {}).get("category") == "NOT_FOUND":
+            fb = fallback(uri, payload or {})
+            return fb if fb is not None else r
+        return r
+    return _dispatch

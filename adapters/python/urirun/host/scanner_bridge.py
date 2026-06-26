@@ -14,7 +14,7 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from .widgets import query_value
-from .document_sync import load_document_index as _load_document_index
+from .document_sync import load_document_index as _load_document_index, file_sha256 as _file_sha256
 
 
 PAGE_ACTION_LOCK = threading.Lock()
@@ -88,6 +88,10 @@ def scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
 
 def scanner_staging_dir() -> Path:
     return Path(os.environ.get("URIRUN_SCANNER_DIR", "~/.urirun/host-dashboard/scans")).expanduser().resolve()
+
+
+_scanner_staging_dir = scanner_staging_dir
+_time = time.time
 
 
 @dataclass(frozen=True)

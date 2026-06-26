@@ -200,66 +200,42 @@ def test_make_local_dispatch_uri_uses_mesh_when_ok():
         _v2.call = real_call
 
 
-def test_make_local_dispatch_uri_falls_back_on_not_found():
+def test_make_local_dispatch_uri_falls_back_on_not_found(monkeypatch):
     """When mesh returns NOT_FOUND, falls through to in-process connector."""
-    from urirun.host.host_dashboard import _make_local_dispatch_uri
+    from urirun.host.dispatch import make_local_dispatch_uri
+    import urirun.v2_service as _v2
 
     inprocess_called = []
+    monkeypatch.setattr(_v2, "call",
+        lambda uri, payload, registry, mode="execute": {
+            "ok": False, "error": {"category": "NOT_FOUND"}})
 
-    import urirun.v2_service as _v2
-    import urirun.host.host_dashboard as hd
-
-    real_v2_call = _v2.call
-    real_inprocess = hd._run_inprocess_connector_uri
-
-    def fake_not_found(uri, payload, registry, *, mode):
-        return {"ok": False, "error": {"category": "NOT_FOUND"}}
-
-    def fake_inprocess(uri, payload):
+    def fake_inprocess(uri, payload=None):
         inprocess_called.append(uri)
         return {"ok": True, "invokedUri": uri, "result": {"from": "inprocess"}}
 
-    _v2.call = fake_not_found
-    hd._run_inprocess_connector_uri = fake_inprocess
-
-    try:
-        dispatch = _make_local_dispatch_uri({}, "execute")
-        result = dispatch("diag://host/error/command/classify", {"error": {}})
-        assert result["ok"] is True
-        assert inprocess_called == ["diag://host/error/command/classify"]
-    finally:
-        _v2.call = real_v2_call
-        hd._run_inprocess_connector_uri = real_inprocess
+    dispatch = make_local_dispatch_uri({}, "execute", fallback=fake_inprocess)
+    result = dispatch("diag://host/error/command/classify", {"error": {}})
+    assert result["ok"] is True
+    assert inprocess_called == ["diag://host/error/command/classify"]
 
 
-def test_make_local_dispatch_uri_returns_error_if_not_not_found():
+def test_make_local_dispatch_uri_returns_error_if_not_not_found(monkeypatch):
     """Non-NOT_FOUND errors from mesh are returned as-is (no in-process fallback)."""
-    from urirun.host.host_dashboard import _make_local_dispatch_uri
+    from urirun.host.dispatch import make_local_dispatch_uri
+    import urirun.v2_service as _v2
 
     inprocess_called = []
+    monkeypatch.setattr(_v2, "call",
+        lambda uri, payload, registry, mode="execute": {
+            "ok": False, "error": {"category": "AUTH_ERROR"}})
 
-    import urirun.v2_service as _v2
-    import urirun.host.host_dashboard as hd
-
-    real_v2_call = _v2.call
-    real_inprocess = hd._run_inprocess_connector_uri
-
-    def fake_auth_error(uri, payload, registry, *, mode):
-        return {"ok": False, "error": {"category": "AUTH_ERROR"}}
-
-    def fake_inprocess(uri, payload):
+    def fake_inprocess(uri, payload=None):
         inprocess_called.append(uri)
         return {"ok": True}
 
-    _v2.call = fake_auth_error
-    hd._run_inprocess_connector_uri = fake_inprocess
-
-    try:
-        dispatch = _make_local_dispatch_uri({}, "execute")
-        result = dispatch("cdp://host/page/fill", {})
-        assert result["ok"] is False
-        assert result["error"]["category"] == "AUTH_ERROR"
-        assert inprocess_called == []  # fallback NOT triggered for non-NOT_FOUND
-    finally:
-        _v2.call = real_v2_call
-        hd._run_inprocess_connector_uri = real_inprocess
+    dispatch = make_local_dispatch_uri({}, "execute", fallback=fake_inprocess)
+    result = dispatch("cdp://host/page/fill", {})
+    assert result["ok"] is False
+    assert result["error"]["category"] == "AUTH_ERROR"
+    assert inprocess_called == []  # fallback NOT triggered for non-NOT_FOUND

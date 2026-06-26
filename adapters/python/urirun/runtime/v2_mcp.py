@@ -26,6 +26,7 @@ import re
 import sys
 
 from urirun import _registry as reglib, v2
+from urirun.runtime.dispatch_protocol import dispatch as _dp_dispatch
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "urirun", "version": "0.8.0"}
@@ -129,7 +130,8 @@ def call_tool(name: str, arguments: dict, registry: dict, mode: str = "dry-run",
     uri = build_tool_index(registry).get(name)
     if not uri:
         raise KeyError(f"unknown tool: {name}")
-    return v2.run(uri, registry, payload=arguments or {}, mode=mode, policy=policy, confirm=confirm)
+    return _dp_dispatch({"uri": uri, "payload": arguments or {}, "mode": mode},
+                        registry, policy=policy, confirm=confirm)
 
 
 def _handle_mcp_request(request, registry, index, public_tools, respond, mode, policy) -> None:
@@ -147,7 +149,8 @@ def _handle_mcp_request(request, registry, index, public_tools, respond, mode, p
         if not uri:
             respond(rid, error={"code": -32602, "message": f"unknown tool: {params.get('name')}"})
             return
-        envelope = v2.run(uri, registry, payload=params.get("arguments", {}), mode=mode, policy=policy)
+        envelope = _dp_dispatch({"uri": uri, "payload": params.get("arguments", {}), "mode": mode},
+                                registry, policy=policy)
         respond(rid, {"content": [{"type": "text", "text": json.dumps(envelope)}], "isError": not envelope.get("ok", False)})
     elif not (method and method.startswith("notifications/")):
         respond(rid, error={"code": -32601, "message": f"unknown method: {method}"})

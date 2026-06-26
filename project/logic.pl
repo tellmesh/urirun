@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.164', 'javascript').
+project_metadata('urirun', '0.4.165', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -37,14 +37,14 @@ project_file('adapters/python/tests/test_daemon.py', 41, 'python').
 project_file('adapters/python/tests/test_declarative.py', 103, 'python').
 project_file('adapters/python/tests/test_diagnostics.py', 1572, 'python').
 project_file('adapters/python/tests/test_discovery.py', 127, 'python').
-project_file('adapters/python/tests/test_dispatch_protocol.py', 182, 'python').
+project_file('adapters/python/tests/test_dispatch_protocol.py', 263, 'python').
 project_file('adapters/python/tests/test_doctor.py', 116, 'python').
 project_file('adapters/python/tests/test_document_metadata.py', 133, 'python').
 project_file('adapters/python/tests/test_document_sync.py', 118, 'python').
 project_file('adapters/python/tests/test_domain_monitor.py', 162, 'python').
 project_file('adapters/python/tests/test_errors.py', 291, 'python').
 project_file('adapters/python/tests/test_exec.py', 147, 'python').
-project_file('adapters/python/tests/test_flow.py', 199, 'python').
+project_file('adapters/python/tests/test_flow.py', 339, 'python').
 project_file('adapters/python/tests/test_flow_reversible.py', 118, 'python').
 project_file('adapters/python/tests/test_flow_rollup.py', 220, 'python').
 project_file('adapters/python/tests/test_flow_twin.py', 319, 'python').
@@ -54,12 +54,13 @@ project_file('adapters/python/tests/test_gap5_authoring.py', 105, 'python').
 project_file('adapters/python/tests/test_host_dashboard.py', 479, 'python').
 project_file('adapters/python/tests/test_host_db.py', 113, 'python').
 project_file('adapters/python/tests/test_host_integrations.py', 108, 'python').
+project_file('adapters/python/tests/test_host_routing.py', 170, 'python').
 project_file('adapters/python/tests/test_install_upgrade.py', 109, 'python').
 project_file('adapters/python/tests/test_introspect.py', 76, 'python').
 project_file('adapters/python/tests/test_kernel_adoption.py', 236, 'python').
 project_file('adapters/python/tests/test_keyauth.py', 109, 'python').
 project_file('adapters/python/tests/test_manage.py', 52, 'python').
-project_file('adapters/python/tests/test_mesh.py', 1790, 'python').
+project_file('adapters/python/tests/test_mesh.py', 1812, 'python').
 project_file('adapters/python/tests/test_minimal_imports.py', 91, 'python').
 project_file('adapters/python/tests/test_no_urirun_shadow.py', 15, 'python').
 project_file('adapters/python/tests/test_node_client.py', 335, 'python').
@@ -78,7 +79,7 @@ project_file('adapters/python/tests/test_refactor_helpers.py', 201, 'python').
 project_file('adapters/python/tests/test_registry.py', 118, 'python').
 project_file('adapters/python/tests/test_registry_portable.py', 47, 'python').
 project_file('adapters/python/tests/test_resolver.py', 101, 'python').
-project_file('adapters/python/tests/test_reversible.py', 448, 'python').
+project_file('adapters/python/tests/test_reversible.py', 516, 'python').
 project_file('adapters/python/tests/test_routing.py', 158, 'python').
 project_file('adapters/python/tests/test_runtime.py', 173, 'python').
 project_file('adapters/python/tests/test_scan.py', 90, 'python').
@@ -132,6 +133,7 @@ project_file('adapters/python/urirun/domain_monitor.py', 6, 'python').
 project_file('adapters/python/urirun/errors.py', 9, 'python').
 project_file('adapters/python/urirun/exec.py', 62, 'python').
 project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
+project_file('adapters/python/urirun/host/android_node.py', 163, 'python').
 project_file('adapters/python/urirun/host/artifacts_admin.py', 485, 'python').
 project_file('adapters/python/urirun/host/capability.py', 161, 'python').
 project_file('adapters/python/urirun/host/connector_admin.py', 241, 'python').
@@ -139,16 +141,17 @@ project_file('adapters/python/urirun/host/contracts.py', 120, 'python').
 project_file('adapters/python/urirun/host/decision_loop.py', 135, 'python').
 project_file('adapters/python/urirun/host/discovery.py', 363, 'python').
 project_file('adapters/python/urirun/host/document_metadata.py', 520, 'python').
-project_file('adapters/python/urirun/host/document_sync.py', 1388, 'python').
+project_file('adapters/python/urirun/host/document_sync.py', 1413, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 488, 'python').
 project_file('adapters/python/urirun/host/fs_transfer.py', 365, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 3693, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 3476, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 528, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 357, 'python').
 project_file('adapters/python/urirun/host/html_templates.py', 4724, 'python').
 project_file('adapters/python/urirun/host/node_types.py', 266, 'python').
 project_file('adapters/python/urirun/host/object_registry.py', 1045, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 282, 'python').
+project_file('adapters/python/urirun/host/routing.py', 81, 'python').
 project_file('adapters/python/urirun/host/scanner_bridge.py', 1334, 'python').
 project_file('adapters/python/urirun/host/scanner_net.py', 141, 'python').
 project_file('adapters/python/urirun/host/scheduler.py', 136, 'python').
@@ -168,7 +171,7 @@ project_file('adapters/python/urirun/node/client.py', 559, 'python').
 project_file('adapters/python/urirun/node/config.py', 227, 'python').
 project_file('adapters/python/urirun/node/diagnostics.py', 551, 'python').
 project_file('adapters/python/urirun/node/doctor.py', 218, 'python').
-project_file('adapters/python/urirun/node/flow.py', 1932, 'python').
+project_file('adapters/python/urirun/node/flow.py', 2034, 'python').
 project_file('adapters/python/urirun/node/formatting.py', 81, 'python').
 project_file('adapters/python/urirun/node/keyauth.py', 174, 'python').
 project_file('adapters/python/urirun/node/manage.py', 444, 'python').
@@ -176,7 +179,7 @@ project_file('adapters/python/urirun/node/mesh.py', 275, 'python').
 project_file('adapters/python/urirun/node/node_cli.py', 897, 'python').
 project_file('adapters/python/urirun/node/paths.py', 39, 'python').
 project_file('adapters/python/urirun/node/recovery.py', 373, 'python').
-project_file('adapters/python/urirun/node/reversible.py', 566, 'python').
+project_file('adapters/python/urirun/node/reversible.py', 598, 'python').
 project_file('adapters/python/urirun/node/routing.py', 174, 'python').
 project_file('adapters/python/urirun/node/server.py', 992, 'python').
 project_file('adapters/python/urirun/node/task_cli.py', 345, 'python').
@@ -205,7 +208,7 @@ project_file('adapters/python/urirun/runtime/v2.py', 2004, 'python').
 project_file('adapters/python/urirun/runtime/v2_adopt.py', 194, 'python').
 project_file('adapters/python/urirun/runtime/v2_grpc.py', 205, 'python').
 project_file('adapters/python/urirun/runtime/v2_mcp.py', 210, 'python').
-project_file('adapters/python/urirun/runtime/v2_service.py', 116, 'python').
+project_file('adapters/python/urirun/runtime/v2_service.py', 137, 'python').
 project_file('adapters/python/urirun/runtime/worker.py', 267, 'python').
 project_file('adapters/python/urirun/scheduler.py', 6, 'python').
 project_file('adapters/python/urirun/task_planner.py', 6, 'python').
@@ -461,6 +464,12 @@ python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_schemas
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_v2_service_post_signs_with_identity', 2, 3, 9).
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_v2_service_post_token_header_when_no_identity', 1, 3, 9).
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_v2_service_post_no_auth_header_without_env', 1, 4, 8).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_returns_callable', 0, 2, 2).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_ok_result_skips_fallback', 1, 4, 4).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_not_found_calls_fallback', 1, 2, 3).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_non_not_found_error_skips_fallback', 1, 4, 4).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_no_fallback_returns_error_directly', 1, 2, 3).
+python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_local_dispatch_uri_delegates_to_make_dispatch', 1, 5, 5).
 python_function('adapters/python/tests/test_doctor.py', 'test_api_id_normalizes', 0, 3, 1).
 python_function('adapters/python/tests/test_doctor.py', 'test_api_protocol_defaults_http', 0, 4, 1).
 python_function('adapters/python/tests/test_doctor.py', 'test_auth_configured_detects_secretref', 0, 4, 1).
@@ -527,11 +536,12 @@ python_function('adapters/python/tests/test_flow.py', 'test_nl_key_strips_diacri
 python_function('adapters/python/tests/test_flow.py', 'test_nl_key_collapses_whitespace', 0, 2, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_requested_folder_path_downloads', 0, 3, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_requested_folder_path_default', 0, 2, 1).
-python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_screen', 0, 2, 1).
-python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_browser', 0, 2, 1).
-python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_health', 0, 2, 1).
-python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_default_processes', 0, 2, 1).
-python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_invoices', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_llm_no_model_returns_none', 1, 2, 2).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_llm_exception_returns_none', 1, 3, 5).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_llm_parses_response', 1, 5, 7).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_default_when_no_llm', 1, 3, 4).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_all_false_sets_processes', 1, 2, 5).
+python_function('adapters/python/tests/test_flow.py', 'test_flow_intents_uses_llm_result', 1, 3, 5).
 python_function('adapters/python/tests/test_flow.py', 'test_uri_segments_basic', 0, 3, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_uri_segments_no_path', 0, 3, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_uri_matches_template_exact', 0, 2, 1).
@@ -550,6 +560,11 @@ python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload
 python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_passthrough', 0, 2, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_mixed', 0, 3, 1).
 python_function('adapters/python/tests/test_flow.py', 'test_resolve_step_payload_none_safe', 0, 2, 1).
+python_function('adapters/python/tests/test_flow.py', 'test_make_dispatch_uri_returns_callable', 0, 2, 2).
+python_function('adapters/python/tests/test_flow.py', 'test_make_dispatch_uri_ok_result_returned_directly', 1, 3, 4).
+python_function('adapters/python/tests/test_flow.py', 'test_make_dispatch_uri_not_found_attempts_inprocess', 1, 2, 5).
+python_function('adapters/python/tests/test_flow.py', 'test_make_dispatch_uri_non_not_found_returned_directly', 1, 2, 3).
+python_function('adapters/python/tests/test_flow.py', 'test_thin_driver_resolves_step_payload_from_prior_result', 1, 5, 5).
 python_function('adapters/python/tests/test_flow_reversible.py', '_execution_with_inverses', 0, 1, 0).
 python_function('adapters/python/tests/test_flow_reversible.py', '_mesh', 0, 1, 0).
 python_function('adapters/python/tests/test_flow_reversible.py', 'test_ledger_from_execution_skips_queries_and_recovery_markers', 0, 3, 2).
@@ -650,6 +665,32 @@ python_function('adapters/python/tests/test_host_integrations.py', 'test_planfil
 python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_project_from_config', 0, 2, 1).
 python_function('adapters/python/tests/test_host_integrations.py', 'test_planfile_project_default', 0, 2, 1).
 python_function('adapters/python/tests/test_host_integrations.py', 'test_simulate_planfile_fields', 0, 5, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_no_inputs_returns_empty', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_selected_nodes_deduped', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_node_targets_extracted_from_selected_targets', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_non_node_targets_ignored', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_explicit_nodes_plus_node_targets_merged_deduped', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_whitespace_stripped', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', '_route', 2, 1, 0).
+python_function('adapters/python/tests/test_host_routing.py', 'test_no_filters_accepts_all', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_route_matches_by_node_field', 0, 3, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_route_matches_by_uri_host', 0, 3, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_host_target_matches_host_uri', 0, 3, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_node_target_in_selected_targets', 0, 3, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_host_in_selected_targets', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', '_routes', 0, 2, 0).
+python_function('adapters/python/tests/test_host_routing.py', 'test_no_routes_returns_false', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_screen_uri_detected', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_kvm_uri_detected', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_screenshot_in_uri_detected', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_browser_capture_detected', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_unrelated_routes_return_false', 0, 2, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_node_filter_restricts_routes', 0, 3, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_no_gap_when_prompt_doesnt_need_capture', 0, 4, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_no_gap_when_capture_route_present', 0, 2, 1).
+python_function('adapters/python/tests/test_host_routing.py', 'test_gap_returned_when_capture_missing', 0, 5, 2).
+python_function('adapters/python/tests/test_host_routing.py', 'test_gap_includes_related_routes', 0, 4, 3).
+python_function('adapters/python/tests/test_host_routing.py', 'test_gap_respects_selected_nodes', 0, 3, 1).
 python_function('adapters/python/tests/test_install_upgrade.py', '_capture', 2, 1, 6).
 python_function('adapters/python/tests/test_install_upgrade.py', '_install', 0, 1, 3).
 python_function('adapters/python/tests/test_install_upgrade.py', '_upgrade', 0, 1, 3).
@@ -708,6 +749,7 @@ python_function('adapters/python/tests/test_manage.py', 'test_classify_catalog_n
 python_function('adapters/python/tests/test_manage.py', 'test_connector_match_by_name', 0, 3, 1).
 python_function('adapters/python/tests/test_manage.py', 'test_connector_match_no_hit', 0, 2, 1).
 python_function('adapters/python/tests/test_manage.py', 'test_connector_match_non_dict', 0, 3, 1).
+python_function('adapters/python/tests/test_mesh.py', '_with_intents', 0, 2, 2).
 python_function('adapters/python/tests/test_mesh.py', '_wait_healthy', 3, 4, 6).
 python_function('adapters/python/tests/test_mesh.py', '_wait_subscribers', 4, 4, 8).
 python_function('adapters/python/tests/test_mesh.py', '_post_run', 3, 3, 6).
@@ -1336,6 +1378,13 @@ python_function('adapters/python/urirun/connectors/surfaces/cdp.py', 'await_read
 python_function('adapters/python/urirun/connectors/surfaces/cdp.py', 'launch_session', 4, 3, 4).
 python_function('adapters/python/urirun/exec.py', '_resolve', 1, 3, 4).
 python_function('adapters/python/urirun/exec.py', 'main', 1, 10, 16).
+python_function('adapters/python/urirun/host/android_node.py', 'android_node_service_url', 0, 2, 3).
+python_function('adapters/python/urirun/host/android_node.py', 'node_forget_webpage', 1, 3, 10).
+python_function('adapters/python/urirun/host/android_node.py', 'start_android_node_service', 1, 8, 10).
+python_function('adapters/python/urirun/host/android_node.py', 'restart_android_node_service', 1, 12, 11).
+python_function('adapters/python/urirun/host/android_node.py', 'webpage_node_dict', 3, 11, 2).
+python_function('adapters/python/urirun/host/android_node.py', 'merge_live_webpage_nodes', 1, 14, 7).
+python_function('adapters/python/urirun/host/android_node.py', 'phone_web_nodes', 1, 5, 8).
 python_function('adapters/python/urirun/host/artifacts_admin.py', 'artifact_delete_roots', 1, 3, 5).
 python_function('adapters/python/urirun/host/artifacts_admin.py', 'artifact_file_delete_allowed', 2, 5, 5).
 python_function('adapters/python/urirun/host/artifacts_admin.py', 'payload_bool', 3, 5, 6).
@@ -1501,6 +1550,7 @@ python_function('adapters/python/urirun/host/document_sync.py', '_cleanup_scan_f
 python_function('adapters/python/urirun/host/document_sync.py', 'archive_redundant_duplicate', 0, 10, 17).
 python_function('adapters/python/urirun/host/document_sync.py', 'supersede_archived_document', 0, 10, 14).
 python_function('adapters/python/urirun/host/document_sync.py', 'archive_scanned_document', 0, 15, 39).
+python_function('adapters/python/urirun/host/document_sync.py', 'reconcile_document_index', 0, 3, 7).
 python_function('adapters/python/urirun/host/domain_monitor.py', 'now_id', 0, 1, 2).
 python_function('adapters/python/urirun/host/domain_monitor.py', '_list', 1, 6, 5).
 python_function('adapters/python/urirun/host/domain_monitor.py', '_domain', 2, 2, 2).
@@ -1543,8 +1593,6 @@ python_function('adapters/python/urirun/host/fs_transfer.py', 'node_token_for', 
 python_function('adapters/python/urirun/host/fs_transfer.py', 'run_node_uri', 3, 2, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_prune_scanner_staging', 0, 2, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_archive_scanned_document', 0, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'node_add', 2, 1, 1).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'node_remove', 2, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'artifacts_delete', 4, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'artifacts_dedupe_rows', 4, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'artifacts_cleanup_orphan_sidecars', 4, 1, 2).
@@ -1572,7 +1620,6 @@ python_function('adapters/python/urirun/host/host_dashboard.py', 'node_test_rout
 python_function('adapters/python/urirun/host/host_dashboard.py', '_ensure_node_uri_routes', 2, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_document_sync_deps', 0, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'sync_documents_to_node', 4, 5, 6).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'reconcile_document_index', 0, 3, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'startup_phone_qr', 2, 10, 17).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'ensure_phone_scanner_service', 6, 10, 14).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_latest_scanner_page_status', 1, 2, 3).
@@ -1594,7 +1641,7 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_uri_simulated
 python_function('adapters/python/urirun/host/host_dashboard.py', '_result_artifact_class', 1, 4, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'register_tagged_artifact', 1, 9, 8).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_run_inprocess_connector_uri', 3, 13, 10).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_make_local_dispatch_uri', 2, 1, 3).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_make_local_dispatch_uri', 2, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_svc_port', 1, 1, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_svc_is_map', 0, 2, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_svc_start_fn', 8, 4, 3).
@@ -1618,13 +1665,8 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_compact_chat_
 python_function('adapters/python/urirun/host/host_dashboard.py', 'node_add', 2, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'node_remove', 2, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'configured_node_api_request', 3, 13, 9).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_node_forget_webpage', 1, 3, 10).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_android_node_service_url', 0, 2, 3).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'start_android_node_service', 1, 8, 10).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'restart_android_node_service', 1, 11, 11).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_webpage_node_dict', 3, 11, 2).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_merge_live_webpage_nodes', 1, 14, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', 'phone_web_nodes', 1, 5, 8).
+python_function('adapters/python/urirun/host/host_dashboard.py', 'restart_android_node_service', 1, 1, 1).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_merge_live_webpage_nodes', 1, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'phone_node_qr', 3, 9, 19).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_node_envelope_error', 1, 10, 3).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_probe_node_token', 2, 14, 13).
@@ -1632,10 +1674,6 @@ python_function('adapters/python/urirun/host/host_dashboard.py', 'node_set_token
 python_function('adapters/python/urirun/host/host_dashboard.py', '_try_urifix_repair', 3, 12, 4).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_is_document_sync_prompt', 5, 10, 8).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_document_sync_node_from_prompt', 5, 5, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_route_in_selected_targets', 3, 14, 7).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_has_screen_capture_route', 3, 8, 5).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_screen_document_capability_gap', 4, 8, 5).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_selected_nodes_from_targets', 2, 8, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_chat_ask_phone_scanner', 10, 10, 14).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_sync_execute_initial', 7, 6, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_sync_ok_and_status', 3, 7, 2).
@@ -1818,6 +1856,10 @@ python_function('adapters/python/urirun/host/planfile_adapter.py', 'wait_for_inp
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'ready_ticket', 3, 2, 3).
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'run_dsl', 2, 1, 4).
 python_function('adapters/python/urirun/host/planfile_adapter.py', 'loads_json', 2, 2, 1).
+python_function('adapters/python/urirun/host/routing.py', 'selected_nodes_from_targets', 2, 8, 7).
+python_function('adapters/python/urirun/host/routing.py', 'route_in_selected_targets', 3, 14, 7).
+python_function('adapters/python/urirun/host/routing.py', 'has_screen_capture_route', 3, 8, 5).
+python_function('adapters/python/urirun/host/routing.py', 'screen_document_capability_gap', 4, 8, 5).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_live_store_locked', 2, 10, 11).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_best_update', 2, 3, 10).
 python_function('adapters/python/urirun/host/scanner_bridge.py', 'scanner_best_take', 1, 3, 3).
@@ -2010,11 +2052,12 @@ python_function('adapters/python/urirun/node/flow.py', '_next_kind', 1, 4, 1).
 python_function('adapters/python/urirun/node/flow.py', '_extract_inverse', 1, 6, 2).
 python_function('adapters/python/urirun/node/flow.py', '_resolve_inverse_uri', 2, 4, 4).
 python_function('adapters/python/urirun/node/flow.py', '_thin_circuit_break', 7, 4, 2).
-python_function('adapters/python/urirun/node/flow.py', '_thin_rollback', 5, 5, 5).
-python_function('adapters/python/urirun/node/flow.py', '_thin_handle_non_continue', 10, 5, 7).
+python_function('adapters/python/urirun/node/flow.py', '_thin_rollback', 7, 10, 6).
+python_function('adapters/python/urirun/node/flow.py', '_thin_handle_non_continue', 10, 7, 9).
 python_function('adapters/python/urirun/node/flow.py', '_thin_update_ledger', 3, 7, 5).
+python_function('adapters/python/urirun/node/flow.py', '_thin_step_entry', 3, 4, 2).
 python_function('adapters/python/urirun/node/flow.py', '_thin_goal_verify', 4, 6, 5).
-python_function('adapters/python/urirun/node/flow.py', '_thin_driver', 5, 12, 13).
+python_function('adapters/python/urirun/node/flow.py', '_thin_driver', 5, 15, 16).
 python_function('adapters/python/urirun/node/flow.py', '_flow_format', 2, 3, 2).
 python_function('adapters/python/urirun/node/flow.py', 'flow_document', 1, 3, 2).
 python_function('adapters/python/urirun/node/flow.py', 'write_flow_document', 3, 3, 7).
@@ -2023,6 +2066,7 @@ python_function('adapters/python/urirun/node/flow.py', 'first_url', 1, 2, 2).
 python_function('adapters/python/urirun/node/flow.py', 'nl_key', 1, 1, 6).
 python_function('adapters/python/urirun/node/flow.py', 'append_if_available', 5, 5, 5).
 python_function('adapters/python/urirun/node/flow.py', 'requested_folder_path', 1, 3, 2).
+python_function('adapters/python/urirun/node/flow.py', '_flow_intents_llm', 1, 6, 7).
 python_function('adapters/python/urirun/node/flow.py', '_flow_intents', 1, 4, 3).
 python_function('adapters/python/urirun/node/flow.py', '_append_target_steps', 6, 14, 4).
 python_function('adapters/python/urirun/node/flow.py', 'heuristic_flow', 4, 13, 15).
@@ -2076,7 +2120,7 @@ python_function('adapters/python/urirun/node/flow.py', '_restore_service_map', 1
 python_function('adapters/python/urirun/node/flow.py', '_orchestrate_steps', 14, 12, 13).
 python_function('adapters/python/urirun/node/flow.py', '_make_memory_dispatch', 4, 1, 12).
 python_function('adapters/python/urirun/node/flow.py', '_plan_with_preflight', 1, 5, 3).
-python_function('adapters/python/urirun/node/flow.py', '_build_thin_plan', 2, 12, 7).
+python_function('adapters/python/urirun/node/flow.py', '_build_thin_plan', 2, 13, 7).
 python_function('adapters/python/urirun/node/flow.py', 'execute_flow', 4, 12, 9).
 python_function('adapters/python/urirun/node/flow.py', '_flow_stdout', 1, 6, 2).
 python_function('adapters/python/urirun/node/flow.py', '_run_goal_check', 2, 6, 8).
@@ -2086,7 +2130,8 @@ python_function('adapters/python/urirun/node/flow.py', '_verify_log_fragment_che
 python_function('adapters/python/urirun/node/flow.py', '_verify_goal_check', 3, 5, 3).
 python_function('adapters/python/urirun/node/flow.py', 'verify_flow_execution', 2, 10, 6).
 python_function('adapters/python/urirun/node/flow.py', '_apply_reversibility', 8, 11, 6).
-python_function('adapters/python/urirun/node/flow.py', 'run_flow_document', 2, 8, 9).
+python_function('adapters/python/urirun/node/flow.py', 'run_flow_document', 2, 9, 10).
+python_function('adapters/python/urirun/node/flow.py', 'make_dispatch_uri', 2, 1, 7).
 python_function('adapters/python/urirun/node/flow.py', '_flow_transport', 1, 1, 7).
 python_function('adapters/python/urirun/node/flow.py', 'rollback_flow', 2, 6, 9).
 python_function('adapters/python/urirun/node/flow.py', '_uri_goal_verify', 1, 8, 5).
@@ -2228,7 +2273,9 @@ python_function('adapters/python/urirun/node/reversible.py', 'rollback_partial_f
 python_function('adapters/python/urirun/node/reversible.py', '_inner_value', 1, 5, 2).
 python_function('adapters/python/urirun/node/reversible.py', '_inverse_uri', 2, 3, 4).
 python_function('adapters/python/urirun/node/reversible.py', 'ledger_from_execution', 1, 10, 8).
-python_function('adapters/python/urirun/node/reversible.py', '_uri_rollback', 1, 15, 10).
+python_function('adapters/python/urirun/node/reversible.py', '_transition_inverse_uri', 1, 3, 2).
+python_function('adapters/python/urirun/node/reversible.py', '_normalize_stuck', 1, 8, 5).
+python_function('adapters/python/urirun/node/reversible.py', '_uri_rollback', 1, 15, 11).
 python_function('adapters/python/urirun/node/routing.py', 'uri_is_denied', 1, 2, 1).
 python_function('adapters/python/urirun/node/routing.py', 'route_class', 1, 7, 3).
 python_function('adapters/python/urirun/node/routing.py', 'route_is_safe', 2, 3, 2).
@@ -2729,6 +2776,7 @@ python_function('adapters/python/urirun/runtime/v2_mcp.py', 'main', 1, 9, 11).
 python_function('adapters/python/urirun/runtime/v2_service.py', 'service_base', 2, 5, 4).
 python_function('adapters/python/urirun/runtime/v2_service.py', '_post', 3, 5, 11).
 python_function('adapters/python/urirun/runtime/v2_service.py', 'call', 6, 9, 9).
+python_function('adapters/python/urirun/runtime/v2_service.py', 'make_dispatch', 3, 1, 3).
 python_function('adapters/python/urirun/runtime/worker.py', 'render_argv', 2, 6, 8).
 python_function('adapters/python/urirun/runtime/worker.py', '_worker_main', 1, 13, 17).
 python_function('adapters/python/urirun/runtime/worker.py', '_handler_worker_main', 0, 10, 18).
@@ -3298,16 +3346,16 @@ python_method('MeshTests', 'test_event_topic_mapping', 0, 1, 2).
 python_method('MeshTests', 'test_fanout_to_mqtt_publishes_each_event', 0, 1, 4).
 python_method('MeshTests', 'test_event_hub_ids_and_replay', 0, 2, 4).
 python_method('MeshTests', 'test_events_endpoint_auth_gating', 0, 1, 13).
-python_method('MeshTests', 'test_heuristic_flow_uses_all_reachable_nodes', 0, 2, 2).
-python_method('MeshTests', 'test_heuristic_flow_maps_config_node_name_to_route_target', 0, 2, 2).
-python_method('MeshTests', 'test_heuristic_flow_maps_linkedin_screen_prompt_to_capture', 0, 1, 2).
-python_method('MeshTests', 'test_heuristic_flow_filters_selected_node_when_route_targets_overlap', 0, 2, 2).
-python_method('MeshTests', 'test_heuristic_flow_maps_browser_linkedin_prompt_to_cdp', 0, 2, 2).
+python_method('MeshTests', 'test_heuristic_flow_uses_all_reachable_nodes', 0, 2, 3).
+python_method('MeshTests', 'test_heuristic_flow_maps_config_node_name_to_route_target', 0, 2, 3).
+python_method('MeshTests', 'test_heuristic_flow_maps_linkedin_screen_prompt_to_capture', 0, 1, 3).
+python_method('MeshTests', 'test_heuristic_flow_filters_selected_node_when_route_targets_overlap', 0, 2, 3).
+python_method('MeshTests', 'test_heuristic_flow_maps_browser_linkedin_prompt_to_cdp', 0, 2, 3).
 python_method('MeshTests', 'test_llm_flow_presents_cdp_dom_routes_and_prefers_them', 0, 3, 9).
-python_method('MeshTests', 'test_heuristic_flow_maps_downloads_invoice_prompt_to_filesystem', 0, 2, 2).
+python_method('MeshTests', 'test_heuristic_flow_maps_downloads_invoice_prompt_to_filesystem', 0, 2, 3).
 python_method('MeshTests', 'test_heuristic_flow_does_not_fake_invoice_prompt_with_processes', 0, 1, 2).
 python_method('MeshTests', 'test_heuristic_flow_does_not_fake_browser_prompt_with_lone_health', 0, 1, 2).
-python_method('MeshTests', 'test_heuristic_flow_keeps_health_when_explicitly_requested', 0, 2, 2).
+python_method('MeshTests', 'test_heuristic_flow_keeps_health_when_explicitly_requested', 0, 2, 3).
 python_method('MeshTests', 'test_registry_from_remote_routes', 0, 1, 3).
 python_method('MeshTests', 'test_service_map_prefers_exact_uri_over_shared_target', 0, 2, 5).
 python_method('MeshTests', 'test_resolve_step_payload_chains_prior_results', 0, 1, 2).
@@ -3472,6 +3520,15 @@ python_method('PlausibilityTests', 'test_uncontrollable_env_is_hitl_zero_score',
 python_method('PlausibilityTests', 'test_os_unreliable_drops_to_verify', 0, 1, 3).
 python_method('PlausibilityTests', 'test_drift_lowers_to_hitl', 0, 1, 4).
 python_method('PlausibilityTests', 'test_planner_context_carries_confidence_and_guidance', 0, 2, 4).
+python_class('adapters/python/tests/test_reversible.py', 'NormalizeStuckTests').
+python_method('NormalizeStuckTests', 'setUp', 0, 1, 2).
+python_method('NormalizeStuckTests', 'test_string_stuck_unchanged', 0, 2, 1).
+python_method('NormalizeStuckTests', 'test_transition_stuck_becomes_uri', 0, 2, 1).
+python_method('NormalizeStuckTests', 'test_tuple_undone_becomes_uri_list', 0, 2, 1).
+python_method('NormalizeStuckTests', 'test_string_undone_preserved', 0, 2, 1).
+python_method('NormalizeStuckTests', 'test_mixed_undone_normalized', 0, 2, 1).
+python_method('NormalizeStuckTests', 'test_none_stuck_unchanged', 0, 2, 2).
+python_method('NormalizeStuckTests', 'test_uri_rollback_emits_string_stuck_on_failure', 0, 4, 5).
 python_class('adapters/python/tests/test_scheduler.py', 'SchedulerTests').
 python_method('SchedulerTests', 'test_systemd_preview_and_install', 0, 1, 9).
 python_method('SchedulerTests', 'test_cli_schedule_cron_preview', 0, 1, 9).

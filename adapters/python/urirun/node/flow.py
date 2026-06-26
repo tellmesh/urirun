@@ -135,11 +135,21 @@ def _thin_circuit_break(envelope: FlowEnvelope, timeline: list, results: dict,
     return None
 
 
-def _thin_rollback(dispatch_uri, envelope: "FlowEnvelope", timeline: list, results: dict, kind: str) -> dict:
+def _thin_rollback(dispatch_uri, envelope: "FlowEnvelope", timeline: list, results: dict, kind: str,
+                   error: "dict | None" = None, explicit: bool = False) -> dict:
     """Apply envelope.ledger inverses LIFO through the same dispatch_uri that ran the steps.
     No connector hop: the thin driver already has the transport wired; routing through
-    twin://…/rollback would need a registry the driver doesn't carry."""
+    twin://…/rollback would need a registry the driver doesn't carry.
+
+    ``error`` is the triggering step's error dict, surfaced at top-level so callers can
+    read ``result["error"]["message"]`` — matches orchestrator _abort_envelope shape.
+
+    ``explicit`` — True when the step returned next.kind="rollback" intentionally; False
+    when rollback was synthesised from an inner ok=False.  When False and the ledger has no
+    inverses (nothing to undo), the "rollback" key is omitted so callers can distinguish
+    "rolled back nothing" from "no rollback attempted" with ``"rollback" not in result``."""
     undone: list[str] = []
+    has_inverses = any(entry.get("inverse") for entry in envelope.ledger)
     for entry in reversed(envelope.ledger):
         inv_uri = entry.get("inverse")
         if not inv_uri:
@@ -147,14 +157,23 @@ def _thin_rollback(dispatch_uri, envelope: "FlowEnvelope", timeline: list, resul
         envelope.record(inv_uri, "call")
         rb = dispatch_uri(inv_uri, entry.get("args") or {})
         envelope.record(inv_uri, "return", ok=rb.get("ok", True))
+        timeline.append({"id": f"rollback:{inv_uri}", "uri": inv_uri,
+                         "type": "recovery", "action": "rollback", "ok": rb.get("ok", True)})
         if not rb.get("ok", True):
-            return {"ok": False, "timeline": timeline, "results": results,
-                    "rollback": {"ok": False, "undone": undone, "stuck": inv_uri,
-                                 "reason": rb.get("error", "inverse failed")},
-                    "next": {"kind": kind}}
+            out = {"ok": False, "timeline": timeline, "results": results,
+                   "rollback": {"ok": False, "undone": undone, "stuck": inv_uri,
+                                "reason": rb.get("error", "inverse failed")},
+                   "next": {"kind": kind}}
+            if error:
+                out["error"] = error
+            return out
         undone.append(inv_uri)
-    return {"ok": False, "timeline": timeline, "results": results,
-            "rollback": {"ok": True, "undone": undone}, "next": {"kind": kind}}
+    out: dict = {"ok": False, "timeline": timeline, "results": results, "next": {"kind": kind}}
+    if has_inverses or explicit:
+        out["rollback"] = {"ok": True, "undone": undone}
+    if error:
+        out["error"] = error
+    return out
 
 
 def _thin_handle_non_continue(kind: str, r: dict, step: dict, sid: str, uri: str, payload: dict,
@@ -176,7 +195,12 @@ def _thin_handle_non_continue(kind: str, r: dict, step: dict, sid: str, uri: str
             return False, _thin_rollback(dispatch_uri, envelope, timeline, results, "failed")
         return False, None
     if kind == "rollback":
-        return False, _thin_rollback(dispatch_uri, envelope, timeline, results, "failed")
+        err = r.get("error") if isinstance(r.get("error"), dict) else None
+        # explicit=True when step intentionally returned next.kind="rollback"; False when
+        # synthesised by _next_kind from ok=False (no next.kind in the result).
+        explicit_rb = bool((r.get("next") or {}).get("kind") == "rollback")
+        return False, _thin_rollback(dispatch_uri, envelope, timeline, results, "failed",
+                                     error=err, explicit=explicit_rb)
     return kind == "done", None  # done → break; unknown → continue
 
 
@@ -195,6 +219,30 @@ def _thin_update_ledger(envelope: "FlowEnvelope", uri: str, r: dict) -> None:
                               before=str(r.get("stateBefore") or ""),
                               after=str(r.get("stateAfter") or ""),
                               inverse_args=inv.get("args") or {})
+
+
+def _thin_step_entry(sid: str, uri: str, r: dict) -> dict:
+    """Build a timeline entry for one step result."""
+    entry: dict = {"id": sid, "uri": uri, "ok": r.get("ok", True), "target": route_target(uri)}
+    if not r.get("ok"):
+        entry["error"] = r.get("error")
+    for _k in ("type", "action", "drift"):
+        if r.get(_k) is not None:
+            entry[_k] = r[_k]
+    return entry
+
+
+def _thin_fold_inner_ok(r: dict) -> dict:
+    """Fold inner ok=False into the transport envelope.
+
+    Legacy connectors return transport-ok=True with result.value.ok=False (action failed).
+    Normalise so the driver always sees a single authoritative ok signal."""
+    if r.get("ok", True) and not _action_ok(r):
+        inner_err = _action_error(r)
+        return {**r, "ok": False,
+                "error": {"message": inner_err or "inner result reported ok=False",
+                           "category": "ACTION_FAILED"}}
+    return r
 
 
 def _thin_goal_verify(dispatch_uri, envelope, timeline: list, results: dict):
@@ -247,23 +295,34 @@ def _thin_driver(
         envelope.position = i
         uri = step["uri"]
         sid = step.get("id") or uri
-        payload = step.get("payload") or {}
+        payload = resolve_step_payload(step.get("payload") or {}, results)
         envelope.record(uri, "call")
 
         r = dispatch_uri(uri, payload)
+
+        if step.get("optional"):
+            # Soft steps (drift/remember): never abort the flow on failure.
+            kind = (r.get("next") or {}).get("kind") or "continue"
+            timeline.append(_thin_step_entry(sid, uri, r))
+            results[sid] = r
+            continue
+
+        r = _thin_fold_inner_ok(r)
+
         kind = _next_kind(r)
         envelope.record(uri, "return", ok=r.get("ok", True), next=kind)
 
         _thin_update_ledger(envelope, uri, r)
 
-        entry: dict = {"id": sid, "uri": uri, "ok": r.get("ok", True), "target": route_target(uri)}
-        if not r.get("ok"):
-            entry["error"] = r.get("error")
-        for _k in ("type", "action", "drift"):  # pass-through metadata from step result
-            if r.get(_k) is not None:
-                entry[_k] = r[_k]
-        timeline.append(entry)
+        timeline.append(_thin_step_entry(sid, uri, r))
         results[sid] = r
+
+        # Step failed with no explicit next.kind → abort immediately.
+        if not r.get("ok", True) and kind == "continue":
+            err_dict = r.get("error") or {"message": f"step {uri} failed", "category": "ACTION_FAILED"}
+            return {"ok": False, "timeline": timeline, "results": results,
+                    "error": err_dict, "next": {"kind": "failed"},
+                    "envelope": dataclasses.asdict(envelope)}
 
         if kind != "continue":
             should_break, early = _thin_handle_non_continue(
@@ -349,19 +408,10 @@ def append_if_available(steps: list[dict], route_uris: set[str], uri: str, paylo
 _DEFAULT_LOG_LIMIT = 20
 _PROCESS_LIST_LIMIT = 12
 
-_FLOW_INTENT_WORDS = {
-    "browser": ("browser", "przeglad", "stron", "url", "otworz", "open"),
-    "screen": ("screen", "ekran", "monitor", "zrzut", "screenshot", "widz", "widac", "linkedin"),
-    "files": ("plik", "folder", "katalog", "downloads", "download", "pobran"),
-    "invoices": ("faktur", "invoice", "rachunk", "receipt"),
-    "processes": ("proces", "process", "aplikac", "program"),
-    "logs": ("log", "logi"),
-    "python": ("python3", "python"),
-    "git": ("git",),
-    "date": ("date", "data"),
-    "health": ("health", "zdrow", "runtime"),
-    "uname": ("uname", "system"),
-}
+_INTENT_NAMES: frozenset[str] = frozenset({
+    "browser", "screen", "files", "invoices", "processes",
+    "logs", "python", "git", "date", "health", "uname",
+})
 
 
 def requested_folder_path(lowered: str) -> str:
@@ -376,9 +426,47 @@ def requested_folder_path(lowered: str) -> str:
     return "."
 
 
-def _flow_intents(lowered: str) -> dict[str, bool]:
-    """Map a lowered prompt to the set of host intents, defaulting to a process listing."""
-    intents = {name: any(word in lowered for word in words) for name, words in _FLOW_INTENT_WORDS.items()}
+def _flow_intents_llm(prompt: str) -> dict[str, bool] | None:
+    """Ask the LLM to classify the prompt into the known intent set.
+
+    Returns a complete {intent: bool} dict on success, None when LLM is not
+    configured or the call fails — callers fall back to the default intent."""
+    model = os.getenv("URIRUN_LLM_MODEL") or os.getenv("LLM_MODEL")
+    if not model:
+        return None
+    try:
+        from urirun.host.task_planner import quiet_completion
+        import json as _json
+        names_csv = ", ".join(sorted(_INTENT_NAMES))
+        resp = quiet_completion(
+            model=model,
+            messages=[
+                {"role": "system", "content": (
+                    f"Classify the user prompt. Return JSON with boolean fields: {names_csv}. "
+                    "Set true for each capability the user clearly wants to use. "
+                    "Respond with JSON only, no commentary."
+                )},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+            response_format={"type": "json_object"},
+        )
+        parsed = _json.loads(resp.choices[0].message.content or "{}")
+        return {k: bool(parsed.get(k, False)) for k in _INTENT_NAMES}
+    except Exception:  # noqa: BLE001 — LLM unavailable must not crash the heuristic path
+        return None
+
+
+def _flow_intents(prompt: str) -> dict[str, bool]:
+    """Classify the prompt into host intents via LLM.
+
+    Returns LLM result when available.  When LLM is not configured or the
+    call fails, all intents are False (no-op — heuristic_flow emits no steps
+    rather than guessing).  When LLM IS available but classifies nothing,
+    defaults to processes=True so the call is not silent."""
+    intents = _flow_intents_llm(prompt)
+    if intents is None:
+        return {k: False for k in _INTENT_NAMES}
     if not any(intents.values()):
         intents["processes"] = True
     return intents
@@ -472,7 +560,7 @@ def heuristic_flow(prompt: str, routes: list[dict], nodes: list[dict], selected_
     route_uris = {route["uri"] for route in selected_routes}
     targets = route_targets_for_nodes(selected_routes, selected)
     lowered = nl_key(prompt)
-    intents = _flow_intents(lowered)
+    intents = _flow_intents(prompt)
     url = first_url(prompt) or ("https://www.linkedin.com/feed/" if "linkedin" in lowered else "https://example.com/")
     path = requested_folder_path(lowered)
     steps: list[dict] = []
@@ -1512,14 +1600,10 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
 
     Order: drift checks → preflight (CDP) → original steps → remember.
 
-    Memory steps are injected whenever execute=True and the flow has kvm:// targets —
-    no longer gated on a ``memory=`` object being passed.  The drift/remember handlers
-    read from and write to the durable JsonFileStore (twin_store.durable_memory()) so
-    known-good snapshots persist across process restarts with zero extra infra.
-
-    When an explicit ``memory=`` object IS passed, _make_memory_dispatch wraps dispatch
-    so the drift/remember URIs are intercepted in-process (backward compat for callers
-    and tests that inject a TwinMemory directly).
+    Memory steps (drift/remember) are only injected when ``memory`` is explicitly provided.
+    The URI handlers (_uri_env_drift, _uri_memory_remember) are available via the twin
+    connector and reachable through the mesh regardless of this gate — the gate just controls
+    whether the thin driver automatically inserts them into every kvm flow.
 
     ``routes`` is forwarded into the drift/remember step payloads so the URI handlers
     can build a registry and call ``kvm://{node}/environment/query/profile`` without
@@ -1536,7 +1620,7 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
     flow_key = _flow_key(flow)
     drift_steps = [
         {"id": f"twin:drift:{t}", "uri": f"twin://{t}{_THIN_DRIFT_SUFFIX}",
-         "payload": {"node": t, "routes": routes_list}, "depends_on": []}
+         "payload": {"node": t, "routes": routes_list}, "depends_on": [], "optional": True}
         for t in kvm_targets
     ]
     remember_step = {
@@ -1545,7 +1629,7 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
         "payload": {"nodes": kvm_targets, "routes": routes_list,
                     "flow_key": flow_key,
                     "record": {"steps": flow.get("steps") or []}},
-        "depends_on": [],
+        "depends_on": [], "optional": True,
     }
     return drift_steps + plan + [remember_step]
 
@@ -1560,7 +1644,7 @@ def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recov
     # When dispatch_uri is provided without an explicit envelope, auto-create one
     # from the flow's task so every dispatched flow goes through the thin driver
     # (observable events, envelope-aware steps, goal-verify, SAGA rollback).
-    # Callers without dispatch_uri → full orchestrator path below.
+    # Callers without dispatch_uri → full orchestrator path with recovery/self-heal.
     if envelope is None and dispatch_uri is not None:
         envelope = FlowEnvelope(
             flow_id=str(flow.get("task", {}).get("id") or ""),
@@ -1730,7 +1814,9 @@ def run_flow_document(document: dict, mesh: dict, *, execute: bool, rollback_on_
     route_uris = {route["uri"] for route in mesh["routes"] if safe_route(route)}
     flow = normalize_flow(document, route_uris, routes=mesh["routes"])
     registry = registry_from_routes(mesh["routes"])
-    execution = execute_flow(flow, mesh, registry, execute=execute)
+    mode = "execute" if execute else "dry-run"
+    dispatch_uri = make_dispatch_uri(registry, mode)
+    execution = execute_flow(flow, mesh, registry, execute=execute, dispatch_uri=dispatch_uri)
     goal_dispatch = lambda uri, payload=None: v2_service.call(uri, payload or {}, registry, mode="execute")
     verification = verify_flow_execution(document, execution, executed=execute, dispatch=goal_dispatch)
     ok = bool(execution.get("ok")) and (verification is None or bool(verification.get("ok")))
@@ -1742,6 +1828,40 @@ def run_flow_document(document: dict, mesh: dict, *, execute: bool, rollback_on_
         result["verification"] = verification
     return _apply_reversibility(result, execution, ok, execute, rollback_on_failure, document, mesh,
                                 dispatch_uri=None)
+
+
+def _in_process_discovery(uri: str, payload: dict | None = None) -> "dict | None":
+    """Tier-2 fallback: resolve *uri* through installed connectors (entry-point scan).
+
+    Called by make_dispatch_uri when Tier 1 (mesh) returns NOT_FOUND.  Returns None when
+    the connector is also absent in-process, letting make_dispatch surface the NOT_FOUND."""
+    try:
+        import urirun as _u  # noqa: PLC0415
+        from urirun.runtime import discovery as _disc  # noqa: PLC0415
+        reg2 = _disc.registry_for_uri(uri, "urirun.bindings")
+        env = _u.run(uri, reg2, payload=dict(payload or {}),
+                     mode="execute", policy={"allowExecute": True})
+        if (env.get("error") or {}).get("category") == "NOT_FOUND":
+            return None
+        val = (env.get("result") or {}).get("value") if isinstance(env.get("result"), dict) else None
+        return {"ok": bool(env.get("ok")), "result": val,
+                "error": (env.get("error") or {}).get("message") if not env.get("ok") else None}
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def make_dispatch_uri(registry: dict, mode: str = "execute"):
+    """Build a two-tier dispatch callable for execute_flow / run_flow_document.
+
+    Tier 1 (mesh): v2_service.call with the mesh registry — covers all served nodes.
+    Tier 2 (in-process): urirun.runtime.discovery — covers connectors installed locally
+    that aren't exposed as mesh routes (diag://, fix://, twin://, widget://, …).
+
+    Returns a callable ``(uri, payload=None) → dict`` suitable for dispatch_uri=.
+
+    Delegates to ``v2_service.make_dispatch`` — single implementation of the two-tier
+    pattern, shared with the HTTP transport layer."""
+    return v2_service.make_dispatch(registry, mode, fallback=_in_process_discovery)
 
 
 def _flow_transport(mesh: dict) -> CallableTransport:

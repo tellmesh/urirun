@@ -1,19 +1,21 @@
-# code2llm | 183f 44184L | python:122,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
+# code2llm | 184f 44432L | python:123,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
 # generated in 0.09s
-# CC̅=4.8 | critical:4/1872 | dups:0 | cycles:0
+# CC̅=4.8 | critical:6/1880 | dups:0 | cycles:0
 
-HEALTH[5]:
+HEALTH[7]:
   🔴 GOD   adapters/python/urirun/node/reversible.py = 597L, 9 classes, 38m, max CC=15
   🟡 CC    archive_scanned_document CC=15 (limit:15)
+  🟡 CC    _uri_rollback CC=15 (limit:15)
+  🟡 CC    append_twin_widget CC=18 (limit:15)
+  🟡 CC    _thin_driver CC=15 (limit:15)
   🟡 CC    _normalize_flow_step CC=15 (limit:15)
   🟡 CC    _preflight CC=15 (limit:15)
-  🟡 CC    _uri_rollback CC=15 (limit:15)
 
 REFACTOR[2]:
   1. split adapters/python/urirun/node/reversible.py  (god module)
-  2. split 4 high-CC methods  (CC>15)
+  2. split 6 high-CC methods  (CC>15)
 
-PIPELINES[610]:
+PIPELINES[593]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -124,14 +126,14 @@ LAYERS:
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
   │
   adapters/                       CC̄=4.8    ←in:10  →out:0
-  │ !! html_templates            4723L  0C    0m  CC=0.0    ←0
-  │ !! host_dashboard            3509L  0C  130m  CC=14     ←1
+  │ !! html_templates            4745L  0C    0m  CC=0.0    ←0
+  │ !! host_dashboard            3266L  0C  127m  CC=14     ←1
+  │ !! flow                      2051L  1C   94m  CC=15     ←3
   │ !! v2                        2003L  1C  122m  CC=14     ←4
-  │ !! flow                      1931L  1C   89m  CC=15     ←3
-  │ !! document_sync             1387L  2C   58m  CC=15     ←2
-  │ !! scanner_bridge            1333L  1C   63m  CC=13     ←1
+  │ !! scanner_bridge            1534L  1C   65m  CC=14     ←1
+  │ !! document_sync             1412L  2C   59m  CC=15     ←3
   │ !! object_registry           1044L  0C   54m  CC=14     ←0
-  │ !! server                     991L  3C   56m  CC=14     ←4
+  │ !! server                     997L  3C   56m  CC=14     ←3
   │ !! node_cli                   896L  0C   48m  CC=14     ←1
   │ !! __init__                   737L  1C   51m  CC=14     ←15
   │ !! _registry                  718L  0C   43m  CC=14     ←1
@@ -170,7 +172,7 @@ LAYERS:
   │ connector_admin            240L  0C    9m  CC=14     ←1
   │ config                     226L  0C   17m  CC=9      ←3
   │ doctor                     217L  0C   13m  CC=9      ←1
-  │ v2_mcp                     209L  0C   11m  CC=9      ←0
+  │ v2_mcp                     212L  0C   11m  CC=9      ←0
   │ v2_grpc                    204L  0C   11m  CC=9      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
   │ compat                     199L  0C    6m  CC=10     ←0
@@ -186,17 +188,17 @@ LAYERS:
   │ capability                 160L  0C    6m  CC=12     ←0
   │ agent                      151L  0C    6m  CC=10     ←0
   │ uinput                     148L  0C    9m  CC=10     ←0
+  │ !! twin_bridge                142L  0C    5m  CC=18     ←0
   │ scanner_net                140L  0C   10m  CC=8      ←2
+  │ v2_service                 137L  0C    4m  CC=9      ←0
   │ scheduler                  135L  0C    6m  CC=4      ←0
   │ decision_loop              134L  0C    5m  CC=13     ←0
   │ backend_registry           129L  2C   10m  CC=11     ←0
   │ contracts                  119L  0C    8m  CC=5      ←1
-  │ daemon                     117L  0C    3m  CC=14     ←0
-  │ twin_store                 117L  2C   17m  CC=5      ←1
-  │ v2_service                 115L  0C    3m  CC=9      ←2
+  │ daemon                     117L  0C    3m  CC=14     ←1
+  │ twin_store                 117L  2C   17m  CC=5      ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ _artifacts                 111L  0C    5m  CC=9      ←2
-  │ twin_bridge                105L  0C    5m  CC=11     ←0
   │ openapi_import              95L  0C    6m  CC=12     ←0
   │ declarative                 95L  0C    3m  CC=14     ←0
   │ tree                        91L  0C    4m  CC=11     ←0
@@ -204,8 +206,8 @@ LAYERS:
   │ connector_sdk               87L  0C    3m  CC=5      ←0
   │ connector_smoke             81L  0C    3m  CC=6      ←0
   │ urirun.go                   80L  3C    5m  CC=3      ←0
-  │ formatting                  80L  0C    4m  CC=8      ←2
   │ routing                     80L  0C    4m  CC=14     ←0
+  │ formatting                  80L  0C    4m  CC=8      ←2
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
   │ project.assets.json         71L  0C    0m  CC=0.0    ←0
@@ -213,6 +215,7 @@ LAYERS:
   │ urirun-connector.csproj.nuget.dgspec.json    66L  0C    0m  CC=0.0    ←0
   │ widgets                     64L  0C    4m  CC=12     ←1
   │ exec                        61L  0C    2m  CC=10     ←0
+  │ dispatch                    55L  0C    2m  CC=11     ←0
   │ index.test.js               52L  0C    1m  CC=1      ←0
   │ Urirun.pm                   47L  0C    4m  CC=0.0    ←1
   │ urirun.ts                   41L  2C    4m  CC=4      ←0
@@ -228,9 +231,9 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -328,8 +331,8 @@ COUPLING:
   examples.matrix                1                                                                                   ──                 
           scripts                1                                                                                                    ──
   CYCLES: none
-  HUB: adapters/ (fan-in=10)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=10)
   SMELL: adapters.python/ fan-out=18 → split needed
 
 EXTERNAL:

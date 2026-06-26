@@ -135,7 +135,7 @@ from urirun.node.routing import (  # noqa: F401  (re-exported; keep all names ev
 # Natural-language flow planning/execution moved to urirun.node.flow.
 # Re-export these names so existing callers can keep using mesh.<name>.
 from urirun.node.flow import (  # noqa: E402,F401
-    _FLOW_INTENT_WORDS,
+    _INTENT_NAMES,
     _append_target_steps,
     _dig_path,
     _flow_format,

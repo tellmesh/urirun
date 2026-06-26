@@ -179,3 +179,84 @@ def test_v2_service_post_no_auth_header_without_env(monkeypatch):
     auth = captured["headers"].get("Authorization") or captured["headers"].get("authorization")
     token = captured["headers"].get("X-urirun-token") or captured["headers"].get("X-Urirun-Token")
     assert auth is None and token is None
+
+
+# ─── make_dispatch factory ────────────────────────────────────────────────────
+
+def test_make_dispatch_returns_callable():
+    """make_dispatch(registry, mode) returns a callable(uri, payload) → dict."""
+    from urirun.runtime import v2_service
+    fn = v2_service.make_dispatch({}, "dry-run")
+    assert callable(fn)
+
+
+def test_make_dispatch_ok_result_skips_fallback(monkeypatch):
+    """When call() returns ok=True, the fallback is never invoked."""
+    from urirun.runtime import v2_service
+    fallback_called = []
+    monkeypatch.setattr(v2_service, "call",
+        lambda uri, payload, reg, mode="execute": {"ok": True, "result": {"value": 42}})
+
+    fn = v2_service.make_dispatch({}, "execute",
+                                   fallback=lambda u, p: fallback_called.append(u) or {})
+    r = fn("kvm://host/ui/command/click", {})
+    assert r["ok"] is True
+    assert fallback_called == [], "fallback must not be called when mesh returns ok"
+
+
+def test_make_dispatch_not_found_calls_fallback(monkeypatch):
+    """When call() returns NOT_FOUND, the fallback is invoked and its result returned."""
+    from urirun.runtime import v2_service
+    monkeypatch.setattr(v2_service, "call",
+        lambda uri, payload, reg, mode="execute": {
+            "ok": False, "error": {"category": "NOT_FOUND", "message": "route not found"}})
+
+    sentinel = {"ok": True, "source": "fallback"}
+    fn = v2_service.make_dispatch({}, "execute", fallback=lambda u, p: sentinel)
+    r = fn("twin://host/flow/command/preflight", {})
+    assert r is sentinel
+
+
+def test_make_dispatch_non_not_found_error_skips_fallback(monkeypatch):
+    """A transport error (not NOT_FOUND) is returned directly; fallback not invoked."""
+    from urirun.runtime import v2_service
+    transport_error = {"ok": False, "error": {"category": "TRANSPORT", "message": "timeout"}}
+    monkeypatch.setattr(v2_service, "call",
+        lambda uri, payload, reg, mode="execute": transport_error)
+
+    fallback_called = []
+    fn = v2_service.make_dispatch({}, "execute",
+                                   fallback=lambda u, p: fallback_called.append(u) or {})
+    r = fn("kvm://host/ui/command/click", {})
+    assert r is transport_error
+    assert fallback_called == []
+
+
+def test_make_dispatch_no_fallback_returns_error_directly(monkeypatch):
+    """Without a fallback, NOT_FOUND error is returned as-is (no crash)."""
+    from urirun.runtime import v2_service
+    not_found = {"ok": False, "error": {"category": "NOT_FOUND"}}
+    monkeypatch.setattr(v2_service, "call",
+        lambda uri, payload, reg, mode="execute": not_found)
+
+    fn = v2_service.make_dispatch({}, "execute")
+    r = fn("missing://host/x", {})
+    assert r is not_found
+
+
+def test_make_local_dispatch_uri_delegates_to_make_dispatch(monkeypatch):
+    """_make_local_dispatch_uri in host_dashboard now delegates to v2_service.make_dispatch."""
+    from urirun.runtime import v2_service
+    calls = []
+
+    def fake_make_dispatch(registry, mode, fallback=None):
+        calls.append({"registry": registry, "mode": mode, "has_fallback": fallback is not None})
+        return lambda uri, payload=None: {"ok": True}
+
+    monkeypatch.setattr(v2_service, "make_dispatch", fake_make_dispatch)
+    from urirun.host.host_dashboard import _make_local_dispatch_uri
+    fn = _make_local_dispatch_uri({"routes": []}, "execute")
+    assert callable(fn)
+    assert len(calls) == 1
+    assert calls[0]["mode"] == "execute"
+    assert calls[0]["has_fallback"] is True

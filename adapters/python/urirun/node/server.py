@@ -28,6 +28,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from urirun import _registry as reglib, errors as uri_errors, v2, v2_mcp
+from urirun.runtime.dispatch_protocol import normalize_request as _normalize_request
 from urirun.node import keyauth
 from urirun.node.paths import deploy_dir, node_token_path
 from urirun.node.config import load_node_config, save_node_config
@@ -575,16 +576,21 @@ class NodeHandler(BaseHTTPRequestHandler):
             return  # _run_target already answered (404/403)
         target_reg, run_policy = target
         run_policy["secretsDisabled"] = not c.allow_secrets
-        # a request may DOWNGRADE to dry-run (validate route + schema, no side effects)
-        # — never escalate: a dry-run node stays dry-run. Lets `host probe` test safely.
-        mode = "dry-run" if (body.get("mode") == "dry-run" or not c.execute) else "execute"
+        # Normalise the request through the canonical dispatch contract so all transports
+        # (HTTP, MCP, gRPC) share identical mode/payload parsing.  Use the node's execute
+        # setting as the default when the request omits mode — a dry-run node stays dry-run,
+        # an execute node uses execute unless the caller explicitly downgrades.
+        node_default = "execute" if c.execute else "dry-run"
+        req = _normalize_request(body, default_mode=node_default)
+        # A request may DOWNGRADE to dry-run; a dry-run node never escalates.
+        mode = "dry-run" if (req["mode"] == "dry-run" or not c.execute) else "execute"
+        payload = req["payload"]
         # bind a RunControl so an in-process handler (or the subprocess reader) can stream
         # this run live to /events?run=<id> and a run:// cancel can stop it.
         run_id = self.headers.get("X-Urirun-Run-Id") or body.get("runId") or f"run-{c.hub.current_id() + 1}"
         ctrl = progress.RunControl(run_id, lambda ev: c.hub.publish(
             {"event": "progress", "run": run_id, "uri": uri, "at": time.time(), "service": c.state["name"], **ev}))
         c.runs[run_id] = ctrl
-        payload = body.get("payload") or {}
 
         def _run_it():
             token = progress.bind(ctrl)

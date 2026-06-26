@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.22s
-# nodes: 456 | edges: 500 | modules: 41
+# generated in 0.23s
+# nodes: 448 | edges: 500 | modules: 44
 # CC̄=4.8
 
 HUBS[20]:
   adapters.python.urirun.host.document_sync.archive_scanned_document
     CC=15  in:0  out:72  total:72
-  adapters.python.urirun.host.scanner_bridge.frame_visual_metrics
-    CC=7  in:1  out:40  total:41
   adapters.python.urirun.host.host_integrations._write_planfile_action
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.host.artifacts_admin.collect_attachments
     CC=1  in:0  out:35  total:35
-  adapters.python.urirun.host.scanner_bridge.scanner_crop_overlay
-    CC=8  in:1  out:33  total:34
   adapters.python.urirun.host.document_sync.archive_redundant_duplicate
     CC=10  in:1  out:32  total:33
   adapters.python.urirun.host.document_sync.scanned_log_entry
     CC=8  in:1  out:29  total:30
+  adapters.python.urirun.host.document_metadata._normalize_llm_doc_fields
+    CC=14  in:1  out:28  total:29
   adapters.python.urirun.host.artifacts_admin.preview_url
     CC=6  in:11  out:18  total:29
-  adapters.python.urirun.host.connector_admin.connector_install
-    CC=13  in:0  out:29  total:29
   adapters.python.urirun.host.connector_admin._connector_install_node
     CC=12  in:1  out:28  total:29
   adapters.python.urirun.host.document_sync.supersede_archived_document
     CC=10  in:1  out:28  total:29
-  adapters.python.urirun.host.document_metadata._normalize_llm_doc_fields
-    CC=14  in:1  out:28  total:29
-  adapters.python.urirun.host.artifacts_admin.artifacts_dedupe_rows
-    CC=14  in:0  out:28  total:28
+  adapters.python.urirun.host.connector_admin.connector_install
+    CC=13  in:0  out:29  total:29
   adapters.python.urirun.host.document_sync._upload_file
     CC=6  in:1  out:27  total:28
+  adapters.python.urirun.host.artifacts_admin.artifacts_dedupe_rows
+    CC=14  in:0  out:28  total:28
   adapters.python.urirun.host.document_sync._build_sync_params
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
-  adapters.python.urirun.host.host_db._run_query_route
-    CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.discovery.node_alias_map_from_env
     CC=14  in:1  out:26  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.host.host_db._run_query_route
+    CC=7  in:1  out:26  total:27
+  adapters.python.urirun.host.document_sync._read_back_file
+    CC=11  in:1  out:26  total:27
   adapters.python.urirun.testing.smoke
     CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.object_registry.configured_api_headers
+    CC=13  in:1  out:23  total:24
+  adapters.python.urirun.host.document_metadata._local_image_ocr
+    CC=12  in:0  out:24  total:24
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -92,6 +92,13 @@ MODULES:
   adapters.python.urirun.exec  [2 funcs]
     _resolve  CC=3  out:4
     main  CC=10  out:16
+  adapters.python.urirun.host.android_node  [6 funcs]
+    android_node_service_url  CC=2  out:3
+    merge_live_webpage_nodes  CC=14  out:14
+    node_forget_webpage  CC=3  out:10
+    phone_web_nodes  CC=5  out:9
+    restart_android_node_service  CC=12  out:18
+    start_android_node_service  CC=8  out:12
   adapters.python.urirun.host.artifacts_admin  [28 funcs]
     apply_attachment_file_fields  CC=3  out:1
     apply_attachment_visual_fields  CC=3  out:1
@@ -133,17 +140,17 @@ MODULES:
     decision_loop_next_intent  CC=5  out:1
     decision_loop_observation  CC=7  out:0
     decision_loop_status  CC=5  out:0
-  adapters.python.urirun.host.discovery  [24 funcs]
+  adapters.python.urirun.host.discovery  [28 funcs]
     _classify_not_found  CC=7  out:6
     _node_map_from_value  CC=3  out:4
+    _node_test_summary  CC=5  out:4
     _probe_route  CC=3  out:5
+    _route_targets  CC=12  out:7
     add_node_aliases  CC=4  out:7
     alias_map_from_dict  CC=5  out:9
     alias_map_from_list  CC=5  out:8
     classify_route_run  CC=13  out:15
     host_config  CC=2  out:3
-    iter_node_alias_values  CC=9  out:13
-    known_nodes_file_data  CC=3  out:5
   adapters.python.urirun.host.document_metadata  [20 funcs]
     _coerce_amount  CC=7  out:12
     _document_type  CC=12  out:2
@@ -155,7 +162,7 @@ MODULES:
     _llm_model  CC=7  out:10
     _load_env_file  CC=8  out:11
     _local_image_ocr  CC=12  out:24
-  adapters.python.urirun.host.document_sync  [49 funcs]
+  adapters.python.urirun.host.document_sync  [50 funcs]
     _build_sync_params  CC=6  out:27
     _check_preflight  CC=10  out:16
     _cleanup_scan_files_lazy  CC=2  out:1
@@ -177,9 +184,19 @@ MODULES:
     _route_browser  CC=4  out:8
     _route_dns  CC=9  out:8
     _route_flow  CC=4  out:20
-  adapters.python.urirun.host.fs_transfer  [2 funcs]
+  adapters.python.urirun.host.fs_transfer  [15 funcs]
+    compact_remote_run  CC=10  out:17
+    deploy_fs_file_transfer_fallback  CC=3  out:9
+    ensure_node_uri_routes  CC=14  out:19
+    envelope_error_message  CC=4  out:4
+    fs_file_transfer_binding  CC=4  out:1
+    fs_file_transfer_fallback_bindings  CC=4  out:3
     node_client  CC=1  out:1
+    node_has_route  CC=4  out:6
     node_token_for  CC=5  out:2
+    remote_read_error  CC=11  out:12
+  adapters.python.urirun.host.host_dashboard  [1 funcs]
+    _service_restart_argv  CC=1  out:1
   adapters.python.urirun.host.host_db  [32 funcs]
     _query_table  CC=2  out:7
     _run_command_route  CC=11  out:17
@@ -221,17 +238,22 @@ MODULES:
     api_item_fields  CC=9  out:15
     apply_auth_header  CC=10  out:15
     apply_uri_overrides  CC=10  out:8
-  adapters.python.urirun.host.scanner_bridge  [43 funcs]
-    _add_log  CC=3  out:1
-    best_finish_store_failure  CC=5  out:4
-    bounded  CC=1  out:2
-    capture_candidate_result  CC=4  out:12
-    capture_ocr_and_detect  CC=5  out:8
-    capture_reject_result  CC=5  out:4
+  adapters.python.urirun.host.planfile_adapter  [9 funcs]
+    _imports  CC=2  out:1
+    _model_dict  CC=1  out:1
+    _normalize_labels  CC=6  out:7
+    build_ticket_payload  CC=8  out:16
+    create_ticket  CC=3  out:7
+    load_planfile  CC=1  out:2
+    normalize_priority  CC=2  out:2
+    project_root  CC=2  out:4
+    ticket_to_dict  CC=2  out:1
+  adapters.python.urirun.host.routing  [3 funcs]
+    has_screen_capture_route  CC=8  out:6
+    route_in_selected_targets  CC=14  out:10
+    screen_document_capability_gap  CC=8  out:7
+  adapters.python.urirun.host.scanner_bridge  [1 funcs]
     cleanup_duplicate_scan_files  CC=8  out:11
-    crop_dimensions  CC=5  out:6
-    crop_geometry_score  CC=8  out:13
-    crop_quality_score  CC=6  out:11
   adapters.python.urirun.host.scanner_net  [8 funcs]
     _lan_host  CC=8  out:8
     _phone_scanner_external_status  CC=7  out:11
@@ -269,11 +291,7 @@ MODULES:
     is_ambiguous  CC=2  out:3
     is_destructive  CC=4  out:4
     llm_plan_chat_request  CC=4  out:10
-  adapters.python.urirun.host.twin_bridge  [2 funcs]
-    append_twin_widget  CC=7  out:13
-    flow_has_desktop_step  CC=3  out:5
-  adapters.python.urirun.host.widgets  [3 funcs]
-    query_value  CC=2  out:1
+  adapters.python.urirun.host.widgets  [2 funcs]
     scanner_stream_summary  CC=10  out:17
     service_widget_summary  CC=12  out:16
   adapters.python.urirun.runtime._runtime  [1 funcs]
