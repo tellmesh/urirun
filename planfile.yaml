@@ -173,110 +173,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-368b698d
-    name: Fix duplicate-imports issues
-    description: Resolve 2 duplicate-imports issues in adapters/python/urirun/connectors/connect_catalog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connect_catalog.py
-    rule_id: duplicate-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-bbe7f50d
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in adapters/python/urirun/connectors/connect_catalog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connect_catalog.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-9e8633a2
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/connectors/connect_catalog.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connect_catalog.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-e85eacd2
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/connectors/connector_sdk.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_sdk.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-5ea0f3d1
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/connectors/connector_smoke.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_smoke.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-391710d3
-    name: Fix string-concat issues
-    description: Resolve 3 string-concat issues in adapters/python/urirun/connectors/connector_scaffold.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_scaffold.py
-    rule_id: string-concat
-    count: 3
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4fea9046
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/connectors/connector_scaffold.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_scaffold.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-b39e6393
-    name: Fix ai-boilerplate issues
-    description: Resolve 1 ai-boilerplate issues in adapters/python/urirun/connectors/connector_scaffold.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_scaffold.py
-    rule_id: ai-boilerplate
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-91da63e0
     name: Fix ai-boilerplate issues
     description: Resolve 1 ai-boilerplate issues in adapters/python/urirun/errors.py
@@ -576,19 +472,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-279c822c
-    name: Fix unused-imports issues
-    description: Resolve 6 unused-imports issues in adapters/python/urirun/connectors/connector_lint.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - adapters/python/urirun/connectors/connector_lint.py
-    rule_id: unused-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-55686191
     name: Fix llm-generated-code issues
     description: Resolve 1 llm-generated-code issues in adapters/python/urirun/__init__.py
@@ -654,19 +537,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-daef9f77
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in adapters/python/urirun/connectors/connector_lint.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/connector_lint.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-dbaa1034
     name: Fix magic-numbers issues
     description: Resolve 2 magic-numbers issues in adapters/python/urirun/node/keyauth.py
@@ -677,45 +547,6 @@ sprints:
     - adapters/python/urirun/node/keyauth.py
     rule_id: magic-numbers
     count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-1ed4ffa6
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in adapters/python/urirun/connectors/resolver.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/resolver.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-833a8eb0
-    name: Fix unused-imports issues
-    description: Resolve 2 unused-imports issues in adapters/python/urirun/connectors/resolver.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/resolver.py
-    rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-2c2b9916
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in adapters/python/urirun/connectors/resolver.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/resolver.py
-    rule_id: magic-numbers
-    count: 1
     model_hints:
       planning: balanced
       implementation: balanced
@@ -767,58 +598,6 @@ sprints:
     files:
     - adapters/python/urirun/host/discovery.py
     rule_id: unused-imports
-    count: 2
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-3145ffbd
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in adapters/python/urirun/connectors/backend_registry.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/backend_registry.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-43f3536d
-    name: Fix unused-imports issues
-    description: Resolve 6 unused-imports issues in adapters/python/urirun/connectors/connector_contract.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - adapters/python/urirun/connectors/connector_contract.py
-    rule_id: unused-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-f5ad69c3
-    name: Fix unused-imports issues
-    description: Resolve 6 unused-imports issues in adapters/python/urirun/connectors/backend_registry.py
-    task_type: prefactor
-    priority: high
-    estimate: 2d
-    files:
-    - adapters/python/urirun/connectors/backend_registry.py
-    rule_id: unused-imports
-    count: 6
-    model_hints:
-      planning: balanced
-      implementation: balanced
-  - id: ticket-4aa699db
-    name: Fix magic-numbers issues
-    description: Resolve 2 magic-numbers issues in adapters/python/urirun/connectors/backend_registry.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/connectors/backend_registry.py
-    rule_id: magic-numbers
     count: 2
     model_hints:
       planning: balanced
@@ -1314,6 +1093,227 @@ sprints:
     - adapters/python/urirun/host/node_api.py
     rule_id: magic-numbers
     count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-761df093
+    name: Fix relative-imports issues
+    description: Resolve 23 relative-imports issues in adapters/python/urirun/host/host_dashboard.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - adapters/python/urirun/host/host_dashboard.py
+    rule_id: relative-imports
+    count: 23
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-69f8db24
+    name: Fix smart-return-type issues
+    description: Resolve 8 smart-return-type issues in adapters/python/urirun/host/host_dashboard.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urirun/host/host_dashboard.py
+    rule_id: smart-return-type
+    count: 8
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ac6f93ff
+    name: Fix unused-imports issues
+    description: Resolve 19 unused-imports issues in adapters/python/urirun/host/host_dashboard.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - adapters/python/urirun/host/host_dashboard.py
+    rule_id: unused-imports
+    count: 19
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-15b735e3
+    name: Fix magic-numbers issues
+    description: Resolve 0 magic-numbers issues in adapters/python/urirun/host/host_dashboard.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/host_dashboard.py
+    rule_id: magic-numbers
+    count: 0
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-f2fd6b97
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/host/node_types.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/node_types.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-6d28abd2
+    name: Fix string-concat issues
+    description: Resolve 7 string-concat issues in adapters/python/urirun/host/node_cli.py
+    task_type: prefactor
+    priority: high
+    estimate: 2d
+    files:
+    - adapters/python/urirun/host/node_cli.py
+    rule_id: string-concat
+    count: 7
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-6aed8db1
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/host/node_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/node_cli.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d9d14ab1
+    name: Fix magic-numbers issues
+    description: Resolve 4 magic-numbers issues in adapters/python/urirun/host/node_cli.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urirun/host/node_cli.py
+    rule_id: magic-numbers
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c06e0668
+    name: Fix relative-imports issues
+    description: Resolve 3 relative-imports issues in adapters/python/urirun/host/object_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/object_registry.py
+    rule_id: relative-imports
+    count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-c51acf38
+    name: Fix duplicate-imports issues
+    description: Resolve 4 duplicate-imports issues in adapters/python/urirun/host/object_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 2d
+    files:
+    - adapters/python/urirun/host/object_registry.py
+    rule_id: duplicate-imports
+    count: 4
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1776be86
+    name: Fix string-concat issues
+    description: Resolve 1 string-concat issues in adapters/python/urirun/host/object_registry.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/object_registry.py
+    rule_id: string-concat
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ac7a6711
+    name: Fix unused-imports issues
+    description: Resolve 42 unused-imports issues in adapters/python/urirun/host/object_registry.py
+    task_type: prefactor
+    priority: high
+    estimate: 3d
+    files:
+    - adapters/python/urirun/host/object_registry.py
+    rule_id: unused-imports
+    count: 42
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d7e53e5c
+    name: Fix relative-imports issues
+    description: Resolve 2 relative-imports issues in adapters/python/urirun/host/routing.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/routing.py
+    rule_id: relative-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-8a431e0e
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/host/routing.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/routing.py
+    rule_id: unused-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-d1f79ee4
+    name: Fix magic-numbers issues
+    description: Resolve 1 magic-numbers issues in adapters/python/urirun/host/routing.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/routing.py
+    rule_id: magic-numbers
+    count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1227be3c
+    name: Fix wildcard-imports issues
+    description: Resolve 2 wildcard-imports issues in adapters/python/urirun/host/scanner_bridge.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/scanner_bridge.py
+    rule_id: wildcard-imports
+    count: 2
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-1f626b4d
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/urirun/host/scanner_bridge.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/urirun/host/scanner_bridge.py
+    rule_id: unused-imports
+    count: 2
     model_hints:
       planning: balanced
       implementation: balanced

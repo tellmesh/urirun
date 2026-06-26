@@ -1,5 +1,5 @@
-# code2llm | 202f 31754L | python:141,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
-# generated in 0.07s
+# code2llm | 202f 31757L | python:141,json:13,shell:10,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-26
+# generated in 0.06s
 # CC̅=4.7 | critical:0/1249 | dups:0 | cycles:0
 
 HEALTH[1]:
@@ -178,7 +178,7 @@ LAYERS:
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
   │ project.assets.json         71L  0C    0m  CC=0.0    ←0
-  │ pyproject.toml              68L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              69L  0C    0m  CC=0.0    ←0
   │ urirun-connector.csproj.nuget.dgspec.json    66L  0C    0m  CC=0.0    ←0
   │ widgets                     64L  0C    4m  CC=12     ←0
   │ exec                        61L  0C    2m  CC=10     ←0
@@ -199,14 +199,15 @@ LAYERS:
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ scanner_net                 13L  0C    0m  CC=0.0    ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
   │ tsconfig.json               11L  0C    0m  CC=0.0    ←0
+  │ v2                          11L  0C    0m  CC=0.0    ←0
   │ hash-connector.ts           10L  0C    1m  CC=1      ←0
   │ Cargo.toml                  10L  0C    0m  CC=0.0    ←0
   │ v2_service                  10L  0C    0m  CC=0.0    ←0
@@ -237,7 +238,6 @@ LAYERS:
   │ v2_service                   8L  0C    0m  CC=0.0    ←0
   │ v1                           8L  0C    0m  CC=0.0    ←0
   │ errors                       8L  0C    0m  CC=0.0    ←0
-  │ v2                           8L  0C    0m  CC=0.0    ←0
   │ _runtime                     8L  0C    0m  CC=0.0    ←0
   │ v2_grpc                      8L  0C    0m  CC=0.0    ←0
   │ v2_adopt                     8L  0C    0m  CC=0.0    ←0
@@ -269,7 +269,6 @@ LAYERS:
   │ connector_scaffold           5L  0C    0m  CC=0.0    ←0
   │ domain_monitor               5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
-  │ .NETCoreApp,Version=v8.0.AssemblyAttributes.cs     4L  0C    0m  CC=0.0    ←0
   │ connector_lint               4L  0C    0m  CC=0.0    ←0
   │ backend_registry             4L  0C    0m  CC=0.0    ←0
   │ connector_sdk                4L  0C    0m  CC=0.0    ←0
@@ -280,10 +279,11 @@ LAYERS:
   │ connector_smoke              4L  0C    0m  CC=0.0    ←0
   │ connector_contract           4L  0C    0m  CC=0.0    ←0
   │ connector_scaffold           4L  0C    0m  CC=0.0    ←0
-  │ __init__                     2L  0C    0m  CC=0.0    ←0
+  │ .NETCoreApp,Version=v8.0.AssemblyAttributes.cs     4L  0C    0m  CC=0.0    ←0
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ artifacts_admin              1L  0C    0m  CC=0.0    ←0
   │ scanner_bridge               1L  0C    0m  CC=0.0    ←0
+  │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ urirun-connector.sourcelink.json     1L  0C    0m  CC=0.0    ←0

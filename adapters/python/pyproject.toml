@@ -21,6 +21,7 @@ llm = ["litellm>=1.60"]
 keyauth = ["cryptography>=41"]  # SSH-key admin auth (uri-copy-id, signed /deploy)
 yaml = ["pyyaml>=6"]  # YAML manifests (adopt-pack) + `urirun tree --format yaml`
 cdp = ["urirun-cdp>=0.1.0"]  # Chrome DevTools Protocol surface (urirun.connectors.surfaces.cdp shim)
+uinput = ["urirun-uinput>=0.1.0"]  # Linux uinput keyboard/mouse surface (urirun.connectors.inputs.uinput shim)
 openapi = ["urirun-openapi-import>=0.1.0", "urirun-connectors-toolkit>=0.1.0"]  # OpenAPI→URI import
 declarative = ["urirun-declarative>=0.1.0", "urirun-connectors-toolkit>=0.1.0"]  # declarative connector spec
 host = ["planfile>=0.1.103", "litellm>=1.60", "qrcode[pil]>=7", "docid>=0.1.9", "cryptography>=41"]

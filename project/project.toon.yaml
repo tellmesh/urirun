@@ -1,4 +1,4 @@
-# urirun | 1249 func | 87f | 31754L | python | 2026-06-26
+# urirun | 1249 func | 87f | 31757L | python | 2026-06-26
 # generated in 0.00s
 
 HEALTH:
@@ -12,9 +12,9 @@ ALERTS[20]:
   !!! high_fan_out     _chat_ask_general = 21 (limit:10)
   !!! high_fan_out     _run_task_flow = 20 (limit:10)
   !!  high_fan_out     NodeHandler._stream_events = 19 (limit:10)
+  !!  high_fan_out     serve = 18 (limit:10)
   !!  high_fan_out     _file_response = 18 (limit:10)
   !!  high_fan_out     _make_memory_dispatch = 18 (limit:10)
-  !!  high_fan_out     serve = 18 (limit:10)
 
 MODULES[202] (top by size):
   M[adapters/python/urirun/host/html_templates.py] 4916L C:0 F:3 CC↑6 D:0 (python)
@@ -50,4 +50,4 @@ REFACTOR[15]:
   [5] H/H Split god module adapters/python/urirun/host/object_registry.py (981L, 0 classes)
 
 EVOLUTION:
-  2026-06-26 CC̄=4.7 crit=161 31754L // Automated analysis
+  2026-06-26 CC̄=4.7 crit=161 31757L // Automated analysis

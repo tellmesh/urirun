@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.22s
-# nodes: 457 | edges: 500 | modules: 55
+# generated in 0.21s
+# nodes: 447 | edges: 500 | modules: 51
 # CC̄=4.7
 
 HUBS[20]:
-  adapters.python.urirun.host.dashboard_http._json_response
-    CC=1  in:38  out:13  total:51
   adapters.python.urirun.host.host_integrations._write_planfile_action
     CC=8  in:1  out:39  total:40
+  adapters.python.urirun.host.host_dashboard.summary
+    CC=6  in:0  out:38  total:38
   scripts.extraction_audit.print_report
     CC=12  in:1  out:36  total:37
   adapters.python.urirun.host.node_cli.copy_id_command
     CC=12  in:2  out:30  total:32
-  adapters.python.urirun.host.connector_admin._connector_install_node
-    CC=12  in:1  out:28  total:29
-  scripts.transport_swap_proof.main
-    CC=5  in:0  out:29  total:29
   adapters.python.urirun.host.connector_admin.connector_install
     CC=13  in:0  out:29  total:29
+  scripts.transport_swap_proof.main
+    CC=5  in:0  out:29  total:29
+  adapters.python.urirun.host.connector_admin._connector_install_node
+    CC=12  in:1  out:28  total:29
   adapters.python.urirun.host.node_cli._run_streamed
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.discovery.node_alias_map_from_env
-    CC=14  in:1  out:26  total:27
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
   adapters.python.urirun.host.node_cli.watch_command
     CC=11  in:1  out:24  total:25
   adapters.python.urirun.host.object_registry.probe_node_token
     CC=14  in:1  out:24  total:25
-  adapters.python.urirun.host.node_api.configured_api_headers
-    CC=13  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard._recent_scanner_artifacts
+    CC=14  in:1  out:23  total:24
   adapters.python.urirun.node.routing.route_target
     CC=1  in:23  out:1  total:24
   adapters.python.urirun.host.task_cli._run_task_flow
     CC=12  in:2  out:22  total:24
   adapters.python.urirun.testing.smoke
     CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.node_api.configured_api_headers
+    CC=13  in:1  out:23  total:24
+  adapters.python.urirun.host.host_dashboard.uri_invoke
+    CC=12  in:2  out:21  total:23
   adapters.python.urirun.node.doctor.format_doctor_report
     CC=9  in:1  out:22  total:23
-  adapters.python.urirun.host.dashboard_api._first
-    CC=1  in:21  out:1  total:22
+  adapters.python.urirun.host.dashboard_api.chat_history
+    CC=6  in:1  out:21  total:22
   adapters.python.urirun.host.node_cli.probe_command
     CC=14  in:1  out:21  total:22
-  adapters.python.urirun.node.transport.http_json
-    CC=8  in:11  out:11  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -104,10 +104,6 @@ MODULES:
     _check_reachability  CC=9  out:6
     _protocol_owner  CC=1  out:1
     api_node_doctor  CC=12  out:10
-  adapters.python.urirun.host.chat_orchestrator  [3 funcs]
-    _document_sync_node_from_prompt  CC=5  out:4
-    _is_document_sync_prompt  CC=10  out:9
-    compact_chat_result  CC=5  out:6
   adapters.python.urirun.host.connector_admin  [8 funcs]
     _connector_install_node  CC=12  out:28
     connector_env_check  CC=14  out:20
@@ -117,15 +113,6 @@ MODULES:
     parse_bindings_output  CC=9  out:6
     refresh_connector_schemes  CC=5  out:5
     run_docker_check  CC=4  out:5
-  adapters.python.urirun.host.contracts  [8 funcs]
-    _completed_count  CC=3  out:2
-    _flow_checks  CC=2  out:5
-    _ok_step_ids  CC=4  out:3
-    _plan_steps  CC=3  out:1
-    _side_effect_steps  CC=4  out:2
-    file_transfer_verification  CC=4  out:20
-    flow_execution_verification  CC=5  out:13
-    verification_check  CC=3  out:5
   adapters.python.urirun.host.dashboard_api  [18 funcs]
     _api_artifacts  CC=4  out:12
     _api_chat_history  CC=2  out:3
@@ -137,25 +124,11 @@ MODULES:
     _api_tasks  CC=2  out:5
     _dashboard_api_response  CC=3  out:3
     _first  CC=1  out:1
-  adapters.python.urirun.host.dashboard_http  [2 funcs]
-    _js_sdk_response  CC=5  out:16
-    _json_response  CC=1  out:13
   adapters.python.urirun.host.decision_loop  [4 funcs]
     decision_loop_for_document_sync  CC=11  out:9
     decision_loop_next_intent  CC=5  out:1
     decision_loop_observation  CC=7  out:0
     decision_loop_status  CC=5  out:0
-  adapters.python.urirun.host.discovery  [29 funcs]
-    _classify_not_found  CC=7  out:6
-    _node_map_from_value  CC=3  out:4
-    _node_test_summary  CC=5  out:4
-    _probe_route  CC=3  out:5
-    _route_targets  CC=12  out:7
-    add_node_aliases  CC=4  out:7
-    alias_map_from_dict  CC=5  out:9
-    alias_map_from_list  CC=5  out:8
-    classify_route_run  CC=13  out:15
-    host_config  CC=2  out:3
   adapters.python.urirun.host.dispatch  [6 funcs]
     _env_to_result  CC=6  out:10
     _flow_scheme_dispatch  CC=12  out:14
@@ -163,19 +136,20 @@ MODULES:
     _flow_scheme_run  CC=12  out:10
     _inprocess_run  CC=8  out:13
     inprocess_fallback  CC=5  out:6
-  adapters.python.urirun.host.fs_transfer  [15 funcs]
-    compact_remote_run  CC=10  out:17
-    deploy_fs_file_transfer_fallback  CC=3  out:9
-    ensure_node_uri_routes  CC=14  out:19
-    envelope_error_message  CC=4  out:4
-    fs_file_transfer_binding  CC=4  out:1
-    fs_file_transfer_fallback_bindings  CC=4  out:3
+  adapters.python.urirun.host.fs_transfer  [2 funcs]
     node_client  CC=1  out:1
-    node_has_route  CC=4  out:6
     node_token_for  CC=5  out:2
-    remote_read_error  CC=11  out:12
-  adapters.python.urirun.host.host_dashboard  [1 funcs]
-    _service_restart_argv  CC=1  out:1
+  adapters.python.urirun.host.host_dashboard  [48 funcs]
+    _add_chat_message  CC=2  out:2
+    _document_sync_deps  CC=1  out:2
+    _extract_document_metadata  CC=1  out:2
+    _finalize_uri_result  CC=3  out:4
+    _latest_scanner_page_status  CC=2  out:3
+    _local_image_ocr  CC=1  out:2
+    _node_alias_map_from_context  CC=2  out:3
+    _node_url_from_config  CC=2  out:5
+    _recent_scanner_artifacts  CC=14  out:23
+    _register_scanner_result  CC=1  out:2
   adapters.python.urirun.host.host_db  [32 funcs]
     _query_table  CC=2  out:7
     _run_command_route  CC=11  out:17
@@ -239,11 +213,10 @@ MODULES:
     api_item_fields  CC=9  out:15
     apply_uri_overrides  CC=10  out:8
     build_auth_extra_fields  CC=4  out:2
-  adapters.python.urirun.host.routing  [4 funcs]
+  adapters.python.urirun.host.routing  [3 funcs]
     has_screen_capture_route  CC=8  out:6
     route_in_selected_targets  CC=14  out:10
     screen_document_capability_gap  CC=8  out:7
-    selected_nodes_from_targets  CC=8  out:12
   adapters.python.urirun.host.scheduler  [5 funcs]
     build_loop_command  CC=4  out:4
     cron_line  CC=1  out:4
@@ -297,9 +270,8 @@ MODULES:
   adapters.python.urirun.host.widgets  [2 funcs]
     scanner_stream_summary  CC=10  out:17
     service_widget_summary  CC=12  out:16
-  adapters.python.urirun.node._artifacts  [2 funcs]
+  adapters.python.urirun.node._artifacts  [1 funcs]
     compact_result_artifacts  CC=3  out:4
-    materialize_base64_artifacts  CC=1  out:16
   adapters.python.urirun.node._util  [3 funcs]
     _parse_json_option  CC=2  out:1
     json_load  CC=1  out:3

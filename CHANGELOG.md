@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.10] - 2026-06-26
 
 ### Fixed
+- Fix relative-imports issues (ticket-761df093)
+- Fix smart-return-type issues (ticket-69f8db24)
+- Fix unused-imports issues (ticket-ac6f93ff)
+- Fix magic-numbers issues (ticket-15b735e3)
+- Fix unused-imports issues (ticket-f2fd6b97)
+- Fix string-concat issues (ticket-6d28abd2)
+- Fix unused-imports issues (ticket-6aed8db1)
+- Fix magic-numbers issues (ticket-d9d14ab1)
+- Fix relative-imports issues (ticket-c06e0668)
+- Fix duplicate-imports issues (ticket-c51acf38)
+- Fix string-concat issues (ticket-1776be86)
+- Fix unused-imports issues (ticket-ac7a6711)
+- Fix relative-imports issues (ticket-d7e53e5c)
+- Fix unused-imports issues (ticket-8a431e0e)
+- Fix magic-numbers issues (ticket-d1f79ee4)
+- Fix wildcard-imports issues (ticket-1227be3c)
+- Fix unused-imports issues (ticket-1f626b4d)
+
+## [0.1.10] - 2026-06-26
+
+### Fixed
 - Fix unused-imports issues (ticket-e0667267)
 - Fix smart-return-type issues (ticket-35d459b0)
 - Fix string-concat issues (ticket-9d05b809)

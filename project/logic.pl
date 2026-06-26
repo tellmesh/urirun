@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.172', 'javascript').
+project_metadata('urirun', '0.4.174', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -164,7 +164,7 @@ project_file('adapters/python/urirun/host/document_metadata.py', 27, 'python').
 project_file('adapters/python/urirun/host/document_sync.py', 7, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 6, 'python').
 project_file('adapters/python/urirun/host/fs_transfer.py', 365, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 1823, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 1836, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 528, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 375, 'python').
 project_file('adapters/python/urirun/host/html_templates.py', 4917, 'python').
@@ -218,7 +218,7 @@ project_file('adapters/python/urirun/node/task_cli.py', 9, 'python').
 project_file('adapters/python/urirun/node/transport.py', 541, 'python').
 project_file('adapters/python/urirun/node/twin_store.py', 354, 'python').
 project_file('adapters/python/urirun/planfile_adapter.py', 6, 'python').
-project_file('adapters/python/urirun/runtime/__init__.py', 3, 'python').
+project_file('adapters/python/urirun/runtime/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/runtime/_registry.py', 11, 'python').
 project_file('adapters/python/urirun/runtime/_runtime.py', 11, 'python').
 project_file('adapters/python/urirun/runtime/_scan.py', 11, 'python').
@@ -246,7 +246,7 @@ project_file('adapters/python/urirun/scheduler.py', 6, 'python').
 project_file('adapters/python/urirun/task_planner.py', 6, 'python').
 project_file('adapters/python/urirun/testing.py', 190, 'python').
 project_file('adapters/python/urirun/v1.py', 9, 'python').
-project_file('adapters/python/urirun/v2.py', 9, 'python').
+project_file('adapters/python/urirun/v2.py', 12, 'python').
 project_file('adapters/python/urirun/v2_adopt.py', 9, 'python').
 project_file('adapters/python/urirun/v2_grpc.py', 9, 'python').
 project_file('adapters/python/urirun/v2_mcp.py', 9, 'python').
@@ -1563,12 +1563,16 @@ python_function('adapters/python/urirun/host/host_dashboard.py', 'documents_reco
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_events_sse', 2, 13, 15).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_static', 3, 9, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_nodes_qr', 2, 5, 14).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get', 8, 13, 19).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_services', 3, 4, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_api', 4, 9, 11).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get', 8, 4, 6).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_connectors', 8, 4, 5).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_nodes', 8, 8, 9).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_scanner', 8, 9, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_chat', 8, 3, 4).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post', 9, 13, 14).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_tasks', 4, 5, 5).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_artifacts', 4, 5, 7).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post', 9, 7, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'create_handler', 6, 1, 6).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_free_port_from_matching_processes', 1, 1, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_is_dashboard_process', 1, 1, 1).

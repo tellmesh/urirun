@@ -477,24 +477,24 @@ Returns None when no connector o
 ### adapters.python.urirun.host.service_control.free_port_from_matching_processes
 - **Output to**: getpid_fn, holders, targets, adapters.python.urirun.host.service_control._signal_pids, holders
 
+### adapters.python.urirun.host.host_dashboard._run_inprocess_connector_uri
+> Execute an installed in-process connector URI (widget://, artifact://, …) through the
+urirun runtime
+- **Output to**: discovery.registry_for_uri, urirun.run, urirun.result_data, adapters.python.urirun.host.host_dashboard.register_tagged_artifact, bool
+
+### adapters.python.urirun.host.host_dashboard._free_port_from_matching_processes
+- **Output to**: _free_port_from_matching_processes_impl, is_target
+
+### adapters.python.urirun.host.host_dashboard._is_dashboard_process
+> True only when pid is a urirun host dashboard serve process. Monkeypatch-friendly.
+- **Output to**: _is_dashboard_process_impl
+
 ### adapters.python.urirun.node._util._parse_json_option
 > Parse an optional JSON CLI argument; return ``default`` when unset.
 - **Output to**: json.loads
 
 ### adapters.python.urirun.node.doctor._parse_non_http_address
 - **Output to**: urllib.parse.urlparse, _DEFAULT_PORT.get
-
-### adapters.python.urirun.node.doctor.format_doctor_report
-> Plain-text capability doctor report table.
-- **Output to**: output.extend, None.join, rows.append, max, None.rstrip
-
-### adapters.python.urirun.node.server._parse_sse_query
-- **Output to**: query.split, part.split, unquote, v.replace
-
-### adapters.python.urirun.node.server.NodeHandler._validate_run_request
-> Auth-gate, JSON-parse and shape-check a /run body, then enforce optimistic
-concurrency (If-Registry-
-- **Output to**: adapters.python.urirun.node.server.send_json, json.loads, adapters.python.urirun.node.server.send_json, self.headers.get, body.get
 
 ## Behavioral Patterns
 
@@ -513,15 +513,15 @@ concurrency (If-Registry-
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.Connector.handler
 
-### recursion_short_value
-- **Type**: recursion
-- **Confidence**: 0.90
-- **Functions**: adapters.python.urirun.host.fs_transfer.short_value
-
 ### recursion__uri_action_lookup
 - **Type**: recursion
 - **Confidence**: 0.90
 - **Functions**: adapters.python.urirun.host.host_dashboard._uri_action_lookup
+
+### recursion_short_value
+- **Type**: recursion
+- **Confidence**: 0.90
+- **Functions**: adapters.python.urirun.host.fs_transfer.short_value
 
 ### state_machine_Urirun
 - **Type**: state_machine
@@ -576,13 +576,13 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
-- `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
 - `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
+- `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.node_cli.probe_command` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
-- `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_dashboard.uri_invoke` - 21 calls
+- `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `examples.matrix.verify.main` - 20 calls
 - `scripts.extraction_audit.audit` - 20 calls
 - `adapters.python.urirun.host.node_cli.run_command` - 20 calls

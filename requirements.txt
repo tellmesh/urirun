@@ -13,3 +13,12 @@
 
 # Declarative connector spec extracted to standalone package.
 -e ../urirun-declarative
+
+# Time tools connector (time//, date//, cron// URI handlers).
+-e ../urirun-connector-time-tools
+
+# Connectors installed for examples test suite (19-all-connectors etc.).
+-e ../urirun-connector-mcp-filesystem
+-e ../urirun-connector-email
+-e ../urirun-connector-mqtt
+-e ../urirun-connector-sqlite-context
