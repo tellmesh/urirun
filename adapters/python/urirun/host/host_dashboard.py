@@ -104,10 +104,7 @@ from .fs_transfer import (
     node_has_route as _node_has_route_impl,
     route_key as _route_key_impl,
 
-    short_value as _short_value,
     compact_remote_run as _compact_remote_run,
-    route_not_found_remedy as _route_not_found_remedy,
-    envelope_error_message as _envelope_error_message,
     remote_write_error as _remote_write_error,
     remote_read_error as _remote_read_error,
     node_client as _node_client,
