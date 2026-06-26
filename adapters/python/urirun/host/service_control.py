@@ -374,3 +374,89 @@ def free_port_from_old_dashboard(
         except OSError:
             pass
     sleep_fn(0.3)
+
+
+# ─── Service lifecycle URI helpers ───────────────────────────────────────────
+
+def canonical_service_uri(name: str, verb: str) -> str:
+    """Return the canonical lifecycle URI for a named host service.
+
+    ``verb`` is one of the four standard lifecycle verbs:
+    ``command/start``, ``command/stop``, ``command/restart``, ``query/status``.
+    """
+    return f"dashboard://host/service/{name}/{verb}"
+
+
+def service_lifecycle_uris(name: str) -> dict[str, str]:
+    """Canonical start / stop / restart / status URIs for a named host service."""
+    return {
+        "start":   canonical_service_uri(name, "command/start"),
+        "stop":    canonical_service_uri(name, "command/stop"),
+        "restart": canonical_service_uri(name, "command/restart"),
+        "status":  canonical_service_uri(name, "query/status"),
+    }
+
+
+def service_lifecycle_aliases(name: str) -> dict[str, str]:
+    """Map all recognized legacy / alternate restart URIs to the canonical form.
+
+    Covers the three patterns that accumulated before the ``dashboard://host/service/``
+    namespace was standardized: bare dashboard scheme, ``service://host/``, and
+    ``service://`` (no explicit host target).
+    """
+    canonical = canonical_service_uri(name, "command/restart")
+    return {
+        f"dashboard://host/{name}/command/restart": canonical,
+        f"service://host/{name}/command/restart": canonical,
+        f"service://{name}/command/restart": canonical,
+    }
+
+
+def service_status(
+    port: int,
+    is_process_fn: Callable[[int], bool],
+    *,
+    port_holder_pids_fn: Callable[[int], list[int]] = port_holder_pids,
+    process_cmdline_fn: Callable[[int], str] = process_cmdline,
+) -> dict:
+    """Return the live status of a host service identified by its port + process classifier.
+
+    Returns ``{ok, running, port, pids, pid_count}``.  ``running`` is True when AT LEAST
+    one PID on the port matches the classifier — a different process holding the port is
+    reported as ``running=False`` (port-busy, not the target service).
+    """
+    holders = port_holder_pids_fn(port)
+    matching = [p for p in holders if is_process_fn(p)]
+    running = bool(matching)
+    return {
+        "ok": True,
+        "running": running,
+        "port": port,
+        "pids": matching,
+        "pid_count": len(matching),
+    }
+
+
+def stop_service_pids(
+    port: int,
+    is_process_fn: Callable[[int], bool],
+    *,
+    port_holder_pids_fn: Callable[[int], list[int]] = port_holder_pids,
+    process_cmdline_fn: Callable[[int], str] = process_cmdline,
+    kill_fn: Callable[[int, int], Any] = os.kill,
+) -> dict:
+    """Send SIGTERM to all matching service PIDs on `port`.
+
+    Returns ``{ok, stopped, pids}`` — ``stopped`` is the count of processes signalled.
+    Not an error when no process was found (service was already stopped).
+    """
+    holders = port_holder_pids_fn(port)
+    targets = [p for p in holders if is_process_fn(p)]
+    signalled: list[int] = []
+    for pid in targets:
+        try:
+            kill_fn(pid, signal.SIGTERM)
+            signalled.append(pid)
+        except OSError:
+            pass
+    return {"ok": True, "stopped": len(signalled), "pids": signalled}

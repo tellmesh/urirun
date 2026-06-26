@@ -107,6 +107,22 @@ module names cause import mismatch in default `pytest -q`, and socket-opening
 tests fail in the restricted sandbox with `PermissionError: Operation not
 permitted`.
 
+## Landed (2026-06-26): nextIntent wired to general chat path + P0 closed
+
+**`nextIntent` in `_chat_ask_general` (2026-06-26):** When a flow fails, the dashboard now adds
+a structured `nextIntent` to the result — pointing to `urifix://host/chain/command/repair` with
+the PLAYBOOK diagnosis attached (`rule`, `cause`, `confidence`, `actions`, `automatic`).
+`_general_path_next_intent(execution)` extracts the first recovery plan from
+`execution.recovery[*].plan` (which `flow.execute_flow` already populated from `diagnostics.py`).
+When no PLAYBOOK rule matched, a generic fallback intent with `automatic: False` is returned.
+5 new tests in `test_contracts.py`. **P0 CLOSED.**
+
+**P0 full summary — all items now landed:**
+1. `auth-required`, `service-stopped`, `port-busy`, `verification-failed`, `missing-llm-model`
+   rules in the PLAYBOOK — the dashboard self-healer diagnoses all common runtime failure classes.
+2. `verification` block on every side-effecting execute flow (`flow_execution_verification`).
+3. `nextIntent` on every failed flow — structured (PLAYBOOK-backed) instead of generic inspect-error.
+
 ## Landed (2026-06-26): 5 new diagnostics PLAYBOOK rules + CC gate clean
 
 **5 new PLAYBOOK rules in `diagnostics.py`** — placed before `route-not-served` (more specific first):
@@ -220,22 +236,41 @@ CC-clean, no obvious seam. Your own rule applies: split only when a seam appears
 
 ## Next tasks: connection/runtime reliability
 
-P0:
+P0: **CLOSED 2026-06-26** (5 PLAYBOOK rules + verification block + nextIntent wired)
 
-- Extend `urifix://` diagnoses for missing connector, missing API auth, missing
-  node URL, stopped service, busy port and failed verification contract.
-- Require side-effecting dashboard flows to return a `verification` block with
-  expected/actual counts and named checks.
+## Landed (2026-06-26): route classification in discover_mesh
 
-P1:
+**`routeClass` now universal (2026-06-26):** `discover_mesh` in `transport.py` already tagged
+routes from live nodes (their state was built by `routes_from_registry` which calls
+`route_class()`). Gap: routes from configured API/device nodes (`_configured_api_routes`) had no
+`routeClass`. Fixed by importing `route_class` in `transport.py` and stamping
+`item["routeClass"] = route_class(item)` for any route without the field in `discover_mesh`.
+`format_routes` (the `urirun host routes` table) already had a `class` column; it's now filled
+for all route sources. 2 new tests: `test_discover_mesh_stamps_route_class_on_routes_without_it`
+(configured-media → `connector_required`) and `test_discover_mesh_preserves_routeClass_…` (live
+node pre-classified routes are not overwritten). **603 passed, CC gate OK.**
 
-- Mark discovered routes as `executable`, `metadata`, `connector_required` or
-  `external` in `urirun host routes` and dashboard discovery.
-- Add `capability doctor` for API/device nodes: auth, endpoint reachability,
-  protocol owner, connector requirement and known service owner.
-- Normalize service lifecycle routes across `urirun-service-chat` and
-  `urirun-service-scanner`: `query/status`, `command/start`,
-  `command/restart`, `command/stop`.
+P1 (next):
+
+## Landed (2026-06-26): capability doctor for API/device nodes
+
+**`urirun.host.capability` (new module, 2026-06-26):** Proactive health-check for configured
+API/device nodes — runs BEFORE any flow, catches misconfiguration early.
+
+5 checks per API entry:
+- **auth** — `secretRef` resolved via `resolve_secret`; inline keys pass; absent = public
+- **reachability** — TCP probe on URL host:port (HTTPS→443, HTTP→80, custom port explicit);
+  no URL → `ok=None` (indeterminate, not failure)
+- **connector** — `importlib.util.find_spec` on the package module for the apiKind;
+  built-in adapters (`http/https/rest/openapi/web/panel`) don't need one
+- **protocolOwner** — maps apiKind to the owning connector package name
+- **degraded** — node/api is degraded (some ok=None, no ok=False) vs hard-failed (any ok=False)
+
+`api_node_doctor(node)` returns `{ok, degraded, nodeId, apis: [{apiId, apiKind, ok, degraded, protocolOwner, checks}]}`.
+
+CC fix: `node/doctor.py::_check_api` was CC=16 — extracted `_parse_non_http_address` and `_probe_url`. **20 new tests in `test_capability_doctor.py`. 623 passed, CC gate OK.**
+
+**CLOSED 2026-06-26** (see "service lifecycle normalized" section above)
 - Implement concrete non-HTTP device connectors: RTSP/camera/media,
   SSH-device and fileshare/NAS.
 - Add authenticated host callback registration for webpage nodes so opening the

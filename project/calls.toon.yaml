@@ -1,7 +1,7 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.24s
-# nodes: 433 | edges: 500 | modules: 43
-# CC̄=4.6
+# generated in 0.22s
+# nodes: 424 | edges: 500 | modules: 42
+# CC̄=4.7
 
 HUBS[20]:
   adapters.python.urirun.runtime.daemon.serve
@@ -10,40 +10,40 @@ HUBS[20]:
     CC=8  in:1  out:39  total:40
   adapters.python.urirun.runtime.errors.info
     CC=13  in:2  out:27  total:29
-  adapters.python.urirun.host.document_sync._build_sync_params
-    CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.document_sync._upload_file
-    CC=6  in:1  out:27  total:28
-  adapters.python.urirun.host.document_sync._read_back_file
-    CC=11  in:1  out:26  total:27
-  adapters.python.urirun.host.discovery.node_alias_map_from_env
-    CC=14  in:1  out:26  total:27
+  adapters.python.urirun.host.document_metadata._normalize_llm_doc_fields
+    CC=14  in:1  out:28  total:29
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
   adapters.python.urirun.runtime.codegen.proto_from_registry
     CC=13  in:2  out:25  total:27
+  adapters.python.urirun.host.discovery.node_alias_map_from_env
+    CC=14  in:1  out:26  total:27
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
   adapters.python.urirun.runtime.v2.validate_binding_document
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun.testing.smoke
-    CC=9  in:1  out:23  total:24
   adapters.python.urirun.runtime.v1.run
     CC=14  in:1  out:23  total:24
-  adapters.python.urirun.host.document_sync.sync_documents_to_node
-    CC=13  in:0  out:23  total:23
+  adapters.python.urirun.testing.smoke
+    CC=9  in:1  out:23  total:24
+  adapters.python.urirun.host.document_metadata._local_image_ocr
+    CC=12  in:0  out:24  total:24
   adapters.python.urirun.host.host_db.search_records
     CC=6  in:1  out:21  total:22
   adapters.python.urirun.runtime.errors.problem
     CC=10  in:0  out:22  total:22
+  adapters.python.urirun.host.document_metadata._parse_contractor
+    CC=13  in:1  out:21  total:22
   adapters.python.urirun.runtime.v1._run_process_streaming
     CC=7  in:1  out:20  total:21
   adapters.python.urirun.host.host_db.init_db
     CC=2  in:15  out:6  total:21
   adapters.python.urirun.host.contracts.file_transfer_verification
     CC=4  in:1  out:20  total:21
-  adapters.python.urirun.host.scanner_bridge.register_scanner_result
-    CC=10  in:0  out:20  total:20
+  examples.matrix.verify.main
+    CC=9  in:0  out:20  total:20
+  adapters.python.urirun.host.domain_monitor._route_flow
+    CC=4  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -76,7 +76,7 @@ MODULES:
   adapters.php.Urirun  [2 funcs]
     bindings  CC=1  out:0
     bindingsJson  CC=1  out:2
-  adapters.python.urirun  [24 funcs]
+  adapters.python.urirun  [25 funcs]
     _dispatch_cli  CC=11  out:16
     _live_bindings  CC=4  out:5
     manifest  CC=11  out:13
@@ -92,8 +92,21 @@ MODULES:
   adapters.python.urirun.exec  [2 funcs]
     _resolve  CC=3  out:4
     main  CC=10  out:16
-  adapters.python.urirun.host.contracts  [2 funcs]
+  adapters.python.urirun.host.capability  [6 funcs]
+    _capability_check_for_api  CC=8  out:12
+    _check_auth  CC=8  out:6
+    _check_connector  CC=3  out:3
+    _check_reachability  CC=9  out:6
+    _protocol_owner  CC=1  out:1
+    api_node_doctor  CC=12  out:10
+  adapters.python.urirun.host.contracts  [8 funcs]
+    _completed_count  CC=3  out:2
+    _flow_checks  CC=2  out:5
+    _ok_step_ids  CC=4  out:3
+    _plan_steps  CC=3  out:1
+    _side_effect_steps  CC=4  out:2
     file_transfer_verification  CC=4  out:20
+    flow_execution_verification  CC=5  out:13
     verification_check  CC=3  out:5
   adapters.python.urirun.host.discovery  [28 funcs]
     _classify_not_found  CC=7  out:6
@@ -106,17 +119,17 @@ MODULES:
     alias_map_from_list  CC=5  out:8
     classify_route_run  CC=13  out:15
     host_config  CC=2  out:3
-  adapters.python.urirun.host.document_sync  [10 funcs]
-    _build_sync_params  CC=6  out:27
-    _check_preflight  CC=10  out:16
-    _log_and_chat_report  CC=2  out:4
-    _parse_sync_params  CC=6  out:12
-    _read_back_file  CC=11  out:26
-    _resolve_node_params  CC=9  out:12
-    _upload_file  CC=6  out:27
-    boolish  CC=3  out:4
-    document_sync_verification  CC=7  out:5
-    sync_documents_to_node  CC=13  out:23
+  adapters.python.urirun.host.document_metadata  [21 funcs]
+    _coerce_amount  CC=7  out:12
+    _document_type  CC=12  out:2
+    _extract_document_metadata  CC=14  out:16
+    _llm_api_key_ref  CC=5  out:5
+    _llm_complete_metadata  CC=6  out:3
+    _llm_env_file  CC=5  out:11
+    _llm_extract_metadata  CC=11  out:14
+    _llm_model  CC=7  out:10
+    _load_env_file  CC=8  out:11
+    _local_image_ocr  CC=12  out:24
   adapters.python.urirun.host.domain_monitor  [25 funcs]
     _db  CC=3  out:3
     _domain  CC=2  out:2
@@ -214,17 +227,6 @@ MODULES:
     preview  CC=3  out:5
     shell_join  CC=2  out:2
     systemd_units  CC=2  out:1
-  adapters.python.urirun.host.service_control  [15 funcs]
-    _append_chat_restart_options  CC=9  out:9
-    _cmdline_contains  CC=2  out:2
-    _free_port_result  CC=8  out:6
-    _resolve_chat_service_script  CC=8  out:11
-    _signal_pids  CC=4  out:4
-    chat_service_restart_argv  CC=4  out:13
-    free_port_from_matching_processes  CC=6  out:16
-    is_android_node_process  CC=1  out:1
-    is_chat_process  CC=1  out:1
-    is_dashboard_process  CC=1  out:1
   adapters.python.urirun.host.task_planner  [16 funcs]
     _ambiguous_plan  CC=1  out:3
     _derive_acceptance_criteria  CC=5  out:5
@@ -284,10 +286,8 @@ MODULES:
     compile_registry  CC=1  out:2
     expand_binding  CC=7  out:6
     expand_bindings  CC=2  out:2
-  adapters.python.urirun.runtime.v2  [53 funcs]
+  adapters.python.urirun.runtime.v2  [36 funcs]
     _apply_defaults  CC=14  out:12
-    _builtin_error_route_entry  CC=4  out:2
-    _builtin_registry_route_entry  CC=3  out:2
     _collision_index  CC=7  out:12
     _document_binding_from_expanded  CC=4  out:5
     _entry_point_script_issues  CC=5  out:7
@@ -295,6 +295,8 @@ MODULES:
     _error_ticket  CC=3  out:4
     _first_payload_value  CC=3  out:1
     _handler_kwargs  CC=7  out:5
+    _input_values  CC=4  out:8
+    _load_entry_point_bindings  CC=4  out:9
   adapters.python.urirun.runtime.v2_service  [3 funcs]
     _post  CC=5  out:15
     call  CC=9  out:10
@@ -336,8 +338,6 @@ MODULES:
     main  CC=11  out:16
     pypi_has  CC=3  out:5
     repin_text  CC=1  out:5
-  v1.js.urirun-v1  [1 funcs]
-    executor  CC=3  out:1
 
 EDGES:
   examples.matrix.verify.main → adapters.python.urirun.validate_binding_document

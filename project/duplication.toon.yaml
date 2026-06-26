@@ -1,15 +1,15 @@
-# redup/duplication | 15 groups | 101f 36313L | 2026-06-26
+# redup/duplication | 16 groups | 103f 37204L | 2026-06-26
 
 SUMMARY:
-  files_scanned: 101
-  total_lines:   36313
-  dup_groups:    15
-  dup_fragments: 37
-  saved_lines:   143
-  scan_ms:       1045
+  files_scanned: 103
+  total_lines:   37204
+  dup_groups:    16
+  dup_fragments: 39
+  saved_lines:   146
+  scan_ms:       1062
 
 HOTSPOTS[7] (files with most duplication):
-  host/host_dashboard.py  dup=73L  groups=5  frags=12  (0.2%)
+  host/host_dashboard.py  dup=70L  groups=5  frags=11  (0.2%)
   __init__.py  dup=38L  groups=1  frags=3  (0.1%)
   runtime/v2.py  dup=35L  groups=4  frags=9  (0.1%)
   host/service_control.py  dup=20L  groups=1  frags=2  (0.1%)
@@ -17,15 +17,15 @@ HOTSPOTS[7] (files with most duplication):
   node/flow.py  dup=11L  groups=1  frags=1  (0.0%)
   runtime/worker.py  dup=8L  groups=1  frags=2  (0.0%)
 
-DUPLICATES[15] (ranked by impact):
+DUPLICATES[16] (ranked by impact):
   [a58866334f01e99a] ! STRU  command  L=16 N=3 saved=32 sim=1.00
       __init__.py:47-62  (command)
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=13 N=3 saved=26 sim=1.00
-      host/host_dashboard.py:11536-11548  (_free_port_from_old_scanner)
-      host/host_dashboard.py:11551-11559  (_free_port_from_old_chat)
-      host/host_dashboard.py:11562-11570  (_free_port_from_old_android_node)
+      host/host_dashboard.py:11660-11672  (_free_port_from_old_scanner)
+      host/host_dashboard.py:11675-11683  (_free_port_from_old_chat)
+      host/host_dashboard.py:11686-11694  (_free_port_from_old_android_node)
   [e819c3a558e3729d]   STRU  _cmd_add_openapi  L=4 N=5 saved=16 sim=1.00
       runtime/v2.py:1533-1536  (_cmd_add_openapi)
       runtime/v2.py:1539-1542  (_cmd_gen)
@@ -33,9 +33,9 @@ DUPLICATES[15] (ranked by impact):
       runtime/v2.py:1850-1853  (_cmd_host)
       runtime/v2.py:1856-1859  (_cmd_node)
   [b7534632e49155f1]   STRU  _host_db  L=4 N=4 saved=12 sim=1.00
-      host/host_dashboard.py:8483-8486  (_host_db)
-      host/host_dashboard.py:8489-8492  (_mesh)
-      host/host_dashboard.py:8495-8498  (_planfile_adapter)
+      host/host_dashboard.py:8549-8552  (_host_db)
+      host/host_dashboard.py:8555-8558  (_mesh)
+      host/host_dashboard.py:8561-8564  (_planfile_adapter)
       runtime/v2.py:634-637  (_host_integrations)
   [bcc95f219db12f7c]   STRU  _json_from_text  L=11 N=2 saved=11 sim=1.00
       host/task_planner.py:85-95  (_json_from_text)
@@ -44,26 +44,29 @@ DUPLICATES[15] (ranked by impact):
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
   [926b8a3d766222d9]   STRU  _chat_document_sync_response  L=9 N=2 saved=9 sim=1.00
-      host/host_dashboard.py:10464-10472  (_chat_document_sync_response)
-      host/host_dashboard.py:10475-10483  (_chat_generic_response)
+      host/host_dashboard.py:10588-10596  (_chat_document_sync_response)
+      host/host_dashboard.py:10599-10607  (_chat_generic_response)
   [3fed59bde8ae1620]   EXAC  replace  L=5 N=2 saved=5 sim=1.00
       runtime/v1.py:68-72  (replace)
       runtime/v2.py:507-511  (replace)
   [ecb3319de9bb32de]   EXAC  close  L=4 N=2 saved=4 sim=1.00
       runtime/worker.py:156-159  (close)
       runtime/worker.py:187-190  (close)
-  [cdb2ba2d3a97a0f6]   STRU  _document_index_path  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:5381-5383  (_document_index_path)
-      host/host_dashboard.py:5482-5484  (_scanned_id_log_path)
+  [cdb2ba2d3a97a0f6]   STRU  document_index_path  L=3 N=2 saved=3 sim=1.00
+      host/document_sync.py:24-26  (document_index_path)
+      host/host_dashboard.py:5476-5478  (_scanned_id_log_path)
   [bed22d936aabe8e2]   STRU  _api_checks  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:11155-11157  (_api_checks)
-      host/host_dashboard.py:11160-11162  (_api_logs)
+      host/host_dashboard.py:11279-11281  (_api_checks)
+      host/host_dashboard.py:11284-11286  (_api_logs)
   [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
   [d0098f298e2a6380]   STRU  save_host_config  L=3 N=2 saved=3 sim=1.00
       node/config.py:82-84  (save_host_config)
       node/config.py:196-198  (save_node_config)
+  [03f92089ee2852df]   STRU  _api_id  L=3 N=2 saved=3 sim=1.00
+      node/doctor.py:74-76  (_api_id)
+      node/transport.py:407-409  (_configured_api_id)
   [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
       node/mesh.py:269-271  (_data_artifact_register)
       node/mesh.py:278-280  (_data_check_add)
@@ -71,7 +74,7 @@ DUPLICATES[15] (ranked by impact):
       runtime/v2.py:640-642  (planfile_task_bindings)
       runtime/v2.py:649-651  (host_data_bindings)
 
-REFACTOR[15] (ranked by priority):
+REFACTOR[16] (ranked by priority):
   [1] ○ extract_function   → utils/command.py
       WHY: 3 occurrences of 16-line block across 1 files — saves 32 lines
       FILES: __init__.py
@@ -99,9 +102,9 @@ REFACTOR[15] (ranked by priority):
   [9] ○ extract_function   → runtime/utils/close.py
       WHY: 2 occurrences of 4-line block across 1 files — saves 4 lines
       FILES: runtime/worker.py
-  [10] ○ extract_function   → host/utils/_document_index_path.py
-      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
-      FILES: host/host_dashboard.py
+  [10] ○ extract_function   → host/utils/document_index_path.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: host/document_sync.py, host/host_dashboard.py
   [11] ○ extract_function   → host/utils/_api_checks.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/host_dashboard.py
@@ -111,10 +114,13 @@ REFACTOR[15] (ranked by priority):
   [13] ○ extract_function   → node/utils/save_host_config.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/config.py
-  [14] ○ extract_function   → node/utils/_data_artifact_register.py
+  [14] ○ extract_function   → node/utils/_api_id.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: node/doctor.py, node/transport.py
+  [15] ○ extract_function   → node/utils/_data_artifact_register.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: node/mesh.py
-  [15] ○ extract_function   → runtime/utils/planfile_task_bindings.py
+  [16] ○ extract_function   → runtime/utils/planfile_task_bindings.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: runtime/v2.py
 
@@ -142,7 +148,7 @@ DEPENDENCY_RISK[2] (duplicates spanning multiple packages):
       host/task_planner.py
       node/flow.py
 
-EFFORT_ESTIMATE (total ≈ 5.5h):
+EFFORT_ESTIMATE (total ≈ 5.6h):
   medium command                             saved=32L  ~64min
   medium _free_port_from_old_scanner         saved=26L  ~52min
   medium _cmd_add_openapi                    saved=16L  ~32min
@@ -152,9 +158,9 @@ EFFORT_ESTIMATE (total ≈ 5.5h):
   easy   _chat_document_sync_response        saved=9L  ~18min
   easy   replace                             saved=5L  ~10min
   easy   close                               saved=4L  ~8min
-  easy   _document_index_path                saved=3L  ~6min
-  ... +5 more (~30min)
+  easy   document_index_path                 saved=3L  ~6min
+  ... +6 more (~36min)
 
 METRICS-TARGET:
-  dup_groups:  15 → 0
-  saved_lines: 143 lines recoverable
+  dup_groups:  16 → 0
+  saved_lines: 146 lines recoverable

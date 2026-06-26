@@ -2,11 +2,71 @@
 # Tests for urirun.host.contracts — verification helpers for URI side-effect flows.
 from __future__ import annotations
 
+import sys
+import types
+
 from urirun.host.contracts import (
     file_transfer_verification,
     flow_execution_verification,
     verification_check,
 )
+
+# ─── _general_path_next_intent (imported from host_dashboard) ─────────────────
+# Isolate the helper without loading the whole dashboard (avoids heavy imports).
+
+def _next_intent(execution):
+    import importlib
+    import urirun.host.host_dashboard as _hd
+    return _hd._general_path_next_intent(execution)
+
+
+def _plan(rule="test-rule", cause="test-cause", confidence=0.9, auto_ids=None, remediation=None):
+    remediation = remediation or [
+        {"id": "auto-action", "kind": "retry", "automatic": True, "label": "auto"},
+        {"id": "manual-action", "kind": "provision", "automatic": False, "label": "manual"},
+    ]
+    auto_ids = auto_ids if auto_ids is not None else ["auto-action"]
+    return {"rule": rule, "cause": cause, "confidence": confidence,
+            "autoApplicable": auto_ids, "remediation": remediation}
+
+
+def _failed_exec(plan=None, error_category="INTERNAL"):
+    recovery = [{"stepId": "s0", "uri": "kvm://laptop/ui/command/click", "error": {"message": "x"},
+                 "plan": plan}] if plan else []
+    return {"ok": False, "timeline": [], "results": {},
+            "error": {"message": "x", "category": error_category}, "recovery": recovery}
+
+
+def test_next_intent_returns_none_on_success():
+    assert _next_intent({"ok": True, "timeline": [], "results": {}, "recovery": []}) is None
+
+
+def test_next_intent_with_known_diagnosis_uses_rule():
+    ni = _next_intent(_failed_exec(plan=_plan()))
+    assert ni["uri"] == "urifix://host/chain/command/repair"
+    assert ni["rule"] == "test-rule"
+    assert ni["cause"] == "test-cause"
+    assert ni["confidence"] == 0.9
+
+
+def test_next_intent_automatic_when_auto_action_in_playbook():
+    ni = _next_intent(_failed_exec(plan=_plan(auto_ids=["auto-action"])))
+    assert ni["automatic"] is True
+    assert ni["status"] == "ready"
+
+
+def test_next_intent_needs_input_when_no_auto_action():
+    ni = _next_intent(_failed_exec(plan=_plan(auto_ids=[])))
+    assert ni["automatic"] is False
+    assert ni["status"] == "needs-input"
+
+
+def test_next_intent_generic_fallback_when_no_diagnosis():
+    ni = _next_intent(_failed_exec(plan=None, error_category="NOT_FOUND"))
+    assert ni["uri"] == "urifix://host/chain/command/repair"
+    assert ni["id"] == "repair-uri-chain"
+    assert ni["automatic"] is False
+    assert ni["errorCategory"] == "NOT_FOUND"
 
 
 def test_verification_check_builds_named_row():

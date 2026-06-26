@@ -608,6 +608,11 @@ def _add_host_subparser(subparsers) -> None:
     flow_run.add_argument("--artifact-dir", help="directory for large base64/binary result artifacts; default ~/.urirun/artifacts/host")
     flow_run.add_argument("--inline-artifacts", action="store_true", help="keep large base64 values inline in stdout")
 
+    host_doctor = host_sub.add_parser("doctor", parents=[host_common],
+                                      help="Check reachability, auth, and connector status for every configured API/device node")
+    host_doctor.add_argument("--timeout", type=float, default=2.0, help="per-endpoint probe timeout in seconds")
+    host_doctor.add_argument("--json", action="store_true", help="emit JSON report")
+
     _add_host_task_subparser(host_sub)
 
 def _build_parser(prog: str) -> argparse.ArgumentParser:

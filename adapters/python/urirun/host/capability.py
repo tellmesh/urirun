@@ -9,6 +9,11 @@ import importlib
 import importlib.util
 import socket
 
+try:
+    from urirun.secret import resolve_secret  # type: ignore
+except Exception:  # noqa: BLE001 - secret layer is optional
+    resolve_secret = None  # type: ignore[assignment]
+
 _API_KIND_CONNECTOR: dict[str, str] = {
     "rtsp": "urirun-connector-rtsp",
     "rtmp": "urirun-connector-rtsp",
@@ -60,7 +65,8 @@ def _check_auth(api: dict) -> dict:
     if not str(secret_ref).startswith("secret://"):
         return {"name": "auth", "ok": True, "detail": "inline credential (not a secretRef)"}
     try:
-        from urirun.secret import resolve_secret  # type: ignore
+        if resolve_secret is None:
+            return {"name": "auth", "ok": None, "detail": "secret layer not available"}
         resolved = resolve_secret(secret_ref)
         if resolved:
             return {"name": "auth", "ok": True, "detail": f"secretRef resolved ({secret_ref})"}
@@ -144,8 +150,8 @@ def api_node_doctor(node: dict) -> dict:
     apis = [a for a in (node.get("apis") or []) if isinstance(a, dict)]
     api_results = [_capability_check_for_api(api) for api in apis]
     all_ok = bool(api_results) and all(r["ok"] for r in api_results)
-    any_fail = any(r["ok"] is False or not r["ok"] for r in api_results)
-    degraded = not all_ok and not any_fail
+    any_hard_fail = any(not r["ok"] and not r.get("degraded") for r in api_results)
+    degraded = not all_ok and not any_hard_fail
     return {
         "ok": all_ok,
         "degraded": degraded,

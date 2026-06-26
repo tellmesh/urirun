@@ -293,6 +293,43 @@ PLAYBOOK: list[_Rule] = [
         confidence=0.85,
     ),
     _Rule(
+        "no-routes-discovered",
+        [r"no uri steps",
+         r"discovered 0 safe route",
+         r"discovered \d+ safe route\(s\) on node\(s\) \[\]"],
+        "The planner found no safe routes on the target nodes — either the node(s) are offline/unreachable "
+        "or discover_mesh returned an empty list. The prompt cannot be converted to URI steps without live "
+        "routes. Fix: ensure the target node is running and reachable (urirun node list / urirun host nodes), "
+        "add the node URL with --node-url, or if the required capability is missing use 'urirun host ensure'.",
+        lambda t: [
+            {"id": "check-node-health", "kind": "diagnostic", "automatic": False,
+             "label": "Run 'urirun host nodes' to see which nodes are reachable and report their route counts."},
+            {"id": "add-node-url", "kind": "precondition", "automatic": False,
+             "label": "Pass --node-url NAME=http://HOST:PORT to make the node URL visible to the planner."},
+            {"id": "ensure-capability", "kind": "provision", "automatic": False,
+             "label": "If the node is up but lacks the required scheme, run 'urirun host ensure NODE SCHEME'."},
+        ],
+        categories={"INVALID_ARGUMENT"},
+        confidence=0.95,
+    ),
+    _Rule(
+        "no-routes-for-intent",
+        [r"no uri steps", r"safe route.*\[\]", r"discovered \d+ safe route"],
+        "The planner found routes but none matched the intent — the required scheme/capability may not be "
+        "deployed on the target node. For example, asking to 'open browser' requires a kvm:// or app:// "
+        "connector serving browser routes; if those aren't in the mesh the planner produces empty steps. "
+        "Fix: deploy the connector for the needed capability, or phrase the request in terms of "
+        "available routes (urirun host routes shows what's ready).",
+        lambda t: [
+            {"id": "check-routes", "kind": "diagnostic", "automatic": False,
+             "label": "Run 'urirun host routes' to see which URIs and schemes are currently available."},
+            {"id": "ensure-capability", "kind": "provision", "automatic": False,
+             "label": "Run 'urirun host ensure NODE SCHEME' to deploy the missing connector to the node."},
+        ],
+        categories={"INVALID_ARGUMENT"},
+        confidence=0.75,
+    ),
+    _Rule(
         "missing-llm-model",
         [r"llm.?model.*not (set|configured|found)", r"llm.?model.*missing",
          r"no model configured", r"openai.*api.?key.*not set",

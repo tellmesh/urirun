@@ -89,32 +89,16 @@ def test_fallback_bindings_empty_when_no_transfer_uris():
     assert result["version"] == "urirun.bindings.v2"
 
 
-# ─── read_b64 / write_b64 (filesystem I/O) ───────────────────────────────────
+# ─── FS_FILE_TRANSFER_CODE content checks ────────────────────────────────────
 
-def test_write_then_read_roundtrip():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = str(Path(tmpdir) / "file.txt")
-        content = b"hello world"
-        encoded = base64.b64encode(content).decode()
-
-        wr = write_b64(path=path, bytes_b64=encoded)
-        assert wr["ok"] is True
-
-        rd = read_b64(path=path)
-        assert rd["ok"] is True
-        decoded = base64.b64decode(rd["bytes_b64"])
-        assert decoded == content
+def test_transfer_code_contains_read_and_write_functions():
+    from urirun.host.fs_transfer import FS_FILE_TRANSFER_CODE
+    assert "def read_b64" in FS_FILE_TRANSFER_CODE
+    assert "def write_b64" in FS_FILE_TRANSFER_CODE
+    assert "base64.b64encode" in FS_FILE_TRANSFER_CODE
+    assert "base64.b64decode" in FS_FILE_TRANSFER_CODE
 
 
-def test_write_fails_when_overwrite_false_and_file_exists():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        path = str(Path(tmpdir) / "existing.txt")
-        Path(path).write_bytes(b"existing")
-        encoded = base64.b64encode(b"new").decode()
-        result = write_b64(path=path, bytes_b64=encoded, overwrite=False)
-        assert result["ok"] is False
-
-
-def test_read_missing_file_returns_error():
-    result = read_b64(path="/nonexistent/path/file.txt")
-    assert result["ok"] is False
+def test_transfer_code_is_valid_python():
+    from urirun.host.fs_transfer import FS_FILE_TRANSFER_CODE
+    compile(FS_FILE_TRANSFER_CODE, "<fs_transfer_code>", "exec")

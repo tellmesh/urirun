@@ -728,6 +728,17 @@ def _host_cmd_agents(args: argparse.Namespace, config: dict, mesh: dict) -> int:
     return 0
 
 
+def _host_cmd_doctor(args: argparse.Namespace, config: dict, mesh: dict) -> int:
+    from urirun.node.doctor import diagnose_mesh, format_doctor_report
+    timeout = getattr(args, "timeout", 2.0)
+    checks = diagnose_mesh(config, mesh, timeout=timeout)
+    if getattr(args, "json", False):
+        reglib._emit_json({"checks": checks, "ok": all(c["ok"] for c in checks)}, "-")
+    else:
+        print(format_doctor_report(checks))
+    return 0 if all(c["ok"] for c in checks) else 1
+
+
 def _host_cmd_ask(args: argparse.Namespace, config: dict, mesh: dict) -> int:
     prompt = " ".join(args.prompt)
     flow, generator = make_flow(prompt, mesh, selected_nodes=args.node, use_llm=not args.no_llm)
@@ -749,6 +760,7 @@ _HOST_MESH_HANDLERS = {
     "routes": _host_cmd_routes,
     "agents": _host_cmd_agents,
     "ask": _host_cmd_ask,
+    "doctor": _host_cmd_doctor,
 }
 
 

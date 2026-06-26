@@ -49,14 +49,16 @@ def format_routes(routes: list[dict]) -> str:
             "uri": route["uri"],
             "node": route.get("node") or "",
             "source": route.get("source") or "",
+            "class": route.get("routeClass") or "",
             "kind": route.get("kind") or "",
             "adapter": route.get("adapter") or "",
         }
         for route in sorted(routes, key=lambda item: item["uri"])
         if safe_route(route)
     ]
-    return format_table(rows, ["uri", "node", "source", "kind", "adapter"],
-                        {"uri": "URI", "node": "NODE", "source": "SOURCE", "kind": "KIND", "adapter": "ADAPTER"})
+    return format_table(rows, ["uri", "node", "source", "class", "kind", "adapter"],
+                        {"uri": "URI", "node": "NODE", "source": "SOURCE",
+                         "class": "CLASS", "kind": "KIND", "adapter": "ADAPTER"})
 
 
 def format_tickets(tickets: list[dict]) -> str:

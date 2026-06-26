@@ -452,5 +452,42 @@ class MissingLlmModelDiagnosisTests(unittest.TestCase):
         self.assertIn("retry-no-llm", ids)
 
 
+class NoRoutesTests(unittest.TestCase):
+    """Planner 'no URI steps' errors must be named, not silently flagged as unrecognized."""
+
+    _MSG = ("NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
+            "selected ['laptop']. Check the mesh config or pass --node-url [NAME=]URL. "
+            "Sample routes: []")
+
+    def test_no_routes_discovered_rule_matches(self):
+        d = diagnose(_err(self._MSG, category="INVALID_ARGUMENT"),
+                     step={"id": "plan", "uri": "flow://host/planner/command/make"})
+        self.assertIsNotNone(d)
+        self.assertEqual(d["rule"], "no-routes-discovered")
+        self.assertGreaterEqual(d["confidence"], 0.9)
+
+    def test_no_routes_discovered_provides_check_node_health(self):
+        d = diagnose(_err(self._MSG, category="INVALID_ARGUMENT"),
+                     step={"id": "plan", "uri": "flow://host/planner/command/make"})
+        ids = [a["id"] for a in d["remediation"]]
+        self.assertIn("check-node-health", ids)
+        self.assertIn("add-node-url", ids)
+        self.assertIn("ensure-capability", ids)
+
+    def test_no_routes_no_automatic_actions(self):
+        d = diagnose(_err(self._MSG, category="INVALID_ARGUMENT"),
+                     step={"id": "plan", "uri": "flow://host/planner/command/make"})
+        self.assertEqual(d["autoApplicable"], [], "node-offline actions must not run automatically")
+
+    def test_recovery_plan_not_unrecognized(self):
+        from urirun.node.recovery import recovery_plan
+        error = {"category": "INVALID_ARGUMENT", "message": self._MSG}
+        step = {"id": "plan", "uri": "flow://host/planner/command/make"}
+        plan = recovery_plan(error, step=step)
+        self.assertNotIn("unrecognized", plan, "must not fall through to unrecognized counter")
+        self.assertIn("diagnosis", plan)
+        self.assertEqual(plan["diagnosis"]["rule"], "no-routes-discovered")
+
+
 if __name__ == "__main__":
     unittest.main()

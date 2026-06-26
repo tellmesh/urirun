@@ -16,7 +16,7 @@ from urllib.parse import urlencode
 from urirun.node import keyauth
 from urirun.node.config import node_url
 from urirun.node.paths import node_state_dir
-from urirun.node.routing import registry_from_routes, route_target, routes_from_registry, safe_route
+from urirun.node.routing import registry_from_routes, route_class, route_target, routes_from_registry, safe_route
 
 
 def http_json(method: str, url: str, body: dict | None = None, timeout: float = 8.0,
@@ -529,6 +529,8 @@ def discover_mesh(config: dict) -> dict:
             item = dict(route)
             item["node"] = node["name"]
             item["nodeUrl"] = node["url"]
+            if "routeClass" not in item:
+                item["routeClass"] = route_class(item)
             routes.append(item)
             service_map[item["uri"]] = node["url"]
             try:

@@ -24,6 +24,36 @@ def uri_is_denied(uri: str) -> bool:
     return any(part in uri for part in UNSAFE_URI_PARTS)
 
 
+_CONNECTOR_REQUIRED_ADAPTERS = frozenset({
+    "configured-camera", "configured-media", "configured-ssh", "configured-files",
+})
+_EXTERNAL_ADAPTERS = frozenset({
+    "configured-api", "fetch", "argv-template", "shell-template",
+})
+_READONLY_VERBS = ("/query/", "/info/", "/status/")
+_MUTATING_VERBS = ("/command/", "/mutation/", "/event/", "/stream/", "/action/")
+
+
+def route_class(route: dict) -> str:
+    """Classify a route descriptor into one of four classes that drive UI/discovery display.
+
+    - ``connector_required``: the adapter needs an external connector that may not be installed
+      (e.g. SSH, RTSP, NFS — a built-in device-protocol adapter with no Python connector).
+    - ``external``: calls out to a configured external HTTP API or runs a shell/script template.
+    - ``metadata``: a read-only query — /query/ or /info/ or /status/ verb — safe to poll.
+    - ``executable``: a normal mutating or interactive route ready to run.
+    """
+    adapter = str(route.get("adapter") or "")
+    if adapter in _CONNECTOR_REQUIRED_ADAPTERS:
+        return "connector_required"
+    if adapter in _EXTERNAL_ADAPTERS:
+        return "external"
+    uri = str(route.get("uri") or "")
+    if any(v in uri for v in _READONLY_VERBS):
+        return "metadata"
+    return "executable"
+
+
 def route_is_safe(uri: str, declared: bool | None = None) -> bool:
     """THE single source of truth for route safety, shared by safe_route() and
     routes_from_registry() so they cannot diverge.
@@ -50,17 +80,17 @@ def routes_from_registry(registry: dict, source: str = "built-in") -> list[dict]
         # Author's explicit flag (config/meta `safe: false`); top-level binding `safe` is
         # dropped by compile, so it must live under config/meta to survive.
         declared = config.get("safe", meta.get("safe"))
-        routes.append(
-            {
-                "uri": item["uri"],
-                "kind": entry.get("kind"),
-                "adapter": entry.get("adapter"),
-                "safe": route_is_safe(item["uri"], declared),
-                "title": meta.get("label") or meta.get("title") or item["uri"],
-                "source": source,
-                "inputSchema": config.get("inputSchema") or entry.get("inputSchema") or {"type": "object"},
-            }
-        )
+        descriptor = {
+            "uri": item["uri"],
+            "kind": entry.get("kind"),
+            "adapter": entry.get("adapter"),
+            "safe": route_is_safe(item["uri"], declared),
+            "title": meta.get("label") or meta.get("title") or item["uri"],
+            "source": source,
+            "inputSchema": config.get("inputSchema") or entry.get("inputSchema") or {"type": "object"},
+        }
+        descriptor["routeClass"] = route_class(descriptor)
+        routes.append(descriptor)
     return sorted(routes, key=lambda item: item["uri"])
 
 
