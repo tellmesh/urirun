@@ -146,6 +146,22 @@ PRESETS: dict[str, dict] = {
         "allow_outward": (),
         "allow_exact": (),
     },
+    "K": {
+        "name": "flow engine (bundled as urirun_flow)",
+        # Post-extraction verification: the shim stubs in urirun/node/* have zero real code,
+        # so OUTWARD and CYCLE should be 0 for these addresses. Real code is in urirun_flow/.
+        "package": {
+            "urirun.node.flow",
+            "urirun.node.flow_thin",
+            "urirun.node.flow_planner",
+            "urirun.node.flow_verify",
+            "urirun.node.diagnostics",
+            "urirun.node.recovery",
+        },
+        "package_prefixes": (),
+        "allow_outward": ("urirun.runtime.", "urirun.node.", "urirun.connectors.", "urirun_flow."),
+        "allow_exact": ("urirun", "urirun.runtime"),
+    },
 }
 
 
