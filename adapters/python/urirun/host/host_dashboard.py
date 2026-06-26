@@ -5438,70 +5438,6 @@ def _add_node_aliases(out: dict[str, str], name: str, aliases: Any = None) -> No
     _add_node_aliases_impl(out, name, aliases)
 
 
-def _node_spec_aliases(spec: dict, fallback_name: str) -> tuple[str, list[str]]:
-    return _node_spec_aliases_impl(spec, fallback_name)
-
-
-def _alias_map_from_dict(value: dict) -> dict[str, str]:
-    return _alias_map_from_dict_impl(value)
-
-
-def _alias_map_from_list(value: Any) -> dict[str, str]:
-    return _alias_map_from_list_impl(value)
-
-
-def _node_alias_map_from_value(value: Any) -> dict[str, str]:
-    return _node_alias_map_from_value_impl(value)
-
-
-def _normalize_known_node_url(raw: Any) -> str:
-    return _normalize_known_node_url_impl(raw)
-
-
-def _url_map_from_dict(value: dict) -> dict[str, str]:
-    return _url_map_from_dict_impl(value)
-
-
-def _url_map_from_list(value: Any) -> dict[str, str]:
-    return _url_map_from_list_impl(value)
-
-
-def _node_url_map_from_value(value: Any) -> dict[str, str]:
-    return _node_url_map_from_value_impl(value)
-
-
-def _node_dicts_from_url_map(nodes: dict[str, str], *, source: str) -> list[dict]:
-    return _node_dicts_from_url_map_impl(nodes, source=source)
-
-
-def _node_alias_map_from_config_doc(config_doc: dict | None) -> dict[str, str]:
-    return _node_alias_map_from_config_doc_impl(config_doc)
-
-
-def _node_alias_map_from_env() -> dict[str, str]:
-    return _node_alias_map_from_env_impl(default_node=_document_sync_default_node())
-
-
-def _node_alias_map_from_node_urls(node_urls: list[str] | None) -> dict[str, str]:
-    return _node_alias_map_from_node_urls_impl(node_urls)
-
-
-def _known_nodes_file_data() -> Any:
-    return _known_nodes_file_data_impl()
-
-
-def _node_alias_map_from_known_nodes_file() -> dict[str, str]:
-    return _node_alias_map_from_known_nodes_file_impl()
-
-
-def _known_nodes_file_urls() -> dict[str, str]:
-    return _known_nodes_file_urls_impl()
-
-
-def _merge_known_nodes_into_config(config_doc: dict | None) -> dict:
-    return _merge_known_nodes_into_config_impl(config_doc)
-
-
 def _node_alias_map_from_context(config: str | None, node_urls: list[str] | None = None) -> dict[str, str]:
     try:
         config_doc = _host_config(config, node_urls)
@@ -5512,10 +5448,6 @@ def _node_alias_map_from_context(config: str | None, node_urls: list[str] | None
         node_urls,
         default_node=_document_sync_default_node(),
     )
-
-
-def _prompt_node_match(prompt: str, alias_map: dict[str, str]) -> str:
-    return _prompt_node_match_impl(prompt, alias_map)
 
 
 def _utc_now() -> str:
@@ -8440,7 +8372,7 @@ def _probe_node_token(name: str, config: str | None, *, token: str | None = None
     ``name`` — by calling the read-only ``node://<self>/registry/query/installed`` route, which is
     admin-gated. Returns ``{reachable, tokenValid, tokenReason, keyValid, keyAuth}``; no side
     effects beyond a query, the token value is never logged."""
-    url = _node_url_from_config(config, node_urls, name) or (_known_nodes_file_urls() or {}).get(name, "")
+    url = _node_url_from_config(config, node_urls, name) or (_known_nodes_file_urls_impl() or {}).get(name, "")
     if not url:
         return {"reachable": False, "reason": "nieznany URL węzła — najpierw dodaj node"}
     self_name, key_auth = name, False
@@ -8566,7 +8498,7 @@ def _is_document_sync_prompt(prompt: str, selected_nodes: list[str] | None = Non
     wants_node = bool(
         target_nodes
         or _document_sync_default_node()
-        or _prompt_node_match(prompt, alias_map)
+        or _prompt_node_match_impl(prompt, alias_map)
         or re.search(r"(?<![\w.-])node(?![\w.-])", text_value)
     )
     return wants_transfer and wants_documents and wants_node
@@ -8580,7 +8512,7 @@ def _document_sync_node_from_prompt(prompt: str, selected_nodes: list[str],
     target_nodes = _selected_nodes_from_targets([], selected_targets or [])
     if target_nodes:
         return target_nodes[0]
-    matched = _prompt_node_match(prompt, _node_alias_map_from_context(config, node_urls))
+    matched = _prompt_node_match_impl(prompt, _node_alias_map_from_context(config, node_urls))
     if matched:
         return matched
     return _document_sync_default_node()
