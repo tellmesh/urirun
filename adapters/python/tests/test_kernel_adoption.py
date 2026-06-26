@@ -60,6 +60,60 @@ def test_a_new_connector_adopts_all_three_kernels(monkeypatch):
     uinput.configure(screen_size=lambda: (0, 0))
 
 
+# ── surfaces.cdp contract: symbols the KVM connector shim needs from the generic surface ──
+# A migration that removes/renames a symbol here fails BEFORE the connector reaches .201.
+# (Prevents the gen-50 window_close class: cdp._evaluate→cdp.evaluate renamed, caught at gen 50
+# on the live node; these tests catch it in <1s locally.)
+#
+# When you ADD a symbol needed from surfaces.cdp by the KVM connector: add it to _CDP_PUBLIC
+# or _CDP_PRIVATE below.  When you REMOVE one from surfaces.cdp: this block fails first.
+
+_CDP_PUBLIC = (                  # public API the shim re-exports or calls directly
+    "configure",                 # cdp.py: _surface.configure(endpoint=..., env=...)
+    "endpoint",                  # cdp.py re-exports; environment.py: cdp.endpoint()
+    "reachable",                 # re-exports; strategies/core/environment: cdp.reachable()
+    "navigate",                  # re-exports; core.py: cdp.navigate(url)
+    "page_ready",                # re-exports; core.py: cdp.page_ready(timeout=...)
+    "evaluate",                  # re-exports; core.py/_run: cdp.evaluate(expr)
+    "CdpError",                  # re-exports; core.py/_run: except cdp.CdpError
+)
+_CDP_PRIVATE = ("_pages",)       # surface.py: _cdp._pages() — foreground surface detection
+
+
+def test_cdp_surface_public_symbols_exist():
+    from urirun.connectors.surfaces import cdp as surface
+    missing = [s for s in _CDP_PUBLIC if not hasattr(surface, s)]
+    assert missing == [], f"surfaces.cdp missing symbols used by KVM connector: {missing}"
+
+
+def test_cdp_surface_private_symbols_exist():
+    from urirun.connectors.surfaces import cdp as surface
+    missing = [s for s in _CDP_PRIVATE if not hasattr(surface, s)]
+    assert missing == [], f"surfaces.cdp missing private symbols used by KVM connector: {missing}"
+
+
+def test_cdp_surface_configure_accepts_endpoint_and_env():
+    import inspect
+    from urirun.connectors.surfaces import cdp as surface
+    params = inspect.signature(surface.configure).parameters
+    assert "endpoint" in params, "configure() must accept 'endpoint' kwarg (wires kvm endpoint)"
+    assert "env" in params, "configure() must accept 'env' kwarg (wires session_env for Chrome)"
+
+
+def test_cdp_surface_callables_are_callable():
+    from urirun.connectors.surfaces import cdp as surface
+    for name in (*_CDP_PUBLIC[:-1], *_CDP_PRIVATE):  # all except CdpError (a class, not a fn)
+        assert callable(getattr(surface, name)), f"surfaces.cdp.{name} must be callable"
+
+
+def test_cdp_surface_CdpError_is_exception():
+    from urirun.connectors.surfaces import cdp as surface
+    assert issubclass(surface.CdpError, Exception), "CdpError must be an Exception subclass"
+
+
+# ── end surfaces.cdp contract ──────────────────────────────────────────────────────────────
+
+
 def test_injected_platform_gates_a_connectors_backend():
     # a connector registers a wayland-only backend + a cross-platform fallback; the injected
     # platform resolver decides which one dispatch picks — the gating the kernel provides for free.

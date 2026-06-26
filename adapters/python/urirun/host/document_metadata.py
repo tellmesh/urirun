@@ -172,7 +172,7 @@ def _parse_document_date(text: str, fallback: str | None = None) -> str:
     if candidates:
         return min(candidates).isoformat()
     if fallback:
-        match = re.search(r"\b(20\d{2}-\d{2}-\d{2})\b", fallback)
+        match = re.search(r"(20\d{2}-\d{2}-\d{2})(?!\d)", fallback)
         if match:
             return match.group(1)
     return time.strftime("%Y-%m-%d", time.gmtime())

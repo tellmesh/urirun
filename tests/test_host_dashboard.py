@@ -2886,7 +2886,7 @@ def test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate(mo
 
 
 def test_write_document_pdf_orients_image_before_embedding(monkeypatch, tmp_path):
-    import urirun_connector_smart_crop
+    urirun_connector_smart_crop = pytest.importorskip("urirun_connector_smart_crop")
 
     source = tmp_path / "sideways.jpg"
     Image.new("RGB", (120, 60), (245, 244, 235)).save(source)

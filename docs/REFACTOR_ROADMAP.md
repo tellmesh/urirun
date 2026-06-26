@@ -107,6 +107,19 @@ module names cause import mismatch in default `pytest -q`, and socket-opening
 tests fail in the restricted sandbox with `PermissionError: Operation not
 permitted`.
 
+## Landed (2026-06-26): connector_required recovery + CC gate clean + surface contract test
+
+**surfaces.cdp contract test (2026-06-26):** 5 new tests in `test_kernel_adoption.py` guard the
+full symbol set that `urirun-connector-kvm/cdp.py` uses from `urirun.connectors.surfaces.cdp`:
+`configure`(endpoint+env kwargs), `endpoint`, `reachable`, `navigate`, `page_ready`, `evaluate`,
+`CdpError` (public) and `_pages` (private, used by `surface.py`). A migration renaming any of these
+fails in <1s locally — not at gen 50 on `.201` (the `cdp._evaluate→cdp.evaluate` regression class).
+
+**speculative:true in connectorHint (2026-06-26):** `_connector_hint` now marks unknown schemes with
+`speculative:true` so the LLM re-planner and humans know the fallback `urirun-connector-<scheme>`
+package name is a guess, not a known package. Known schemes from `_SCHEME_CONNECTOR_PACKAGES` do NOT
+get the flag. 3 new tests in `ConnectorHintTests`. 556 passed, CC gate OK.
+
 ## Landed (2026-06-26): connector_required structured recovery + CC gate clean
 
 **connector_required enriched (P0):** `_connector_required_response` and `_configured_api_call` now

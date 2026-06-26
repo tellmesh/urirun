@@ -287,5 +287,30 @@ class ConnectorRequiredDiagnosisTests(unittest.TestCase):
         self.assertEqual(d["rule"], "connector-required")
 
 
+class ConnectorHintTests(unittest.TestCase):
+    """connectorHint carries install/deploy info; unknown schemes are marked speculative."""
+
+    def _hint(self, scheme: str) -> dict:
+        from urirun.host.host_dashboard import _connector_hint
+        return _connector_hint(scheme)
+
+    def test_known_scheme_not_speculative(self):
+        h = self._hint("ssh")
+        self.assertEqual(h["package"], "urirun-connector-ssh")
+        self.assertNotIn("speculative", h)
+
+    def test_unknown_scheme_is_speculative(self):
+        h = self._hint("unknownprotocol")
+        self.assertEqual(h["package"], "urirun-connector-unknownprotocol")
+        self.assertTrue(h.get("speculative"))
+
+    def test_hint_has_install_and_deploy_commands(self):
+        h = self._hint("rtsp")
+        self.assertIn("installCommand", h)
+        self.assertIn("deployCommand", h)
+        self.assertIn("pip install", h["installCommand"])
+        self.assertIn("urirun host deploy", h["deployCommand"])
+
+
 if __name__ == "__main__":
     unittest.main()

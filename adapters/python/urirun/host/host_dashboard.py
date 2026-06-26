@@ -9070,8 +9070,9 @@ _SCHEME_CONNECTOR_PACKAGES: dict[str, str] = {
 
 
 def _connector_hint(scheme: str) -> dict:
+    known = scheme in _SCHEME_CONNECTOR_PACKAGES
     package = _SCHEME_CONNECTOR_PACKAGES.get(scheme) or f"urirun-connector-{scheme}"
-    return {
+    hint: dict = {
         "scheme": scheme,
         "package": package,
         "installCommand": f"pip install {package}",
@@ -9079,6 +9080,9 @@ def _connector_hint(scheme: str) -> dict:
         "reason": (f"The {scheme}:// scheme requires a dedicated connector that implements its protocol. "
                    "Install the connector package, deploy it to the node, then the route goes live."),
     }
+    if not known:
+        hint["speculative"] = True
+    return hint
 
 
 def _connector_required_response(scheme: str, node_name: str, safe_api: dict) -> dict:
