@@ -235,6 +235,10 @@ def apply_attachment_visual_fields(item: dict, visual_path: str, visual_preview:
 def public_chat_attachment(attachment: dict, project: str) -> dict:
     """Normalize old chat attachments so the UI never embeds stale /api/file links."""
     item = dict(attachment or {})
+    # Live-widget attachments carry a URI, not a file path — skip file-presence logic
+    # so the renderer can display them via kind check, independent of disk state.
+    if item.get("kind") == "twin-monitor":
+        return item
     path = str(item.get("path") or "")
     file_preview = preview_url(path, project) if path else None
     meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
