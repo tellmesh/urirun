@@ -1,11 +1,20 @@
 # Release readiness — extracted packages
 
-> **Why this exists.** The kernel/connectors extraction split `urirun` into several installable
-> packages, wired into the published `urirun` via `sys.modules` shims. But none of the extracted
-> packages are on PyPI and `urirun` does not pin the unconditional ones — so a fresh
-> `pip install urirun` (and therefore `get.urirun.com/node.sh` / `host.sh`) is **broken** until they
-> are published and declared. Tested 2026-06-26 in clean Ubuntu 24.04 + Fedora containers. This file
-> is the checklist to unblock it. See [[extraction-breaks-fresh-install]] (memory) for the full repro.
+> **STATUS UPDATE (2026-06-26, later).** The published `urirun` is now **self-contained again**:
+> `urirun 0.4.176` on PyPI resolves `import urirun.v2` / `urirun.node.mesh` **without** the separate
+> packages installed (the `urirun.runtime.*` shims fall back to bundled code). Verified clean
+> (no workarounds) in Ubuntu 24.04: `pip install urirun[keyauth]` → `urirun node serve` → healthy
+> node, URI executes. **So the urgent fresh-install breakage is RESOLVED** — it was the transitional
+> `0.4.172` that hard-imported the (unpublished) `urirun_runtime`. The extracted packages are
+> currently **optional/parallel**, not required. `node.sh`/`host.sh` `ensure_runtime` is now a
+> no-op on a self-contained urirun (guards on the real import chain) and only acts on a transitional
+> shimmed build. The plan below stays relevant only IF the team later decides to make `urirun`
+> genuinely depend on the separate packages (slimmer core); it is no longer an emergency.
+
+> **Original context.** The kernel/connectors extraction split `urirun` into several installable
+> packages, wired into the published `urirun` via `sys.modules` shims. None are on PyPI; a
+> transitional `urirun` that hard-imported them (0.4.172) broke a fresh `pip install urirun` (and
+> `get.urirun.com/node.sh` / `host.sh`). See [[extraction-breaks-fresh-install]] (memory) for the repro.
 
 ## The extracted library packages (all build clean, v0.1.0, publish-ready)
 
