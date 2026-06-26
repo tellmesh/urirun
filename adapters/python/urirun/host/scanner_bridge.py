@@ -19,6 +19,68 @@ _PAGE_ACTION_QUEUE_MAX = 50
 _POLL_ITEMS_MAX = 20
 _OCR_PREVIEW_CHARS = 180
 
+SCANNER_BEST_LOCK = threading.Lock()
+SCANNER_BEST_SESSIONS: dict[str, dict] = {}
+SCANNER_LIVE_STREAMS: dict[str, dict] = {}
+
+
+def scanner_live_store_locked(
+    series_id: str,
+    series: dict,
+    *,
+    status: str = "running",
+    error: str | None = None,
+    document: dict | None = None,
+    artifact: dict | None = None,
+) -> None:
+    """Write a live-stream snapshot for ``series_id``. Must be called under SCANNER_BEST_LOCK."""
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    candidates = [item for item in (series.get("candidates") or []) if isinstance(item, dict)]
+    best = series.get("best") if isinstance(series.get("best"), dict) else None
+    SCANNER_LIVE_STREAMS[series_id] = {
+        "seriesId": series_id,
+        "createdAt": series.get("createdAt") or ts,
+        "updatedAt": ts,
+        "status": status,
+        "count": len(candidates),
+        "best": best,
+        "candidates": candidates[-8:],
+        "error": error,
+        "document": document or series.get("document"),
+        "artifact": artifact or series.get("artifact"),
+    }
+    if len(SCANNER_LIVE_STREAMS) > 20:
+        keep = sorted(SCANNER_LIVE_STREAMS.items(), key=lambda item: str(item[1].get("updatedAt") or ""), reverse=True)[:20]
+        SCANNER_LIVE_STREAMS.clear()
+        SCANNER_LIVE_STREAMS.update(dict(keep))
+
+
+def scanner_best_update(series_id: str, candidate: dict) -> dict:
+    ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    with SCANNER_BEST_LOCK:
+        series = SCANNER_BEST_SESSIONS.setdefault(series_id, {"createdAt": ts, "candidates": []})
+        series["updatedAt"] = ts
+        series["candidates"].append(candidate)
+        series["candidates"] = series["candidates"][-24:]
+        best = max(series["candidates"], key=lambda item: float((item.get("quality") or {}).get("score") or 0.0))
+        series["best"] = best
+        scanner_live_store_locked(series_id, series, status="running")
+        return {
+            "seriesId": series_id,
+            "count": len(series["candidates"]),
+            "best": public_scanner_candidate(best),
+        }
+
+
+def scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
+    with SCANNER_BEST_LOCK:
+        series = SCANNER_BEST_SESSIONS.get(series_id)
+        if not series:
+            return None
+        if clear:
+            SCANNER_BEST_SESSIONS.pop(series_id, None)
+        return dict(series)
+
 
 @dataclass(frozen=True)
 class ScannerBridgeDeps:

@@ -105,6 +105,9 @@ from .object_registry import (
 from .scanner_bridge import (
     PAGE_ACTION_LOCK as _SCANNER_PAGE_ACTION_LOCK,
     PAGE_ACTION_QUEUES as _SCANNER_PAGE_ACTION_QUEUES,
+    SCANNER_BEST_LOCK as _SCANNER_BEST_LOCK,
+    SCANNER_BEST_SESSIONS as _SCANNER_BEST_SESSIONS,
+    SCANNER_LIVE_STREAMS as _SCANNER_LIVE_STREAMS,
     ScannerBridgeDeps,
     crop_overlay_attachment as _crop_overlay_attachment_impl,
     page_action_enqueue as _page_action_enqueue_impl,
@@ -121,7 +124,10 @@ from .scanner_bridge import (
     register_scanner_result as _register_scanner_result_impl,
     scanner_artifact_item as _scanner_artifact_item_impl,
     scanner_artifact_doc_meta as _scanner_artifact_doc_meta_impl,
+    scanner_best_take as _scanner_best_take,
+    scanner_best_update as _scanner_best_update,
     scanner_live_state_from_streams as _scanner_live_state_from_streams_impl,
+    scanner_live_store_locked as _scanner_live_store_locked,
     scanner_public_candidate_for_live as _scanner_public_candidate_for_live_impl,
     scanner_status_from_log as _scanner_status_from_log_impl,
     scanner_session as _scanner_session_impl,
@@ -199,9 +205,6 @@ _SERVICE_LOCK = threading.Lock()
 _SERVICE_SERVERS: dict[str, ThreadingHTTPServer] = {}
 _SERVICE_THREADS: dict[str, threading.Thread] = {}
 _DOCUMENT_INDEX_LOCK = threading.Lock()
-_SCANNER_BEST_LOCK = threading.Lock()
-_SCANNER_BEST_SESSIONS: dict[str, dict] = {}
-_SCANNER_LIVE_STREAMS: dict[str, dict] = {}
 _PAGE_ACTION_LOCK = _SCANNER_PAGE_ACTION_LOCK
 _PAGE_ACTION_QUEUES = _SCANNER_PAGE_ACTION_QUEUES
 
@@ -7113,35 +7116,6 @@ def _public_scanner_candidate(candidate: dict) -> dict:
     return _public_scanner_candidate_impl(candidate)
 
 
-def _scanner_live_store_locked(
-    series_id: str,
-    series: dict,
-    *,
-    status: str = "running",
-    error: str | None = None,
-    document: dict | None = None,
-    artifact: dict | None = None,
-) -> None:
-    candidates = [item for item in (series.get("candidates") or []) if isinstance(item, dict)]
-    best = series.get("best") if isinstance(series.get("best"), dict) else None
-    _SCANNER_LIVE_STREAMS[series_id] = {
-        "seriesId": series_id,
-        "createdAt": series.get("createdAt") or _utc_now(),
-        "updatedAt": _utc_now(),
-        "status": status,
-        "count": len(candidates),
-        "best": best,
-        "candidates": candidates[-8:],
-        "error": error,
-        "document": document or series.get("document"),
-        "artifact": artifact or series.get("artifact"),
-    }
-    if len(_SCANNER_LIVE_STREAMS) > 20:
-        keep = sorted(_SCANNER_LIVE_STREAMS.items(), key=lambda item: str(item[1].get("updatedAt") or ""), reverse=True)[:20]
-        _SCANNER_LIVE_STREAMS.clear()
-        _SCANNER_LIVE_STREAMS.update(dict(keep))
-
-
 def _scanner_public_candidate_for_live(candidate: dict | None, project: str) -> dict | None:
     return _scanner_public_candidate_for_live_impl(candidate, project, preview_url=_preview_url)
 
@@ -7227,32 +7201,6 @@ def service_live_views(project: str, db: str | None = None, limit: int = 8) -> d
         camera_status,
         utc_now=_utc_now,
     )
-
-
-def _scanner_best_update(series_id: str, candidate: dict) -> dict:
-    with _SCANNER_BEST_LOCK:
-        series = _SCANNER_BEST_SESSIONS.setdefault(series_id, {"createdAt": _utc_now(), "candidates": []})
-        series["updatedAt"] = _utc_now()
-        series["candidates"].append(candidate)
-        series["candidates"] = series["candidates"][-24:]
-        best = max(series["candidates"], key=lambda item: float((item.get("quality") or {}).get("score") or 0.0))
-        series["best"] = best
-        _scanner_live_store_locked(series_id, series, status="running")
-        return {
-            "seriesId": series_id,
-            "count": len(series["candidates"]),
-            "best": _public_scanner_candidate(best),
-        }
-
-
-def _scanner_best_take(series_id: str, *, clear: bool = True) -> dict | None:
-    with _SCANNER_BEST_LOCK:
-        series = _SCANNER_BEST_SESSIONS.get(series_id)
-        if not series:
-            return None
-        if clear:
-            _SCANNER_BEST_SESSIONS.pop(series_id, None)
-        return dict(series)
 
 
 def _scanner_bridge_deps() -> ScannerBridgeDeps:
@@ -11233,6 +11181,16 @@ def _api_nodes_or_routes(path: str, config: str | None, node_urls: list[str] | N
     return 200, {"ok": True, key: discovered.get(key) or []}
 
 
+def _api_twin_flows(project: str, db: str | None, config: str | None, query: dict,
+                    node_urls: list[str] | None = None) -> tuple[int, dict]:
+    """Return known-good flow records from the durable TwinMemory store, newest-first."""
+    from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
+    mem = _durable_memory()
+    flows = mem.known_good_flows()
+    limit = int((query.get("limit") or [20])[0])
+    return 200, {"ok": True, "flows": flows[:limit], "total": len(flows)}
+
+
 _API_ROUTES = {
     "/api/summary": _api_summary,
     "/api/objects": _api_objects,
@@ -11244,6 +11202,7 @@ _API_ROUTES = {
     "/api/chat/history": _api_chat_history,
     "/api/services/live": _api_services_live,
     "/api/scanner/live": _api_scanner_live,
+    "/api/twin/flows": _api_twin_flows,
 }
 
 
