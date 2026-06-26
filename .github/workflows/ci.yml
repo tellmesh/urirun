@@ -24,6 +24,12 @@ jobs:
         run: |
           python -m pip install radon
           make complexity
+      - name: Extraction boundary gate (core-creep guard)
+        run: |
+          python scripts/extraction_audit.py --selftest
+          PYTHONPATH=adapters/python python -m pytest -q \
+            adapters/python/tests/test_scanner_extractable.py \
+            adapters/python/tests/test_runtime_extractable.py
       - run: make test
       - name: Verify urirun[grpc] optional extra
         run: |

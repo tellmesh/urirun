@@ -329,19 +329,67 @@ def _results_degraded(results: dict) -> tuple[bool, str | None]:
     return False, None
 
 
-def _enrich_remember_with_degraded(payload: dict, results: dict) -> dict:
-    """Stamp a remember step's ``record`` with the run's degraded outcome before dispatch.
+def _capture_proofs_from_results(results: dict) -> list[dict]:
+    """Extract evidence proofs from successful capture step results.
 
-    The thin driver is the only place that holds the accumulated step results, while the memory
-    handler only sees the payload — so the enrichment happens here. A clean run is left untouched
-    (no ``degraded`` key), so ``remember_flow`` records it as known-good as before."""
+    Returns a list of ``{kind, step, path, bytes, format}`` dicts, one per captured
+    screenshot. Written to ``proof_store`` by the remember handler so that
+    ``/api/twin/state proofs[]`` is non-empty after a successful capture flow."""
+    proofs: list[dict] = []
+    for sid, r in (results or {}).items():
+        if not isinstance(r, dict) or not r.get("ok"):
+            continue
+        # Unwrap thin-driver envelope: result.value or the dict itself.
+        inner = r
+        res = r.get("result")
+        if isinstance(res, dict):
+            inner = res.get("value") if isinstance(res.get("value"), dict) else res
+        if not isinstance(inner, dict):
+            continue
+        if inner.get("action") != "capture":
+            continue
+        path = inner.get("path") or ""
+        bts = inner.get("bytes") or 0
+        if not path or not bts:
+            continue
+        proofs.append({
+            "kind": "file",
+            "step": sid,
+            "path": path,
+            "bytes": bts,
+            "format": inner.get("format") or "png",
+            "via": inner.get("via") or "",
+        })
+    return proofs
+
+
+def _enrich_remember_with_degraded(payload: dict, results: dict,
+                                    timeline: list | None = None) -> dict:
+    """Stamp a remember step's ``record`` with the run's degraded outcome, execution
+    timeline, and capture proofs before dispatch.
+
+    The thin driver is the only place that holds the accumulated step results and
+    timeline, while the memory handler only sees the payload — so the enrichment
+    happens here. ``timeline`` (when provided) is stored in the record so
+    ``/api/twin/state flows[].timeline`` can serve ``reversible``/``inverse`` fields."""
     degraded, reason = _results_degraded(results)
-    if not degraded:
-        return payload
     out = dict(payload)
     rec = dict(out.get("record") or {})
-    rec["degraded"] = True
-    rec["degradedReason"] = reason
+    if degraded:
+        rec["degraded"] = True
+        rec["degradedReason"] = reason
+    if timeline is not None:
+        # Filter to user-facing steps only (exclude internal drift/preflight/remember steps).
+        user_timeline = [
+            e for e in timeline
+            if not any(e.get("uri", "").endswith(s)
+                       for s in ("/env/query/drift", "/memory/command/remember",
+                                 "/flow/command/preflight"))
+        ]
+        rec["timeline"] = user_timeline
+    proofs = _capture_proofs_from_results(results)
+    if proofs:
+        rec["captureProofs"] = proofs
     out["record"] = rec
     return out
 
@@ -381,10 +429,10 @@ def _thin_driver(
         sid = step.get("id") or uri
         payload = resolve_step_payload(step.get("payload") or {}, results)
         if "/memory/command/remember" in uri:
-            # The remember step runs last; stamp it with the run's degraded outcome so the
-            # memory handler keeps a degraded run out of the known-good store (the handler
-            # only sees the payload, not the accumulated results).
-            payload = _enrich_remember_with_degraded(payload, results)
+            # The remember step runs last; stamp it with the run's degraded outcome and
+            # execution timeline so the memory handler can store both without access to the
+            # driver's internal state (the handler only sees the payload).
+            payload = _enrich_remember_with_degraded(payload, results, timeline=timeline)
         envelope.record(uri, "call")
 
         r = dispatch_uri(uri, payload)
@@ -421,7 +469,10 @@ def _thin_driver(
             if should_break:
                 break
 
-    rb = _thin_goal_verify(dispatch_uri, envelope, timeline, results)
+    # Dry-run (execute=False) never ACHIEVES the goal, so goal verification can only
+    # fail — skip it. Otherwise a preview of a valid plan reports goal-failed the moment
+    # the twin verify route becomes resolvable in-process (e.g. connector-twin installed).
+    rb = _thin_goal_verify(dispatch_uri, envelope, timeline, results) if execute else None
     if rb is not None:
         return rb
     _deg, _deg_reason = _results_degraded(results)

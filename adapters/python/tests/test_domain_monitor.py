@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from urirun import domain_monitor, host_db, planfile_adapter, v2
+from urirun.host import host_integrations
 
 
 PLANFILE_AVAILABLE = importlib.util.find_spec("planfile") is not None
@@ -101,7 +102,7 @@ class DomainMonitorTests(unittest.TestCase):
     def test_v2_domain_monitor_bindings(self):
         with tempfile.TemporaryDirectory() as tmp, local_http(200) as url:
             db = str(Path(tmp) / "host.db")
-            registry = v2.compile_registry(v2.domain_monitor_bindings(db=db, project=tmp, screenshot_dir=str(Path(tmp) / "shots")))
+            registry = v2.compile_registry(host_integrations.domain_monitor_bindings(db=db, project=tmp, screenshot_dir=str(Path(tmp) / "shots")))
 
             http = v2.run(
                 "monitor://localhost/http/query/status",
@@ -125,7 +126,7 @@ class DomainMonitorTests(unittest.TestCase):
     def test_v2_domain_monitor_mismatch_sets_failed_envelope_and_review_ticket(self):
         with tempfile.TemporaryDirectory() as tmp, local_http(200) as url:
             db = str(Path(tmp) / "host.db")
-            registry = v2.compile_registry(v2.domain_monitor_bindings(db=db, project=tmp, screenshot_dir=str(Path(tmp) / "shots")))
+            registry = v2.compile_registry(host_integrations.domain_monitor_bindings(db=db, project=tmp, screenshot_dir=str(Path(tmp) / "shots")))
             flow = v2.run(
                 "flow://host/domain/command/check",
                 registry,

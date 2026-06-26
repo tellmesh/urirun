@@ -379,13 +379,25 @@ def search(query: str, store: str | None = None) -> list[dict]:
     return out
 
 
+_ticket_creator = None
+
+
+def register_ticket_creator(fn) -> None:
+    """Register the callable that turns an error payload into a planfile ticket.
+
+    Called by the host layer (planfile_adapter) at import time — inverts the
+    dependency so errors.py never imports host code."""
+    global _ticket_creator
+    _ticket_creator = fn
+
+
 def to_ticket(code: str, project: str | None = None, store: str | None = None) -> dict:
     """Turn a recorded error into a planfile ticket."""
+    if _ticket_creator is None:
+        return {"ok": False, "code": code, "error": "ticket creation unavailable (no host integration registered)"}
     detail = info(code, store=store)
     if not detail.get("found"):
         return {"ok": False, "code": code, "error": "unknown error code"}
-    from urirun.host import planfile_adapter
-
     payload: dict[str, Any] = {
         "name": f"[{code}] {detail.get('category')}: {(detail.get('message') or '')[:80]}",
         "description": (
@@ -402,7 +414,7 @@ def to_ticket(code: str, project: str | None = None, store: str | None = None) -
         "priority": "high" if detail["count"] >= 5 or detail.get("severity") in ("critical", "alert", "emergency") else "medium",
         "source": "error://",
     }
-    ticket = planfile_adapter.create_ticket(project, payload)
+    ticket = _ticket_creator(project, payload)
     return {"ok": True, "code": code, "ticket": ticket}
 
 

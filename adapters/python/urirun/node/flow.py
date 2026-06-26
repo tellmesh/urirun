@@ -169,19 +169,22 @@ def _flow_step_failure(step: dict, exc: BaseException, routes: list[dict], envir
 def _flow_timeline_entry(step: dict, env: dict, routes: list[dict], *, attempt: int = 0,
                          environment: dict | None = None) -> dict:
     ok = _action_ok(env)
+    uri = step["uri"]
     entry = {
         "id": step["id"],
-        "uri": step["uri"],
-        "target": route_target(step["uri"]),
+        "uri": uri,
+        "target": route_target(uri),
         "ok": ok,
     }
     if attempt:
         entry["attempt"] = attempt + 1
     if not ok:
         raw = env.get("error") or _action_error(env)
-        error = exception_error(Exception("unknown URI error"), uri=step["uri"]) if not raw else normalize_error(raw, uri=step["uri"])
+        error = exception_error(Exception("unknown URI error"), uri=uri) if not raw else normalize_error(raw, uri=uri)
         entry["error"] = error
         entry["recovery"] = recovery_plan(error, step=step, routes=routes, environment=environment)
+    # Read-only steps (/query/) are trivially reversible; command steps without an explicit inverse are not.
+    entry["reversible"] = "/query/" in uri
     return entry
 
 
@@ -655,6 +658,11 @@ def _make_memory_dispatch(base_dispatch, memory: TwinMemory, flow: dict, registr
             record["flowKey"] = flow_key
             memory.remember_flow(flow_key, record)  # degraded records go to degraded_store, not known-good
             degraded = bool(record.get("degraded"))
+            # Write capture proofs to proof_store so /api/twin/state proofs[] is non-empty.
+            for cp in (record.get("captureProofs") or []):
+                pkey = f"proof:{flow_key}:{cp.get('step', '')}:captured"
+                if hasattr(memory, "remember_proof"):
+                    memory.remember_proof(pkey, {"verdict": True, "flowKey": flow_key, **cp})
             return {"ok": True, "remembered": not degraded, "degraded": degraded,
                     "degradedReason": record.get("degradedReason"), "flowKey": flow_key}
 
@@ -668,14 +676,17 @@ _THIN_REMEMBER_URI = "twin://host/memory/command/remember"
 
 
 def _plan_with_preflight(steps: list[dict], *, execute: bool) -> list[dict]:
-    """Prepend a twin://host/flow/command/preflight step when the plan has CDP steps."""
+    """Prepend a twin://host/flow/command/preflight step when the plan has CDP steps.
+
+    Preflight is ``optional`` — a NOT_FOUND or provisioning failure degrades gracefully;
+    the reactive self-heal backstop in the driver handles CDP failures step-by-step."""
     if not execute:
         return steps
     has_cdp = any("/cdp/page/" in str(s.get("uri") or "") for s in steps)
     if not has_cdp:
         return steps
     return [{"id": "preflight", "uri": _THIN_PREFLIGHT_URI,
-             "payload": {"steps": steps}, "depends_on": []}, *steps]
+             "payload": {"steps": steps}, "depends_on": [], "optional": True}, *steps]
 
 
 def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
@@ -847,8 +858,9 @@ def _in_process_discovery(uri: str, payload: dict | None = None) -> "dict | None
         val = (env.get("result") or {}).get("value") if isinstance(env.get("result"), dict) else None
         return {"ok": bool(env.get("ok")), "result": val,
                 "error": (env.get("error") or {}).get("message") if not env.get("ok") else None}
-    except Exception:  # noqa: BLE001
-        return None
+    except Exception as _exc:  # noqa: BLE001
+        return {"ok": False, "invokedUri": uri,
+                "error": {"message": str(_exc), "category": "INPROCESS_ERROR"}}
 
 
 def make_dispatch_uri(registry: dict, mode: str = "execute"):

@@ -53,13 +53,13 @@ raise SystemExit(1 if loaded else 0)
 import json
 import sys
 
-from urirun import v2
+from urirun.host import host_integrations
 
-v2.planfile_task_bindings()
-v2.host_data_bindings()
-v2.domain_monitor_bindings()
+host_integrations.planfile_task_bindings()
+host_integrations.host_data_bindings()
+host_integrations.domain_monitor_bindings()
 
-required = ["urirun.host_integrations"]
+# These heavy modules must NOT be loaded by calling the binding generators.
 forbidden = [
     "urirun.compat",
     "urirun.domain_monitor",
@@ -67,10 +67,9 @@ forbidden = [
     "urirun.planfile_adapter",
     "urirun.task_planner",
 ]
-missing = [name for name in required if name not in sys.modules]
 loaded = [name for name in forbidden if name in sys.modules]
-print(json.dumps({"missing": missing, "loaded": loaded}, sort_keys=True))
-raise SystemExit(1 if missing or loaded else 0)
+print(json.dumps({"loaded": loaded}, sort_keys=True))
+raise SystemExit(1 if loaded else 0)
 """
         env = dict(os.environ)
         previous = env.get("PYTHONPATH")

@@ -60,6 +60,19 @@ PRESETS: dict[str, dict] = {
         # The kernel must not import UP into node/host — empty allow-set proves it.
         "allow_outward": (),
     },
+    "C": {
+        "name": "domain-monitor",
+        "package": {"urirun.host.domain_monitor"},
+        "package_prefixes": (),
+        "allow_outward": ("urirun.host.host_db", "urirun.runtime.", "urirun.node.",
+                          "urirun.connectors."),
+    },
+    "D": {
+        "name": "cdp-surface",
+        "package": {"urirun.connectors.surfaces.cdp"},
+        "package_prefixes": (),
+        "allow_outward": ("urirun.runtime.", "urirun.node."),
+    },
 }
 
 

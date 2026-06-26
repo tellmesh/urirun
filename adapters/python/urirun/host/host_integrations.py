@@ -354,3 +354,17 @@ def run_domain_monitor(ctx: dict, policy: dict, execute: bool) -> dict:
     if isinstance(result.get("ok"), bool):
         result.setdefault("exitCode", 0 if result["ok"] else 1)
     return result
+
+
+def _register_executors() -> None:
+    """Register host-layer executors into the v2 runtime executor table.
+
+    Called once at module import so the kernel (v2.py) never needs to import
+    this module — the dependency arrow points inward (host → runtime), not outward."""
+    from urirun.runtime import v2
+    v2.register_executor("planfile-task", run_planfile_task)
+    v2.register_executor("host-sqlite-data", run_host_data)
+    v2.register_executor("domain-monitor", run_domain_monitor)
+
+
+_register_executors()

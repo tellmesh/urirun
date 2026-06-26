@@ -32,7 +32,6 @@ import urllib.request
 from jsonschema import exceptions as jsonschema_exceptions
 
 from urirun.runtime import _registry as reglib, v2
-from urirun.node import keyauth
 
 DEFAULT_PORT = 8080
 
@@ -56,6 +55,7 @@ def _post(url: str, body: dict, timeout: float):
     identity = os.getenv("URIRUN_RUN_IDENTITY")
     token = os.getenv("URIRUN_RUN_TOKEN")
     if identity:
+        from urirun.node import keyauth  # noqa: PLC0415 — lazy: only when URIRUN_RUN_IDENTITY is set
         headers.update(keyauth.sign(os.path.expanduser(identity), keyauth.PURPOSE_RUN, data))
     elif token:
         headers["X-Urirun-Token"] = token

@@ -56,7 +56,8 @@ from urirun.node.transport import (
 
 
 def _data_bindings(args: argparse.Namespace, host_db: Any) -> None:
-    doc = v2.host_data_bindings(target=args.target, db=args.db)
+    from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
+    doc = _hi.host_data_bindings(target=args.target, db=args.db)
     reglib._emit_json(doc, args.out)
     if args.registry_out:
         reglib.write_json(args.registry_out, v2.compile_registry(doc))
@@ -144,7 +145,8 @@ def monitor_command(args: argparse.Namespace) -> int:
     from urirun import domain_monitor
 
     if args.monitor_command == "bindings":
-        doc = v2.domain_monitor_bindings(
+        from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
+        doc = _hi.domain_monitor_bindings(
             target=args.target,
             db=args.db,
             project=args.project,

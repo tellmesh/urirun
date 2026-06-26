@@ -631,47 +631,16 @@ def run_error_store(ctx: dict, policy: dict, execute: bool) -> dict:
     return handler(payload, args, code, _first_payload_value(payload, "store"), execute)
 
 
-def _host_integrations():
-    from urirun import host_integrations
-
-    return host_integrations
+_EXTRA_EXECUTORS: dict = {}
 
 
-def planfile_task_bindings(target: str = "host", project: str | None = None) -> dict:
-    """Return URI bindings for planfile-backed host tasks."""
-    return _host_integrations().planfile_task_bindings(target=target, project=project)
+def register_executor(name: str, fn) -> None:
+    """Register a host-layer executor so the runtime can call it without importing host code.
 
-
-def run_planfile_task(ctx: dict, policy: dict, execute: bool) -> dict:
-    return _host_integrations().run_planfile_task(ctx, policy, execute)
-
-
-def host_data_bindings(target: str = "host", db: str | None = None) -> dict:
-    """Return URI bindings for the host SQLite context store."""
-    return _host_integrations().host_data_bindings(target=target, db=db)
-
-
-def run_host_data(ctx: dict, policy: dict, execute: bool) -> dict:
-    return _host_integrations().run_host_data(ctx, policy, execute)
-
-
-def domain_monitor_bindings(
-    target: str = "host",
-    db: str | None = None,
-    project: str | None = None,
-    screenshot_dir: str | None = None,
-) -> dict:
-    """Return URI bindings for HTTP/DNS/domain monitoring flows."""
-    return _host_integrations().domain_monitor_bindings(
-        target=target,
-        db=db,
-        project=project,
-        screenshot_dir=screenshot_dir,
-    )
-
-
-def run_domain_monitor(ctx: dict, policy: dict, execute: bool) -> dict:
-    return _host_integrations().run_domain_monitor(ctx, policy, execute)
+    Called by upper-layer modules (e.g. host_integrations) at import time to wire
+    adapters like ``planfile-task``, ``host-sqlite-data``, ``domain-monitor`` into
+    the executor table without creating an upward dependency from the kernel."""
+    _EXTRA_EXECUTORS[name] = fn
 
 
 def run_local_function_subprocess(ctx: dict, policy: dict, execute: bool) -> dict:
@@ -753,18 +722,32 @@ if not hasattr(v1, "EXECUTORS"):  # import-environment guard, not a logic error
         "directory, or put '<repo>/urirun/adapters/python' first on PYTHONPATH."
     )
 
-EXECUTORS = {
+_BASE_EXECUTORS = {
     **v1.EXECUTORS,
     "argv-template": run_argv_template,
     "command": run_argv_template,
-    "domain-monitor": run_domain_monitor,
     "error-store": run_error_store,
-    "host-sqlite-data": run_host_data,
     "local-function-subprocess": run_local_function_subprocess,
-    "planfile-task": run_planfile_task,
     "registry-introspect": run_registry_introspect,
     "shell-template": run_shell_template,
 }
+
+
+class _ExecutorProxy(dict):
+    """EXECUTORS dict that includes host-registered executors at lookup time.
+
+    Upper-layer modules call ``v2.register_executor()`` to wire their adapters
+    (planfile-task, host-sqlite-data, domain-monitor) after importing this module —
+    no upward import from the kernel."""
+
+    def get(self, key, default=None):
+        return _EXTRA_EXECUTORS.get(key) or _BASE_EXECUTORS.get(key, default)
+
+    def __contains__(self, key):
+        return key in _EXTRA_EXECUTORS or key in _BASE_EXECUTORS
+
+
+EXECUTORS = _ExecutorProxy(_BASE_EXECUTORS)
 
 
 def _builtin_error_route_entry(translation: dict) -> dict | None:

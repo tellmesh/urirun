@@ -124,7 +124,7 @@ def capture_screenshot_artifact(
     reason: str = "failure",
     meta: dict | None = None,
 ) -> dict:
-    from urirun import host_db
+    from urirun.host import host_db
 
     timestamp = now_id()
     directory = Path(out_dir or "~/.urirun/artifacts/screenshots").expanduser()
@@ -144,7 +144,7 @@ def create_dns_repair_ticket(
     expected: dict,
     mismatches: list[dict],
 ) -> dict:
-    from urirun import planfile_adapter
+    from urirun.host import planfile_adapter
 
     prompt = (
         f"Review DNS mismatch for {domain}. "
@@ -261,7 +261,7 @@ def _persist_check_effects(
     create_repair_ticket,
 ) -> None:
     """Record the check, screenshots, repair tickets and log line (execute side)."""
-    from urirun import host_db
+    from urirun.host import host_db
 
     result["check"] = host_db.add_check(
         db,
@@ -303,7 +303,7 @@ def run_daily(
     screenshot_when: str = "failure",
     screenshot_dir: str | None = None,
 ) -> dict:
-    from urirun import host_db
+    from urirun.host import host_db
 
     try:
         records = host_db.search_records(db, "", dataset=dataset, limit=limit)
@@ -395,7 +395,7 @@ def _route_browser(rc: "_RouteCtx") -> dict | None:
 
 
 def _route_log(rc: "_RouteCtx") -> dict | None:
-    from urirun import host_db
+    from urirun.host import host_db
 
     if rc.package == "log" and rc.operation == "command" and rc.action == "write":
         if not rc.execute:

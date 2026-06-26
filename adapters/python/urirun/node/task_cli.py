@@ -52,8 +52,9 @@ def _host_local_registry(args: argparse.Namespace) -> dict:
     base = Path(args.project or ".") / ".urirun"
     db = getattr(args, "db", None) or str(base / "host.db")
     screenshot_dir = getattr(args, "screenshot_dir", None) or str(base / "screenshots")
-    planfile_doc = v2.planfile_task_bindings(target="host", project=args.project)
-    monitor_doc = v2.domain_monitor_bindings(target="host", db=db, project=args.project, screenshot_dir=screenshot_dir)
+    from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
+    planfile_doc = _hi.planfile_task_bindings(target="host", project=args.project)
+    monitor_doc = _hi.domain_monitor_bindings(target="host", db=db, project=args.project, screenshot_dir=screenshot_dir)
     merged = {
         "version": planfile_doc.get("version"),
         "bindings": {**planfile_doc.get("bindings", {}), **monitor_doc.get("bindings", {})},
@@ -165,7 +166,8 @@ def _task_plan(args, pa) -> int:
 def _task_bindings(args, pa) -> int:
     from urirun import v2
 
-    doc = v2.planfile_task_bindings(target=args.target, project=args.project)
+    from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
+    doc = _hi.planfile_task_bindings(target=args.target, project=args.project)
     reglib._emit_json(doc, args.out)
     if args.registry_out:
         reglib.write_json(args.registry_out, v2.compile_registry(doc))

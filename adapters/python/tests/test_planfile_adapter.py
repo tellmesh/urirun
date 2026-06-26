@@ -11,6 +11,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from urirun import mesh, planfile_adapter, task_planner, v2
+from urirun.host import host_integrations
 from urirun.node import task_cli
 
 
@@ -122,7 +123,7 @@ class PlanfileAdapterTests(unittest.TestCase):
 
     def test_v2_task_uri_bindings_create_and_list_ticket(self):
         with tempfile.TemporaryDirectory() as tmp:
-            registry = v2.compile_registry(v2.planfile_task_bindings(project=tmp))
+            registry = v2.compile_registry(host_integrations.planfile_task_bindings(project=tmp))
 
             # dry-run create returns a plan and must NOT mutate the store.
             simulated = v2.run(
@@ -156,7 +157,7 @@ class PlanfileAdapterTests(unittest.TestCase):
 
     def test_v2_task_uri_complete_and_fail_record_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
-            registry = v2.compile_registry(v2.planfile_task_bindings(project=tmp))
+            registry = v2.compile_registry(host_integrations.planfile_task_bindings(project=tmp))
 
             def run(uri, payload, mode="execute"):
                 result = v2.run(uri, registry, payload, mode=mode)
@@ -183,7 +184,7 @@ class PlanfileAdapterTests(unittest.TestCase):
 
     def test_v2_task_uri_rejects_invalid_payload(self):
         with tempfile.TemporaryDirectory() as tmp:
-            registry = v2.compile_registry(v2.planfile_task_bindings(project=tmp))
+            registry = v2.compile_registry(host_integrations.planfile_task_bindings(project=tmp))
             result = v2.run(
                 "task://host/ticket/command/create",
                 registry,

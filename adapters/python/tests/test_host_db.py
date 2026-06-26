@@ -8,6 +8,7 @@ from pathlib import Path
 from jsonschema.exceptions import ValidationError
 
 from urirun import host_db, v2
+from urirun.host import host_integrations
 
 
 class HostDbTests(unittest.TestCase):
@@ -42,7 +43,7 @@ class HostDbTests(unittest.TestCase):
     def test_v2_data_uri_bindings(self):
         with tempfile.TemporaryDirectory() as tmp:
             db = str(Path(tmp) / "host.db")
-            registry = v2.compile_registry(v2.host_data_bindings(db=db))
+            registry = v2.compile_registry(host_integrations.host_data_bindings(db=db))
 
             dataset = v2.run(
                 "data://host/dataset/command/create",

@@ -279,3 +279,12 @@ def loads_json(value: str | None, default=None):
     if value is None:
         return default
     return json.loads(value)
+
+
+def _register_ticket_creator() -> None:
+    """Register create_ticket into the errors module — inverts the dependency arrow."""
+    from urirun.runtime import errors
+    errors.register_ticket_creator(create_ticket)
+
+
+_register_ticket_creator()
