@@ -2948,12 +2948,104 @@ INDEX_HTML = r"""<!doctype html>
         : (Array.isArray(detail.attachments) ? detail.attachments : []);
       const hasPdf = rows.some(isPdfAttachment);
       return rows.filter((att) => {
+        if (att.kind === 'twin-plan') return true;
         if (att.kind === 'twin-monitor') return true;
         if (isPdfAttachment(att)) return true;
         if (hasPdf && isScannerFrameAttachment(att)) return false;
         if (isScannerFrameAttachment(att) && !(document.ok && document.path)) return false;
         return true;
       });
+    }
+
+    function renderTwinPlanCard(att) {
+      const plan = att.plan || {};
+      const env = att.environment || {};
+      const mock = att.mock;
+      const sel = plan.browserSelection || {};
+      const steps = (plan.steps || []);
+      const constraints = (env.constraints || []);
+      const domain = att.domain || '';
+      const taskType = att.taskType || 'task';
+      const needsAuth = att.needsAuth;
+
+      // ── session selection badge ──────────────────────────────────────────────
+      const selMode = sel.mode || '';
+      const selBadge = selMode === 'attach'
+        ? `<span class="pill up" title="${esc(sel.reason||'')}">CDP attach :${esc(String(sel.port||''))}${sel.authCookie ? ' 🔑' : ''}</span>`
+        : selMode === 'needs-login'
+        ? `<span class="pill warn" title="${esc(sel.reason||'')}">⚠ login required (human-gated)</span>`
+        : selMode === 'no-chrome'
+        ? `<span class="pill down">no CDP Chrome found</span>`
+        : '';
+
+      // ── steps table ─────────────────────────────────────────────────────────
+      const stepRows = steps.map(s => {
+        const feasMark = s.feasible ? '✓' : '✗';
+        const feasCls = s.feasible ? 'color:var(--ok)' : 'color:var(--err)';
+        const revMark = s.reversible ? '↩' : '—';
+        const surf = s.surface || '';
+        const uri = (s.uri || '').replace(/^kvm:\/\/[^/]+\//, '');
+        const fixHint = !s.feasible && s.fix ? ` → fix: ${s.fix}` : '';
+        return `<tr>
+          <td style="padding:2px 6px;color:var(--subtle)">${s.step}</td>
+          <td style="padding:2px 6px;font-family:monospace;font-size:0.82em">${esc(uri)}</td>
+          <td style="padding:2px 6px;font-size:0.8em">${esc(surf)}</td>
+          <td style="padding:2px 6px;${feasCls}">${feasMark}${esc(fixHint)}</td>
+          <td style="padding:2px 6px;color:var(--subtle)">${revMark}</td>
+        </tr>`;
+      }).join('');
+
+      const stepsHtml = steps.length ? `
+        <table style="width:100%;border-collapse:collapse;margin:4px 0">
+          <thead><tr style="font-size:0.78em;color:var(--subtle)">
+            <th style="padding:2px 6px;text-align:left">#</th>
+            <th style="padding:2px 6px;text-align:left">URI</th>
+            <th style="padding:2px 6px;text-align:left">surface</th>
+            <th style="padding:2px 6px;text-align:left">feasible</th>
+            <th style="padding:2px 6px;text-align:left">rev</th>
+          </tr></thead>
+          <tbody>${stepRows}</tbody>
+        </table>` : '<div class="subtle" style="font-size:0.82em">no steps derived</div>';
+
+      // ── Docker mock section ──────────────────────────────────────────────────
+      const mockHtml = mock ? `
+        <details style="margin-top:6px">
+          <summary style="cursor:pointer;font-size:0.82em;color:var(--subtle)">
+            Docker mock: ${esc(mock.service || '')} (port ${mock.port || ''})
+          </summary>
+          <pre style="margin:4px 0;font-size:0.78em;overflow-x:auto;background:var(--bg2);padding:6px;border-radius:3px">${esc(mock.dockerCompose || '')}</pre>
+          <div style="font-size:0.8em;margin-top:2px">
+            <code>${esc(mock.startCmd || '')}</code><br>
+            <code style="color:var(--subtle)">${esc(mock.stopCmd || '')}</code>
+          </div>
+          ${(mock.notes||[]).map(n=>`<div class="subtle" style="font-size:0.78em">• ${esc(n)}</div>`).join('')}
+        </details>` : '';
+
+      // ── constraints summary ──────────────────────────────────────────────────
+      const constraintsHtml = constraints.length ? constraints.map(c =>
+        `<div style="font-size:0.8em;color:var(--warn,#f59e0b)">⚠ ${esc(c.what||'')} — ${esc(c.reason||'')}${c.fix ? ` → ${esc(c.fix)}` : ''}</div>`
+      ).join('') : '';
+
+      const domainTag = domain ? `<span class="pill" style="font-size:0.78em">${esc(domain)}</span>` : '';
+      const authTag = needsAuth ? `<span class="pill" style="font-size:0.78em;background:var(--warn,#f59e0b20)">auth required</span>` : '';
+      const humanGated = plan.humanGated ? `<div style="color:var(--warn,#f59e0b);font-size:0.82em;margin:4px 0">⚠ human-gated: ${esc(plan.guidance||plan.blockedBy||'')}</div>` : '';
+
+      return `<div class="attachment" style="border:1px solid var(--border-color);border-radius:4px;padding:8px 10px;width:100%;box-sizing:border-box">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          <span style="font-weight:600;font-size:0.88em">🤖 Digital Twin Plan</span>
+          ${domainTag}${authTag}
+          <span class="subtle" style="font-size:0.78em;margin-left:auto">${esc(taskType)}</span>
+        </div>
+        ${selBadge ? `<div style="margin-bottom:4px">${selBadge}</div>` : ''}
+        ${humanGated}
+        ${constraintsHtml}
+        <div style="margin:4px 0">
+          <span style="font-size:0.8em;color:var(--subtle)">${plan.totalSteps||0} steps · ${plan.feasibleSteps||0} feasible · ${plan.infeasibleSteps||0} blocked · ${plan.irreversibleSteps||0} irreversible</span>
+        </div>
+        ${stepsHtml}
+        ${mockHtml}
+        <details style="margin-top:4px"><summary style="font-size:0.75em;color:var(--subtle);cursor:pointer">raw data</summary><pre style="font-size:0.72em;overflow-x:auto">${esc(JSON.stringify(att, null, 2))}</pre></details>
+      </div>`;
     }
 
     function renderAttachment(att) {
@@ -7165,10 +7257,6 @@ def scanner_best_finish(project: str, db: str | None, payload: dict) -> dict:
 
 
 
-def uri_event(db: str | None, query: dict[str, list[str]]) -> dict:
-    return _uri_event_impl(_scanner_bridge_deps(), db, query)
-
-
 def page_action_enqueue(
     db: str | None,
     *,
@@ -7189,14 +7277,6 @@ def page_action_enqueue(
         uri_mode=_uri_mode,
         utc_now=_utc_now,
     )
-
-
-def page_action_poll(target: str = "scanner", limit: int = 4) -> dict:
-    return _page_action_poll_impl(target, limit)
-
-
-def page_action_result(db: str | None, payload: dict) -> dict:
-    return _page_action_result_impl(_scanner_bridge_deps(), db, payload, utc_now=_utc_now)
 
 
 def _uri_action_catalog() -> list[dict]:
@@ -10210,14 +10290,14 @@ def create_handler(
                     _asset_response(self, widget.read_bytes(), "text/html; charset=utf-8")
                     return
                 if parsed.path == "/api/uri/event":
-                    _json_response(self, 200, uri_event(db, parse_qs(parsed.query)))
+                    _json_response(self, 200, _uri_event_impl(_scanner_bridge_deps(), db, parse_qs(parsed.query)))
                     return
                 if parsed.path == "/api/page/actions/poll":
                     query = parse_qs(parsed.query)
                     _json_response(
                         self,
                         200,
-                        page_action_poll(_first(query, "target", "scanner") or "scanner", int(_first(query, "limit", "4") or 4)),
+                        _page_action_poll_impl(_first(query, "target", "scanner") or "scanner", int(_first(query, "limit", "4") or 4)),
                     )
                     return
                 if parsed.path == "/api/file":
@@ -10331,7 +10411,7 @@ def create_handler(
                     return
                 if parsed.path == "/api/page/actions/result":
                     payload = _read_json(self)
-                    _json_response(self, 200, page_action_result(db, payload))
+                    _json_response(self, 200, _page_action_result_impl(_scanner_bridge_deps(), db, payload, utc_now=_utc_now))
                     return
                 if parsed.path == "/api/scanner/capture":
                     payload = _read_json(self)
