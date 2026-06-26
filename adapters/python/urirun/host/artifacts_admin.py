@@ -377,3 +377,108 @@ def cleanup_one_sidecar(target: Path, project: str, *, delete_files: bool, sibli
     return info
 
 
+
+
+def artifacts_delete(host_db: "Any", project: str, db: "str | None", payload: dict) -> dict:
+    ids = payload.get("ids") or payload.get("artifactIds") or []
+    if isinstance(ids, str):
+        ids = [ids]
+    clean_ids = [str(item).strip() for item in ids if str(item).strip()]
+    if not clean_ids:
+        return {"ok": False, "error": "ids are required", "deleted": 0, "filesDeleted": 0}
+    artifacts = host_db.artifacts_by_ids(db, clean_ids)
+    files = delete_artifact_files(artifacts, project) if payload_bool(payload, "deleteFiles", True) else []
+    deleted = host_db.delete_artifacts(db, clean_ids)
+    result = {
+        "ok": True,
+        "requested": len(clean_ids),
+        "matched": len(artifacts),
+        "deleted": deleted,
+        "filesDeleted": len([item for item in files if item.get("deleted")]),
+        "files": files,
+    }
+    try:
+        host_db.add_log(db, "artifacts", "delete", result)
+    except Exception:  # noqa: BLE001
+        pass
+    return result
+
+
+def artifacts_dedupe_rows(host_db: "Any", project: str, db: "str | None", payload: dict) -> dict:
+    """Remove duplicate artifact DB rows that point at the same physical output."""
+    limit = int(payload.get("limit") or 10_000)
+    limit = max(1, min(limit, 50_000))
+    delete_rows = payload_bool(payload, "deleteRows", True)
+    pub = public_artifacts(host_db.list_artifacts(db, limit=limit), project)
+    groups: "dict[tuple[str, str], list[dict]]" = {}
+    for item in pub:
+        key = artifact_dedupe_key(item)
+        if not key[1]:
+            continue
+        groups.setdefault(key, []).append(item)
+
+    duplicate_groups: "list[dict]" = []
+    delete_ids: "list[str]" = []
+    for key, group in groups.items():
+        if len(group) < 2:
+            continue
+        keep = sorted(group, key=artifact_dedupe_rank)[0]
+        keep_id = str(keep.get("id") or "")
+        duplicate_ids = [
+            str(item.get("id"))
+            for item in group
+            if item.get("id") and str(item.get("id")) != keep_id
+        ]
+        if not duplicate_ids:
+            continue
+        delete_ids.extend(duplicate_ids)
+        duplicate_groups.append({
+            "key": {"type": key[0], "value": key[1]},
+            "keepId": keep_id,
+            "keepKind": keep.get("kind"),
+            "deleteIds": duplicate_ids,
+            "count": len(group),
+        })
+
+    deleted = host_db.delete_artifacts(db, delete_ids) if delete_rows and delete_ids else 0
+    result = {
+        "ok": True,
+        "scanned": len(pub),
+        "groups": duplicate_groups,
+        "duplicateRows": len(delete_ids),
+        "deleted": deleted,
+        "dryRun": not delete_rows,
+    }
+    try:
+        host_db.add_log(db, "artifacts", "dedupe", result)
+    except Exception:  # noqa: BLE001
+        pass
+    return result
+
+
+def artifacts_cleanup_orphan_sidecars(host_db: "Any", project: str, db: "str | None", payload: dict) -> dict:
+    import os  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+    delete_files = payload_bool(payload, "deleteFiles", True)
+    include_artifact_dir = payload_bool(payload, "includeArtifactDir", False)
+    roots = [Path(os.environ.get("URIRUN_DOCUMENT_DIR", "~/.urirun/documents")).expanduser()]
+    if include_artifact_dir:
+        roots.append(Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser())
+    global_metadata = global_document_metadata_paths()
+    sibling_suffixes = (".pdf", ".jpg", ".jpeg", ".png", ".webp", ".bin")
+    files: "list[dict]" = []
+    seen: "set[Path]" = set()
+    for target in iter_orphan_candidates(roots, seen, global_metadata):
+        info = cleanup_one_sidecar(target, project, delete_files=delete_files, sibling_suffixes=sibling_suffixes)
+        if info is not None:
+            files.append(info)
+    result = {
+        "ok": True,
+        "filesDeleted": len([item for item in files if item.get("deleted")]),
+        "files": files,
+    }
+    try:
+        host_db.add_log(db, "artifacts", "cleanup-orphans", result)
+    except Exception:  # noqa: BLE001
+        pass
+    return result

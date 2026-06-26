@@ -80,6 +80,7 @@ from .document_sync import (
     supersede_archived_document as _supersede_archived_document,
     archive_scanned_document as _archive_scanned_document,
     _transaction_fingerprint,
+    _fingerprint_match_count,
 )
 from .discovery import (
     add_node_aliases as _add_node_aliases_impl,
@@ -211,6 +212,9 @@ from .artifacts_admin import (
     collect_attachments as _collect_attachments,
     iter_orphan_candidates as _iter_orphan_candidates,
     cleanup_one_sidecar as _cleanup_one_sidecar,
+    artifacts_delete as _artifacts_delete_impl,
+    artifacts_dedupe_rows as _artifacts_dedupe_rows_impl,
+    artifacts_cleanup_orphan_sidecars as _artifacts_cleanup_orphan_sidecars_impl,
 )
 from .html_templates import INDEX_HTML, NODE_TYPES_DOC_HTML, SCANNER_HTML
 from .scanner_bridge import (
@@ -3388,116 +3392,6 @@ def _connector_install_node(node: str, payload: dict, *, config: str | None,
             "already": bool(res.get("already")), "schemes": after,
             "added": sorted(set(after) - set(before)), "detail": res,
             "error": None if ok else (res.get("error") or "ensure_scheme failed")}
-def artifacts_delete(project: str, db: str | None, payload: dict) -> dict:
-    ids = payload.get("ids") or payload.get("artifactIds") or []
-    if isinstance(ids, str):
-        ids = [ids]
-    clean_ids = [str(item).strip() for item in ids if str(item).strip()]
-    if not clean_ids:
-        return {"ok": False, "error": "ids are required", "deleted": 0, "filesDeleted": 0}
-    host_db = _host_db()
-    artifacts = host_db.artifacts_by_ids(db, clean_ids)
-    files = _delete_artifact_files(artifacts, project) if _payload_bool(payload, "deleteFiles", True) else []
-    deleted = host_db.delete_artifacts(db, clean_ids)
-    result = {
-        "ok": True,
-        "requested": len(clean_ids),
-        "matched": len(artifacts),
-        "deleted": deleted,
-        "filesDeleted": len([item for item in files if item.get("deleted")]),
-        "files": files,
-    }
-    try:
-        host_db.add_log(db, "artifacts", "delete", result)
-    except Exception:  # noqa: BLE001
-        pass
-    return result
-
-
-def artifacts_dedupe_rows(project: str, db: str | None, payload: dict) -> dict:
-    """Remove duplicate artifact DB rows that point at the same physical output.
-
-    This is intentionally DB-only: it never removes files. It keeps the same
-    canonical row the UI would display, so historical `camera-scan` + `document-pdf`
-    duplicates can be compacted without changing the artifact grid semantics.
-    """
-    limit = int(payload.get("limit") or 10_000)
-    limit = max(1, min(limit, 50_000))
-    delete_rows = _payload_bool(payload, "deleteRows", True)
-    host_db = _host_db()
-    public = _public_artifacts(host_db.list_artifacts(db, limit=limit), project)
-    groups: dict[tuple[str, str], list[dict]] = {}
-    for item in public:
-        key = _artifact_dedupe_key(item)
-        if not key[1]:
-            continue
-        groups.setdefault(key, []).append(item)
-
-    duplicate_groups: list[dict] = []
-    delete_ids: list[str] = []
-    for key, group in groups.items():
-        if len(group) < 2:
-            continue
-        keep = sorted(group, key=_artifact_dedupe_rank)[0]
-        keep_id = str(keep.get("id") or "")
-        duplicate_ids = [
-            str(item.get("id"))
-            for item in group
-            if item.get("id") and str(item.get("id")) != keep_id
-        ]
-        if not duplicate_ids:
-            continue
-        delete_ids.extend(duplicate_ids)
-        duplicate_groups.append({
-            "key": {"type": key[0], "value": key[1]},
-            "keepId": keep_id,
-            "keepKind": keep.get("kind"),
-            "deleteIds": duplicate_ids,
-            "count": len(group),
-        })
-
-    deleted = host_db.delete_artifacts(db, delete_ids) if delete_rows and delete_ids else 0
-    result = {
-        "ok": True,
-        "scanned": len(public),
-        "groups": duplicate_groups,
-        "duplicateRows": len(delete_ids),
-        "deleted": deleted,
-        "dryRun": not delete_rows,
-    }
-    try:
-        host_db.add_log(db, "artifacts", "dedupe", result)
-    except Exception:  # noqa: BLE001
-        pass
-    return result
-
-
-def artifacts_cleanup_orphan_sidecars(project: str, db: str | None, payload: dict) -> dict:
-    delete_files = _payload_bool(payload, "deleteFiles", True)
-    include_artifact_dir = _payload_bool(payload, "includeArtifactDir", False)
-    roots = [Path(os.environ.get("URIRUN_DOCUMENT_DIR", "~/.urirun/documents")).expanduser()]
-    if include_artifact_dir:
-        roots.append(Path(os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")).expanduser())
-    global_metadata = _global_document_metadata_paths()
-    sibling_suffixes = (".pdf", ".jpg", ".jpeg", ".png", ".webp", ".bin")
-    files: list[dict] = []
-    seen: set[Path] = set()
-    for target in _iter_orphan_candidates(roots, seen, global_metadata):
-        info = _cleanup_one_sidecar(target, project, delete_files=delete_files, sibling_suffixes=sibling_suffixes)
-        if info is not None:
-            files.append(info)
-    result = {
-        "ok": True,
-        "filesDeleted": len([item for item in files if item.get("deleted")]),
-        "files": files,
-    }
-    try:
-        _host_db().add_log(db, "artifacts", "cleanup-orphans", result)
-    except Exception:  # noqa: BLE001
-        pass
-    return result
-
-
 def documents_reconcile(project: str, db: str | None, payload: dict | None = None) -> dict:
     """Prune document-index entries whose artifacts are gone from disk.
 
@@ -3791,15 +3685,15 @@ def create_handler(
                     return
                 if parsed.path == "/api/artifacts/delete":
                     payload = _read_json(self)
-                    _json_response(self, 200, artifacts_delete(project, db, payload))
+                    _json_response(self, 200, _artifacts_delete_impl(_host_db(), project, db, payload))
                     return
                 if parsed.path == "/api/artifacts/dedupe":
                     payload = _read_json(self)
-                    _json_response(self, 200, artifacts_dedupe_rows(project, db, payload))
+                    _json_response(self, 200, _artifacts_dedupe_rows_impl(_host_db(), project, db, payload))
                     return
                 if parsed.path == "/api/artifacts/cleanup-orphans":
                     payload = _read_json(self)
-                    _json_response(self, 200, artifacts_cleanup_orphan_sidecars(project, db, payload))
+                    _json_response(self, 200, _artifacts_cleanup_orphan_sidecars_impl(_host_db(), project, db, payload))
                     return
                 if parsed.path == "/api/documents/reconcile":
                     payload = _read_json(self)
