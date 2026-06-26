@@ -17,8 +17,16 @@
 # Time tools connector (time//, date//, cron// URI handlers).
 -e ../urirun-connector-time-tools
 
-# Connectors installed for examples test suite (19-all-connectors etc.).
+# Connectors installed for examples test suite (19-all-connectors, 34-all-connectors-flow etc.).
 -e ../urirun-connector-mcp-filesystem
 -e ../urirun-connector-email
 -e ../urirun-connector-mqtt
 -e ../urirun-connector-sqlite-context
+-e ../urirun-connector-http-check
+-e ../urirun-connector-get-node
+-e ../urirun-connector-ksef
+-e ../urirun-connector-planfile
+-e ../urirun-connector-namecheap-dns
+-e ../urirun-connector-llm
+-e ../urirun-connector-flow-repair
+-e ../urirun-connector-invoice

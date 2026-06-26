@@ -3748,12 +3748,15 @@ INDEX_HTML = r"""<!doctype html>
       $('chatStatus').textContent = 'running...';
       $('chatAskBtn').disabled = true;
       try {
+        // Send empty targets when nothing was explicitly checked — lets the orchestrator
+        // infer the target node from the prompt text (e.g. "screenshot na lenovo").
+        const explicitTargets = [...document.querySelectorAll('input[name="chatTarget"]:checked')].map(el => el.value);
         const result = await api('/api/chat/ask', {
           method: 'POST',
           body: JSON.stringify({
             prompt,
             nodes,
-            targets: state.selectedTargets,
+            targets: explicitTargets,
             execute,
             no_llm: $('chatNoLlm').checked,
           }),
@@ -3778,7 +3781,9 @@ INDEX_HTML = r"""<!doctype html>
       if (!prompt) return;
       const detail = msg.detail || {};
       const nodes = detail.selectedNodes || detail.requestedNodes || selectedNodeNames();
-      const targets = detail.selectedTargets || detail.requestedTargets || selectedTargets();
+      // Use requestedTargets (what the user originally selected) rather than selectedTargets
+      // (which includes the LLM-inferred node). Empty = let the orchestrator re-infer.
+      const targets = detail.requestedTargets || [];
       const execute = detail.execute !== undefined ? !!detail.execute : $('chatExecute').checked;
       if ($('chatPrompt')) $('chatPrompt').value = prompt;
       state.view = 'chat';

@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.21s
-# nodes: 447 | edges: 500 | modules: 51
+# generated in 0.22s
+# nodes: 455 | edges: 500 | modules: 57
 # CC̄=4.7
 
 HUBS[20]:
   adapters.python.urirun.host.host_integrations._write_planfile_action
     CC=8  in:1  out:39  total:40
-  adapters.python.urirun.host.host_dashboard.summary
-    CC=6  in:0  out:38  total:38
   scripts.extraction_audit.print_report
     CC=12  in:1  out:36  total:37
   adapters.python.urirun.host.node_cli.copy_id_command
     CC=12  in:2  out:30  total:32
-  adapters.python.urirun.host.connector_admin.connector_install
-    CC=13  in:0  out:29  total:29
-  scripts.transport_swap_proof.main
-    CC=5  in:0  out:29  total:29
   adapters.python.urirun.host.connector_admin._connector_install_node
     CC=12  in:1  out:28  total:29
+  scripts.transport_swap_proof.main
+    CC=5  in:0  out:29  total:29
+  adapters.python.urirun.host.connector_admin.connector_install
+    CC=13  in:0  out:29  total:29
   adapters.python.urirun.host.node_cli._run_streamed
     CC=6  in:1  out:27  total:28
   adapters.python.urirun.host.host_db._run_query_route
     CC=7  in:1  out:26  total:27
+  adapters.python.urirun_connectors_toolkit.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
   adapters.python.urirun.host.node_cli.watch_command
     CC=11  in:1  out:24  total:25
   adapters.python.urirun.host.object_registry.probe_node_token
     CC=14  in:1  out:24  total:25
-  adapters.python.urirun.host.host_dashboard._recent_scanner_artifacts
-    CC=14  in:1  out:23  total:24
   adapters.python.urirun.node.routing.route_target
     CC=1  in:23  out:1  total:24
+  adapters.python.urirun.host.host_dashboard._recent_scanner_artifacts
+    CC=14  in:1  out:23  total:24
+  adapters.python.urirun.host.node_api.configured_api_headers
+    CC=13  in:1  out:23  total:24
   adapters.python.urirun.host.task_cli._run_task_flow
     CC=12  in:2  out:22  total:24
   adapters.python.urirun.testing.smoke
     CC=9  in:1  out:23  total:24
-  adapters.python.urirun.host.node_api.configured_api_headers
-    CC=13  in:1  out:23  total:24
-  adapters.python.urirun.host.host_dashboard.uri_invoke
-    CC=12  in:2  out:21  total:23
   adapters.python.urirun.node.doctor.format_doctor_report
     CC=9  in:1  out:22  total:23
-  adapters.python.urirun.host.dashboard_api.chat_history
-    CC=6  in:1  out:21  total:22
   adapters.python.urirun.host.node_cli.probe_command
     CC=14  in:1  out:21  total:22
+  adapters.python.urirun.host.host_db.search_records
+    CC=6  in:1  out:21  total:22
+  adapters.python.urirun.node.transport.http_json
+    CC=8  in:11  out:11  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -76,17 +76,17 @@ MODULES:
   adapters.php.Urirun  [2 funcs]
     bindings  CC=1  out:0
     bindingsJson  CC=1  out:2
-  adapters.python.urirun  [21 funcs]
+  adapters.python.urirun  [25 funcs]
     _dispatch_cli  CC=11  out:16
+    _live_bindings  CC=4  out:5
     manifest  CC=11  out:13
     registry  CC=4  out:5
     _connector_cli_routes  CC=12  out:17
     _connector_run_command  CC=9  out:12
     _example_payload  CC=9  out:8
     build_invocation  CC=1  out:2
+    command  CC=1  out:1
     compile_registry  CC=1  out:1
-    connector  CC=2  out:2
-    connector_emit  CC=1  out:1
   adapters.python.urirun.exec  [2 funcs]
     _resolve  CC=3  out:4
     main  CC=10  out:16
@@ -139,7 +139,7 @@ MODULES:
   adapters.python.urirun.host.fs_transfer  [2 funcs]
     node_client  CC=1  out:1
     node_token_for  CC=5  out:2
-  adapters.python.urirun.host.host_dashboard  [48 funcs]
+  adapters.python.urirun.host.host_dashboard  [43 funcs]
     _add_chat_message  CC=2  out:2
     _document_sync_deps  CC=1  out:2
     _extract_document_metadata  CC=1  out:2
@@ -326,6 +326,21 @@ MODULES:
     assert_smoke  CC=2  out:2
     registry_portability  CC=1  out:3
     smoke  CC=9  out:23
+  adapters.python.urirun_connectors_toolkit.connector_lint  [1 funcs]
+    lint_connector  CC=9  out:24
+  adapters.python.urirun_connectors_toolkit.connector_sdk  [1 funcs]
+    emit  CC=1  out:2
+  adapters.python.urirun_runtime._registry  [1 funcs]
+    uri_handler  CC=1  out:2
+  adapters.python.urirun_runtime._runtime  [1 funcs]
+    build_policy  CC=13  out:13
+  adapters.python.urirun_runtime.errors  [1 funcs]
+    _emit  CC=1  out:2
+  adapters.python.urirun_runtime.v2  [4 funcs]
+    _load_manifest  CC=1  out:2
+    decorated_bindings  CC=2  out:1
+    uri_command  CC=1  out:6
+    uri_shell  CC=1  out:1
   adapters.ts.urirun  [2 funcs]
     document  CC=1  out:0
     toJSON  CC=1  out:2
@@ -380,6 +395,7 @@ EDGES:
   scripts.transport_swap_proof.main → scripts.transport_swap_proof.timed
   scripts.cc_gate.find_offenders → scripts.cc_gate._iter_py
   scripts.cc_gate.main → scripts.cc_gate.find_offenders
+  scripts.lint_connectors.lint_fleet → adapters.python.urirun_connectors_toolkit.connector_lint.lint_connector
   scripts.lint_connectors.lint_fleet → scripts.lint_connectors.classify
   scripts.lint_connectors._print_fleet_report → scripts.lint_connectors._flags
   scripts.lint_connectors.main → scripts.lint_connectors.lint_fleet
@@ -421,4 +437,3 @@ EDGES:
   adapters.python.urirun.dispatch → adapters.python.urirun.parse_uri
   adapters.python.urirun.dispatch → adapters.python.urirun.build_invocation
   adapters.python.urirun.dispatch → adapters.js.fn
-  adapters.python.urirun.result_degraded → adapters.python.urirun.result_data

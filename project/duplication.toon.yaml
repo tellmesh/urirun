@@ -1,12 +1,12 @@
-# redup/duplication | 12 groups | 129f 25894L | 2026-06-26
+# redup/duplication | 12 groups | 129f 26017L | 2026-06-26
 
 SUMMARY:
   files_scanned: 129
-  total_lines:   25894
+  total_lines:   26017
   dup_groups:    12
   dup_fragments: 28
   saved_lines:   103
-  scan_ms:       681
+  scan_ms:       636
 
 HOTSPOTS[7] (files with most duplication):
   __init__.py  dup=38L  groups=1  frags=3  (0.1%)
