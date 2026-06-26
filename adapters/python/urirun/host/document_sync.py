@@ -990,20 +990,35 @@ def enrich_archived_record(existing: dict, fused: dict, enriched_fields: list[st
 try:
     from docid.dedup import (
         business_key as _dedup_business_key,
+        dhash_distance as _dedup_dhash_distance,
         document_id as _dedup_document_id,
         document_matches as _dedup_document_matches,
+        fingerprint_match_count as _dedup_fingerprint_match_count,
+        image_dhash as _dedup_image_dhash,
+        image_phash as _dedup_image_phash,
         metadata_completeness as _dedup_metadata_completeness,
+        transaction_fingerprint as _dedup_transaction_fingerprint,
     )
 except Exception:  # noqa: BLE001
     _dedup_business_key = None
+    _dedup_dhash_distance = None
     _dedup_document_id = None
     _dedup_document_matches = None
+    _dedup_fingerprint_match_count = None
+    _dedup_image_dhash = None
+    _dedup_image_phash = None
     _dedup_metadata_completeness = None
+    _dedup_transaction_fingerprint = None
 
 if _dedup_document_matches is not None:
     _document_matches = _dedup_document_matches
     _business_key = _dedup_business_key
     _metadata_completeness = _dedup_metadata_completeness
+    _transaction_fingerprint = _dedup_transaction_fingerprint
+    _fingerprint_match_count = _dedup_fingerprint_match_count
+    _image_dhash = _dedup_image_dhash
+    _image_phash = _dedup_image_phash
+    _dhash_distance = _dedup_dhash_distance
 else:
     def _document_matches(existing: dict, *, doc_id: str, source_sha256: str, text_sha256: str,
                           fingerprint: dict, dhash: str, phash: str = "",
@@ -1021,6 +1036,21 @@ else:
 
     def _metadata_completeness(meta: dict | None) -> int:
         return 0
+
+    def _transaction_fingerprint(text: str) -> dict:
+        return {}
+
+    def _fingerprint_match_count(a: "dict | None", b: "dict | None") -> int:
+        return 0
+
+    def _image_dhash(path: "str | Path") -> str:
+        return ""
+
+    def _image_phash(path: "str | Path") -> str:
+        return ""
+
+    def _dhash_distance(a: str, b: str) -> int:
+        return 999
 
 
 def file_sha256(path: "str | Path") -> str:
@@ -1204,3 +1234,149 @@ def supersede_archived_document(*, duplicate: dict, existing_meta: dict, extract
         if isinstance(item, dict) and item.get("docId") != superseded_of
     ]
     return extracted, month, archive_dir, filename, superseded_of, merged_fields
+
+
+def archive_scanned_document(
+    *,
+    display_path: "Path",
+    original_path: "Path",
+    ocr: dict,
+    crop: dict,
+    source_sha256: str,
+    captured_at: "str | None",
+    metadata: "dict | None" = None,
+) -> dict:
+    from .document_metadata import _extract_document_metadata  # noqa: PLC0415 — lazy (circular)
+    ocr_text = str(ocr.get("text") or "")
+    extracted = metadata if metadata is not None else _extract_document_metadata(
+        ocr_text, captured_at=captured_at, image_path=str(original_path))
+    docid_info = docid_for_file(display_path, ocr_text)
+    doc_id = str(docid_info["id"])
+    from .document_metadata import normalized_document_text as _normalized_doc_text3  # noqa: PLC0415
+    normalized_text = _normalized_doc_text3(ocr_text)
+    text_sha256 = hashlib.sha256(normalized_text.encode("utf-8")).hexdigest() if normalized_text else ""
+    fingerprint = _transaction_fingerprint(ocr_text)
+    dhash = _image_dhash(display_path)
+    phash = _image_phash(display_path)
+    new_completeness = _metadata_completeness(extracted)
+    month = archive_month(extracted)
+    root = document_archive_root()
+    archive_dir = root / month
+    filename = document_filename_with_id(canonical_document_filename(extracted), doc_id)
+
+    with _DOCUMENT_INDEX_LOCK:
+        index = load_document_index()
+        backfill_scanned_id_log(index)
+        index_match = find_duplicate_document(
+            index, doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
+            fingerprint=fingerprint, dhash=dhash, phash=phash,
+            metadata=extracted, text=ocr_text,
+        )
+        duplicate = index_match or existing_scanned_id(
+            doc_id=doc_id, source_sha256=source_sha256, text_sha256=text_sha256,
+        )
+        superseded_of = None
+        merged_fields: list[str] = []
+        if duplicate:
+            existing_meta = existing_document_meta(duplicate)
+            can_supersede = index_match is not None and new_completeness > _metadata_completeness(existing_meta)
+            if not can_supersede:
+                return archive_redundant_duplicate(
+                    duplicate=duplicate, index_match=index_match, existing_meta=existing_meta,
+                    extracted=extracted, new_completeness=new_completeness, index=index,
+                    docid_info=docid_info, doc_id=doc_id, original_path=original_path,
+                    display_path=display_path, source_sha256=source_sha256, text_sha256=text_sha256,
+                    fingerprint=fingerprint, dhash=dhash, phash=phash,
+                )
+            extracted, month, archive_dir, filename, superseded_of, merged_fields = supersede_archived_document(
+                duplicate=duplicate, existing_meta=existing_meta, extracted=extracted,
+                new_completeness=new_completeness, root=root, month=month, doc_id=doc_id, index=index,
+            )
+
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        pdf_path = unique_document_path(archive_dir, filename, doc_id)
+        json_path = pdf_path.with_suffix(".json")
+        pdf_meta = {
+            **extracted,
+            "docId": doc_id,
+            "sourcePath": str(original_path),
+            "cropPath": str(display_path),
+        }
+        write_document_pdf(display_path, pdf_path, metadata=pdf_meta, ocr_text=ocr_text)
+        _schema_fields = document_schema_fields(extracted.get("type"))
+        entry = {
+            "docId": doc_id,
+            "docIdProvider": docid_info.get("provider"),
+            "docIdSource": docid_info.get("source"),
+            "docIdError": docid_info.get("docidError"),
+            "docIdLog": docid_info.get("docidLog"),
+            "uri": f"document://host/{quote(doc_id, safe='')}",
+            "pdfPath": str(pdf_path),
+            "jsonPath": str(json_path),
+            "originalPath": str(original_path),
+            "cropPath": str(display_path),
+            "sourceSha256": source_sha256,
+            "textSha256": text_sha256,
+            "fingerprint": fingerprint,
+            "dhash": dhash,
+            "phash": phash,
+            "supersededOf": superseded_of,
+            "mergedFields": merged_fields or None,
+            "ocrBackend": ocr.get("backend"),
+            "ocrChars": ocr.get("chars"),
+            "text": ocr_text,
+            "crop": crop,
+            "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "schemaKnown": _schema_fields["schemaKnown"],
+            "schemaId": _schema_fields["schemaId"],
+            **extracted,
+        }
+        json_path.write_text(
+            json.dumps({**entry, "ocr": ocr, "text": ocr_text}, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        docs = [item for item in index.get("documents", []) if isinstance(item, dict) and item.get("docId") != doc_id]
+        docs.append(entry)
+        index["documents"] = docs
+        save_document_index(index)
+        append_scanned_id_log({
+            "version": 1,
+            "event": "superseded" if superseded_of else "scan",
+            "scannedAt": entry["createdAt"],
+            "docId": doc_id,
+            "docIdProvider": docid_info.get("provider"),
+            "docIdSource": docid_info.get("source"),
+            "docIdError": docid_info.get("docidError"),
+            "docIdLog": docid_info.get("docidLog"),
+            "duplicate": False,
+            "supersededOf": superseded_of,
+            "mergedFields": merged_fields or None,
+            "uri": entry["uri"],
+            "pdfPath": str(pdf_path),
+            "jsonPath": str(json_path),
+            "fileName": pdf_path.name,
+            "originalPath": str(original_path),
+            "cropPath": str(display_path),
+            "sourceSha256": source_sha256,
+            "textSha256": text_sha256,
+            "fingerprint": fingerprint,
+            "dhash": dhash,
+            "phash": phash,
+            "ocrBackend": ocr.get("backend"),
+            "ocrChars": ocr.get("chars"),
+            "metadata": extracted,
+        })
+    return {
+        "ok": True,
+        "duplicate": False,
+        "superseded": bool(superseded_of),
+        "supersededOf": superseded_of,
+        "docId": doc_id,
+        "docIdProvider": docid_info.get("provider"),
+        "path": str(pdf_path),
+        "jsonPath": str(json_path),
+        "uri": entry["uri"],
+        "metadata": extracted,
+        "indexPath": str(document_index_path()),
+        "scannedIdLogPath": str(scanned_id_log_path()),
+    }
