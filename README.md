@@ -3,7 +3,7 @@
 
 ## AI Cost Tracking
 
-![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.1.31-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
+![PyPI](https://img.shields.io/badge/pypi-costs-blue) ![Version](https://img.shields.io/badge/version-0.4.190-blue) ![Python](https://img.shields.io/badge/python-3.9+-blue) ![License](https://img.shields.io/badge/license-Apache--2.0-green)
 ![AI Cost](https://img.shields.io/badge/AI%20Cost-$6.68-orange) ![Human Time](https://img.shields.io/badge/Human%20Time-106.8h-blue) ![Model](https://img.shields.io/badge/Model-openrouter%2Fqwen%2Fqwen3--coder--next-lightgrey)
 
 - 🤖 **LLM usage:** $6.6839 (454 commits)
@@ -126,16 +126,20 @@ or vendor the adapter folder directly into your repo.
 
 ### Python
 
-PyPI publishing is intentionally not required. Install directly from GitHub:
+`urirun` is published on PyPI as a self-contained distribution:
 
 ```bash
-pip install "git+https://github.com/if-uri/urirun.git@v0.3.14#subdirectory=adapters/python"
+pip install urirun
 ```
 
-Or install a GitHub Release wheel:
+The published wheel bundles the kernel and the extracted runtime packages
+(`urirun_runtime`, `urirun_node`, `urirun_flow`, `urirun_connectors_toolkit`, …),
+so `import urirun.v2` and `urirun.node.mesh` resolve without any extra installs.
+
+Or install straight from source (e.g. for an unreleased commit):
 
 ```bash
-pip install "https://github.com/if-uri/urirun/releases/download/v0.3.14/urirun-0.3.14-py3-none-any.whl"
+pip install "git+https://github.com/if-uri/urirun.git#subdirectory=adapters/python"
 ```
 
 The distribution and import package are named `urirun`.
@@ -230,7 +234,7 @@ urirun run 'error://local/E-ce9b1dd4/query/info' error-registry.json
 Optional transports stay optional. For the v2 gRPC transport install:
 
 ```bash
-pip install "urirun[grpc] @ git+https://github.com/if-uri/urirun.git@v0.3.14#subdirectory=adapters/python"
+pip install "urirun[grpc]"
 ```
 
 For task and domain workflows prefer external connector packages. They generate
@@ -247,7 +251,7 @@ pip install "urirun-connector-sqlite-context @ git+https://github.com/if-uri/uri
 For the legacy full host task planner with optional LiteLLM support:
 
 ```bash
-pip install "urirun[host] @ git+https://github.com/if-uri/urirun.git@v0.3.14#subdirectory=adapters/python"
+pip install "urirun[host]"
 ```
 
 ## URI Node model

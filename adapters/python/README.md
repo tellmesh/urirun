@@ -1,19 +1,19 @@
 # urirun python adapter
 
-Install directly from GitHub:
+Install from PyPI (the published wheel is self-contained — it bundles the
+kernel and the extracted runtime packages):
 
 ```bash
-pip install "git+https://github.com/if-uri/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install urirun
 ```
 
-Or install a GitHub Release wheel:
+Or install from source for an unreleased commit:
 
 ```bash
-pip install "https://github.com/if-uri/urirun/releases/download/v0.3.13/urirun-0.3.13-py3-none-any.whl"
+pip install "git+https://github.com/if-uri/urirun.git#subdirectory=adapters/python"
 ```
 
-PyPI publishing is not required. The distribution is named `urirun`; the Python
-import package remains `urirun`:
+The distribution is named `urirun`; the Python import package remains `urirun`:
 
 ```python
 import urirun
@@ -34,7 +34,7 @@ points for scripts that need a stable major-version command.
 The optional v2 gRPC transport can be installed with:
 
 ```bash
-pip install "urirun[grpc] @ git+https://github.com/if-uri/urirun.git@v0.3.13#subdirectory=adapters/python"
+pip install "urirun[grpc]"
 ```
 
 v2 can generate schema-first bindings and a compiled registry from existing
