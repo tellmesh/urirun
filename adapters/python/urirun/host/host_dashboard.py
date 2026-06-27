@@ -88,8 +88,8 @@ from .fs_transfer import (
     remote_read_error as _remote_read_error,
     node_client as _node_client,
     node_token_for as _node_token_for,
-    run_node_uri as _run_node_uri,
 )
+from .node_dispatch import run_node_uri as _run_node_uri
 from .node_types import (
     annotate_node_types as _annotate_node_types_impl,
     node_type_profile as _node_type_profile_impl,
