@@ -378,6 +378,37 @@ def _needs_session_ready_after_ensure(prev_uri: str, next_uri: str | None) -> bo
     return _CDP_PAGE_PREFIX in next_uri and route_target(next_uri) == target
 
 
+_SCREENSHOT_KWS = frozenset({
+    "screenshot", "zrzut ekranu", "zrzut", "screenshota", "printscreen",
+    "screen grab", "capture screen", "snap screen",
+})
+
+
+def _inject_capture_if_needed(flow: dict, prompt: str, allowed_uris: set[str]) -> dict:
+    """Append screen/query/capture as the last step when the prompt asks for a screenshot
+    but the LLM forgot to include it. Idempotent: no-op when a capture step already exists
+    or when no capture route is served by the mesh."""
+    low = nl_key(prompt)
+    if not any(kw in low for kw in _SCREENSHOT_KWS):
+        return flow
+    steps = list(flow.get("steps") or [])
+    if any("screen/query/capture" in str(s.get("uri") or "") for s in steps):
+        return flow
+    capture_uri = next(
+        (u for u in sorted(allowed_uris) if "screen/query/capture" in u), None
+    )
+    if not capture_uri:
+        return flow
+    last_id = steps[-1]["id"] if steps else None
+    steps.append({
+        "id": "capture_screen",
+        "uri": capture_uri,
+        "payload": {},
+        "depends_on": [last_id] if last_id else [],
+    })
+    return {**flow, "steps": steps}
+
+
 def _inject_cdp_ready_probes(steps: list[dict], allowed_uris: set[str],
                              used: set[str], routes: list[dict] | None = None) -> list[dict]:
     """Insert a ``cdp/session/query/ready`` step between every ensure→page jump, when
@@ -531,6 +562,7 @@ def llm_flow(prompt: str, routes: list[dict], nodes: list[dict],
                 "When the task says 'open <website>', ALWAYS include cdp/page/command/navigate (payload: {url: 'https://...'}) BEFORE any page interaction or verification. Never skip the navigate step even if a CDP session is already running. "
                 "Always add explicit validation steps (e.g., using 'ui/query/verify', 'cdp/page/query/ready', or evaluating page state) after actions to confirm success before proceeding. "
                 "NOTE: 'ui/query/verify' requires the field 'expect' (not 'text') — payload must be {\"expect\": \"<visible text to assert\"}. "
+                "SCREENSHOT RULE: when the request contains 'screenshot', 'zrzut ekranu', 'capture', 'snap' or similar, the LAST step MUST be screen/query/capture — ALWAYS, regardless of login state, page content, or what verify found. Never substitute a log note for a screenshot step. "
                 # Concrete-state grounding: when an 'environments' field is present it is the LIVE
                 # capability profile + foreground surface of each node — GROUND your steps on it:
                 "honour each node's 'bestSurface' and ALL items in its 'guidance' list (they are "
@@ -680,29 +712,32 @@ def make_flow(prompt: str, mesh: dict, selected_nodes: list[str] | None = None, 
     allowed = {route["uri"] for route in routes}
     if use_llm:
         try:
-            return normalize_flow_or_explain(
+            flow = normalize_flow_or_explain(
                 llm_flow(prompt, routes, mesh["nodes"], environments=environments),
                 allowed,
                 routes=routes,
                 selected_nodes=selected_nodes,
                 environments=environments,
-            ), {"provider": "litellm", "fallback": False}
+            )
+            return _inject_capture_if_needed(flow, prompt, allowed), {"provider": "litellm", "fallback": False}
         except Exception as exc:  # noqa: BLE001 - host should still be usable without an LLM.
             flow = heuristic_flow(prompt, routes, mesh["nodes"], selected_nodes, use_llm=True)
-            return normalize_flow_or_explain(
+            flow = normalize_flow_or_explain(
                 flow,
                 allowed,
                 routes=routes,
                 selected_nodes=selected_nodes,
                 planner_reason=str(exc),
                 environments=environments,
-            ), {"provider": "heuristic", "fallback": True, "reason": str(exc)}
+            )
+            return _inject_capture_if_needed(flow, prompt, allowed), {"provider": "heuristic", "fallback": True, "reason": str(exc)}
     flow = heuristic_flow(prompt, routes, mesh["nodes"], selected_nodes, use_llm=False)
-    return normalize_flow_or_explain(
+    flow = normalize_flow_or_explain(
         flow,
         allowed,
         routes=routes,
         selected_nodes=selected_nodes,
         planner_reason="LLM disabled",
         environments=environments,
-    ), {"provider": "heuristic", "fallback": True, "reason": "LLM disabled"}
+    )
+    return _inject_capture_if_needed(flow, prompt, allowed), {"provider": "heuristic", "fallback": True, "reason": "LLM disabled"}
