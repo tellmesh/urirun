@@ -958,6 +958,24 @@ def _rebuild_node_targets(selected_targets: list[str], actual: list[str],
     return targets
 
 
+def _filter_mesh_for_targets(discovered: dict, selected_targets: list[str]) -> dict:
+    """Return a copy of discovered with serviceMap filtered to only route to selected nodes.
+
+    When selected_targets is ["host"] (no remote node), removes all serviceMap entries that
+    point to remote node URLs — so kvm://host/... stays local instead of being forwarded."""
+    active_names = {t.split(":", 1)[1] for t in selected_targets if t.startswith("node:")}
+    full_map = discovered.get("serviceMap") or {}
+    nodes = discovered.get("nodes") or []
+    inactive_urls = {
+        n["url"] for n in nodes
+        if n.get("reachable") and n.get("name") not in active_names and n.get("url")
+    }
+    if not inactive_urls:
+        return discovered
+    return {**discovered, "serviceMap": {k: v for k, v in full_map.items()
+                                         if v not in inactive_urls}}
+
+
 def _sync_targets_from_flow(
     flow: dict,
     discovered: dict,
@@ -1191,14 +1209,16 @@ def _chat_ask_general_build_result(
 def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
     """Check the episode recall gate; return (flow, generator) or (None, None) on miss.
 
-    When selected_nodes is empty (user did not pin a node in the UI), we probe with
-    node="" and env_fp="" so the twin recall handler can fall through to intent-only
-    (flow_store) tier — avoiding a hard miss just because the UI target wasn't set."""
+    Episodes are captured against the HOST env (reality.fingerprint = host's known-good), so the
+    recall must probe with that fingerprint. We use the pinned node's known-good when it has one and
+    fall back to the host's — passing env_fp="" used to skip the (working) episode-recall tier and
+    leave only the intent-only flow_store tier, which made the gate miss in practice."""
     if twin_memory is None:
         return None, None
     from urirun.host.dispatch import inprocess_fallback as _iproc  # noqa: PLC0415
-    _node = selected_nodes[0] if selected_nodes else ""
-    _env_fp = (twin_memory.known_good(_node) or {}).get("fingerprint") or "" if _node else ""
+    _node = selected_nodes[0] if selected_nodes else "host"
+    _env_fp = ((twin_memory.known_good(_node) or {}).get("fingerprint")
+               or (twin_memory.known_good("host") or {}).get("fingerprint") or "")
     _recalled = _iproc("twin://host/flow/query/recall",
                        {"prompt": prompt, "env_fp": _env_fp, "node": _node})
     if not (isinstance(_recalled, dict) and _recalled.get("ok") and _recalled.get("found")):
@@ -1291,15 +1311,23 @@ def _chat_ask_general(
             if flow is None:
                 flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes,
                                                  use_llm=not no_llm, environments=environments)
-            selected_nodes, selected_targets = _sync_targets_from_flow(
-                flow, discovered, selected_nodes, selected_targets)
+            # Only auto-sync targets when user didn't explicitly pick them — preserve explicit
+            # "host" selections so kvm://host/... doesn't get re-routed to a remote node.
+            _explicit_targets = [str(t).strip() for t in (payload.get("targets") or [])
+                                  if str(t).strip()]
+            if not _explicit_targets:
+                selected_nodes, selected_targets = _sync_targets_from_flow(
+                    flow, discovered, selected_nodes, selected_targets)
             _flag_remote_capture_inline(flow, discovered, selected_nodes)
         except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
             return _chat_ask_general_planner_failure(exc, db, prompt, execute, selected_nodes, selected_targets, deps)
         _recall = _suggest_recall_for_memory(flow, twin_memory)
         _run_mode = "execute" if execute else "dry-run"
         _dispatch = make_local_dispatch_uri(registry, _run_mode)
-        execution = mesh.execute_flow(flow, discovered, registry, execute=execute, memory=twin_memory,
+        # Filter serviceMap to only route to the selected targets — prevents kvm://host/...
+        # from being silently forwarded to a remote node that happens to serve the same route.
+        _exec_mesh = _filter_mesh_for_targets(discovered, selected_targets)
+        execution = mesh.execute_flow(flow, _exec_mesh, registry, execute=execute, memory=twin_memory,
                                       dispatch_uri=_dispatch)
     finally:
         _restore_run_credentials(old_token, old_identity)
