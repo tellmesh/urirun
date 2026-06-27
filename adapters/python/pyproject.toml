@@ -49,7 +49,7 @@ include = ["urirun*"]
 # Static assets served by the dashboard from their package dir (read fresh per request):
 # the extracted dashboard.js + the twin monitor widget. Must ship in the wheel or the
 # /dashboard.js and /twin routes 404 on a `pip install urirun[host]`.
-"urirun.host" = ["*.html", "*.js"]
+"urirun.host" = ["*.html", "*.js", "*.css"]
 
 
 [tool.costs]

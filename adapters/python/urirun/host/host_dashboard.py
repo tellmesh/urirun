@@ -1457,12 +1457,15 @@ def _handle_get_static(handler, parsed, project) -> bool:
     if parsed.path in {"/", "/index.html"}:
         _html_response(handler)
         return True
-    if parsed.path in ("/dashboard.js", "/scanner.js"):
-        # Page JS extracted from the INDEX_HTML / SCANNER_HTML raw strings into real .js files next
-        # to this module, served fresh per request (edits load without a service restart). Whitelist
-        # by exact basename — no user-controlled path, so no traversal.
-        js = Path(__file__).parent / parsed.path.lstrip("/")
-        _asset_response(handler, js.read_bytes(), "application/javascript; charset=utf-8")
+    _static = {"dashboard.js": "application/javascript", "scanner.js": "application/javascript",
+               "dashboard.css": "text/css"}
+    if parsed.path.lstrip("/") in _static:
+        # Page JS/CSS extracted from the INDEX_HTML / SCANNER_HTML raw strings into real .js/.css
+        # files next to this module, served fresh per request (edits load without a service restart).
+        # Whitelist by exact basename — no user-controlled path, so no traversal.
+        name = parsed.path.lstrip("/")
+        f = Path(__file__).parent / name
+        _asset_response(handler, f.read_bytes(), f"{_static[name]}; charset=utf-8")
         return True
     if parsed.path == "/favicon.ico":
         handler.send_response(204)
