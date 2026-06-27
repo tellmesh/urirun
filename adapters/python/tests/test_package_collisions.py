@@ -34,6 +34,7 @@ _KNOWN_COLLISIONS: dict[str, tuple[str, str]] = {
     "urirun_runtime": ("urirun", "urirun-runtime"),
     "urirun_cdp": ("urirun", "urirun-cdp"),
     "urirun_connectors_toolkit": ("urirun", "urirun-connectors-toolkit"),
+    "urirun_flow": ("urirun", "urirun-flow"),
 }
 
 # ── Authoritative source paths (adapters/python takes priority via sys.path) ──
