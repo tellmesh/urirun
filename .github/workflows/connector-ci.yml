@@ -44,6 +44,12 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
       - if: inputs.lang == 'python'
+        env:
+          # Contract gate ON in CI: runs the conformance tests that are skipif(not URIRUN_CONTRACT_CHECK)
+          # and makes enforce() validate handler output at runtime. A gate that defaults off is a green
+          # shim that silently lies. (The richer 7-gate ci/contract_ci.sh, which also needs node+go for
+          # the polyglot checks, stays a dedicated `make contract-ci` target.)
+          URIRUN_CONTRACT_CHECK: '1'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[test]"
