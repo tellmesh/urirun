@@ -126,6 +126,33 @@ def resolve_http_method_and_url(node: dict, api: dict, payload: dict) -> tuple[s
 
 # ─── HTTP execution ───────────────────────────────────────────────────────────
 
+def _with_remediation(env: dict, *, uri: str = "") -> dict:
+    """Attach a structured ``RemediationClass`` to a failed configured-API envelope.
+
+    Configured-API failures previously carried only a bare ``error``/``status``; routing them
+    through the shared ``node_dispatch.classify_error`` taxonomy gives dashboard/chat the SAME
+    next-steps (install command, auth enroll, offline hint) they get from host→node dispatch.
+    Success envelopes pass through untouched. Lazy import keeps node_api importable standalone.
+    """
+    if env.get("ok") or env.get("remediation"):
+        return env
+    from urirun.host.node_dispatch import classify_error  # noqa: PLC0415 - avoid import cycle
+
+    raw = env.get("error")
+    err: dict = dict(raw) if isinstance(raw, dict) else ({"message": str(raw)} if raw else {})
+    if env.get("status") is not None:
+        err.setdefault("message", f"HTTP {env['status']}")
+        err.setdefault("code", str(env["status"]))
+    hint = env.get("connectorHint")
+    if isinstance(hint, dict):  # connector_hint() returns {scheme, package, installCommand, ...}
+        err.setdefault("installCommand", hint.get("installCommand"))
+        err.setdefault("connectorHint", hint.get("scheme") or hint.get("package"))
+    elif hint:
+        err.setdefault("connectorHint", str(hint))
+    env["remediation"] = classify_error(err, node=str(env.get("node") or ""), uri=uri).to_dict()
+    return env
+
+
 def execute_http_request(node: dict, api: dict, method: str, url: str,
                          raw_body: bytes | None, headers: dict, timeout: float) -> dict:
     request = urllib.request.Request(url, data=raw_body, headers=headers, method=method)
@@ -146,7 +173,7 @@ def execute_http_request(node: dict, api: dict, method: str, url: str,
     except urllib.error.HTTPError as exc:
         raw = exc.read()
         content_type = exc.headers.get("Content-Type", "") if exc.headers else ""
-        return {
+        return _with_remediation({
             "ok": False,
             "node": node.get("name"),
             "apiId": api.get("id"),
@@ -155,7 +182,28 @@ def execute_http_request(node: dict, api: dict, method: str, url: str,
             "status": int(exc.code),
             "contentType": content_type,
             "data": configured_api_response_body(raw, content_type),
-        }
+        })
+    except urllib.error.URLError as exc:
+        # Connection refused / DNS / timeout — previously propagated uncaught and crashed the
+        # caller (uri_invoke). Return a classified envelope instead so the API is treated like
+        # any unreachable host→node target.
+        return _with_remediation({
+            "ok": False,
+            "node": node.get("name"),
+            "apiId": api.get("id"),
+            "method": method,
+            "url": url,
+            "error": {"type": "URLError", "message": str(getattr(exc, "reason", exc))},
+        })
+    except Exception as exc:  # noqa: BLE001 - never let a configured-API call throw past here
+        return _with_remediation({
+            "ok": False,
+            "node": node.get("name"),
+            "apiId": api.get("id"),
+            "method": method,
+            "url": url,
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+        })
 
 
 # ─── connector hint / connector_required ─────────────────────────────────────
@@ -177,7 +225,7 @@ def connector_hint(scheme: str) -> dict:
 
 
 def connector_required_response(scheme: str, node_name: str, safe_api: dict) -> dict:
-    return {
+    return _with_remediation({
         "ok": False,
         "error": "connector_required",
         "message": f"{scheme}:// execution needs a dedicated connector; configured API metadata is available",
@@ -185,7 +233,7 @@ def connector_required_response(scheme: str, node_name: str, safe_api: dict) -> 
         "node": node_name,
         "api": safe_api,
         "connectorHint": connector_hint(scheme),
-    }
+    }, uri=f"{scheme}://{node_name}")
 
 
 # ─── main entry point ─────────────────────────────────────────────────────────
@@ -193,19 +241,20 @@ def connector_required_response(scheme: str, node_name: str, safe_api: dict) -> 
 def configured_api_call(node: dict, api: dict, payload: dict) -> dict:
     api_kind = str(api.get("kind") or "").strip().lower()
     if api_kind not in {"http", "https", "rest", "openapi", "web", "panel"}:
-        return {
+        return _with_remediation({
             "ok": False,
+            "node": node.get("name"),
             "error": "connector_required",
             "message": f"{api_kind or 'unknown'} interfaces require a dedicated connector/service",
             "api": {k: v for k, v in api.items() if k != "auth"},
             "connectorHint": connector_hint(api_kind),
-        }
+        })
     method, url, method_error = resolve_http_method_and_url(node, api, payload)
     if method_error:
-        return {"ok": False, "error": method_error}
+        return _with_remediation({"ok": False, "node": node.get("name"), "error": method_error})
     headers, auth_error = configured_api_headers(api, payload)
     if auth_error:
-        return {"ok": False, "error": auth_error}
+        return _with_remediation({"ok": False, "node": node.get("name"), "error": auth_error})
     raw_body = build_request_body(payload, headers)
     timeout = float(payload.get("timeout") or 20)
     return execute_http_request(node, api, method, url, raw_body, headers, timeout)
