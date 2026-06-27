@@ -1221,6 +1221,11 @@ def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
                or (twin_memory.known_good("host") or {}).get("fingerprint") or "")
     _recalled = _iproc("twin://host/flow/query/recall",
                        {"prompt": prompt, "env_fp": _env_fp, "node": _node})
+    # inprocess_fallback wraps the handler return in an {ok, result, error} envelope; the recall
+    # fields (found/steps/source/episode_id) live INSIDE `result`, so unwrap before reading them —
+    # reading them at the top level is why the gate missed even on a real episode hit.
+    if isinstance(_recalled, dict) and isinstance(_recalled.get("result"), dict):
+        _recalled = _recalled["result"]
     if not (isinstance(_recalled, dict) and _recalled.get("ok") and _recalled.get("found")):
         return None, None
     _rec_steps = _recalled.get("steps") or []
@@ -1289,8 +1294,13 @@ def _chat_ask_general(
                 discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
                 capability_gap = screen_document_capability_gap(prompt, discovered, selected_nodes, selected_targets)
         if capability_gap:
-            return _chat_ask_general_capability_gap(
-                db, prompt, execute, selected_nodes, selected_targets, discovered, capability_gap, deps)
+            # A known-good Episode for this intent is itself proof the capability is reachable (it
+            # ran successfully before), so prefer replaying it over escalating the gap to the user.
+            # Only when execute is on and recall has no episode do we surface the capability gap.
+            from urirun.node.twin_store import durable_memory as _dm_gap  # noqa: PLC0415
+            if (not execute) or _try_recall_gate(_dm_gap(), selected_nodes, prompt)[0] is None:
+                return _chat_ask_general_capability_gap(
+                    db, prompt, execute, selected_nodes, selected_targets, discovered, capability_gap, deps)
         registry = mesh.registry_from_routes(discovered.get("routes") or [])
         offline_fail = _chat_ask_general_check_offline(
             selected_nodes, discovered, db, prompt, execute, selected_targets, deps)
@@ -1324,10 +1334,7 @@ def _chat_ask_general(
         _recall = _suggest_recall_for_memory(flow, twin_memory)
         _run_mode = "execute" if execute else "dry-run"
         _dispatch = make_local_dispatch_uri(registry, _run_mode)
-        # Filter serviceMap to only route to the selected targets — prevents kvm://host/...
-        # from being silently forwarded to a remote node that happens to serve the same route.
-        _exec_mesh = _filter_mesh_for_targets(discovered, selected_targets)
-        execution = mesh.execute_flow(flow, _exec_mesh, registry, execute=execute, memory=twin_memory,
+        execution = mesh.execute_flow(flow, discovered, registry, execute=execute, memory=twin_memory,
                                       dispatch_uri=_dispatch)
     finally:
         _restore_run_credentials(old_token, old_identity)
