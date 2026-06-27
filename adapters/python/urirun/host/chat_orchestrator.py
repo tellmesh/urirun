@@ -726,6 +726,47 @@ def _general_path_complete(
                                generator, flow, result, attachments, content, steps_all_ok, deps)
 
 
+def _try_auto_ensure_screen_capture(
+    discovered: dict,
+    selected_nodes: list[str],
+    selected_targets: list[str],
+    token: str | None,
+    identity: str | None,
+) -> bool:
+    """Auto-deploy kvm connector to remote nodes that lack a screen-capture route.
+
+    Called when screen_document_capability_gap fires; if SSH credentials are available and
+    the node is reachable, deploys kvm automatically and returns True so the caller can
+    re-discover and retry.  Silent on failure — the caller falls back to showing the gap."""
+    from .fs_transfer import ensure_node_uri_routes as _ensure, node_client as _mk_client  # noqa: PLC0415
+    eff_id = identity or os.environ.get("URIRUN_RUN_IDENTITY")
+    eff_tok = token or os.environ.get("URIRUN_RUN_TOKEN")
+    if not eff_id and not eff_tok:
+        return False
+    target_names: set[str] = {t.removeprefix("node:") for t in selected_targets if t.startswith("node:")}
+    target_names.update(selected_nodes)
+    target_names.discard("host")
+    if not target_names:
+        return False
+    fixed = False
+    for node in (discovered.get("nodes") or []):
+        name = str(node.get("name") or "")
+        url = str(node.get("url") or "")
+        if name not in target_names or not url:
+            continue
+        try:
+            r = _ensure(
+                url, ["kvm://host/screen/query/capture"],
+                node=name, node_client=_mk_client,
+                token=eff_tok, identity=eff_id,
+            )
+            if r.get("ok"):
+                fixed = True
+        except Exception:  # noqa: BLE001
+            pass
+    return fixed
+
+
 def _chat_ask_general_capability_gap(
     db: str | None,
     prompt: str,
@@ -1144,6 +1185,11 @@ def _chat_ask_general(
     try:
         discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
         capability_gap = screen_document_capability_gap(prompt, discovered, selected_nodes, selected_targets)
+        if capability_gap:
+            # Auto-ensure: if we have SSH credentials, deploy the missing connector and retry once.
+            if _try_auto_ensure_screen_capture(discovered, selected_nodes, selected_targets, token, identity):
+                discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
+                capability_gap = screen_document_capability_gap(prompt, discovered, selected_nodes, selected_targets)
         if capability_gap:
             return _chat_ask_general_capability_gap(
                 db, prompt, execute, selected_nodes, selected_targets, discovered, capability_gap, deps)
