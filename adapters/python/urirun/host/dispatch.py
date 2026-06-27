@@ -153,16 +153,45 @@ def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
     return _env_to_result(uri, env)
 
 
-def make_local_dispatch_uri(registry: dict, run_mode: str, fallback=None):
-    """Return a mesh-first dispatch callable with in-process fallback.
+def _local_scheme_installed(uri: str) -> bool:
+    """Return True when the URI's scheme has an installed connector in this Python env."""
+    try:
+        scheme = uri.split("://")[0] if "://" in uri else ""
+        if not scheme:
+            return False
+        import importlib.metadata as _meta
+        return any(
+            scheme in str(ep).lower()
+            for ep in _meta.entry_points(group=_INPROCESS_BINDINGS_GROUP)
+        )
+    except Exception:  # noqa: BLE001
+        return False
 
-    Tier 1 — mesh via v2_service.call (served nodes in *registry*).
-    Tier 2 — *fallback* or ``inprocess_fallback`` (installed connectors:
-    diag://, fix://, twin://, widget://, artifact://, ...).
+
+def make_local_dispatch_uri(registry: dict, run_mode: str, fallback=None, local_first: bool = False):
+    """Return a dispatch callable with in-process fallback.
+
+    *local_first=True* (used when selectedTargets==["host"]):
+      Tier 1 — in-process (installed connector) for locally-available schemes.
+      Tier 2 — mesh via v2_service.call (covers remote-only routes).
+      The in-process path short-circuits the serviceMap, so a scheme installed
+      locally is never accidentally routed to a remote mesh node even if that node
+      advertises the same URI (e.g. kvm://host/... on lenovo when user wants local).
+
+    *local_first=False* (default — mesh-first, original behaviour):
+      Tier 1 — mesh.
+      Tier 2 — *fallback* or ``inprocess_fallback`` on NOT_FOUND/registry errors.
 
     Accepts an optional *fallback* override so callers can inject test stubs."""
     from urirun.runtime import v2_service as _v2
-    return _v2.make_dispatch(
-        registry, run_mode,
-        fallback=fallback if fallback is not None else inprocess_fallback,
-    )
+    _fallback = fallback if fallback is not None else inprocess_fallback
+    if local_first:
+        _mesh = _v2.make_dispatch(registry, run_mode, fallback=_fallback)
+        def _local_first_dispatch(uri: str, payload: dict | None = None) -> "dict | None":
+            if _local_scheme_installed(uri):
+                result = _fallback(uri, payload or {})
+                if result is not None:
+                    return result
+            return _mesh(uri, payload)
+        return _local_first_dispatch
+    return _v2.make_dispatch(registry, run_mode, fallback=_fallback)
