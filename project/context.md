@@ -7,7 +7,7 @@
 - **Primary Language**: python
 - **Languages**: python: 185, json: 13, shell: 11, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1930
+- **Total Functions**: 1935
 - **Total Classes**: 62
 - **Modules**: 246
 - **Entry Points**: 705
@@ -383,6 +383,11 @@ server (e.g. ``node se
 - **Methods**: 4
 - **Key Methods**: adapters.ts.urirun.Connector.command, adapters.ts.urirun.Connector.document, adapters.ts.urirun.Connector.toJSON, adapters.ts.urirun.Connector.connector
 
+### adapters.python.urirun_flow.Step
+- **Methods**: 4
+- **Key Methods**: adapters.python.urirun_flow.Step._check_uri, adapters.python.urirun_flow.Step._check_catch, adapters.python.urirun_flow.Step._derive_kind, adapters.python.urirun_flow.Step.ref
+- **Inherits**: BaseModel
+
 ### adapters.python.urirun_runtime.progress.RunControl
 > Live control for one in-flight run: a progress sink, a cancel flag, and the set of
 child processes t
@@ -392,11 +397,6 @@ child processes t
 ### adapters.ruby.urirun.Connector
 - **Methods**: 4
 - **Key Methods**: adapters.ruby.urirun.Connector.initialize, adapters.ruby.urirun.Connector.command, adapters.ruby.urirun.Connector.bindings, adapters.ruby.urirun.Connector.bindings_json
-
-### adapters.python.urirun_flow.Step
-- **Methods**: 4
-- **Key Methods**: adapters.python.urirun_flow.Step._check_uri, adapters.python.urirun_flow.Step._check_catch, adapters.python.urirun_flow.Step._derive_kind, adapters.python.urirun_flow.Step.ref
-- **Inherits**: BaseModel
 
 ### adapters.python.urirun_twin.reversible.Connector
 > The ADOPTION CONTRACT. A connector enters the engine by providing these three.
@@ -485,9 +485,8 @@ concurrency (If-Registry-
 ### adapters.python.urirun.node.diagnostics._decode_error_ctx
 - **Output to**: None.casefold, str, str, str, None.get
 
-### adapters.python.urirun.node.flow_planner._validate_step_payload
-> Raise ValueError when routes include an inputSchema that payload doesn't satisfy.
-- **Output to**: next, jsonschema.validate, route.get, ValueError, r.get
+### adapters.python.urirun_flow.Flow._validate
+- **Output to**: model_validator, self._validate_graph
 
 ## Behavioral Patterns
 
@@ -597,7 +596,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
-- `adapters.python.urirun_flow.run.run_flow` - 24 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
@@ -610,6 +608,7 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
+- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 21 calls
 
 ## System Interactions
 

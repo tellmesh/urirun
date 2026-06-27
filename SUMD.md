@@ -329,7 +329,7 @@ Language-agnostic URI to handler adapter
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# urirun | 375f 71598L | python:352,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
+# urirun | 375f 71587L | python:352,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
 # stats: 2857 func | 166 cls | 375 mod | CC̄=4.3 | critical:238 | cycles:0
 # alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC _top_level_packages=19
 # hotspots[5]: summary fan=29; serve fan=28; _chat_ask_general fan=23; main fan=23; main fan=20
@@ -413,7 +413,7 @@ M[375]:
   adapters/python/tests/test_node_types.py,197
   adapters/python/tests/test_object_registry.py,119
   adapters/python/tests/test_orchestrator_helpers.py,126
-  adapters/python/tests/test_package_collisions.py,187
+  adapters/python/tests/test_package_collisions.py,188
   adapters/python/tests/test_param_routing.py,59
   adapters/python/tests/test_paths.py,42
   adapters/python/tests/test_planfile_adapter.py,347
@@ -491,7 +491,7 @@ M[375]:
   adapters/python/urirun/host/android_node.py,163
   adapters/python/urirun/host/artifacts_admin.py,5
   adapters/python/urirun/host/capability.py,161
-  adapters/python/urirun/host/chat_orchestrator.py,1401
+  adapters/python/urirun/host/chat_orchestrator.py,1406
   adapters/python/urirun/host/connector_admin.py,241
   adapters/python/urirun/host/contracts.py,120
   adapters/python/urirun/host/dashboard_api.py,289
@@ -689,7 +689,7 @@ M[375]:
   scripts/release-bump.sh,30
   scripts/repin_connectors.py,177
   scripts/sync-versions.sh,26
-  scripts/test_pypi_install.sh,282
+  scripts/test_pypi_install.sh,265
   scripts/transport_swap_proof.py,119
   security/mesh-probe/probe.py,115
   test/urirun.test.js,11
@@ -4328,7 +4328,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.186', 'javascript').
+project_metadata('urirun', '0.4.187', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -4408,7 +4408,7 @@ project_file('adapters/python/tests/test_node_extracted.py', 333, 'python').
 project_file('adapters/python/tests/test_node_types.py', 197, 'python').
 project_file('adapters/python/tests/test_object_registry.py', 119, 'python').
 project_file('adapters/python/tests/test_orchestrator_helpers.py', 126, 'python').
-project_file('adapters/python/tests/test_package_collisions.py', 187, 'python').
+project_file('adapters/python/tests/test_package_collisions.py', 188, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_paths.py', 42, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 347, 'python').
@@ -4486,7 +4486,7 @@ project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/android_node.py', 163, 'python').
 project_file('adapters/python/urirun/host/artifacts_admin.py', 5, 'python').
 project_file('adapters/python/urirun/host/capability.py', 161, 'python').
-project_file('adapters/python/urirun/host/chat_orchestrator.py', 1401, 'python').
+project_file('adapters/python/urirun/host/chat_orchestrator.py', 1406, 'python').
 project_file('adapters/python/urirun/host/connector_admin.py', 241, 'python').
 project_file('adapters/python/urirun/host/contracts.py', 120, 'python').
 project_file('adapters/python/urirun/host/dashboard_api.py', 289, 'python').
@@ -4684,7 +4684,7 @@ project_file('scripts/lint_connectors.py', 141, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 177, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
-project_file('scripts/test_pypi_install.sh', 282, 'shell').
+project_file('scripts/test_pypi_install.sh', 265, 'shell').
 project_file('scripts/transport_swap_proof.py', 119, 'python').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
@@ -5831,7 +5831,7 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_register_s
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_emit_general_chat_message', 12, 8, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_general_path_complete', 10, 11, 9).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_collect_target_names', 2, 3, 4).
-python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_ensure_kvm_for_node', 5, 6, 5).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_ensure_kvm_for_node', 5, 7, 5).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_auto_ensure_screen_capture', 5, 6, 4).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_capability_gap', 8, 7, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_apply_run_credentials', 2, 3, 3).
@@ -8718,7 +8718,7 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 
 ## Call Graph
 
-*477 nodes · 500 edges · 54 modules · CC̄=4.6*
+*478 nodes · 500 edges · 56 modules · CC̄=4.6*
 
 ### Hubs (by degree)
 
@@ -8729,14 +8729,14 @@ sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/pytho
 | `print_report` *(in scripts.extraction_audit)* | 12 ⚠ | 1 | 36 | **37** |
 | `normalize_error` *(in adapters.python.urirun_flow.recovery)* | 10 ⚠ | 2 | 30 | **32** |
 | `_stream_events` *(in adapters.python.urirun_node.server.NodeHandler)* | 14 ⚠ | 0 | 31 | **31** |
-| `_handle_deploy` *(in adapters.python.urirun_node.server.NodeHandler)* | 11 ⚠ | 0 | 29 | **29** |
 | `main` *(in scripts.transport_swap_proof)* | 5 | 0 | 29 | **29** |
+| `_handle_deploy` *(in adapters.python.urirun_node.server.NodeHandler)* | 11 ⚠ | 0 | 29 | **29** |
 | `verify_connector` *(in adapters.python.urirun.connectors.connector_lint)* | 6 | 1 | 27 | **28** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
 # generated in 0.23s
-# nodes: 477 | edges: 500 | modules: 54
+# nodes: 478 | edges: 500 | modules: 56
 # CC̄=4.6
 
 HUBS[20]:
@@ -8750,36 +8750,36 @@ HUBS[20]:
     CC=10  in:2  out:30  total:32
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  adapters.python.urirun_node.server.NodeHandler._handle_deploy
-    CC=11  in:0  out:29  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
+  adapters.python.urirun_node.server.NodeHandler._handle_deploy
+    CC=11  in:0  out:29  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun_node.server.NodeHandler._handle_run
-    CC=14  in:0  out:27  total:27
-  adapters.python.urirun_node.server.apply_deploy
-    CC=12  in:2  out:25  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.node.flow_planner._append_target_steps
     CC=14  in:1  out:26  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun_node.server.apply_deploy
+    CC=12  in:2  out:25  total:27
   adapters.python.urirun_runtime.v2.validate_binding_document
     CC=12  in:3  out:24  total:27
+  adapters.python.urirun_node.server.NodeHandler._handle_run
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.connectors.connect_catalog._cmd_show
     CC=9  in:0  out:25  total:25
-  adapters.python.urirun.node.flow_thin._thin_dispatch_step
-    CC=14  in:1  out:23  total:24
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
+  adapters.python.urirun.node.flow_thin._thin_dispatch_step
+    CC=14  in:1  out:23  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
-  adapters.python.urirun.node.routing.route_target
-    CC=1  in:21  out:1  total:22
   adapters.python.urirun_node.server.NodeHandler._handle_enroll
     CC=11  in:0  out:22  total:22
+  adapters.python.urirun_node.server._serve_opts_merged
+    CC=14  in:1  out:21  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -8890,17 +8890,17 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.flow_planner  [14 funcs]
+  adapters.python.urirun.node.flow_planner  [12 funcs]
     _append_target_steps  CC=14  out:26
     _flow_intents  CC=6  out:3
     _flow_intents_llm  CC=6  out:8
-    _normalize_flow_step  CC=7  out:16
     _unique_step_id  CC=3  out:4
     _uri_is_available  CC=4  out:2
     _uri_matches_template  CC=6  out:8
     _uri_segments  CC=1  out:3
-    _validate_step_payload  CC=7  out:5
     append_if_available  CC=5  out:6
+    first_url  CC=2  out:2
+    heuristic_flow  CC=13  out:17
   adapters.python.urirun.node.flow_thin  [24 funcs]
     _action_error  CC=2  out:3
     _action_ok  CC=3  out:4
@@ -9008,6 +9008,11 @@ MODULES:
     index_local  CC=12  out:22
     resolve  CC=12  out:24
     resolve_command  CC=6  out:14
+  adapters.python.urirun_flow  [1 funcs]
+    order  CC=3  out:6
+  adapters.python.urirun_flow.cli  [2 funcs]
+    _load_flow  CC=3  out:8
+    _load_python_flow  CC=4  out:6
   adapters.python.urirun_flow.flow  [2 funcs]
     _flow_transport  CC=1  out:8
     execute_flow  CC=3  out:9

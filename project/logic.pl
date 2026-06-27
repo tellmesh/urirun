@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.186', 'javascript').
+project_metadata('urirun', '0.4.187', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -79,7 +79,7 @@ project_file('adapters/python/tests/test_node_extracted.py', 333, 'python').
 project_file('adapters/python/tests/test_node_types.py', 197, 'python').
 project_file('adapters/python/tests/test_object_registry.py', 119, 'python').
 project_file('adapters/python/tests/test_orchestrator_helpers.py', 126, 'python').
-project_file('adapters/python/tests/test_package_collisions.py', 187, 'python').
+project_file('adapters/python/tests/test_package_collisions.py', 188, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_paths.py', 42, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 347, 'python').
@@ -157,7 +157,7 @@ project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/android_node.py', 163, 'python').
 project_file('adapters/python/urirun/host/artifacts_admin.py', 5, 'python').
 project_file('adapters/python/urirun/host/capability.py', 161, 'python').
-project_file('adapters/python/urirun/host/chat_orchestrator.py', 1401, 'python').
+project_file('adapters/python/urirun/host/chat_orchestrator.py', 1406, 'python').
 project_file('adapters/python/urirun/host/connector_admin.py', 241, 'python').
 project_file('adapters/python/urirun/host/contracts.py', 120, 'python').
 project_file('adapters/python/urirun/host/dashboard_api.py', 289, 'python').
@@ -355,7 +355,7 @@ project_file('scripts/lint_connectors.py', 141, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 177, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
-project_file('scripts/test_pypi_install.sh', 282, 'shell').
+project_file('scripts/test_pypi_install.sh', 265, 'shell').
 project_file('scripts/transport_swap_proof.py', 119, 'python').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
@@ -1502,7 +1502,7 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_register_s
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_emit_general_chat_message', 12, 8, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_general_path_complete', 10, 11, 9).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_collect_target_names', 2, 3, 4).
-python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_ensure_kvm_for_node', 5, 6, 5).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_ensure_kvm_for_node', 5, 7, 5).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_auto_ensure_screen_capture', 5, 6, 4).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_capability_gap', 8, 7, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_apply_run_credentials', 2, 3, 3).
@@ -1959,7 +1959,8 @@ python_function('adapters/python/urirun/host/routing.py', '_connector_hint_for_n
 python_function('adapters/python/urirun/host/routing.py', 'selected_nodes_from_targets', 2, 8, 7).
 python_function('adapters/python/urirun/host/routing.py', 'route_in_selected_targets', 3, 14, 7).
 python_function('adapters/python/urirun/host/routing.py', 'has_screen_capture_route', 3, 8, 5).
-python_function('adapters/python/urirun/host/routing.py', 'screen_document_capability_gap', 4, 13, 9).
+python_function('adapters/python/urirun/host/routing.py', '_offline_selected_nodes', 2, 5, 2).
+python_function('adapters/python/urirun/host/routing.py', 'screen_document_capability_gap', 4, 14, 10).
 python_function('adapters/python/urirun/host/scheduler.py', 'build_loop_command', 0, 4, 3).
 python_function('adapters/python/urirun/host/scheduler.py', 'shell_join', 1, 2, 2).
 python_function('adapters/python/urirun/host/scheduler.py', 'systemd_units', 0, 2, 1).

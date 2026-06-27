@@ -6,7 +6,7 @@ SUMMARY:
   dup_groups:    9
   dup_fragments: 21
   saved_lines:   90
-  scan_ms:       489
+  scan_ms:       428
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=40L  groups=3  frags=6  (0.2%)

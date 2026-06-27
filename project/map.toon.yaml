@@ -1,4 +1,4 @@
-# urirun | 375f 71598L | python:352,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
+# urirun | 375f 71587L | python:352,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
 # stats: 2857 func | 166 cls | 375 mod | CC̄=4.3 | critical:238 | cycles:0
 # alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC _top_level_packages=19
 # hotspots[5]: summary fan=29; serve fan=28; _chat_ask_general fan=23; main fan=23; main fan=20
@@ -82,7 +82,7 @@ M[375]:
   adapters/python/tests/test_node_types.py,197
   adapters/python/tests/test_object_registry.py,119
   adapters/python/tests/test_orchestrator_helpers.py,126
-  adapters/python/tests/test_package_collisions.py,187
+  adapters/python/tests/test_package_collisions.py,188
   adapters/python/tests/test_param_routing.py,59
   adapters/python/tests/test_paths.py,42
   adapters/python/tests/test_planfile_adapter.py,347
@@ -160,7 +160,7 @@ M[375]:
   adapters/python/urirun/host/android_node.py,163
   adapters/python/urirun/host/artifacts_admin.py,5
   adapters/python/urirun/host/capability.py,161
-  adapters/python/urirun/host/chat_orchestrator.py,1401
+  adapters/python/urirun/host/chat_orchestrator.py,1406
   adapters/python/urirun/host/connector_admin.py,241
   adapters/python/urirun/host/contracts.py,120
   adapters/python/urirun/host/dashboard_api.py,289
@@ -358,7 +358,7 @@ M[375]:
   scripts/release-bump.sh,30
   scripts/repin_connectors.py,177
   scripts/sync-versions.sh,26
-  scripts/test_pypi_install.sh,282
+  scripts/test_pypi_install.sh,265
   scripts/transport_swap_proof.py,119
   security/mesh-probe/probe.py,115
   test/urirun.test.js,11

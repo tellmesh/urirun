@@ -1,4 +1,4 @@
-# urirun | 1930 func | 128f | 39975L | python | 2026-06-27
+# urirun | 1935 func | 128f | 40036L | python | 2026-06-27
 # generated in 0.00s
 
 HEALTH:
@@ -12,8 +12,8 @@ ALERTS[20]:
   !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
   !!! high_fan_out     NodeHandler._handle_run = 24 (limit:10)
-  !!! high_fan_out     _chat_ask_general = 24 (limit:10)
   !!! high_fan_out     main = 24 (limit:10)
+  !!! high_fan_out     _chat_ask_general = 24 (limit:10)
   !!! high_fan_out     _add_host_task_subparser = 23 (limit:10)
 
 MODULES[247] (top by size):
@@ -49,4 +49,4 @@ REFACTOR[15]:
   [5] H/H Split god module adapters/python/urirun_node/server.py (996L, 3 classes)
 
 EVOLUTION:
-  2026-06-27 CC̄=4.6 crit=225 39975L // Automated analysis
+  2026-06-27 CC̄=4.6 crit=225 40036L // Automated analysis

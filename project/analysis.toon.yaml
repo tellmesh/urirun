@@ -1,12 +1,10 @@
-# code2llm | 247f 39975L | python:185,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
-# generated in 0.11s
-# CC̅=4.6 | critical:1/1930 | dups:0 | cycles:0
+# code2llm | 247f 40036L | python:185,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
+# generated in 0.10s
+# CC̅=4.6 | critical:0/1935 | dups:0 | cycles:0
 
-HEALTH[1]:
-  🟡 CC    run_flow CC=23 (limit:15)
+HEALTH[0]: ok
 
-REFACTOR[1]:
-  1. split 1 high-CC methods  (CC>15)
+REFACTOR[0]: none needed
 
 PIPELINES[645]:
   [1] Src [http]: http
@@ -113,7 +111,7 @@ PIPELINES[645]:
 LAYERS:
   scripts/                        CC̄=5.2    ←in:158  →out:1
   │ extraction_audit           423L  2C   12m  CC=12     ←0
-  │ test_pypi_install.sh       223L  0C    2m  CC=0.0    ←34
+  │ test_pypi_install.sh       264L  0C    2m  CC=0.0    ←34
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
   │ transport_swap_proof       118L  0C    5m  CC=6      ←0
@@ -160,10 +158,10 @@ LAYERS:
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
   │ connector_admin            240L  0C    9m  CC=14     ←1
+  │ run                        236L  0C   12m  CC=14     ←1
   │ config                     226L  0C   17m  CC=9      ←3
   │ node_health                224L  0C    9m  CC=13     ←0
   │ __init__                   216L  3C   12m  CC=13     ←0
-  │ !! run                        216L  0C    7m  CC=23     ←1
   │ node_api                   211L  0C   11m  CC=13     ←0
   │ v2_grpc                    207L  0C   11m  CC=9      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
@@ -388,9 +386,9 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                            ──                     
   security.mesh-probe                                         1                                                                                                                            ──
   CYCLES: none
-  HUB: scripts/ (fan-in=158)
-  HUB: adapters/ (fan-in=18)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=18)
+  HUB: scripts/ (fan-in=158)
   SMELL: examples.matrix/ fan-out=8 → split needed
   SMELL: adapters.python/ fan-out=165 → split needed
   SMELL: adapters/ fan-out=11 → split needed

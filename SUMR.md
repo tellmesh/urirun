@@ -226,7 +226,7 @@ environment[name="local"] {
 
 ## Call Graph
 
-*477 nodes · 500 edges · 54 modules · CC̄=4.6*
+*478 nodes · 500 edges · 56 modules · CC̄=4.6*
 
 ### Hubs (by degree)
 
@@ -237,14 +237,14 @@ environment[name="local"] {
 | `print_report` *(in scripts.extraction_audit)* | 12 ⚠ | 1 | 36 | **37** |
 | `normalize_error` *(in adapters.python.urirun_flow.recovery)* | 10 ⚠ | 2 | 30 | **32** |
 | `_stream_events` *(in adapters.python.urirun_node.server.NodeHandler)* | 14 ⚠ | 0 | 31 | **31** |
-| `_handle_deploy` *(in adapters.python.urirun_node.server.NodeHandler)* | 11 ⚠ | 0 | 29 | **29** |
 | `main` *(in scripts.transport_swap_proof)* | 5 | 0 | 29 | **29** |
+| `_handle_deploy` *(in adapters.python.urirun_node.server.NodeHandler)* | 11 ⚠ | 0 | 29 | **29** |
 | `verify_connector` *(in adapters.python.urirun.connectors.connector_lint)* | 6 | 1 | 27 | **28** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
 # generated in 0.23s
-# nodes: 477 | edges: 500 | modules: 54
+# nodes: 478 | edges: 500 | modules: 56
 # CC̄=4.6
 
 HUBS[20]:
@@ -258,36 +258,36 @@ HUBS[20]:
     CC=10  in:2  out:30  total:32
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  adapters.python.urirun_node.server.NodeHandler._handle_deploy
-    CC=11  in:0  out:29  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
+  adapters.python.urirun_node.server.NodeHandler._handle_deploy
+    CC=11  in:0  out:29  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun_node.server.NodeHandler._handle_run
-    CC=14  in:0  out:27  total:27
-  adapters.python.urirun_node.server.apply_deploy
-    CC=12  in:2  out:25  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.node.flow_planner._append_target_steps
     CC=14  in:1  out:26  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun_node.server.apply_deploy
+    CC=12  in:2  out:25  total:27
   adapters.python.urirun_runtime.v2.validate_binding_document
     CC=12  in:3  out:24  total:27
+  adapters.python.urirun_node.server.NodeHandler._handle_run
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.connectors.connect_catalog._cmd_show
     CC=9  in:0  out:25  total:25
-  adapters.python.urirun.node.flow_thin._thin_dispatch_step
-    CC=14  in:1  out:23  total:24
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
+  adapters.python.urirun.node.flow_thin._thin_dispatch_step
+    CC=14  in:1  out:23  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
-  adapters.python.urirun.node.routing.route_target
-    CC=1  in:21  out:1  total:22
   adapters.python.urirun_node.server.NodeHandler._handle_enroll
     CC=11  in:0  out:22  total:22
+  adapters.python.urirun_node.server._serve_opts_merged
+    CC=14  in:1  out:21  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -398,17 +398,17 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.flow_planner  [14 funcs]
+  adapters.python.urirun.node.flow_planner  [12 funcs]
     _append_target_steps  CC=14  out:26
     _flow_intents  CC=6  out:3
     _flow_intents_llm  CC=6  out:8
-    _normalize_flow_step  CC=7  out:16
     _unique_step_id  CC=3  out:4
     _uri_is_available  CC=4  out:2
     _uri_matches_template  CC=6  out:8
     _uri_segments  CC=1  out:3
-    _validate_step_payload  CC=7  out:5
     append_if_available  CC=5  out:6
+    first_url  CC=2  out:2
+    heuristic_flow  CC=13  out:17
   adapters.python.urirun.node.flow_thin  [24 funcs]
     _action_error  CC=2  out:3
     _action_ok  CC=3  out:4
@@ -516,6 +516,11 @@ MODULES:
     index_local  CC=12  out:22
     resolve  CC=12  out:24
     resolve_command  CC=6  out:14
+  adapters.python.urirun_flow  [1 funcs]
+    order  CC=3  out:6
+  adapters.python.urirun_flow.cli  [2 funcs]
+    _load_flow  CC=3  out:8
+    _load_python_flow  CC=4  out:6
   adapters.python.urirun_flow.flow  [2 funcs]
     _flow_transport  CC=1  out:8
     execute_flow  CC=3  out:9
@@ -738,7 +743,7 @@ EDGES:
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
 # generated in 0.23s
-# nodes: 477 | edges: 500 | modules: 54
+# nodes: 478 | edges: 500 | modules: 56
 # CC̄=4.6
 
 HUBS[20]:
@@ -752,36 +757,36 @@ HUBS[20]:
     CC=10  in:2  out:30  total:32
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  adapters.python.urirun_node.server.NodeHandler._handle_deploy
-    CC=11  in:0  out:29  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
+  adapters.python.urirun_node.server.NodeHandler._handle_deploy
+    CC=11  in:0  out:29  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun_node.server.NodeHandler._handle_run
-    CC=14  in:0  out:27  total:27
-  adapters.python.urirun_node.server.apply_deploy
-    CC=12  in:2  out:25  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun.node.flow_planner._append_target_steps
     CC=14  in:1  out:26  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun_node.server.apply_deploy
+    CC=12  in:2  out:25  total:27
   adapters.python.urirun_runtime.v2.validate_binding_document
     CC=12  in:3  out:24  total:27
+  adapters.python.urirun_node.server.NodeHandler._handle_run
+    CC=14  in:0  out:27  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.connectors.connect_catalog._cmd_show
     CC=9  in:0  out:25  total:25
-  adapters.python.urirun.node.flow_thin._thin_dispatch_step
-    CC=14  in:1  out:23  total:24
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
+  adapters.python.urirun.node.flow_thin._thin_dispatch_step
+    CC=14  in:1  out:23  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
-  adapters.python.urirun.node.routing.route_target
-    CC=1  in:21  out:1  total:22
   adapters.python.urirun_node.server.NodeHandler._handle_enroll
     CC=11  in:0  out:22  total:22
+  adapters.python.urirun_node.server._serve_opts_merged
+    CC=14  in:1  out:21  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -892,17 +897,17 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.flow_planner  [14 funcs]
+  adapters.python.urirun.node.flow_planner  [12 funcs]
     _append_target_steps  CC=14  out:26
     _flow_intents  CC=6  out:3
     _flow_intents_llm  CC=6  out:8
-    _normalize_flow_step  CC=7  out:16
     _unique_step_id  CC=3  out:4
     _uri_is_available  CC=4  out:2
     _uri_matches_template  CC=6  out:8
     _uri_segments  CC=1  out:3
-    _validate_step_payload  CC=7  out:5
     append_if_available  CC=5  out:6
+    first_url  CC=2  out:2
+    heuristic_flow  CC=13  out:17
   adapters.python.urirun.node.flow_thin  [24 funcs]
     _action_error  CC=2  out:3
     _action_ok  CC=3  out:4
@@ -1010,6 +1015,11 @@ MODULES:
     index_local  CC=12  out:22
     resolve  CC=12  out:24
     resolve_command  CC=6  out:14
+  adapters.python.urirun_flow  [1 funcs]
+    order  CC=3  out:6
+  adapters.python.urirun_flow.cli  [2 funcs]
+    _load_flow  CC=3  out:8
+    _load_python_flow  CC=4  out:6
   adapters.python.urirun_flow.flow  [2 funcs]
     _flow_transport  CC=1  out:8
     execute_flow  CC=3  out:9
@@ -1218,15 +1228,13 @@ EDGES:
 ### Code Analysis (`project/analysis.toon.yaml`)
 
 ```toon markpact:analysis path=project/analysis.toon.yaml
-# code2llm | 247f 39975L | python:185,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
-# generated in 0.11s
-# CC̅=4.6 | critical:1/1930 | dups:0 | cycles:0
+# code2llm | 247f 40036L | python:185,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
+# generated in 0.10s
+# CC̅=4.6 | critical:0/1935 | dups:0 | cycles:0
 
-HEALTH[1]:
-  🟡 CC    run_flow CC=23 (limit:15)
+HEALTH[0]: ok
 
-REFACTOR[1]:
-  1. split 1 high-CC methods  (CC>15)
+REFACTOR[0]: none needed
 
 PIPELINES[645]:
   [1] Src [http]: http
@@ -1333,7 +1341,7 @@ PIPELINES[645]:
 LAYERS:
   scripts/                        CC̄=5.2    ←in:158  →out:1
   │ extraction_audit           423L  2C   12m  CC=12     ←0
-  │ test_pypi_install.sh       223L  0C    2m  CC=0.0    ←34
+  │ test_pypi_install.sh       264L  0C    2m  CC=0.0    ←34
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
   │ transport_swap_proof       118L  0C    5m  CC=6      ←0
@@ -1380,10 +1388,10 @@ LAYERS:
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
   │ connector_admin            240L  0C    9m  CC=14     ←1
+  │ run                        236L  0C   12m  CC=14     ←1
   │ config                     226L  0C   17m  CC=9      ←3
   │ node_health                224L  0C    9m  CC=13     ←0
   │ __init__                   216L  3C   12m  CC=13     ←0
-  │ !! run                        216L  0C    7m  CC=23     ←1
   │ node_api                   211L  0C   11m  CC=13     ←0
   │ v2_grpc                    207L  0C   11m  CC=9      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
@@ -1608,9 +1616,9 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                            ──                     
   security.mesh-probe                                         1                                                                                                                            ──
   CYCLES: none
-  HUB: scripts/ (fan-in=158)
-  HUB: adapters/ (fan-in=18)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=18)
+  HUB: scripts/ (fan-in=158)
   SMELL: examples.matrix/ fan-out=8 → split needed
   SMELL: adapters.python/ fan-out=165 → split needed
   SMELL: adapters/ fan-out=11 → split needed
@@ -1631,7 +1639,7 @@ SUMMARY:
   dup_groups:    9
   dup_fragments: 21
   saved_lines:   90
-  scan_ms:       489
+  scan_ms:       428
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=40L  groups=3  frags=6  (0.2%)
@@ -1736,10 +1744,10 @@ METRICS-TARGET:
 ### Evolution / Churn (`project/evolution.toon.yaml`)
 
 ```toon markpact:analysis path=project/evolution.toon.yaml
-# code2llm/evolution | 1884 func | 117f | 2026-06-27
+# code2llm/evolution | 1889 func | 117f | 2026-06-27
 # generated in 0.01s
 
-NEXT[4] (ranked by impact):
+NEXT[3] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/html_templates.py
       WHY: 4921L, 0 classes, max CC=6
       EFFORT: ~4h  IMPACT: 29526
@@ -1752,10 +1760,6 @@ NEXT[4] (ranked by impact):
       WHY: 1924L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 26936
 
-  [4] !  SPLIT-FUNC      run_flow  CC=23  fan=18
-      WHY: CC=23 exceeds 15
-      EFFORT: ~1h  IMPACT: 414
-
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/html_templates.py may break 3 import paths
@@ -1764,9 +1768,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.6 → ≤3.2
-  max-CC:      23 → ≤11
+  max-CC:      14 → ≤7
   god-modules: 19 → 0
-  high-CC(≥15): 1 → ≤0
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
