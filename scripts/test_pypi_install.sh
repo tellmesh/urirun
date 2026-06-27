@@ -1,16 +1,28 @@
 #!/usr/bin/env bash
-# Verify a fresh pip install of urirun==VERSION from PyPI delivers all 8 bundled
-# sub-namespaces, shims resolve correctly, node serve starts and serves /health,
-# and host_dashboard imports without urirun-connector-scanner installed.
+# Verify a fresh pip install of urirun delivers all 8 bundled sub-namespaces,
+# shims resolve correctly, node serve starts, and host_dashboard imports cleanly.
 #
-# Run AFTER make publish, not before (needs the version to be on PyPI).
+# Two modes:
+#   --local    Install from the local adapters/python directory (no PyPI needed).
+#              Run any time; does not require a published version.
+#   (default)  Install from PyPI == VERSION (root VERSION file). Run AFTER publish.
+#
 # Usage:
-#   scripts/test_pypi_install.sh              # uses root VERSION
-#   scripts/test_pypi_install.sh 0.4.183      # explicit version
+#   scripts/test_pypi_install.sh              # PyPI, uses root VERSION
+#   scripts/test_pypi_install.sh 0.4.183      # PyPI, explicit version
+#   scripts/test_pypi_install.sh --local      # local build, any time
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VERSION="${1:-$(cat "$ROOT/VERSION")}"
+LOCAL_MODE=0
+VERSION=""
+for arg in "$@"; do
+  case "$arg" in
+    --local) LOCAL_MODE=1 ;;
+    *)       VERSION="$arg" ;;
+  esac
+done
+[ -z "$VERSION" ] && VERSION="$(cat "$ROOT/VERSION")"
 VENV="/tmp/_urirun_pypi_gate"
 NODE_DIR="/tmp/_urirun_pypi_gate_node"
 
@@ -20,10 +32,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "==> test-published: pip install urirun==$VERSION (clean venv, no editable, no URIRUN_KERNEL_SRC)"
 rm -rf "$VENV" "$NODE_DIR"
 python3 -m venv "$VENV"
-"$VENV/bin/pip" install --quiet "urirun==$VERSION"
+if [ "$LOCAL_MODE" -eq 1 ]; then
+  echo "==> test-install: pip install urirun from local $ROOT/adapters/python (no PyPI)"
+  "$VENV/bin/pip" install --quiet "$ROOT/adapters/python"
+else
+  echo "==> test-published: pip install urirun==$VERSION (clean venv, no editable, no URIRUN_KERNEL_SRC)"
+  "$VENV/bin/pip" install --quiet "urirun==$VERSION"
+fi
 
 "$VENV/bin/python3" - "$VERSION" <<'PY'
 import importlib, sys

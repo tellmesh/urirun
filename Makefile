@@ -40,8 +40,12 @@ release-bump: ## Set every version file to V=X.Y.Z and open a CHANGELOG section 
 test-js: ## Run JavaScript adapter tests.
 	$(NODE) --test adapters/js/*.test.js
 
+.PHONY: heal
+heal: ## Auto-fix misplaced `from __future__` imports in package source (idempotent, safe, no-op when clean).
+	@$(PYTHON) adapters/python/scripts/heal_future_imports.py adapters/python
+
 .PHONY: test-python
-test-python: ## Run Python adapter tests.
+test-python: heal ## Run Python adapter tests.
 	PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s adapters/python/tests -p 'test_*.py'
 
 .PHONY: test-c
@@ -72,7 +76,7 @@ restart: restart-chat ## Restart the local chat dashboard service in the backgro
 restart-services: restart-chat restart-scanner ## Restart chat dashboard and phone scanner services in the background.
 
 .PHONY: restart-chat
-restart-chat: ## Restart urirun-service-chat on CHAT_PORT (default 8194).
+restart-chat: heal ## Restart urirun-service-chat on CHAT_PORT (default 8194).
 	@test -x "$(CHAT_SERVICE)" || { echo "missing $(CHAT_SERVICE); install urirun-service-chat in the venv"; exit 1; }
 	@mkdir -p "$(LOG_DIR)"
 	@nohup "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 &
@@ -82,7 +86,7 @@ restart-chat: ## Restart urirun-service-chat on CHAT_PORT (default 8194).
 	@echo "log:  $(LOG_DIR)/chat.log"
 
 .PHONY: restart-scanner
-restart-scanner: ## Restart urirun-service-scanner on SCANNER_PORT (default 8196).
+restart-scanner: heal ## Restart urirun-service-scanner on SCANNER_PORT (default 8196).
 	@test -x "$(SCANNER_SERVICE)" || { echo "missing $(SCANNER_SERVICE); install urirun-service-scanner in the venv"; exit 1; }
 	@mkdir -p "$(LOG_DIR)"
 	@nohup "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 &
@@ -138,6 +142,10 @@ release: sync-versions version-check ## Tag the current version and push it; CI 
 .PHONY: test-published
 test-published: ## Verify a fresh pip install from PyPI delivers all 8 bundled sub-namespaces + shims. Run AFTER make publish. V= overrides version (default: root VERSION).
 	bash scripts/test_pypi_install.sh $(V)
+
+.PHONY: test-local
+test-local: ## Verify a fresh install from the local source tree (no PyPI needed). Run any time to catch import/serve regressions before publishing.
+	bash scripts/test_pypi_install.sh --local
 
 .PHONY: clean
 clean: ## Remove local generated cache files.
