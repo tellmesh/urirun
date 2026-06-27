@@ -734,7 +734,7 @@ def _collect_target_names(selected_targets: list[str], selected_nodes: list[str]
 
 
 def _try_ensure_kvm_for_node(
-    node: dict, target_names: set[str], ensure_fn: Any, node_client: Any,
+    node: dict, target_names: set[str], node_client: Any,
     token: str | None, identity: str | None,
 ) -> bool:
     name = str(node.get("name") or "")
@@ -742,11 +742,10 @@ def _try_ensure_kvm_for_node(
     if name not in target_names or not url:
         return False
     try:
-        r = ensure_fn(
-            url, ["kvm://host/screen/query/capture"],
-            node=name, node_client=node_client,
-            token=token, identity=identity,
-        )
+        client = node_client(url, token=token, identity=identity)
+        # adopt-only (install=False) — fast path: works when the package is already in the
+        # node's venv (just binds it without SSH). Full install requires `urirun host ensure`.
+        r = client.ensure_scheme("kvm", install=False, route="kvm://host/screen/query/capture")
         return bool(r.get("ok"))
     except Exception:  # noqa: BLE001
         return False
@@ -759,17 +758,19 @@ def _try_auto_ensure_screen_capture(
     token: str | None,
     identity: str | None,
 ) -> bool:
-    """Auto-deploy kvm connector to remote nodes that lack a screen-capture route."""
-    from .fs_transfer import ensure_node_uri_routes as _ensure, node_client as _mk_client  # noqa: PLC0415
+    """Adopt a kvm connector that is already installed in the remote node's venv.
+
+    Fast path: calls adopt-only (no SSH, no install) on each targeted node.  If the
+    package is already present, the node binds it and screen capture becomes available.
+    Falls back to the CapabilityGap message when adoption fails or the package is absent."""
+    from .fs_transfer import node_client as _mk_client  # noqa: PLC0415
     eff_id = identity or os.environ.get("URIRUN_RUN_IDENTITY")
     eff_tok = token or os.environ.get("URIRUN_RUN_TOKEN")
-    if not eff_id and not eff_tok:
-        return False
     target_names = _collect_target_names(selected_targets, selected_nodes)
     if not target_names:
         return False
     return any(
-        _try_ensure_kvm_for_node(node, target_names, _ensure, _mk_client, eff_tok, eff_id)
+        _try_ensure_kvm_for_node(node, target_names, _mk_client, eff_tok, eff_id)
         for node in (discovered.get("nodes") or [])
     )
 
