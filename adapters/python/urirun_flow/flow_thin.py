@@ -473,6 +473,21 @@ def _thin_dispatch_step(step: dict, envelope: FlowEnvelope, dispatch_uri,
     dep_fail = _check_step_deps(sid, uri, step, results, timeline)
     if dep_fail is not None:
         return dep_fail
+
+    # Guard: skip explicitly-irreversible steps when any prior step ran degraded.
+    # A degraded prior step (e.g. xdg-portal capture placeholder) means the plan's
+    # precondition is not met — an irreversible write (log://.../write, etc.) based
+    # on that degraded result would record false information.
+    if step.get("reversible") is False:
+        prior_deg, deg_reason = _results_degraded(results)
+        if prior_deg:
+            skip_r = {"ok": True, "skipped": True,
+                      "skippedReason": f"prior step degraded: {deg_reason}",
+                      "next": {"kind": "continue"}}
+            timeline.append(_thin_step_entry(sid, uri, skip_r))
+            results[sid] = skip_r
+            return _DISPATCH_CONTINUE
+
     payload = resolve_step_payload(step.get("payload") or {}, results)
     if "/memory/command/remember" in uri:
         payload = _enrich_remember_with_degraded(payload, results, timeline=timeline)
