@@ -72,6 +72,25 @@ def _input_schema(entry: dict) -> dict:
     return schema or {"type": "object", "properties": {}}
 
 
+def _contract_output_schema(meta: dict) -> "dict | None":
+    """If the binding carries a contract (via attach_contracts), project its OUTPUT shape to JSON
+    Schema with example results embedded — so MCP/A2A clients see the output contract, not just input.
+    Enrichment must never break tool projection, so any failure yields None."""
+    contract = meta.get("contract")
+    if not isinstance(contract, dict) or not contract.get("output"):
+        return None
+    try:
+        from urirun_connectors_toolkit.contract_jsonschema import to_json_schema
+        schema = to_json_schema(contract["output"])
+    except Exception:  # noqa: BLE001
+        return None
+    results = [ex.get("result") for ex in (contract.get("examples") or [])
+               if isinstance(ex, dict) and ex.get("result")]
+    if results:
+        schema["examples"] = results
+    return schema
+
+
 def to_mcp_tools(registry: dict) -> list[dict]:
     tools: list[dict] = []
     used_names: set[str] = set()
@@ -79,12 +98,16 @@ def to_mcp_tools(registry: dict) -> list[dict]:
         entry = route["routeEntry"]
         uri = route["uri"]
         meta = entry.get("meta") or {}
-        tools.append({
+        tool = {
             "name": unique_tool_name(uri, used_names),
             "description": meta.get("label") or f"{entry.get('kind')} route {uri}",
             "inputSchema": _input_schema(entry),
             "_uri": uri,
-        })
+        }
+        out_schema = _contract_output_schema(meta)
+        if out_schema:
+            tool["outputSchema"] = out_schema
+        tools.append(tool)
     return tools
 
 
@@ -101,14 +124,18 @@ def to_a2a_card(registry: dict, name: str = "urirun-agent", url: str = "http://l
         entry = route["routeEntry"]
         uri = route["uri"]
         meta = entry.get("meta") or {}
-        skills.append({
+        skill = {
             "id": unique_tool_name(uri, used_names),
             "name": meta.get("label") or uri,
             "description": f"{entry.get('kind')} route exposed as a URI",
             "tags": [entry.get("kind"), reglib.parse_uri(uri)["package"]],
             "examples": [uri],
             "inputSchema": _input_schema(entry),
-        })
+        }
+        out_schema = _contract_output_schema(meta)
+        if out_schema:
+            skill["outputSchema"] = out_schema
+        skills.append(skill)
     return {
         "name": name,
         "description": "urirun registry exposed as an A2A agent",
