@@ -150,6 +150,11 @@ workflow[name="release"] {
   step-6: run cmd=echo "pushed tag v$$v to $$remote -> release.yml builds + publishes to PyPI";
 }
 
+workflow[name="test-published"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/test_pypi_install.sh $(V);
+}
+
 workflow[name="clean"] {
   trigger: manual;
   step-1: run cmd=rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build adapters/python/dist __pycache__;

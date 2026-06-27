@@ -63,8 +63,14 @@ jobs:
         run: |
           python -m venv /tmp/venv
           /tmp/venv/bin/pip install dist/*.whl
-          /tmp/venv/bin/python -c "import urirun, urirun.v1, urirun.v2; print('urirun', getattr(urirun,'__version__','?'), 'ok')"
+          # Import the UNCONDITIONAL node/flow subpackages too: they resolve only if the extracted
+          # urirun_node / urirun_flow / urirun_runtime / urirun_contracts / urirun_twin bodies are
+          # bundled into the wheel (packages.find "urirun*"). A non-co-located future extraction would
+          # still pass `import urirun.v2` but FAIL here — this is the gate that catches a "shim points at
+          # an unbundled/unpublished package" break in a clean install BEFORE it reaches PyPI.
+          /tmp/venv/bin/python -c "import urirun, urirun.v1, urirun.v2, urirun.node.mesh, urirun.node.flow; print('urirun', getattr(urirun,'__version__','?'), 'ok — node/flow subpackages bundled')"
           /tmp/venv/bin/urirun --help >/dev/null
+          /tmp/venv/bin/urirun node serve --help >/dev/null   # exercises the CLI->mesh bridge (the "mesh not available" class)
 
       # PyPI Trusted Publishing (OIDC). Configure the publisher on pypi.org for
       # if-uri/urirun · workflow release.yml (this same file). No token needed.

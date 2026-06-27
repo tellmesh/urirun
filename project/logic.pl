@@ -1,5 +1,5 @@
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.175', 'javascript').
+project_metadata('urirun', '0.4.184', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -153,7 +153,7 @@ project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/android_node.py', 163, 'python').
 project_file('adapters/python/urirun/host/artifacts_admin.py', 5, 'python').
 project_file('adapters/python/urirun/host/capability.py', 161, 'python').
-project_file('adapters/python/urirun/host/chat_orchestrator.py', 1295, 'python').
+project_file('adapters/python/urirun/host/chat_orchestrator.py', 1349, 'python').
 project_file('adapters/python/urirun/host/connector_admin.py', 241, 'python').
 project_file('adapters/python/urirun/host/contracts.py', 120, 'python').
 project_file('adapters/python/urirun/host/dashboard_api.py', 289, 'python').
@@ -324,13 +324,14 @@ project_file('adapters/python/urirun_scanner/scanner_net.py', 14, 'python').
 project_file('adapters/python/urirun_scanner/scanner_service.py', 7, 'python').
 project_file('adapters/python/urirun_twin/__init__.py', 1, 'python').
 project_file('adapters/python/urirun_twin/episode.py', 225, 'python').
-project_file('adapters/python/urirun_twin/reversible.py', 548, 'python').
+project_file('adapters/python/urirun_twin/planner.py', 173, 'python').
+project_file('adapters/python/urirun_twin/reversible.py', 384, 'python').
 project_file('adapters/python/urirun_twin/twin_store.py', 354, 'python').
 project_file('adapters/rust/examples/hash_connector.rs', 13, 'rust').
 project_file('adapters/rust/src/lib.rs', 40, 'rust').
 project_file('adapters/ts/example/hash-connector.ts', 11, 'typescript').
 project_file('adapters/ts/urirun.ts', 42, 'typescript').
-project_file('app.doql.less', 178, 'less').
+project_file('app.doql.less', 183, 'less').
 project_file('examples/matrix/Dockerfile.bash', 7, 'shell').
 project_file('examples/matrix/Dockerfile.go', 7, 'go').
 project_file('examples/matrix/emit_python.py', 20, 'python').
@@ -346,6 +347,7 @@ project_file('scripts/lint_connectors.py', 141, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 177, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
+project_file('scripts/test_pypi_install.sh', 87, 'shell').
 project_file('scripts/transport_swap_proof.py', 119, 'python').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
@@ -1475,6 +1477,9 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_enrich_rem
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_register_step_artifacts', 3, 13, 8).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_emit_general_chat_message', 12, 8, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_general_path_complete', 10, 11, 9).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_collect_target_names', 2, 3, 4).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_ensure_kvm_for_node', 5, 6, 5).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_auto_ensure_screen_capture', 5, 6, 4).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_capability_gap', 8, 7, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_apply_run_credentials', 2, 3, 3).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_restore_run_credentials', 2, 3, 1).
@@ -1490,7 +1495,7 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_recall
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_is_selected_remote_node', 2, 8, 3).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_flag_remote_capture_inline', 3, 9, 6).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_suggest_recall_for_memory', 2, 2, 1).
-python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general', 13, 11, 22).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general', 13, 13, 23).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_add_chat_user_message', 4, 4, 7).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_insert_twin_preview', 5, 4, 5).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_parse_chat_nodes_targets', 1, 7, 3).
@@ -2915,17 +2920,17 @@ python_function('adapters/python/urirun_twin/episode.py', '_reality_from_dict', 
 python_function('adapters/python/urirun_twin/episode.py', '_plan_from_dict', 1, 4, 2).
 python_function('adapters/python/urirun_twin/episode.py', '_outcome_from_dict', 1, 4, 2).
 python_function('adapters/python/urirun_twin/episode.py', 'make_episode', 0, 14, 7).
+python_function('adapters/python/urirun_twin/planner.py', 'plausibility', 1, 14, 7).
+python_function('adapters/python/urirun_twin/planner.py', '_planner_facts', 3, 5, 1).
+python_function('adapters/python/urirun_twin/planner.py', '_best_surface_hint', 1, 3, 0).
+python_function('adapters/python/urirun_twin/planner.py', '_action_matrix_hints', 1, 11, 3).
+python_function('adapters/python/urirun_twin/planner.py', '_infeasible_constraints', 1, 6, 2).
+python_function('adapters/python/urirun_twin/planner.py', '_planner_surface_guidance', 1, 6, 5).
+python_function('adapters/python/urirun_twin/planner.py', 'planner_context', 4, 6, 7).
 python_function('adapters/python/urirun_twin/reversible.py', 'parse', 1, 1, 2).
 python_function('adapters/python/urirun_twin/reversible.py', 'path_of', 1, 1, 1).
 python_function('adapters/python/urirun_twin/reversible.py', 'sig', 1, 1, 4).
 python_function('adapters/python/urirun_twin/reversible.py', '_step_kind', 1, 2, 0).
-python_function('adapters/python/urirun_twin/reversible.py', 'plausibility', 1, 14, 7).
-python_function('adapters/python/urirun_twin/reversible.py', '_planner_facts', 3, 5, 1).
-python_function('adapters/python/urirun_twin/reversible.py', '_best_surface_hint', 1, 3, 0).
-python_function('adapters/python/urirun_twin/reversible.py', '_action_matrix_hints', 1, 11, 3).
-python_function('adapters/python/urirun_twin/reversible.py', '_infeasible_constraints', 1, 6, 2).
-python_function('adapters/python/urirun_twin/reversible.py', '_planner_surface_guidance', 1, 6, 5).
-python_function('adapters/python/urirun_twin/reversible.py', 'planner_context', 4, 6, 7).
 python_function('adapters/python/urirun_twin/reversible.py', 'local_transport', 1, 1, 3).
 python_function('adapters/python/urirun_twin/reversible.py', 'durable_memory', 1, 1, 1).
 python_function('adapters/python/urirun_twin/reversible.py', 'rollback_partial_flow', 4, 2, 3).
@@ -4221,6 +4226,7 @@ makefile_target('test-v2', '').
 makefile_target('build', '').
 makefile_target('publish', '').
 makefile_target('release', '').
+makefile_target('test-published', '').
 makefile_target('clean', '').
 
 % ── Taskfile Tasks ───────────────────────────────────────
@@ -4294,6 +4300,8 @@ sumd_workflow_step('release', 3, 'remote=$$(git remote | grep -qx origin && echo
 sumd_workflow_step('release', 4, 'git tag -a "v$$v" -m "urirun v$$v"').
 sumd_workflow_step('release', 5, 'git push "$$remote" "v$$v"').
 sumd_workflow_step('release', 6, 'echo "pushed tag v$$v to $$remote -> release.yml builds + publishes to PyPI"').
+sumd_workflow('test-published', 'manual').
+sumd_workflow_step('test-published', 1, 'bash scripts/test_pypi_install.sh $(V)').
 sumd_workflow('clean', 'manual').
 sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build adapters/python/dist __pycache__').
 

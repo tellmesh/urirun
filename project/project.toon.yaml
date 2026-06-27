@@ -1,4 +1,4 @@
-# urirun | 1881 func | 119f | 37552L | python | 2026-06-27
+# urirun | 1885 func | 121f | 34153L | python | 2026-06-27
 # generated in 0.00s
 
 HEALTH:
@@ -12,27 +12,27 @@ ALERTS[20]:
   !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
   !!! high_fan_out     NodeHandler._handle_run = 24 (limit:10)
+  !!! high_fan_out     _chat_ask_general = 24 (limit:10)
   !!! high_fan_out     _add_host_task_subparser = 23 (limit:10)
   !!! high_fan_out     main = 23 (limit:10)
-  !!! high_fan_out     _run_streamed = 23 (limit:10)
 
-MODULES[254] (top by size):
+MODULES[236] (top by size):
   M[adapters/python/urirun/host/html_templates.py] 4921L C:0 F:3 CC↑6 D:0 (python)
   M[adapters/python/urirun_runtime/v2.py] 2033L C:2 F:120 CC↑14 D:5 (python)
   M[adapters/python/urirun/host/host_dashboard.py] 1899L C:0 F:102 CC↑14 D:1 (python)
+  M[adapters/python/urirun/host/chat_orchestrator.py] 1348L C:1 F:43 CC↑14 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/host/chat_orchestrator.py] 1294L C:1 F:40 CC↑14 D:0 (python)
-  M[adapters/python/urirun_node/server.py] 996L C:3 F:55 CC↑14 D:2 (python)
+  M[adapters/python/urirun_node/server.py] 996L C:3 F:55 CC↑14 D:3 (python)
   M[adapters/python/urirun/host/object_registry.py] 981L C:0 F:46 CC↑14 D:0 (python)
   M[adapters/python/urirun_flow/flow.py] 939L C:0 F:49 CC↑10 D:6 (python)
   M[adapters/python/urirun/host/node_cli.py] 910L C:0 F:57 CC↑13 D:1 (python)
   M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:13 (python)
   M[adapters/python/urirun_runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
-  M[adapters/python/urirun_flow/flow_planner.py] 706L C:0 F:31 CC↑14 D:3 (python)
-  M[adapters/python/urirun_node/manage.py] 599L C:0 F:36 CC↑13 D:0 (python)
   M[adapters/python/urirun_runtime/_runtime.py] 597L C:1 F:30 CC↑13 D:2 (python)
-  M[adapters/python/urirun_flow/diagnostics.py] 583L C:1 F:19 CC↑8 D:2 (python)
-  LANGS: python:193/json:13/shell:10/yaml:5/csharp:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
+  M[adapters/python/urirun_node/client.py] 558L C:1 F:35 CC↑12 D:1 (python)
+  M[adapters/python/urirun_node/transport.py] 540L C:0 F:24 CC↑14 D:3 (python)
+  M[goal.yaml] 538L C:0 F:0 CC↑0 D:0 (yaml)
+  LANGS: python:174/json:13/shell:11/yaml:5/csharp:4/javascript:3/c:3/txt:3/ruby:2/typescript:2/go:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ _add_host_subparser fan=30  // The `host` command tree (init/add-node/config/nodes/routes/agents/watch/dashboar
@@ -43,10 +43,10 @@ HOTSPOTS[10]:
 
 REFACTOR[15]:
   [1] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
-  [2] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (1294L, 1 classes)
+  [2] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (1348L, 1 classes)
   [3] H/H Split god module adapters/python/urirun/host/host_dashboard.py (1899L, 0 classes)
   [4] H/H Split god module adapters/python/urirun/host/object_registry.py (981L, 0 classes)
-  [5] H/H Split god module adapters/python/urirun_flow/flow_planner.py (706L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun_node/server.py (996L, 3 classes)
 
 EVOLUTION:
-  2026-06-27 CC̄=4.6 crit=215 37552L // Automated analysis
+  2026-06-27 CC̄=4.6 crit=215 34153L // Automated analysis

@@ -1,4 +1,4 @@
-# code2llm/evolution | 1840 func | 110f | 2026-06-27
+# code2llm/evolution | 1843 func | 111f | 2026-06-27
 # generated in 0.01s
 
 NEXT[3] (ranked by impact):
@@ -23,7 +23,7 @@ RISKS[3]:
 METRICS-TARGET:
   CC̄:          4.6 → ≤3.2
   max-CC:      14 → ≤7
-  god-modules: 22 → 0
+  god-modules: 17 → 0
   high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
