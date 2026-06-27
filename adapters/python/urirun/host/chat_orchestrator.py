@@ -726,6 +726,32 @@ def _general_path_complete(
                                generator, flow, result, attachments, content, steps_all_ok, deps)
 
 
+def _collect_target_names(selected_targets: list[str], selected_nodes: list[str]) -> set[str]:
+    names: set[str] = {t.removeprefix("node:") for t in selected_targets if t.startswith("node:")}
+    names.update(selected_nodes)
+    names.discard("host")
+    return names
+
+
+def _try_ensure_kvm_for_node(
+    node: dict, target_names: set[str], ensure_fn: Any, node_client: Any,
+    token: str | None, identity: str | None,
+) -> bool:
+    name = str(node.get("name") or "")
+    url = str(node.get("url") or "")
+    if name not in target_names or not url:
+        return False
+    try:
+        r = ensure_fn(
+            url, ["kvm://host/screen/query/capture"],
+            node=name, node_client=node_client,
+            token=token, identity=identity,
+        )
+        return bool(r.get("ok"))
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def _try_auto_ensure_screen_capture(
     discovered: dict,
     selected_nodes: list[str],
@@ -733,38 +759,19 @@ def _try_auto_ensure_screen_capture(
     token: str | None,
     identity: str | None,
 ) -> bool:
-    """Auto-deploy kvm connector to remote nodes that lack a screen-capture route.
-
-    Called when screen_document_capability_gap fires; if SSH credentials are available and
-    the node is reachable, deploys kvm automatically and returns True so the caller can
-    re-discover and retry.  Silent on failure — the caller falls back to showing the gap."""
+    """Auto-deploy kvm connector to remote nodes that lack a screen-capture route."""
     from .fs_transfer import ensure_node_uri_routes as _ensure, node_client as _mk_client  # noqa: PLC0415
     eff_id = identity or os.environ.get("URIRUN_RUN_IDENTITY")
     eff_tok = token or os.environ.get("URIRUN_RUN_TOKEN")
     if not eff_id and not eff_tok:
         return False
-    target_names: set[str] = {t.removeprefix("node:") for t in selected_targets if t.startswith("node:")}
-    target_names.update(selected_nodes)
-    target_names.discard("host")
+    target_names = _collect_target_names(selected_targets, selected_nodes)
     if not target_names:
         return False
-    fixed = False
-    for node in (discovered.get("nodes") or []):
-        name = str(node.get("name") or "")
-        url = str(node.get("url") or "")
-        if name not in target_names or not url:
-            continue
-        try:
-            r = _ensure(
-                url, ["kvm://host/screen/query/capture"],
-                node=name, node_client=_mk_client,
-                token=eff_tok, identity=eff_id,
-            )
-            if r.get("ok"):
-                fixed = True
-        except Exception:  # noqa: BLE001
-            pass
-    return fixed
+    return any(
+        _try_ensure_kvm_for_node(node, target_names, _ensure, _mk_client, eff_tok, eff_id)
+        for node in (discovered.get("nodes") or [])
+    )
 
 
 def _chat_ask_general_capability_gap(
