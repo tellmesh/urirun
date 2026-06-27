@@ -275,7 +275,10 @@ def enforce(conn, contracts: dict, *, validate: bool):
 
         return wrap
 
-    conn.handler = handler
+    # Connector is a frozen dataclass — plain `conn.handler = handler` raises FrozenInstanceError
+    # (which a caller's broad except would silently swallow, leaving enforcement a no-op). Bypass the
+    # freeze via object.__setattr__ so the guard is actually installed. Works for non-frozen conns too.
+    object.__setattr__(conn, "handler", handler)
     return conn
 
 
