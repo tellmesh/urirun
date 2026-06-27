@@ -642,6 +642,9 @@ def _save_inline_attachment(att: dict, b64: str, shot_dir: str) -> bool:
         with open(local, "wb") as _fh:
             _fh.write(_b64.b64decode(b64))
         att["path"] = local
+        meta = att.get("meta")
+        if isinstance(meta, dict):
+            meta.pop("pngBase64", None)
         att["fileExists"] = True
         att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
         return True
@@ -678,6 +681,13 @@ def _enrich_remote_attachments(attachments: list, results: dict) -> None:
             att["filePreviewUrl"] = f"/api/file/remote?nodeUrl={_quote(node_url)}&path={_quote(path)}"
             if not att.get("previewUrl"):
                 att["previewUrl"] = att["filePreviewUrl"]
+    # Strip large pngBase64 blobs from attachment meta regardless of capture path.
+    # The image is accessible via previewUrl/filePreviewUrl; base64 in meta is redundant
+    # and would be sent to the browser on every chat-history load.
+    for att in attachments:
+        meta = att.get("meta") if isinstance(att, dict) else None
+        if isinstance(meta, dict):
+            meta.pop("pngBase64", None)
 
 
 def _register_step_artifacts(result: dict, db: str | None, host_db) -> int:
