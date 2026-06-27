@@ -69,6 +69,9 @@ jobs:
           /tmp/venv/bin/python -c "import urirun_scanner.artifacts_admin as a; assert hasattr(a,'public_chat_attachment'), 'missing sentinel'; import urirun_scanner.document_sync as d; assert hasattr(d,'sync_documents_to_node'), 'missing sentinel'; print('ok  urirun_scanner bundled fallback')"
           # Host dashboard import chain: must not require urirun_connector_scanner (not on PyPI).
           /tmp/venv/bin/python -c "import urirun.host.host_dashboard, urirun.host.chat_orchestrator; print('ok  urirun.host imports clean (no urirun_connector_scanner needed)')"
+          # Contract gate must be SELF-CONTAINED: a re-export of the (unpublished) urirun-contract
+          # would make this import fail in a clean venv → would break every fresh `pip install urirun`.
+          /tmp/venv/bin/python -c "import urirun_connectors_toolkit.contract_gate as g; assert hasattr(g,'conform') and hasattr(g,'enforce'), 'contract_gate not self-contained'; print('ok  contract_gate self-contained (no urirun-contract needed)')"
           /tmp/venv/bin/urirun --help >/dev/null
           /tmp/venv/bin/urirun node serve --help >/dev/null   # exercises the CLI->mesh bridge (the "mesh not available" class)
 

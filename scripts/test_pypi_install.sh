@@ -110,6 +110,9 @@ BUNDLE_CHECKS = [
     # (import_path,                      sentinel_symbol)
     ("urirun_runtime._runtime",          "DEFAULT_TIMEOUT"),
     ("urirun_connectors_toolkit.connector_sdk", "load_manifest"),
+    # contract_gate MUST be self-contained: a re-export of the unpublished urirun-contract would
+    # make this import fail in a clean venv. Guards against re-introducing that fresh-install break.
+    ("urirun_connectors_toolkit.contract_gate", "conform"),
     ("urirun_cdp.cdp",                   "CdpError"),
     ("urirun_contracts.event_schema",    "StepEvent"),
     ("urirun_twin.twin_store",           "TwinMemory"),
