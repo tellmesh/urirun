@@ -584,3 +584,44 @@ class NormalizeStuckTests(unittest.TestCase):
         assert r["ok"] is False
         assert isinstance(r.get("stuck"), str), f"stuck should be str, got {type(r.get('stuck'))}"
         assert r["stuck"] == inv_uri
+
+
+def test_reversible_engine_consumes_callspecs_from_contracts():
+    """Invariant #3 — single source of reversibility: ReversibleProcess must act on CallSpecs
+    DERIVED FROM THE CONTRACT (schema_from_contracts -> callspecs_from_contracts), not a parallel
+    hand-declaration. The contract's effect/reversible drives the engine: a command the contract
+    marks irreversible is UNEXECUTABLE; a reversible command runs and records a Transition; a query
+    is non-mutating."""
+    from urirun_twin.reversible import (
+        schema_from_contracts, ReversibleProcess, Twin, Action, CallableTransport,
+    )
+
+    contracts = {
+        "kv://host/item/command/set":   {"effect": "command", "reversible": True,  "inverseRoute": "/item/command/set"},
+        "kv://host/item/command/purge": {"effect": "command", "reversible": False},
+        "kv://host/item/query/get":     {"effect": "query",   "reversible": False},
+    }
+    schema = schema_from_contracts(contracts)
+    by = {s.uri: s for s in schema}
+    # The contract is the source: effect -> mutates, reversible -> reversible.
+    assert by["kv://host/item/command/set"].mutates and by["kv://host/item/command/set"].reversible
+    assert by["kv://host/item/command/purge"].mutates and not by["kv://host/item/command/purge"].reversible
+    assert not by["kv://host/item/query/get"].mutates
+
+    def _fn(uri, payload):
+        if uri.endswith("/query/state"):
+            return {"state": {"x": 1}}
+        return {"ok": True, "inverse": {"uri": "kv://host/item/command/set", "args": {"k": "x", "v": "old"}}}
+
+    transport = CallableTransport(_fn)
+    twin = Twin(scan_uri="kv://host/item/query/state", state={"x": 0}, fingerprint="fp", state_sig="s0")
+
+    # reversible command (contract reversible=True) → executes and records one Transition
+    ok = ReversibleProcess(transport).execute(
+        twin, schema, [Action("kv://host/item/command/set", {"k": "x", "v": "new"})])
+    assert ok["ok"] is True and len(ok["ledger"]) == 1
+
+    # irreversible command (contract reversible=False) → engine REFUSES to run it (not executed)
+    blocked = ReversibleProcess(transport).execute(
+        twin, schema, [Action("kv://host/item/command/purge", {})])
+    assert blocked["ok"] is False and "unexecutable" in blocked["reason"]

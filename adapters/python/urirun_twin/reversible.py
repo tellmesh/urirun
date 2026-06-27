@@ -132,6 +132,19 @@ def _step_kind(spec: CallSpec | None) -> tuple[bool, bool]:
     return spec.mutates, spec.reversible
 
 
+def schema_from_contracts(contracts: dict, *, conn_uri=None) -> list[CallSpec]:
+    """Build the engine's reversibility schema (``list[CallSpec]``) FROM a connector's contracts —
+    the single source of reversibility (invariant #3). A ``Connector.schema()`` should RETURN this
+    instead of hand-declaring CallSpecs in parallel with its contracts.json (which drifts): the
+    contract's ``effect`` (→ mutates) and ``reversible``/``inverseRoute`` become the engine's gate.
+
+    Delegates to ``urirun_contract.contract_reversible.callspecs_from_contracts`` via a lazy import
+    so the engine keeps NO hard dependency on the contract package (mirrors that bridge's own lazy
+    import of ``CallSpec`` — the two packages stay decoupled at import time)."""
+    from urirun_contract.contract_reversible import callspecs_from_contracts
+    return callspecs_from_contracts(contracts, conn_uri=conn_uri)
+
+
 @dataclass
 class ReversibleProcess:
     """The engine: execute with the invariant, build the ledger, roll back with proof. It
