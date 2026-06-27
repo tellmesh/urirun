@@ -594,7 +594,8 @@ class NodeHandler(BaseHTTPRequestHandler):
         def _run_it():
             token = progress.bind(ctrl)
             try:
-                result = v2.run(uri, target_reg, payload=payload, mode=mode, policy=run_policy, executors=c.pool_executors)
+                result = v2.run(uri, target_reg, payload=payload, mode=mode, policy=run_policy,
+                                executors=c.pool_executors, confirm=bool(body.get("confirm")))
             finally:
                 progress.reset(token)
             if not result.get("ok"):
