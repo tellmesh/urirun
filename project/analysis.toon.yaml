@@ -1,12 +1,14 @@
-# code2llm | 236f 34153L | python:174,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
-# generated in 0.10s
-# CC̅=4.6 | critical:0/1885 | dups:0 | cycles:0
+# code2llm | 247f 39975L | python:185,json:13,shell:11,yaml:5,csharp:4,txt:3,javascript:3,yml:2,java:2,go:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-27
+# generated in 0.11s
+# CC̅=4.6 | critical:1/1930 | dups:0 | cycles:0
 
-HEALTH[0]: ok
+HEALTH[1]:
+  🟡 CC    run_flow CC=23 (limit:15)
 
-REFACTOR[0]: none needed
+REFACTOR[1]:
+  1. split 1 high-CC methods  (CC>15)
 
-PIPELINES[628]:
+PIPELINES[645]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -109,12 +111,12 @@ PIPELINES[628]:
       PURITY: 100% pure
 
 LAYERS:
-  scripts/                        CC̄=5.4    ←in:152  →out:1
+  scripts/                        CC̄=5.2    ←in:158  →out:1
   │ extraction_audit           423L  2C   12m  CC=12     ←0
+  │ test_pypi_install.sh       223L  0C    2m  CC=0.0    ←34
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
   │ transport_swap_proof       118L  0C    5m  CC=6      ←0
-  │ test_pypi_install.sh        86L  0C    1m  CC=0.0    ←32
   │ cc_gate                     81L  0C    3m  CC=8      ←0
   │ release-bump.sh             29L  0C    0m  CC=0.0    ←0
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
@@ -122,8 +124,10 @@ LAYERS:
   adapters/                       CC̄=4.6    ←in:18  →out:11  !! split
   │ !! html_templates            4921L  0C    3m  CC=6      ←0
   │ !! v2                        2033L  2C  120m  CC=14     ←5
-  │ !! host_dashboard            1899L  0C  102m  CC=14     ←1
-  │ !! chat_orchestrator         1348L  1C   43m  CC=14     ←0
+  │ !! host_dashboard            1924L  0C  102m  CC=14     ←1
+  │ !! scanner_bridge            1548L  0C    0m  CC=0.0    ←0
+  │ !! document_sync             1422L  0C    0m  CC=0.0    ←0
+  │ !! chat_orchestrator         1400L  1C   45m  CC=14     ←0
   │ !! server                     996L  3C   55m  CC=14     ←3
   │ !! object_registry            981L  0C   46m  CC=14     ←0
   │ !! flow                       939L  0C   49m  CC=10     ←6
@@ -135,16 +139,20 @@ LAYERS:
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! twin_bridge                528L  0C   26m  CC=12     ←1
   │ !! host_db                    527L  0C   33m  CC=11     ←0
+  │ artifacts_admin            495L  0C    0m  CC=0.0    ←0
+  │ document_metadata          471L  0C    0m  CC=0.0    ←0
   │ service_control            462L  0C   23m  CC=11     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
   │ recovery                   393L  0C   23m  CC=10     ←2
   │ reversible                 383L  8C   26m  CC=10     ←5
   │ host_integrations          374L  0C   16m  CC=8      ←0
   │ discovery                  372L  0C   29m  CC=14     ←2
-  │ fs_transfer                364L  0C   15m  CC=14     ←4
+  │ fs_transfer                362L  0C   15m  CC=14     ←5
   │ task_planner               355L  2C   15m  CC=12     ←0
   │ task_cli                   346L  0C   25m  CC=12     ←0
+  │ scanner_service            342L  0C    0m  CC=0.0    ←0
   │ cdp                        339L  1C   24m  CC=8      ←0
+  │ node_dispatch              315L  0C    7m  CC=14     ←2
   │ mesh                       308L  0C    3m  CC=4      ←0
   │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ worker                     289L  3C   21m  CC=13     ←2
@@ -153,6 +161,9 @@ LAYERS:
   │ secrets                    263L  1C   18m  CC=9      ←1
   │ connector_admin            240L  0C    9m  CC=14     ←1
   │ config                     226L  0C   17m  CC=9      ←3
+  │ node_health                224L  0C    9m  CC=13     ←0
+  │ __init__                   216L  3C   12m  CC=13     ←0
+  │ !! run                        216L  0C    7m  CC=23     ←1
   │ node_api                   211L  0C   11m  CC=13     ←0
   │ v2_grpc                    207L  0C   11m  CC=9      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
@@ -167,6 +178,7 @@ LAYERS:
   │ android_node               162L  0C    7m  CC=14     ←1
   │ dispatch                   160L  0C    7m  CC=12     ←1
   │ capability                 160L  0C    6m  CC=12     ←0
+  │ scanner_net                153L  0C    0m  CC=0.0    ←0
   │ scheduler                  135L  0C    6m  CC=4      ←0
   │ decision_loop              134L  0C    5m  CC=13     ←1
   │ backend_registry           129L  2C   10m  CC=11     ←0
@@ -174,14 +186,17 @@ LAYERS:
   │ contracts                  119L  0C    8m  CC=5      ←0
   │ _artifacts                 111L  0C    5m  CC=9      ←2
   │ progress                    89L  1C   11m  CC=3      ←0
-  │ connector_sdk               87L  0C    3m  CC=5      ←1
+  │ connector_sdk               87L  0C    3m  CC=5      ←2
+  │ heal_future_imports         84L  0C    3m  CC=7      ←0
   │ urirun.go                   80L  3C    5m  CC=3      ←0
   │ formatting                  80L  0C    4m  CC=8      ←2
+  │ __init__                    76L  2C    1m  CC=1      ←0
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
   │ project.assets.json         71L  0C    0m  CC=0.0    ←0
-  │ pyproject.toml              69L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              70L  0C    0m  CC=0.0    ←0
   │ urirun-connector.csproj.nuget.dgspec.json    66L  0C    0m  CC=0.0    ←0
+  │ cli                         65L  0C    3m  CC=12     ←0
   │ widgets                     64L  0C    4m  CC=12     ←0
   │ exec                        61L  0C    2m  CC=10     ←0
   │ index.test.js               52L  0C    1m  CC=1      ←0
@@ -194,15 +209,14 @@ LAYERS:
   │ index.js                    33L  0C   11m  CC=8      ←10
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ cdp                         31L  0C    0m  CC=0.0    ←0
-  │ __init__                    26L  0C    0m  CC=0.0    ←0
   │ main.go                     24L  0C    1m  CC=1      ←0
   │ urirun-connector.AssemblyInfo.cs    22L  0C    0m  CC=0.0    ←0
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ urirun-connector.csproj.FileListAbsolute.txt    15L  0C    0m  CC=0.0    ←0
-  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ hash_connector.pl           14L  0C    0m  CC=0.0    ←0
   │ hash-connector.php          14L  0C    0m  CC=0.0    ←0
+  │ package.json                14L  0C    0m  CC=0.0    ←0
   │ urirun.h                    13L  0C    1m  CC=1      ←0
   │ hash_connector.rs           12L  0C    1m  CC=1      ←0
   │ HashConnector.java          11L  1C    1m  CC=1      ←0
@@ -285,13 +299,13 @@ LAYERS:
   │ flow_verify                  4L  0C    7m  CC=10     ←1
   │ flow_thin                    4L  1C   26m  CC=14     ←1
   │ flow_planner                 4L  0C   31m  CC=14     ←3
+  │ openapi_import               4L  0C    0m  CC=0.0    ←0
   │ scanner_net                  4L  0C    0m  CC=0.0    ←0
   │ document_metadata            4L  0C    0m  CC=0.0    ←0
   │ document_sync                4L  0C    0m  CC=0.0    ←0
   │ artifacts_admin              4L  0C    0m  CC=0.0    ←0
   │ scanner_service              4L  0C    0m  CC=0.0    ←0
   │ scanner_bridge               4L  0C    0m  CC=0.0    ←0
-  │ openapi_import               4L  0C    0m  CC=0.0    ←0
   │ backend_registry             4L  0C    0m  CC=0.0    ←0
   │ connector_sdk                4L  0C    0m  CC=0.0    ←0
   │ declarative                  4L  0C    0m  CC=0.0    ←0
@@ -319,7 +333,6 @@ LAYERS:
   │ __init__                     1L  0C    0m  CC=0.0    ←0
   │ urirun-connector.sourcelink.json     1L  0C    0m  CC=0.0    ←0
   │ urirun.c                     0L  0C    6m  CC=7      ←0
-  │ __init__                     0L  0C    0m  CC=0.0    ←0
   │
   examples/                       CC̄=4.1    ←in:0  →out:0
   │ docker-compose.yml         132L  0C    0m  CC=0.0    ←0
@@ -348,7 +361,7 @@ LAYERS:
   ./                              CC̄=0.0    ←in:0  →out:0
   │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  538L  0C    0m  CC=0.0    ←0
-  │ Makefile                   144L  0C    0m  CC=0.0    ←0
+  │ Makefile                   152L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                94L  0C    0m  CC=0.0    ←0
   │ project.sh                  69L  0C    0m  CC=0.0    ←0
   │ requirements.txt            32L  0C    0m  CC=0.0    ←0
@@ -363,11 +376,10 @@ LAYERS:
   │
   ── zero ──
      adapters/c/urirun.c                       0L
-     adapters/python/urirun_contracts/__init__.py  0L
 
 COUPLING:
                            adapters.python              scripts             adapters      examples.matrix                v1.js        adapters.java        adapters.perl  security.mesh-probe
-      adapters.python                   ──                  133                   18                   ←1                    6                    1                    1                       !! fan-out
+      adapters.python                   ──                  139                   18                   ←1                    6                    1                    1                       !! fan-out
               scripts                    1                   ──                  ←11                   ←7                                                                                  ←1  hub
              adapters                  ←18                   11                   ──                                                                                                           hub
       examples.matrix                    1                    7                                        ──                                                                                      !! fan-out
@@ -376,11 +388,11 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                            ──                     
   security.mesh-probe                                         1                                                                                                                            ──
   CYCLES: none
+  HUB: scripts/ (fan-in=158)
   HUB: adapters/ (fan-in=18)
   HUB: v1.js/ (fan-in=6)
-  HUB: scripts/ (fan-in=152)
   SMELL: examples.matrix/ fan-out=8 → split needed
-  SMELL: adapters.python/ fan-out=159 → split needed
+  SMELL: adapters.python/ fan-out=165 → split needed
   SMELL: adapters/ fan-out=11 → split needed
 
 EXTERNAL:

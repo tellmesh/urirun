@@ -36,6 +36,11 @@ workflow[name="test-js"] {
   step-1: run cmd=$(NODE) --test adapters/js/*.test.js;
 }
 
+workflow[name="heal"] {
+  trigger: manual;
+  step-1: run cmd=$(PYTHON) adapters/python/scripts/heal_future_imports.py adapters/python;
+}
+
 workflow[name="test-python"] {
   trigger: manual;
   step-1: run cmd=PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s adapters/python/tests -p 'test_*.py';
@@ -153,6 +158,11 @@ workflow[name="release"] {
 workflow[name="test-published"] {
   trigger: manual;
   step-1: run cmd=bash scripts/test_pypi_install.sh $(V);
+}
+
+workflow[name="test-local"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/test_pypi_install.sh --local;
 }
 
 workflow[name="clean"] {

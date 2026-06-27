@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 174, json: 13, shell: 11, yaml: 5, csharp: 4
+- **Languages**: python: 185, json: 13, shell: 11, yaml: 5, csharp: 4
 - **Analysis Mode**: static
-- **Total Functions**: 1885
-- **Total Classes**: 57
-- **Modules**: 235
-- **Entry Points**: 685
+- **Total Functions**: 1930
+- **Total Classes**: 62
+- **Modules**: 246
+- **Entry Points**: 705
 
 ## Architecture by Module
 
@@ -49,14 +49,14 @@
 - **Functions**: 46
 - **File**: `object_registry.py`
 
+### adapters.python.urirun.host.chat_orchestrator
+- **Functions**: 45
+- **Classes**: 1
+- **File**: `chat_orchestrator.py`
+
 ### adapters.python.urirun_runtime._registry
 - **Functions**: 43
 - **File**: `_registry.py`
-
-### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 43
-- **Classes**: 1
-- **File**: `chat_orchestrator.py`
 
 ### adapters.python.urirun_node.client
 - **Functions**: 35
@@ -114,6 +114,9 @@ Main execution flows into the system:
 
 ### adapters.python.urirun.runtime.v1.main
 - **Calls**: list, argparse.ArgumentParser, parser.add_subparsers, subparsers.add_parser, add_source, run_parser.add_argument, run_parser.add_argument, run_parser.add_argument
+
+### adapters.python.urirun_flow.cli.main
+- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, v.add_argument, sub.add_parser, t.add_argument, sub.add_parser, f.add_argument
 
 ### adapters.python.urirun.host.host_dashboard.summary
 - **Calls**: adapters.python.urirun.host.dashboard_api._safe_tickets, adapters.python.urirun.host.dashboard_api._host_db, adapters.python.urirun.host.dashboard_api._mesh, host_db.recent_checks, _public_artifacts, host_db.recent_logs, _annotate_node_tokens_impl, _annotate_node_kinds
@@ -185,6 +188,15 @@ refresh. The token bundle lives in the keyring under ``oauth:<provider>``
 Reconnects automatically, replaying missed events via Last-Event-ID.
 - **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, getattr, getattr, bool, bool, sys.stderr.write, sys.stderr.flush
 
+### adapters.python.urirun.host.node_health.node_doctor
+> Run all health probes for a urirun node; return a structured per-class report.
+
+Result shape::
+
+    {
+      ok: bool,            # True only when ever
+- **Calls**: adapters.python.urirun.host.node_health._probe_reachable, checks.append, adapters.python.urirun.host.node_health._probe_auth, checks.append, adapters.python.urirun.host.node_health._probe_version, checks.append, adapters.python.urirun.host.node_health._probe_schemes, checks.append
+
 ### adapters.python.urirun_node.server.NodeHandler._handle_enroll
 - **Calls**: adapters.python.urirun_node.server.read_raw, keyauth.verify_request, keyauth.token_matches, scripts.test_pypi_install.print, adapters.python.urirun_node.server.send_json, adapters.python.urirun_node.server.send_json, keyauth.available, adapters.python.urirun_node.server.send_json
 
@@ -209,17 +221,6 @@ Reconnects automatically, replaying missed events via Last-Event-ID.
 
 ### adapters.python.urirun.runtime.codegen.gen_command
 - **Calls**: v2.load_registry_arg, getattr, scripts.test_pypi_install.print, adapters.python.urirun.runtime.codegen.proto_from_registry, getattr, None.write_text, None.write_text, scripts.test_pypi_install.print
-
-### adapters.python.urirun.host.node_cli.run_command
-> `urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
-node; with --stream, start it async and print the node's live progres
-- **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, NodeClient, client.concretize, float, adapters.python.urirun.host.node_cli._maybe_ensure_scheme, adapters.python.urirun.host.node_cli._run_streamed, getattr
-
-### adapters.python.urirun.host.contracts.file_transfer_verification
-> Return the standard verification contract for file-copy style URI flows.
-
-`uploaded` means the remote write acknowledged the file. `verified` means th
-- **Calls**: list, set, set, adapters.python.urirun.host.contracts.verification_check, adapters.python.urirun.host.contracts.verification_check, all, len, len
 
 ## Process Flows
 
@@ -330,6 +331,11 @@ Sub-class and set class attributes::
 - **Methods**: 9
 - **Key Methods**: adapters.python.urirun.node.twin_store._NamespacedStore.__init__, adapters.python.urirun.node.twin_store._NamespacedStore._bucket, adapters.python.urirun.node.twin_store._NamespacedStore.get, adapters.python.urirun.node.twin_store._NamespacedStore.__getitem__, adapters.python.urirun.node.twin_store._NamespacedStore.__contains__, adapters.python.urirun.node.twin_store._NamespacedStore.__setitem__, adapters.python.urirun.node.twin_store._NamespacedStore.values, adapters.python.urirun.node.twin_store._NamespacedStore.items, adapters.python.urirun.node.twin_store._NamespacedStore.keys
 
+### adapters.python.urirun_flow.Flow
+- **Methods**: 8
+- **Key Methods**: adapters.python.urirun_flow.Flow.step, adapters.python.urirun_flow.Flow._validate, adapters.python.urirun_flow.Flow._validate_graph, adapters.python.urirun_flow.Flow.order, adapters.python.urirun_flow.Flow.to_dict, adapters.python.urirun_flow.Flow.to_yaml, adapters.python.urirun_flow.Flow.from_dict, adapters.python.urirun_flow.Flow.from_yaml
+- **Inherits**: BaseModel
+
 ### adapters.python.urirun_node.server.EventHub
 > In-memory pub/sub for a node's live event stream (SSE). Each subscriber gets a
 bounded queue; publis
@@ -387,21 +393,16 @@ child processes t
 - **Methods**: 4
 - **Key Methods**: adapters.ruby.urirun.Connector.initialize, adapters.ruby.urirun.Connector.command, adapters.ruby.urirun.Connector.bindings, adapters.ruby.urirun.Connector.bindings_json
 
+### adapters.python.urirun_flow.Step
+- **Methods**: 4
+- **Key Methods**: adapters.python.urirun_flow.Step._check_uri, adapters.python.urirun_flow.Step._check_catch, adapters.python.urirun_flow.Step._derive_kind, adapters.python.urirun_flow.Step.ref
+- **Inherits**: BaseModel
+
 ### adapters.python.urirun_twin.reversible.Connector
 > The ADOPTION CONTRACT. A connector enters the engine by providing these three.
 - **Methods**: 3
 - **Key Methods**: adapters.python.urirun_twin.reversible.Connector.call, adapters.python.urirun_twin.reversible.Connector.scan_uri, adapters.python.urirun_twin.reversible.Connector.schema
 - **Inherits**: Protocol
-
-### adapters.python.urirun_twin.reversible.ReversibleProcess
-> The engine: execute with the invariant, build the ledger, roll back with proof. It
-knows NO connecto
-- **Methods**: 3
-- **Key Methods**: adapters.python.urirun_twin.reversible.ReversibleProcess.execute, adapters.python.urirun_twin.reversible.ReversibleProcess.rollback, adapters.python.urirun_twin.reversible.ReversibleProcess.rollback_flow
-
-### adapters.python.urirun_connectors_toolkit.backend_registry.Backend
-- **Methods**: 3
-- **Key Methods**: adapters.python.urirun_connectors_toolkit.backend_registry.Backend.missing, adapters.python.urirun_connectors_toolkit.backend_registry.Backend.platform_ok, adapters.python.urirun_connectors_toolkit.backend_registry.Backend.available
 
 ## Data Transformation Functions
 
@@ -573,6 +574,7 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime._registry.main` - 56 calls
 - `adapters.python.urirun.runtime.v1.main` - 44 calls
 - `adapters.python.urirun.runtime.daemon.serve` - 40 calls
+- `adapters.python.urirun_flow.cli.main` - 39 calls
 - `adapters.python.urirun.host.host_dashboard.summary` - 38 calls
 - `scripts.extraction_audit.print_report` - 36 calls
 - `adapters.python.urirun_runtime._runtime.main` - 33 calls
@@ -595,9 +597,11 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
+- `adapters.python.urirun_flow.run.run_flow` - 24 calls
 - `adapters.python.urirun.runtime.v1.run` - 23 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
+- `adapters.python.urirun.host.node_health.node_doctor` - 23 calls
 - `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
 - `adapters.python.urirun_connectors_toolkit.resolver.index_local` - 22 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
@@ -606,9 +610,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
-- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 21 calls
-- `examples.matrix.verify.main` - 20 calls
-- `scripts.extraction_audit.audit` - 20 calls
 
 ## System Interactions
 

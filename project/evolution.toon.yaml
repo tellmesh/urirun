@@ -1,7 +1,7 @@
-# code2llm/evolution | 1843 func | 111f | 2026-06-27
+# code2llm/evolution | 1884 func | 117f | 2026-06-27
 # generated in 0.01s
 
-NEXT[3] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/html_templates.py
       WHY: 4921L, 0 classes, max CC=6
       EFFORT: ~4h  IMPACT: 29526
@@ -11,8 +11,12 @@ NEXT[3] (ranked by impact):
       EFFORT: ~4h  IMPACT: 28462
 
   [3] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 1899L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 26586
+      WHY: 1924L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26936
+
+  [4] !  SPLIT-FUNC      run_flow  CC=23  fan=18
+      WHY: CC=23 exceeds 15
+      EFFORT: ~1h  IMPACT: 414
 
 
 RISKS[3]:
@@ -22,9 +26,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.6 → ≤3.2
-  max-CC:      14 → ≤7
-  god-modules: 17 → 0
-  high-CC(≥15): 0 → ≤0
+  max-CC:      23 → ≤11
+  god-modules: 19 → 0
+  high-CC(≥15): 1 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

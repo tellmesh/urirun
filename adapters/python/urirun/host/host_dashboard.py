@@ -1547,6 +1547,20 @@ def _handle_get(handler, parsed, project, db, config, node_urls, token, identity
         return
     if _handle_get_services(handler, parsed, project):
         return
+    if parsed.path == "/api/nodes/doctor":
+        from .node_health import node_doctor as _node_doctor  # noqa: PLC0415
+        query = parse_qs(parsed.query)
+        node_name = str((_first(query, "node") or "")).strip()
+        if not node_name:
+            _json_response(handler, 400, {"ok": False, "error": "?node= required"})
+            return
+        node_url = _node_url_from_config(config, node_urls, node_name) or ""
+        if not node_url:
+            _json_response(handler, 404, {"ok": False, "error": f"node '{node_name}' not configured"})
+            return
+        _json_response(handler, 200, _node_doctor(
+            node_url, node_name=node_name, token=token, identity=identity))
+        return
     if _handle_get_api(handler, parsed, project, db):
         return
     status, payload = _dashboard_api_response(parsed.path, project, db, config, parse_qs(parsed.query), node_urls=node_urls)
@@ -1600,6 +1614,17 @@ def _handle_post_nodes(handler, parsed, project, db, config, node_urls, token, i
     if parsed.path == "/api/nodes/token":
         payload = _read_json(handler)
         _json_response(handler, 200, node_set_token(config, payload, identity=identity, node_urls=node_urls))
+        return True
+    if parsed.path == "/api/nodes/doctor":
+        from .node_health import node_doctor as _node_doctor  # noqa: PLC0415
+        payload = _read_json(handler)
+        node_name = str(payload.get("node") or "")
+        node_url = _node_url_from_config(config, node_urls, node_name) if node_name else ""
+        if not node_url:
+            _json_response(handler, 400, {"ok": False, "error": "node name required"})
+            return True
+        _json_response(handler, 200, _node_doctor(
+            node_url, node_name=node_name, token=token, identity=identity))
         return True
     return False
 

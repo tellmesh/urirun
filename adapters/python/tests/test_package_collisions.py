@@ -85,6 +85,7 @@ def _standalone_dir(dist_name: str, pkg_name: str) -> pathlib.Path | None:
                 for candidate in (
                     src_root / pkg_name,
                     src_root / "src" / pkg_name,
+                    src_root / "build" / "lib" / pkg_name,  # shell repos: source in build/lib/
                 ):
                     if candidate.is_dir():
                         return candidate

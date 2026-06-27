@@ -465,6 +465,60 @@ def _chat_ask_document_sync(
     return result
 
 
+def _classify_exc_remediation(exc: BaseException, selected_nodes: list[str]) -> dict | None:
+    """Try to classify a planner exception as a known RemediationClass.
+
+    Returns a ``Remediation.to_dict()`` or None when the error doesn't map to a
+    known host↔node failure class.  Used to attach structured next-steps to
+    planner-failure results so the dashboard can render actionable instructions
+    instead of a bare exception string.
+    """
+    from urirun.host.node_dispatch import classify_error  # noqa: PLC0415
+    msg = str(exc)
+    # Only classify when the message contains node-communication signals
+    _node_signals = (
+        "connection refused", "timed out", "timeout", "unreachable", "route not found",
+        "connector_required", "unauthorized", "forbidden", "401", "403",
+        "no route to host", "version", "allow list",
+    )
+    if not any(s in msg.lower() for s in _node_signals):
+        return None
+    node = selected_nodes[0] if selected_nodes else ""
+    r = classify_error({"message": msg}, node=node)
+    return r.to_dict()
+
+
+def _build_escalation_block(remediation: dict, prompt: str, execute: bool) -> dict:
+    """Build a human-escalation block for any RemediationClass (not just offline).
+
+    Mirrors the shape of ``_escalate_offline_to_human`` so the dashboard can
+    render a consistent UX regardless of failure class.
+    """
+    node = remediation.get("node", "")
+    cls = remediation.get("class", "unknown")
+    human_action = remediation.get("humanAction", "")
+    command = remediation.get("command", "")
+    dashboard_url = remediation.get("dashboardUrl") or (f"?node={node}&fix={cls}" if node else "")
+    return {
+        "ok": False,
+        "humanEscalation": True,
+        "dryRun": not execute,
+        "remediationClass": cls,
+        "node": node,
+        "humanAction": human_action,
+        "command": command,
+        "dashboardUrl": dashboard_url,
+        "retryUri": remediation.get("retryUri", ""),
+        "message": human_action or f"Awaria klasy '{cls}' na node '{node}'.",
+        "next": {
+            "kind": "human-action",
+            "instruction": human_action,
+            "command": command,
+            "dashboardUrl": dashboard_url,
+        },
+    }
+
+
 def _chat_ask_general_planner_failure(
     exc: BaseException,
     db: str | None,
@@ -485,9 +539,17 @@ def _chat_ask_general_planner_failure(
         "fallback": True,
         "reason": str(exc),
     }
+
+    # Attach structured remediation when the exception maps to a known node-failure class.
+    remediation = _classify_exc_remediation(exc, selected_nodes)
+    if remediation:
+        result["remediation"] = remediation
+        result["escalation"] = _build_escalation_block(remediation, prompt, execute)
+
+    category = (result.get("error") or {}).get("category") or "UNKNOWN"
     deps.add_chat_message_fn(db, chat_message(
         "system",
-        f"failed: planner error ({(result.get('error') or {}).get('category') or 'UNKNOWN'}); recovery available",
+        f"failed: planner error ({category}); recovery available",
         detail={
             "prompt": prompt,
             "execute": execute,
@@ -499,6 +561,8 @@ def _chat_ask_general_planner_failure(
             "results": {},
             "error": result.get("error"),
             "recovery": result.get("recovery") or [],
+            "remediation": remediation,
+            "escalation": result.get("escalation"),
         },
     ))
     try:
@@ -512,6 +576,7 @@ def _chat_ask_general_planner_failure(
             "timeline": result.get("timeline") or [],
             "error": result.get("error"),
             "recovery": result.get("recovery") or [],
+            "remediation": remediation,
         })
     except Exception:  # noqa: BLE001
         pass
@@ -928,12 +993,11 @@ def _escalate_offline_to_human(
     discovered: dict,
     execute: bool,
 ) -> dict | None:
-    """Create a human:// task on any reachable node that can serve it.
+    """Create a human:// task on any reachable node; routes through run_node_uri for classification.
 
     Returns a pending-escalation envelope or None if no human node is found.
     """
-    import json as _json
-    import urllib.request as _ur
+    from urirun.host.node_dispatch import run_node_uri  # noqa: PLC0415
 
     human_node, human_url = _find_human_node(discovered)
     if not human_node or not human_url:
@@ -961,34 +1025,22 @@ def _escalate_offline_to_human(
             ),
         }
 
-    run_payload = {
-        "uri": f"human://{human_node}/task/create",
-        "payload": {
-            "title": title,
-            "instruction": instruction,
-            "node": human_node,
-            "kind": "action",
-            "scope": "per-instance",
-            "env": human_node,
-        },
-        "mode": "execute",
+    task_payload = {
+        "title": title,
+        "instruction": instruction,
+        "node": human_node,
+        "kind": "action",
+        "scope": "per-instance",
+        "env": human_node,
     }
-    try:
-        body = _json.dumps(run_payload).encode()
-        req = _ur.Request(
-            f"{human_url}/run",
-            data=body,
-            headers={"Content-Type": "application/json"},
-        )
-        with _ur.urlopen(req, timeout=5) as r:
-            resp = _json.loads(r.read())
-    except Exception:
+    env = run_node_uri(
+        human_url, f"human://{human_node}/task/create", task_payload, timeout=5.0,
+        node_name=human_node,
+    )
+    if not env.get("ok"):
         return None
 
-    if not resp.get("ok"):
-        return None
-
-    val = (resp.get("result") or {}).get("value") or {}
+    val = (env.get("result") or {}).get("value") or {}
     task = val.get("task") or {}
     surface = val.get("surface") or {}
     return {

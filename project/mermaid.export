@@ -76,6 +76,7 @@ flowchart TD
     subgraph adapters__python
         adapters__python__urirun__node__event_schema___step_inverse["_step_inverse"]
         adapters__python__urirun__node__event_schema__step_category["step_category"]
+        adapters__python__urirun_contracts__Remediation__to_dict["to_dict"]
         adapters__python__urirun_node___version__current_version["current_version"]
         adapters__python__urirun_node___version___vtuple["_vtuple"]
         adapters__python__urirun_node___version__latest_version["latest_version"]
@@ -133,7 +134,6 @@ flowchart TD
         adapters__python__urirun__node__manage___resolution_info["_resolution_info"]
         adapters__python__urirun__node__manage___app_count["_app_count"]
         adapters__python__urirun__node__manage__host_facts["host_facts"]
-        adapters__python__urirun__node__manage__bindings["bindings"]
     end
     subgraph adapters__ruby
         adapters__ruby__urirun__Connector__initialize["initialize"]
@@ -203,6 +203,7 @@ flowchart TD
         scripts__repin_connectors__main("main CC=11")
     end
     subgraph scripts__test_pypi_install
+        scripts__test_pypi_install__cleanup["cleanup"]
         scripts__test_pypi_install__print["print"]
     end
     subgraph scripts__transport_swap_proof
@@ -590,6 +591,9 @@ flowchart TD
     adapters__python__urirun__node__episode__Episode__from_dict --> adapters__python__urirun__node__episode___plan_from_dict
     adapters__python__urirun__node__episode__Episode__from_dict --> adapters__python__urirun__node__episode___outcome_from_dict
     adapters__python__urirun__node__episode__make_episode --> adapters__python__urirun__node__episode__episode_id
+    adapters__python__scripts__heal_future_imports__heal --> adapters__python__scripts__heal_future_imports___heal_file
+    adapters__python__scripts__heal_future_imports__main --> adapters__python__scripts__heal_future_imports__heal
+    adapters__python__scripts__heal_future_imports__main --> scripts__test_pypi_install__print
     adapters__python__urirun__connectors__connector_lint___connector_assignment --> adapters__python__urirun__connectors__connector_lint___connector_call_target
     adapters__python__urirun__connectors__connector_lint___connector_objects --> adapters__python__urirun__connectors__connector_lint___connector_assignment
     adapters__python__urirun__connectors__connector_lint___decorator_routes --> adapters__python__urirun__connectors__connector_lint___route_uri
@@ -873,10 +877,8 @@ flowchart TD
     adapters__python__urirun_flow__flow___make_memory_dispatch --> adapters__python__urirun_flow__flow___flow_key
     adapters__python__urirun_flow__flow___make_memory_dispatch --> adapters__python__urirun__node__flow_planner___fetch_env_profile
     adapters__python__urirun_flow__flow___make_memory_dispatch --> adapters__python__urirun__node__routing__route_target
-    adapters__python__urirun_flow__flow___thin_remember_record --> adapters__python__urirun__node__episode__intent_signature
-    adapters__python__urirun_flow__flow___kvm_step_targets --> adapters__python__urirun__node__routing__route_target
-    adapters__python__urirun_flow__flow___build_thin_plan --> adapters__python__urirun_flow__flow___plan_with_preflight
 
     classDef highCC fill:#ff6b6b,stroke:#c92a2a,color:#fff
     classDef medCC fill:#ffd43b,stroke:#f08c00,color:#000
+    class adapters__python__urirun_flow__run__run_flow highCC
     class examples__matrix__verify__main,examples__node_file_transfer__fs_transfer__write_b64,scripts__cc_gate___iter_py,scripts__lint_connectors___lint_exit_code,scripts__extraction_audit__edges_in_file,scripts__extraction_audit__classify,scripts__extraction_audit__audit,scripts__extraction_audit__print_report,scripts__repin_connectors__main,adapters__js__parseUri,adapters__python__urirun_node__config__config_with_transient_node_urls,adapters__python__urirun_node__config__node_url,adapters__python__urirun__node__manage___install_policy,adapters__python__urirun__node__manage___policy_allows,adapters__python__urirun__node__manage__package_install,adapters__python__urirun__node__manage__connector_install,adapters__python__urirun__node__manage___scan_local_connectors,adapters__python__urirun__node__manage__connector_discover,adapters__python__urirun__node__manage___derive_local_routes,adapters__python__urirun__node__manage___read_json_manifest,adapters__python__urirun__node__manage__registry_installed,adapters__python__urirun__node__manage__capability_check,adapters__python__urirun__node__manage___session_type,adapters__python__urirun__node__manage___compositor,adapters__python__urirun__node__manage___gpu_info,adapters__python__urirun__node__skill___episode_for,adapters__python__urirun__node__skill___uri_skill_promote,adapters__python__urirun__node__skill___uri_session_start,adapters__python__urirun__node__routing__routes_from_registry,adapters__python__urirun__node__routing__target_nodes medCC

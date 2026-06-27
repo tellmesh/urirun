@@ -5,32 +5,195 @@ task), a single ``run_node_uri`` classifies the failure using the shared
 ``RemediationClass`` taxonomy, optionally attempts auto-repair, and always
 returns ``env["remediation"]`` so the caller has structured next-steps.
 
-Replaces the bare ``fs_transfer.run_node_uri`` (kept as a backward-compat
-thin alias) for all NEW code paths.  Wired into host_dashboard via import swap.
-
 Design rules (from HOST_NODE_COMMUNICATION.md):
   • Default dry-run: auto-repair only mutates when execute=True.
   • Bounded: route-missing repair uses ensure_scheme which is itself bounded.
-  • classify_error is pure and importable without a live node.
+  • classify_error is pure (no I/O) and importable without a live node.
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from urirun_contracts import Remediation, RemediationClass
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Classification
+# Keyword / category sets (module-level constants — no per-call allocation)
+# ──────────────────────────────────────────────────────────────────────────────
+
+_KW_UNREACHABLE = frozenset((
+    "connection refused", "timed out", "timeout", "unreachable",
+    "no route to host", "nodename nor servname", "name or service not known",
+    "failed to establish", "connection reset", "errno 111", "errno 110",
+))
+_CAT_UNREACHABLE = frozenset(("NETWORK_ERROR", "TIMEOUT"))
+_TYP_UNREACHABLE = frozenset(("connectionerror", "timeouterror", "connecttimeout"))
+
+_KW_AUTH = frozenset((
+    "401", "403", "unauthorized", "forbidden", "invalid token",
+    "auth", "enroll", "signature", "bad token",
+))
+_CAT_AUTH = frozenset(("AUTH_ERROR",))
+_CODE_AUTH = frozenset(("e001", "e002"))
+
+_KW_ROUTE = frozenset((
+    "route not found", "no route", "connector_required", "connector required",
+    "no connector", "missing connector", "scheme not found",
+))
+_CAT_ROUTE = frozenset(("NOT_FOUND",))
+_TYP_ROUTE = frozenset(("route",))
+
+_KW_VERSION = frozenset((
+    "version", "allow list", "allow-list", "mismatch", "compat",
+    "merge_mismatch", "deploy_allow",
+))
+
+_KW_DEGRADED = frozenset((
+    "wayland", "portal", "screenshot failed", "capture failed",
+    "display", "xdg-portal", "x11", "gdbus",
+))
+_CAT_DEGRADED = frozenset(("DEGRADED",))
+
+_KW_PRECONDITION = frozenset((
+    "precondition", "acquire", "grant", "permission denied",
+    "allow access", "needs approval",
+))
+_CAT_PRECONDITION = frozenset(("PRECONDITION",))
+
+
+def _any_kw(msg: str, kw: frozenset) -> bool:
+    return any(k in msg for k in kw)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Matcher table — first match wins; evaluated in priority order
+# ──────────────────────────────────────────────────────────────────────────────
+# Each entry: (RemediationClass, matcher(msg, cat, typ, code, error) -> bool)
+
+_MATCHERS: list[tuple[RemediationClass, Callable[[str, str, str, str, dict], bool]]] = [
+    (
+        RemediationClass.UNREACHABLE,
+        lambda msg, cat, typ, code, _e: (
+            _any_kw(msg, _KW_UNREACHABLE) or cat in _CAT_UNREACHABLE or typ in _TYP_UNREACHABLE
+        ),
+    ),
+    (
+        RemediationClass.UNAUTHENTICATED,
+        lambda msg, cat, typ, code, _e: (
+            _any_kw(msg, _KW_AUTH) or cat in _CAT_AUTH or code in _CODE_AUTH
+        ),
+    ),
+    (
+        RemediationClass.ROUTE_MISSING,
+        lambda msg, cat, typ, code, error: (
+            _any_kw(msg, _KW_ROUTE)
+            or cat in _CAT_ROUTE
+            or typ in _TYP_ROUTE
+            or "connector_required" in str(error.get("type") or "")
+        ),
+    ),
+    (
+        RemediationClass.VERSION_SKEW,
+        lambda msg, cat, typ, code, _e: _any_kw(msg, _KW_VERSION),
+    ),
+    (
+        RemediationClass.DEGRADED_BACKEND,
+        lambda msg, cat, typ, code, _e: _any_kw(msg, _KW_DEGRADED) or cat in _CAT_DEGRADED,
+    ),
+    (
+        RemediationClass.PRECONDITION_UNMET,
+        lambda msg, cat, typ, code, _e: _any_kw(msg, _KW_PRECONDITION) or cat in _CAT_PRECONDITION,
+    ),
+]
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Remediation factories — one per class; called only after table match
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _build_remediation(
+    cls: RemediationClass,
+    node: str,
+    uri: str,
+    scheme: str,
+    error: dict,
+) -> Remediation:
+    if cls == RemediationClass.UNREACHABLE:
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            human_action=f"Node '{node}' offline. Uruchom: urirun node serve --name {node}",
+            command=f"urirun node serve --name {node}",
+        )
+    if cls == RemediationClass.UNAUTHENTICATED:
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            auto_fix_uri=f"node://{node}/auth/command/resign",
+            human_action=(
+                f"Node '{node}' odrzucił token. Enroll: "
+                f"uri-copy-id http://{node}:8765 -i ~/.ssh/id_ed25519 --enroll-token <PIN>"
+            ),
+            command=f"uri-copy-id http://{node}:8765 -i ~/.ssh/id_ed25519 --enroll-token <PIN>",
+        )
+    if cls == RemediationClass.ROUTE_MISSING:
+        hint = str(error.get("connectorHint") or error.get("connector") or scheme or "")
+        install_cmd = str(
+            error.get("installCommand")
+            or (f"pip install urirun-connector-{hint}" if hint else "")
+        )
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            auto_fix_uri=f"node://{node}/registry/command/ensure",
+            auto_fix_payload={"scheme": scheme, "route": uri},
+            human_action=f"Node '{node}' nie ma trasy '{uri}'. Zainstaluj: {install_cmd}",
+            command=install_cmd,
+        )
+    if cls == RemediationClass.VERSION_SKEW:
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            auto_fix_uri=f"node://{node}/registry/command/deploy-allow",
+            human_action=f"Node '{node}' ma starą allow-listę. Zaktualizuj: pip install -U urirun na {node}",
+            command="pip install -U urirun",
+        )
+    if cls == RemediationClass.DEGRADED_BACKEND:
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            human_action=(
+                f"Backend na '{node}' zdegradowany (capture/Wayland). "
+                f"Zainstaluj grim lub uruchom node w sesji GUI."
+            ),
+            command="sudo dnf install grim  # lub: DISPLAY=:0 urirun node serve",
+        )
+    if cls == RemediationClass.PRECONDITION_UNMET:
+        return Remediation(
+            cls=cls, node=node, raw_error=error, retry_uri=uri,
+            auto_fix_uri=f"ready://{node}/precondition/command/satisfy",
+            auto_fix_payload={"uri": uri},
+            human_action=f"Node '{node}' wymaga zgody. Zatwierdź na {node}, potem retry.",
+        )
+    return Remediation(
+        cls=RemediationClass.UNKNOWN, node=node, raw_error=error, retry_uri=uri,
+        human_action=f"Nieznana awaria na '{node}': {error.get('message', '')}",
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Classification entry point (pure — no I/O)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def classify_error(error: Any, *, node: str, uri: str = "") -> Remediation:
-    """Map a raw envelope error dict to a ``RemediationClass`` + structured instructions.
+    """Map a raw envelope error to a ``RemediationClass`` + structured instructions.
 
-    Pure function — no I/O, no imports beyond contracts.  Call-site does not
-    need to inspect error strings; the ``Remediation`` object carries everything.
+    Pure function — no I/O.  CC ≤ 3: one early-return for missing node,
+    one loop over the matcher table, one fallback.
     """
     if not isinstance(error, dict):
         error = {"message": str(error)}
+
+    if not node:
+        return Remediation(
+            cls=RemediationClass.NO_NODE_URL, node=node, raw_error=error, retry_uri=uri,
+            human_action="Brak URL dla node. Ustaw w panelu lub --node-url <name>=http://...",
+            command="urirun node serve --name <name>",
+        )
 
     msg = str(error.get("message") or "").lower()
     cat = str(error.get("category") or "").upper()
@@ -38,130 +201,11 @@ def classify_error(error: Any, *, node: str, uri: str = "") -> Remediation:
     code = str(error.get("code") or "").lower()
     scheme = uri.split("://", 1)[0] if "://" in uri else ""
 
-    # ── No URL for node ────────────────────────────────────────────────────────
-    if not node:
-        return Remediation(
-            cls=RemediationClass.NO_NODE_URL,
-            node=node,
-            raw_error=error,
-            human_action="Brak URL dla node. Ustaw w panelu lub --node-url <name>=http://...",
-            command=f"urirun node serve --name <name>",
-            retry_uri=uri,
-        )
+    for cls, matcher in _MATCHERS:
+        if matcher(msg, cat, typ, code, error):
+            return _build_remediation(cls, node, uri, scheme, error)
 
-    # ── Unreachable ────────────────────────────────────────────────────────────
-    _unreachable_kw = (
-        "connection refused", "timed out", "timeout", "unreachable",
-        "no route to host", "nodename nor servname", "name or service not known",
-        "failed to establish", "connection reset", "errno 111", "errno 110",
-    )
-    if (any(k in msg for k in _unreachable_kw)
-            or cat in ("NETWORK_ERROR", "TIMEOUT")
-            or typ in ("connectionerror", "timeouterror", "connecttimeout")):
-        return Remediation(
-            cls=RemediationClass.UNREACHABLE,
-            node=node,
-            raw_error=error,
-            human_action=f"Node '{node}' offline. Uruchom: urirun node serve --name {node}",
-            command=f"urirun node serve --name {node}",
-            retry_uri=uri,
-        )
-
-    # ── Unauthenticated ────────────────────────────────────────────────────────
-    _auth_kw = ("401", "403", "unauthorized", "forbidden", "invalid token",
-                "auth", "enroll", "signature", "bad token")
-    if (any(k in msg for k in _auth_kw)
-            or cat in ("AUTH_ERROR",)
-            or code in ("e001", "e002")):
-        return Remediation(
-            cls=RemediationClass.UNAUTHENTICATED,
-            node=node,
-            raw_error=error,
-            auto_fix_uri=f"node://{node}/auth/command/resign",
-            human_action=(
-                f"Node '{node}' odrzucił token. Enroll: "
-                f"uri-copy-id http://{node}:8765 -i ~/.ssh/id_ed25519 --enroll-token <PIN>"
-            ),
-            command=f"uri-copy-id http://{node}:8765 -i ~/.ssh/id_ed25519 --enroll-token <PIN>",
-            retry_uri=uri,
-        )
-
-    # ── Route missing / connector required ────────────────────────────────────
-    _route_kw = ("route not found", "no route", "connector_required", "connector required",
-                 "no connector", "missing connector", "scheme not found")
-    connector_hint = (error.get("connectorHint") or error.get("connector") or scheme or "")
-    if (any(k in msg for k in _route_kw)
-            or cat in ("NOT_FOUND",)
-            or typ in ("route",)
-            or "connector_required" in str(error.get("type") or "")):
-        return Remediation(
-            cls=RemediationClass.ROUTE_MISSING,
-            node=node,
-            raw_error=error,
-            auto_fix_uri=f"node://{node}/registry/command/ensure",
-            auto_fix_payload={"scheme": scheme, "route": uri},
-            human_action=(
-                f"Node '{node}' nie ma trasy '{uri}'. "
-                f"Zainstaluj: {error.get('installCommand') or f'pip install urirun-connector-{connector_hint}'}"
-            ),
-            command=(
-                error.get("installCommand")
-                or (f"pip install urirun-connector-{connector_hint}" if connector_hint else "")
-            ),
-            retry_uri=uri,
-        )
-
-    # ── Version skew ──────────────────────────────────────────────────────────
-    _version_kw = ("version", "allow list", "allow-list", "mismatch", "compat",
-                   "merge_mismatch", "deploy_allow")
-    if any(k in msg for k in _version_kw):
-        return Remediation(
-            cls=RemediationClass.VERSION_SKEW,
-            node=node,
-            raw_error=error,
-            auto_fix_uri=f"node://{node}/registry/command/deploy-allow",
-            human_action=f"Node '{node}' ma starą allow-listę. Zaktualizuj: pip install -U urirun na {node}",
-            command="pip install -U urirun",
-            retry_uri=uri,
-        )
-
-    # ── Degraded backend ──────────────────────────────────────────────────────
-    _degraded_kw = ("wayland", "portal", "screenshot failed", "capture failed",
-                    "display", "xdg-portal", "x11", "gdbus")
-    if any(k in msg for k in _degraded_kw) or cat in ("DEGRADED",):
-        return Remediation(
-            cls=RemediationClass.DEGRADED_BACKEND,
-            node=node,
-            raw_error=error,
-            human_action=(
-                f"Backend na '{node}' zdegradowany (capture/Wayland). "
-                f"Zainstaluj grim lub uruchom node w sesji GUI."
-            ),
-            command="sudo dnf install grim  # lub: DISPLAY=:0 urirun node serve",
-            retry_uri=uri,
-        )
-
-    # ── Precondition unmet ────────────────────────────────────────────────────
-    _pre_kw = ("precondition", "acquire", "grant", "permission denied", "allow access",
-               "needs approval")
-    if any(k in msg for k in _pre_kw) or cat in ("PRECONDITION",):
-        return Remediation(
-            cls=RemediationClass.PRECONDITION_UNMET,
-            node=node,
-            raw_error=error,
-            auto_fix_uri=f"ready://{node}/precondition/command/satisfy",
-            auto_fix_payload={"uri": uri},
-            human_action=f"Node '{node}' wymaga zgody. Zatwierdź na {node}, potem retry.",
-            retry_uri=uri,
-        )
-
-    return Remediation(
-        cls=RemediationClass.UNKNOWN,
-        node=node,
-        raw_error=error,
-        human_action=f"Nieznana awaria na '{node}': {error.get('message', '')}",
-        retry_uri=uri,
-    )
+    return _build_remediation(RemediationClass.UNKNOWN, node, uri, scheme, error)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -176,7 +220,6 @@ def run_node_uri(
     token: str | None = None,
     identity: str | None = None,
     timeout: float = 120.0,
-    # Extended kwargs (not in fs_transfer.run_node_uri — backward-compat safe):
     node_name: str = "",
     auto_repair: bool = False,
     execute: bool = False,
@@ -191,8 +234,7 @@ def run_node_uri(
     ``NodeClient.ensure_scheme`` and retries the call once.
 
     Dry-run invariant: ``auto_repair=True, execute=False`` populates
-    ``env["repairAttempt"]`` with ``{"dryRun": True, ...}`` and does NOT mutate
-    any remote state.
+    ``env["repairAttempt"]`` with ``{"dryRun": True}`` without mutating remote state.
     """
     from urirun.host.fs_transfer import node_client as _node_client
 

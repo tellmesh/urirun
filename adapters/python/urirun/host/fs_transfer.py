@@ -354,11 +354,9 @@ def run_node_uri(
     identity: str | None = None,
     timeout: float = 120.0,
 ) -> dict:
-    """Execute a URI on a remote node and return the raw envelope dict.
+    """Execute a URI on a remote node; delegates to node_dispatch for classification.
 
-    Thin wrapper around NodeClient.run() so callers don't import the client directly."""
-    client = node_client(node_url, token=token, identity=identity)
-    try:
-        return client.run(uri, payload, timeout=timeout)
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "error": str(exc), "uri": uri, "node_url": node_url}
+    Backward-compat wrapper — callers that need auto-repair or structured
+    Remediation should import ``node_dispatch.run_node_uri`` directly."""
+    from urirun.host.node_dispatch import run_node_uri as _classifying
+    return _classifying(node_url, uri, payload, token=token, identity=identity, timeout=timeout)

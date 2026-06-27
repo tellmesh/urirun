@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "urirun"
-version = "0.4.186"
+version = "0.4.187"
 description = "Language-agnostic URI to handler adapter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,6 +32,7 @@ urirun = "urirun.v2:main"
 urirun-v1 = "urirun.v1:main"
 urirun-v2 = "urirun.v2:main"
 uri-copy-id = "urirun.node.mesh:copy_id_cli"
+urirun-flow = "urirun_flow.cli:main"  # flow DSL CLI (folded in from the urirun-flow meta-package)
 
 # In-core URI surfaces (trace-first authoring): a promoted known-good run replayable by name,
 # and a session recorder. Declared as bindings so skill:// / session:// resolve like any connector.

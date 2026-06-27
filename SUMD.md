@@ -73,6 +73,11 @@ workflow[name="test-js"] {
   step-1: run cmd=$(NODE) --test adapters/js/*.test.js;
 }
 
+workflow[name="heal"] {
+  trigger: manual;
+  step-1: run cmd=$(PYTHON) adapters/python/scripts/heal_future_imports.py adapters/python;
+}
+
 workflow[name="test-python"] {
   trigger: manual;
   step-1: run cmd=PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s adapters/python/tests -p 'test_*.py';
@@ -192,6 +197,11 @@ workflow[name="test-published"] {
   step-1: run cmd=bash scripts/test_pypi_install.sh $(V);
 }
 
+workflow[name="test-local"] {
+  trigger: manual;
+  step-1: run cmd=bash scripts/test_pypi_install.sh --local;
+}
+
 workflow[name="clean"] {
   trigger: manual;
   step-1: run cmd=rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build adapters/python/dist __pycache__;
@@ -287,6 +297,7 @@ npm install urirun
 - `sync-versions`
 - `release-bump`
 - `test-js`
+- `heal`
 - `test-python`
 - `test-c`
 - `conformance`
@@ -304,6 +315,7 @@ npm install urirun
 - `publish`
 - `release`
 - `test-published`
+- `test-local`
 - `clean`
 
 ## Node.js Scripts (`package.json`)
@@ -317,13 +329,13 @@ Language-agnostic URI to handler adapter
 ### `project/map.toon.yaml`
 
 ```toon markpact:analysis path=project/map.toon.yaml
-# urirun | 367f 65356L | python:344,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
-# stats: 2810 func | 160 cls | 367 mod | CC̄=4.2 | critical:228 | cycles:0
-# alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC test_chat_ask_generates_and_dry_runs_uri_flow=15
-# hotspots[5]: summary fan=29; serve fan=28; _chat_ask_general fan=23; main fan=23; lint_connector fan=19
+# urirun | 375f 71598L | python:352,shell:11,javascript:4,go:3,rust:2,typescript:2,less:1 | 2026-06-27
+# stats: 2857 func | 166 cls | 375 mod | CC̄=4.3 | critical:238 | cycles:0
+# alerts[5]: CC test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen=125; CC test_archive_scanned_document_writes_pdf_json_index_and_detects_duplicate=26; CC test_sync_documents_to_node_copies_pdfs_and_logs_chat=23; CC test_chat_ask_plans_document_sync_without_llm=22; CC _top_level_packages=19
+# hotspots[5]: summary fan=29; serve fan=28; _chat_ask_general fan=23; main fan=23; main fan=20
 # evolution: baseline
 # Keys: M=modules, D=details, i=imports, e=exports, c=classes, f=functions, m=methods
-M[367]:
+M[375]:
   adapters/bash/example/hash-connector.sh,10
   adapters/bash/urirun.sh,18
   adapters/conformance.py,168
@@ -332,7 +344,8 @@ M[367]:
   adapters/js/index.js,34
   adapters/js/index.test.js,53
   adapters/new-connector.sh,169
-  adapters/python/conftest.py,24
+  adapters/python/conftest.py,47
+  adapters/python/scripts/heal_future_imports.py,85
   adapters/python/tests/__init__.py,1
   adapters/python/tests/test_adopt_pack.py,103
   adapters/python/tests/test_adopt_tree.py,39
@@ -363,6 +376,7 @@ M[367]:
   adapters/python/tests/test_diagnostics.py,1572
   adapters/python/tests/test_discovery.py,127
   adapters/python/tests/test_dispatch_protocol.py,303
+  adapters/python/tests/test_distribution_name_collision.py,143
   adapters/python/tests/test_doctor.py,116
   adapters/python/tests/test_document_metadata.py,133
   adapters/python/tests/test_document_sync.py,118
@@ -399,6 +413,7 @@ M[367]:
   adapters/python/tests/test_node_types.py,197
   adapters/python/tests/test_object_registry.py,119
   adapters/python/tests/test_orchestrator_helpers.py,126
+  adapters/python/tests/test_package_collisions.py,187
   adapters/python/tests/test_param_routing.py,59
   adapters/python/tests/test_paths.py,42
   adapters/python/tests/test_planfile_adapter.py,347
@@ -428,6 +443,7 @@ M[367]:
   adapters/python/tests/test_service_lifecycle.py,235
   adapters/python/tests/test_session_skill.py,219
   adapters/python/tests/test_skill_session.py,105
+  adapters/python/tests/test_source_compiles.py,36
   adapters/python/tests/test_task_planner.py,138
   adapters/python/tests/test_transport.py,139
   adapters/python/tests/test_tree.py,28
@@ -475,7 +491,7 @@ M[367]:
   adapters/python/urirun/host/android_node.py,163
   adapters/python/urirun/host/artifacts_admin.py,5
   adapters/python/urirun/host/capability.py,161
-  adapters/python/urirun/host/chat_orchestrator.py,1349
+  adapters/python/urirun/host/chat_orchestrator.py,1401
   adapters/python/urirun/host/connector_admin.py,241
   adapters/python/urirun/host/contracts.py,120
   adapters/python/urirun/host/dashboard_api.py,289
@@ -486,13 +502,15 @@ M[367]:
   adapters/python/urirun/host/document_metadata.py,5
   adapters/python/urirun/host/document_sync.py,5
   adapters/python/urirun/host/domain_monitor.py,6
-  adapters/python/urirun/host/fs_transfer.py,365
-  adapters/python/urirun/host/host_dashboard.py,1900
+  adapters/python/urirun/host/fs_transfer.py,363
+  adapters/python/urirun/host/host_dashboard.py,1925
   adapters/python/urirun/host/host_db.py,528
   adapters/python/urirun/host/host_integrations.py,375
   adapters/python/urirun/host/html_templates.py,4922
   adapters/python/urirun/host/node_api.py,212
   adapters/python/urirun/host/node_cli.py,911
+  adapters/python/urirun/host/node_dispatch.py,316
+  adapters/python/urirun/host/node_health.py,225
   adapters/python/urirun/host/node_types.py,266
   adapters/python/urirun/host/object_registry.py,982
   adapters/python/urirun/host/planfile_adapter.py,291
@@ -587,15 +605,17 @@ M[367]:
   adapters/python/urirun_connectors_toolkit/declarative.py,7
   adapters/python/urirun_connectors_toolkit/openapi_import.py,8
   adapters/python/urirun_connectors_toolkit/resolver.py,170
-  adapters/python/urirun_contracts/__init__.py,1
+  adapters/python/urirun_contracts/__init__.py,77
   adapters/python/urirun_contracts/event_schema.py,126
-  adapters/python/urirun_flow/__init__.py,27
+  adapters/python/urirun_flow/__init__.py,217
+  adapters/python/urirun_flow/cli.py,66
   adapters/python/urirun_flow/diagnostics.py,584
   adapters/python/urirun_flow/flow.py,940
   adapters/python/urirun_flow/flow_planner.py,707
   adapters/python/urirun_flow/flow_thin.py,554
   adapters/python/urirun_flow/flow_verify.py,112
   adapters/python/urirun_flow/recovery.py,394
+  adapters/python/urirun_flow/run.py,237
   adapters/python/urirun_node/__init__.py,1
   adapters/python/urirun_node/_artifacts.py,112
   adapters/python/urirun_node/_util.py,55
@@ -638,12 +658,12 @@ M[367]:
   adapters/python/urirun_runtime/v2_service.py,153
   adapters/python/urirun_runtime/worker.py,290
   adapters/python/urirun_scanner/__init__.py,1
-  adapters/python/urirun_scanner/artifacts_admin.py,2
-  adapters/python/urirun_scanner/document_metadata.py,27
-  adapters/python/urirun_scanner/document_sync.py,7
-  adapters/python/urirun_scanner/scanner_bridge.py,2
-  adapters/python/urirun_scanner/scanner_net.py,14
-  adapters/python/urirun_scanner/scanner_service.py,7
+  adapters/python/urirun_scanner/artifacts_admin.py,496
+  adapters/python/urirun_scanner/document_metadata.py,472
+  adapters/python/urirun_scanner/document_sync.py,1423
+  adapters/python/urirun_scanner/scanner_bridge.py,1549
+  adapters/python/urirun_scanner/scanner_net.py,154
+  adapters/python/urirun_scanner/scanner_service.py,343
   adapters/python/urirun_twin/__init__.py,1
   adapters/python/urirun_twin/episode.py,225
   adapters/python/urirun_twin/planner.py,173
@@ -653,7 +673,7 @@ M[367]:
   adapters/rust/src/lib.rs,40
   adapters/ts/example/hash-connector.ts,11
   adapters/ts/urirun.ts,42
-  app.doql.less,183
+  app.doql.less,193
   examples/matrix/Dockerfile.bash,7
   examples/matrix/Dockerfile.go,7
   examples/matrix/emit_python.py,20
@@ -669,7 +689,7 @@ M[367]:
   scripts/release-bump.sh,30
   scripts/repin_connectors.py,177
   scripts/sync-versions.sh,26
-  scripts/test_pypi_install.sh,87
+  scripts/test_pypi_install.sh,282
   scripts/transport_swap_proof.py,119
   security/mesh-probe/probe.py,115
   test/urirun.test.js,11
@@ -702,6 +722,11 @@ D:
     _exec_check(outputs;contracts)
     main()
   adapters/python/conftest.py:
+  adapters/python/scripts/heal_future_imports.py:
+    e: _heal_file,heal,main
+    _heal_file(f)
+    heal(root;pkgs)
+    main(argv)
   adapters/python/tests/__init__.py:
   adapters/python/tests/test_adopt_pack.py:
     e: AdoptPackTests
@@ -1014,6 +1039,13 @@ D:
     test_make_dispatch_no_fallback_returns_error_directly(monkeypatch)
     test_make_local_dispatch_uri_delegates_to_make_dispatch(monkeypatch)
     test_inprocess_fallback_reaches_twin_preflight()
+  adapters/python/tests/test_distribution_name_collision.py:
+    e: _repo_root,_iter_pyprojects,_top_level_packages,test_no_import_name_shipped_by_two_distributions,test_bundle_owns_the_urirun_namespace_packages
+    _repo_root()
+    _iter_pyprojects(root)
+    _top_level_packages(pyproject)
+    test_no_import_name_shipped_by_two_distributions()
+    test_bundle_owns_the_urirun_namespace_packages()
   adapters/python/tests/test_doctor.py:
     e: test_api_id_normalizes,test_api_protocol_defaults_http,test_auth_configured_detects_secretref,test_connector_installed_unknown_returns_none,test_connector_installed_missing_package,test_check_api_node_http_no_connector_required,test_check_api_node_rtsp_needs_connector,test_check_urirun_node_up,test_check_urirun_node_down,test_diagnose_mesh_api_and_urirun,test_format_doctor_report_columns,test_format_doctor_report_empty
     test_api_id_normalizes()
@@ -1531,6 +1563,14 @@ D:
     test_empty_flow_steps_is_noop()
     test_returns_none_when_twin_memory_is_none()
     test_calls_suggest_recall_with_real_memory(monkeypatch)
+  adapters/python/tests/test_package_collisions.py:
+    e: _all_urirun_collisions,_dir_hash,_standalone_dir,test_no_unexpected_collisions,test_known_collision_resolves_to_adapters_python,test_known_collision_no_content_drift
+    _all_urirun_collisions()
+    _dir_hash(directory)
+    _standalone_dir(dist_name;pkg_name)
+    test_no_unexpected_collisions()
+    test_known_collision_resolves_to_adapters_python(pkg_name;dists)
+    test_known_collision_no_content_drift(pkg_name;dists)
   adapters/python/tests/test_param_routing.py:
     e: ParamRoutingTests
     ParamRoutingTests: setUp(0),_run(1),test_concrete_param_resolves_templated_route(0),test_bound_param_reaches_handler(0),test_exact_match_still_wins_over_param(0),test_unknown_route_still_raises(0)
@@ -1863,6 +1903,9 @@ D:
     e: SkillStoreTests,SkillSessionURITests
     SkillStoreTests: test_remember_recall_and_list_skill(0),test_session_append_accumulates_in_order(0)  # The TwinMemory store primitives (no connector layer).
     SkillSessionURITests: setUp(0),_seed_episode(1),test_promote_episode_to_skill_then_recall(0),test_promote_requires_name_and_a_matching_episode(0),test_recall_missing_skill_is_found_false(0),test_session_record_export_and_promote(0),test_session_append_rejects_empty_step(0),test_connectors_register_and_expose_bindings(0)  # The skill:// / session:// handlers against an isolated durab
+  adapters/python/tests/test_source_compiles.py:
+    e: SourceCompilesTests
+    SourceCompilesTests: test_all_package_sources_compile(0)
   adapters/python/tests/test_task_planner.py:
     e: test_normalize_text_lowercases,test_normalize_text_strips_diacritics,test_normalize_text_collapses_whitespace,test_slug_basic,test_slug_strips_special_chars,test_slug_fallback,test_ambiguous_few_words,test_ambiguous_enough_words,test_ambiguous_known_phrase,test_destructive_delete_keyword,test_destructive_drop_database,test_destructive_normal_prompt,test_unique_removes_duplicates,test_unique_preserves_order,test_unique_filters_empty,test_short_name_daily_domains,test_short_name_domains_no_daily,test_short_name_plain_prompt,test_short_name_truncated,test_json_from_text_plain,test_json_from_text_fenced_block,test_json_from_text_embedded,test_json_from_text_invalid_raises
     test_normalize_text_lowercases()
@@ -2151,7 +2194,7 @@ D:
     _capability_check_for_api(api)
     api_node_doctor(node)
   adapters/python/urirun/host/chat_orchestrator.py:
-    e: chat_message,compact_chat_result,_is_document_sync_prompt,_document_sync_node_from_prompt,_chat_ask_phone_scanner,_sync_execute_initial,_sync_ok_and_status,_apply_urifix_recovery,_chat_ask_document_sync,_chat_ask_general_planner_failure,_timeline_steps_all_ok,_resolve_artifact_value,_build_remote_path_maps,_save_inline_attachment,_enrich_remote_attachments,_register_step_artifacts,_emit_general_chat_message,_general_path_complete,_collect_target_names,_try_ensure_kvm_for_node,_try_auto_ensure_screen_capture,_chat_ask_general_capability_gap,_apply_run_credentials,_restore_run_credentials,_actual_nodes_from_steps,_rebuild_node_targets,_sync_targets_from_flow,_fetch_planner_environments_for_nodes,_find_human_node,_escalate_offline_to_human,_chat_ask_general_check_offline,_chat_ask_general_build_result,_try_recall_gate,_is_selected_remote_node,_flag_remote_capture_inline,_suggest_recall_for_memory,_chat_ask_general,_add_chat_user_message,_chat_insert_twin_preview,_parse_chat_nodes_targets,_init_selected_targets,_infer_node_targets,chat_ask,ChatDeps
+    e: chat_message,compact_chat_result,_is_document_sync_prompt,_document_sync_node_from_prompt,_chat_ask_phone_scanner,_sync_execute_initial,_sync_ok_and_status,_apply_urifix_recovery,_chat_ask_document_sync,_classify_exc_remediation,_build_escalation_block,_chat_ask_general_planner_failure,_timeline_steps_all_ok,_resolve_artifact_value,_build_remote_path_maps,_save_inline_attachment,_enrich_remote_attachments,_register_step_artifacts,_emit_general_chat_message,_general_path_complete,_collect_target_names,_try_ensure_kvm_for_node,_try_auto_ensure_screen_capture,_chat_ask_general_capability_gap,_apply_run_credentials,_restore_run_credentials,_actual_nodes_from_steps,_rebuild_node_targets,_sync_targets_from_flow,_fetch_planner_environments_for_nodes,_find_human_node,_escalate_offline_to_human,_chat_ask_general_check_offline,_chat_ask_general_build_result,_try_recall_gate,_is_selected_remote_node,_flag_remote_capture_inline,_suggest_recall_for_memory,_chat_ask_general,_add_chat_user_message,_chat_insert_twin_preview,_parse_chat_nodes_targets,_init_selected_targets,_infer_node_targets,chat_ask,ChatDeps
     ChatDeps:
     chat_message(role;content)
     compact_chat_result(result;payload)
@@ -2162,6 +2205,8 @@ D:
     _sync_ok_and_status(sync_result;error;execute)
     _apply_urifix_recovery(result;timeline)
     _chat_ask_document_sync(project;db;config;payload;node_urls;token;identity;prompt;execute;no_llm;selected_nodes;selected_targets;deps)
+    _classify_exc_remediation(exc;selected_nodes)
+    _build_escalation_block(remediation;prompt;execute)
     _chat_ask_general_planner_failure(exc;db;prompt;execute;selected_nodes;selected_targets;deps)
     _timeline_steps_all_ok(timeline;fallback)
     _resolve_artifact_value(sr)
@@ -2558,6 +2603,26 @@ D:
     node_stop_command(args)
     _resolve_registry_source(registry_arg;node_registry)
     node_command(args)
+  adapters/python/urirun/host/node_dispatch.py:
+    e: _any_kw,_build_remediation,classify_error,run_node_uri,_node_from_url,_extract_error,_try_route_repair
+    _any_kw(msg;kw)
+    _build_remediation(cls;node;uri;scheme;error)
+    classify_error(error)
+    run_node_uri(node_url;uri;payload)
+    _node_from_url(node_url)
+    _extract_error(env)
+    _try_route_repair(client;r;uri;payload;timeout)
+  adapters/python/urirun/host/node_health.py:
+    e: _http_get_json,_probe_reachable,_probe_auth,_probe_schemes,_probe_version,node_doctor,classify_node_error,_node_from_url,_result
+    _http_get_json(url;timeout)
+    _probe_reachable(node_url)
+    _probe_auth(node_url;token;identity)
+    _probe_schemes(node_url;token;identity)
+    _probe_version(health_data)
+    node_doctor(node_url)
+    classify_node_error(error)
+    _node_from_url(node_url)
+    _result(node;node_url)
   adapters/python/urirun/host/node_types.py:
     e: node_type_profiles,normalize_node_type,node_type_profile,node_type_from_tags,node_type_from_node,node_type_tags,annotate_node_type,annotate_node_types
     node_type_profiles()
@@ -2990,6 +3055,9 @@ D:
     index_command(args)
     resolve_command(args)
   adapters/python/urirun_contracts/__init__.py:
+    e: RemediationClass,Remediation
+    RemediationClass:  # Wyliczalny zbiór klas awarii host↔node.
+    Remediation: to_dict(0)  # Sklasyfikowana naprawa: co poszło nie tak, jak naprawić auto
   adapters/python/urirun_contracts/event_schema.py:
     e: _step_inverse,step_category,_StepTransition,StepEvent,FlowCompletedEvent
     _StepTransition:
@@ -2998,6 +3066,15 @@ D:
     _step_inverse(step_uri)
     step_category(step_uri)
   adapters/python/urirun_flow/__init__.py:
+    e: FlowError,Step,Flow
+    FlowError:  # Raised when a flow is structurally invalid (bad URI, cycle, 
+    Step: _check_uri(2),_check_catch(2),_derive_kind(0),ref(1)
+    Flow: step(1),_validate(0),_validate_graph(0),order(0),to_dict(0),to_yaml(0),from_dict(2),from_yaml(2)
+  adapters/python/urirun_flow/cli.py:
+    e: _load_python_flow,_load_flow,main
+    _load_python_flow(target)
+    _load_flow(target)
+    main(argv)
   adapters/python/urirun_flow/diagnostics.py:
     e: _target,_target_of,_is_login_surface,_build,_decode_error_ctx,diagnose,_match_rule,_surface_upgrade,_cdp_feasible,_controllable,_mark_feasibility,_os_level_unreliable,_rem_has_ui_failure,_rem_already_cdp,_maybe_escalate_surface,fit_to_environment,_uri_classify,_Rule
     _Rule: __init__(4),matches(3)
@@ -3163,6 +3240,20 @@ D:
     can_retry_step(error)
     planner_failure(exc)
     _uri_remediate(payload)
+  adapters/python/urirun_flow/run.py:
+    e: _result_value,envelope_ok,error_category,_skip_envelope,flow_summary,resolve_step,_skip_step,_prereq_skip,_resolve_payload,_apply_degrade,_flow_policy,run_flow
+    _result_value(env)
+    envelope_ok(env)
+    error_category(env)
+    _skip_envelope(step;reason)
+    flow_summary(results)
+    resolve_step(step;payload;run_call)
+    _skip_step(step;reason;results;status)
+    _prereq_skip(step;aborted;results;status)
+    _resolve_payload(step;results;status;mesh)
+    _apply_degrade(step;env;ok;results;status)
+    _flow_policy(data;allow;secret_allow;runtime)
+    run_flow(flow;base_dir)
   adapters/python/urirun_node/__init__.py:
   adapters/python/urirun_node/_artifacts.py:
     e: _artifact_extension,_decode_base64_artifact,_write_artifact,materialize_base64_artifacts,compact_result_artifacts
@@ -4237,7 +4328,7 @@ D:
 
 ```prolog markpact:analysis path=project/logic.pl
 % ── Project Metadata ─────────────────────────────────────
-project_metadata('urirun', '0.4.184', 'javascript').
+project_metadata('urirun', '0.4.186', 'javascript').
 
 % ── Project Files ────────────────────────────────────────
 project_file('adapters/bash/example/hash-connector.sh', 10, 'shell').
@@ -4248,7 +4339,8 @@ project_file('adapters/go/urirun.go', 81, 'go').
 project_file('adapters/js/index.js', 34, 'javascript').
 project_file('adapters/js/index.test.js', 53, 'javascript').
 project_file('adapters/new-connector.sh', 169, 'shell').
-project_file('adapters/python/conftest.py', 24, 'python').
+project_file('adapters/python/conftest.py', 47, 'python').
+project_file('adapters/python/scripts/heal_future_imports.py', 85, 'python').
 project_file('adapters/python/tests/__init__.py', 1, 'python').
 project_file('adapters/python/tests/test_adopt_pack.py', 103, 'python').
 project_file('adapters/python/tests/test_adopt_tree.py', 39, 'python').
@@ -4279,6 +4371,7 @@ project_file('adapters/python/tests/test_dashboard_api_characterizing.py', 213, 
 project_file('adapters/python/tests/test_diagnostics.py', 1572, 'python').
 project_file('adapters/python/tests/test_discovery.py', 127, 'python').
 project_file('adapters/python/tests/test_dispatch_protocol.py', 303, 'python').
+project_file('adapters/python/tests/test_distribution_name_collision.py', 143, 'python').
 project_file('adapters/python/tests/test_doctor.py', 116, 'python').
 project_file('adapters/python/tests/test_document_metadata.py', 133, 'python').
 project_file('adapters/python/tests/test_document_sync.py', 118, 'python').
@@ -4315,6 +4408,7 @@ project_file('adapters/python/tests/test_node_extracted.py', 333, 'python').
 project_file('adapters/python/tests/test_node_types.py', 197, 'python').
 project_file('adapters/python/tests/test_object_registry.py', 119, 'python').
 project_file('adapters/python/tests/test_orchestrator_helpers.py', 126, 'python').
+project_file('adapters/python/tests/test_package_collisions.py', 187, 'python').
 project_file('adapters/python/tests/test_param_routing.py', 59, 'python').
 project_file('adapters/python/tests/test_paths.py', 42, 'python').
 project_file('adapters/python/tests/test_planfile_adapter.py', 347, 'python').
@@ -4344,6 +4438,7 @@ project_file('adapters/python/tests/test_service_control.py', 80, 'python').
 project_file('adapters/python/tests/test_service_lifecycle.py', 235, 'python').
 project_file('adapters/python/tests/test_session_skill.py', 219, 'python').
 project_file('adapters/python/tests/test_skill_session.py', 105, 'python').
+project_file('adapters/python/tests/test_source_compiles.py', 36, 'python').
 project_file('adapters/python/tests/test_task_planner.py', 138, 'python').
 project_file('adapters/python/tests/test_transport.py', 139, 'python').
 project_file('adapters/python/tests/test_tree.py', 28, 'python').
@@ -4391,7 +4486,7 @@ project_file('adapters/python/urirun/host/__init__.py', 2, 'python').
 project_file('adapters/python/urirun/host/android_node.py', 163, 'python').
 project_file('adapters/python/urirun/host/artifacts_admin.py', 5, 'python').
 project_file('adapters/python/urirun/host/capability.py', 161, 'python').
-project_file('adapters/python/urirun/host/chat_orchestrator.py', 1349, 'python').
+project_file('adapters/python/urirun/host/chat_orchestrator.py', 1401, 'python').
 project_file('adapters/python/urirun/host/connector_admin.py', 241, 'python').
 project_file('adapters/python/urirun/host/contracts.py', 120, 'python').
 project_file('adapters/python/urirun/host/dashboard_api.py', 289, 'python').
@@ -4402,13 +4497,15 @@ project_file('adapters/python/urirun/host/dispatch.py', 161, 'python').
 project_file('adapters/python/urirun/host/document_metadata.py', 5, 'python').
 project_file('adapters/python/urirun/host/document_sync.py', 5, 'python').
 project_file('adapters/python/urirun/host/domain_monitor.py', 6, 'python').
-project_file('adapters/python/urirun/host/fs_transfer.py', 365, 'python').
-project_file('adapters/python/urirun/host/host_dashboard.py', 1900, 'python').
+project_file('adapters/python/urirun/host/fs_transfer.py', 363, 'python').
+project_file('adapters/python/urirun/host/host_dashboard.py', 1925, 'python').
 project_file('adapters/python/urirun/host/host_db.py', 528, 'python').
 project_file('adapters/python/urirun/host/host_integrations.py', 375, 'python').
 project_file('adapters/python/urirun/host/html_templates.py', 4922, 'python').
 project_file('adapters/python/urirun/host/node_api.py', 212, 'python').
 project_file('adapters/python/urirun/host/node_cli.py', 911, 'python').
+project_file('adapters/python/urirun/host/node_dispatch.py', 316, 'python').
+project_file('adapters/python/urirun/host/node_health.py', 225, 'python').
 project_file('adapters/python/urirun/host/node_types.py', 266, 'python').
 project_file('adapters/python/urirun/host/object_registry.py', 982, 'python').
 project_file('adapters/python/urirun/host/planfile_adapter.py', 291, 'python').
@@ -4503,15 +4600,17 @@ project_file('adapters/python/urirun_connectors_toolkit/connector_smoke.py', 82,
 project_file('adapters/python/urirun_connectors_toolkit/declarative.py', 7, 'python').
 project_file('adapters/python/urirun_connectors_toolkit/openapi_import.py', 8, 'python').
 project_file('adapters/python/urirun_connectors_toolkit/resolver.py', 170, 'python').
-project_file('adapters/python/urirun_contracts/__init__.py', 1, 'python').
+project_file('adapters/python/urirun_contracts/__init__.py', 77, 'python').
 project_file('adapters/python/urirun_contracts/event_schema.py', 126, 'python').
-project_file('adapters/python/urirun_flow/__init__.py', 27, 'python').
+project_file('adapters/python/urirun_flow/__init__.py', 217, 'python').
+project_file('adapters/python/urirun_flow/cli.py', 66, 'python').
 project_file('adapters/python/urirun_flow/diagnostics.py', 584, 'python').
 project_file('adapters/python/urirun_flow/flow.py', 940, 'python').
 project_file('adapters/python/urirun_flow/flow_planner.py', 707, 'python').
 project_file('adapters/python/urirun_flow/flow_thin.py', 554, 'python').
 project_file('adapters/python/urirun_flow/flow_verify.py', 112, 'python').
 project_file('adapters/python/urirun_flow/recovery.py', 394, 'python').
+project_file('adapters/python/urirun_flow/run.py', 237, 'python').
 project_file('adapters/python/urirun_node/__init__.py', 1, 'python').
 project_file('adapters/python/urirun_node/_artifacts.py', 112, 'python').
 project_file('adapters/python/urirun_node/_util.py', 55, 'python').
@@ -4554,12 +4653,12 @@ project_file('adapters/python/urirun_runtime/v2_mcp.py', 213, 'python').
 project_file('adapters/python/urirun_runtime/v2_service.py', 153, 'python').
 project_file('adapters/python/urirun_runtime/worker.py', 290, 'python').
 project_file('adapters/python/urirun_scanner/__init__.py', 1, 'python').
-project_file('adapters/python/urirun_scanner/artifacts_admin.py', 2, 'python').
-project_file('adapters/python/urirun_scanner/document_metadata.py', 27, 'python').
-project_file('adapters/python/urirun_scanner/document_sync.py', 7, 'python').
-project_file('adapters/python/urirun_scanner/scanner_bridge.py', 2, 'python').
-project_file('adapters/python/urirun_scanner/scanner_net.py', 14, 'python').
-project_file('adapters/python/urirun_scanner/scanner_service.py', 7, 'python').
+project_file('adapters/python/urirun_scanner/artifacts_admin.py', 496, 'python').
+project_file('adapters/python/urirun_scanner/document_metadata.py', 472, 'python').
+project_file('adapters/python/urirun_scanner/document_sync.py', 1423, 'python').
+project_file('adapters/python/urirun_scanner/scanner_bridge.py', 1549, 'python').
+project_file('adapters/python/urirun_scanner/scanner_net.py', 154, 'python').
+project_file('adapters/python/urirun_scanner/scanner_service.py', 343, 'python').
 project_file('adapters/python/urirun_twin/__init__.py', 1, 'python').
 project_file('adapters/python/urirun_twin/episode.py', 225, 'python').
 project_file('adapters/python/urirun_twin/planner.py', 173, 'python').
@@ -4569,7 +4668,7 @@ project_file('adapters/rust/examples/hash_connector.rs', 13, 'rust').
 project_file('adapters/rust/src/lib.rs', 40, 'rust').
 project_file('adapters/ts/example/hash-connector.ts', 11, 'typescript').
 project_file('adapters/ts/urirun.ts', 42, 'typescript').
-project_file('app.doql.less', 183, 'less').
+project_file('app.doql.less', 193, 'less').
 project_file('examples/matrix/Dockerfile.bash', 7, 'shell').
 project_file('examples/matrix/Dockerfile.go', 7, 'go').
 project_file('examples/matrix/emit_python.py', 20, 'python').
@@ -4585,7 +4684,7 @@ project_file('scripts/lint_connectors.py', 141, 'python').
 project_file('scripts/release-bump.sh', 30, 'shell').
 project_file('scripts/repin_connectors.py', 177, 'python').
 project_file('scripts/sync-versions.sh', 26, 'shell').
-project_file('scripts/test_pypi_install.sh', 87, 'shell').
+project_file('scripts/test_pypi_install.sh', 282, 'shell').
 project_file('scripts/transport_swap_proof.py', 119, 'python').
 project_file('security/mesh-probe/probe.py', 115, 'python').
 project_file('test/urirun.test.js', 11, 'javascript').
@@ -4616,6 +4715,9 @@ python_function('adapters/conformance.py', '_validate_contracts', 1, 4, 8).
 python_function('adapters/conformance.py', '_compare_to_python', 1, 4, 5).
 python_function('adapters/conformance.py', '_exec_check', 2, 7, 13).
 python_function('adapters/conformance.py', 'main', 0, 2, 6).
+python_function('adapters/python/scripts/heal_future_imports.py', '_heal_file', 1, 7, 9).
+python_function('adapters/python/scripts/heal_future_imports.py', 'heal', 2, 6, 6).
+python_function('adapters/python/scripts/heal_future_imports.py', 'main', 1, 5, 5).
 python_function('adapters/python/tests/test_adopt_tree.py', '_pack', 3, 1, 3).
 python_function('adapters/python/tests/test_adopt_tree.py', 'test_directory_of_packs_merges', 1, 3, 5).
 python_function('adapters/python/tests/test_adopt_tree.py', 'test_single_manifest_dir_unchanged', 1, 2, 4).
@@ -4834,6 +4936,11 @@ python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_di
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_dispatch_no_fallback_returns_error_directly', 1, 2, 3).
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_make_local_dispatch_uri_delegates_to_make_dispatch', 1, 5, 5).
 python_function('adapters/python/tests/test_dispatch_protocol.py', 'test_inprocess_fallback_reaches_twin_preflight', 0, 4, 4).
+python_function('adapters/python/tests/test_distribution_name_collision.py', '_repo_root', 0, 4, 3).
+python_function('adapters/python/tests/test_distribution_name_collision.py', '_iter_pyprojects', 1, 4, 3).
+python_function('adapters/python/tests/test_distribution_name_collision.py', '_top_level_packages', 1, 19, 14).
+python_function('adapters/python/tests/test_distribution_name_collision.py', 'test_no_import_name_shipped_by_two_distributions', 0, 7, 13).
+python_function('adapters/python/tests/test_distribution_name_collision.py', 'test_bundle_owns_the_urirun_namespace_packages', 0, 7, 9).
 python_function('adapters/python/tests/test_doctor.py', 'test_api_id_normalizes', 0, 3, 1).
 python_function('adapters/python/tests/test_doctor.py', 'test_api_protocol_defaults_http', 0, 4, 1).
 python_function('adapters/python/tests/test_doctor.py', 'test_auth_configured_detects_secretref', 0, 4, 1).
@@ -5245,6 +5352,12 @@ python_function('adapters/python/tests/test_orchestrator_helpers.py', 'test_crea
 python_function('adapters/python/tests/test_orchestrator_helpers.py', 'test_empty_flow_steps_is_noop', 0, 1, 3).
 python_function('adapters/python/tests/test_orchestrator_helpers.py', 'test_returns_none_when_twin_memory_is_none', 0, 2, 1).
 python_function('adapters/python/tests/test_orchestrator_helpers.py', 'test_calls_suggest_recall_with_real_memory', 1, 4, 3).
+python_function('adapters/python/tests/test_package_collisions.py', '_all_urirun_collisions', 0, 4, 5).
+python_function('adapters/python/tests/test_package_collisions.py', '_dir_hash', 1, 3, 7).
+python_function('adapters/python/tests/test_package_collisions.py', '_standalone_dir', 2, 9, 9).
+python_function('adapters/python/tests/test_package_collisions.py', 'test_no_unexpected_collisions', 0, 4, 5).
+python_function('adapters/python/tests/test_package_collisions.py', 'test_known_collision_resolves_to_adapters_python', 2, 4, 10).
+python_function('adapters/python/tests/test_package_collisions.py', 'test_known_collision_no_content_drift', 2, 12, 11).
 python_function('adapters/python/tests/test_paths.py', 'test_node_state_dir_returns_path', 0, 3, 2).
 python_function('adapters/python/tests/test_paths.py', 'test_node_state_dir_creates_directory', 0, 3, 3).
 python_function('adapters/python/tests/test_paths.py', 'test_node_token_path_under_state_dir', 0, 3, 2).
@@ -5706,7 +5819,9 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_sync_execu
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_sync_ok_and_status', 3, 7, 2).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_apply_urifix_recovery', 2, 14, 11).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_document_sync', 13, 12, 15).
-python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_planner_failure', 7, 9, 7).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_classify_exc_remediation', 2, 4, 5).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_build_escalation_block', 3, 4, 1).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_planner_failure', 7, 10, 9).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_timeline_steps_all_ok', 2, 5, 2).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_resolve_artifact_value', 1, 7, 2).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_build_remote_path_maps', 1, 11, 6).
@@ -5726,7 +5841,7 @@ python_function('adapters/python/urirun/host/chat_orchestrator.py', '_rebuild_no
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_sync_targets_from_flow', 4, 10, 8).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_fetch_planner_environments_for_nodes', 5, 9, 2).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_find_human_node', 1, 9, 3).
-python_function('adapters/python/urirun/host/chat_orchestrator.py', '_escalate_offline_to_human', 4, 10, 8).
+python_function('adapters/python/urirun/host/chat_orchestrator.py', '_escalate_offline_to_human', 4, 9, 3).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_check_offline', 7, 13, 7).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_chat_ask_general_build_result', 12, 10, 11).
 python_function('adapters/python/urirun/host/chat_orchestrator.py', '_try_recall_gate', 3, 11, 4).
@@ -5848,7 +5963,7 @@ python_function('adapters/python/urirun/host/fs_transfer.py', 'remote_write_erro
 python_function('adapters/python/urirun/host/fs_transfer.py', 'remote_read_error', 2, 11, 5).
 python_function('adapters/python/urirun/host/fs_transfer.py', 'node_client', 1, 1, 1).
 python_function('adapters/python/urirun/host/fs_transfer.py', 'node_token_for', 2, 5, 2).
-python_function('adapters/python/urirun/host/fs_transfer.py', 'run_node_uri', 3, 2, 3).
+python_function('adapters/python/urirun/host/fs_transfer.py', 'run_node_uri', 3, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_prune_scanner_staging', 0, 2, 2).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_archive_scanned_document', 0, 1, 1).
 python_function('adapters/python/urirun/host/host_dashboard.py', 'artifacts_delete', 4, 1, 2).
@@ -5933,9 +6048,9 @@ python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_st
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_nodes_qr', 2, 5, 14).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_services', 3, 4, 7).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get_api', 4, 14, 12).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get', 8, 4, 6).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_get', 8, 9, 11).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_connectors', 8, 4, 5).
-python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_nodes', 8, 8, 9).
+python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_nodes', 8, 12, 13).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_scanner', 8, 9, 10).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_chat', 8, 3, 4).
 python_function('adapters/python/urirun/host/host_dashboard.py', '_handle_post_tasks', 4, 5, 5).
@@ -6071,6 +6186,22 @@ python_function('adapters/python/urirun/host/node_cli.py', '_print_stop_results'
 python_function('adapters/python/urirun/host/node_cli.py', 'node_stop_command', 1, 7, 6).
 python_function('adapters/python/urirun/host/node_cli.py', '_resolve_registry_source', 2, 6, 4).
 python_function('adapters/python/urirun/host/node_cli.py', 'node_command', 1, 11, 14).
+python_function('adapters/python/urirun/host/node_dispatch.py', '_any_kw', 2, 2, 1).
+python_function('adapters/python/urirun/host/node_dispatch.py', '_build_remediation', 5, 12, 3).
+python_function('adapters/python/urirun/host/node_dispatch.py', 'classify_error', 1, 10, 9).
+python_function('adapters/python/urirun/host/node_dispatch.py', 'run_node_uri', 3, 14, 11).
+python_function('adapters/python/urirun/host/node_dispatch.py', '_node_from_url', 1, 2, 1).
+python_function('adapters/python/urirun/host/node_dispatch.py', '_extract_error', 1, 6, 2).
+python_function('adapters/python/urirun/host/node_dispatch.py', '_try_route_repair', 5, 7, 6).
+python_function('adapters/python/urirun/host/node_health.py', '_http_get_json', 2, 3, 4).
+python_function('adapters/python/urirun/host/node_health.py', '_probe_reachable', 1, 1, 4).
+python_function('adapters/python/urirun/host/node_health.py', '_probe_auth', 3, 9, 6).
+python_function('adapters/python/urirun/host/node_health.py', '_probe_schemes', 3, 2, 3).
+python_function('adapters/python/urirun/host/node_health.py', '_probe_version', 1, 4, 2).
+python_function('adapters/python/urirun/host/node_health.py', 'node_doctor', 1, 13, 12).
+python_function('adapters/python/urirun/host/node_health.py', 'classify_node_error', 1, 1, 2).
+python_function('adapters/python/urirun/host/node_health.py', '_node_from_url', 1, 1, 1).
+python_function('adapters/python/urirun/host/node_health.py', '_result', 2, 1, 0).
 python_function('adapters/python/urirun/host/node_types.py', 'node_type_profiles', 0, 2, 1).
 python_function('adapters/python/urirun/host/node_types.py', 'normalize_node_type', 1, 5, 5).
 python_function('adapters/python/urirun/host/node_types.py', 'node_type_profile', 1, 4, 2).
@@ -6382,6 +6513,9 @@ python_function('adapters/python/urirun_connectors_toolkit/resolver.py', 'index_
 python_function('adapters/python/urirun_connectors_toolkit/resolver.py', 'resolve_command', 1, 6, 7).
 python_function('adapters/python/urirun_contracts/event_schema.py', '_step_inverse', 1, 5, 1).
 python_function('adapters/python/urirun_contracts/event_schema.py', 'step_category', 1, 3, 1).
+python_function('adapters/python/urirun_flow/cli.py', '_load_python_flow', 1, 4, 6).
+python_function('adapters/python/urirun_flow/cli.py', '_load_flow', 1, 3, 7).
+python_function('adapters/python/urirun_flow/cli.py', 'main', 1, 12, 20).
 python_function('adapters/python/urirun_flow/diagnostics.py', '_target', 1, 7, 4).
 python_function('adapters/python/urirun_flow/diagnostics.py', '_target_of', 1, 6, 3).
 python_function('adapters/python/urirun_flow/diagnostics.py', '_is_login_surface', 1, 5, 4).
@@ -6533,6 +6667,18 @@ python_function('adapters/python/urirun_flow/recovery.py', 'apply_auto_remediati
 python_function('adapters/python/urirun_flow/recovery.py', 'can_retry_step', 1, 6, 4).
 python_function('adapters/python/urirun_flow/recovery.py', 'planner_failure', 1, 3, 2).
 python_function('adapters/python/urirun_flow/recovery.py', '_uri_remediate', 1, 4, 5).
+python_function('adapters/python/urirun_flow/run.py', '_result_value', 1, 3, 2).
+python_function('adapters/python/urirun_flow/run.py', 'envelope_ok', 1, 6, 3).
+python_function('adapters/python/urirun_flow/run.py', 'error_category', 1, 8, 3).
+python_function('adapters/python/urirun_flow/run.py', '_skip_envelope', 2, 1, 0).
+python_function('adapters/python/urirun_flow/run.py', 'flow_summary', 1, 8, 7).
+python_function('adapters/python/urirun_flow/run.py', 'resolve_step', 3, 14, 11).
+python_function('adapters/python/urirun_flow/run.py', '_skip_step', 4, 1, 1).
+python_function('adapters/python/urirun_flow/run.py', '_prereq_skip', 4, 5, 2).
+python_function('adapters/python/urirun_flow/run.py', '_resolve_payload', 4, 3, 2).
+python_function('adapters/python/urirun_flow/run.py', '_apply_degrade', 5, 4, 1).
+python_function('adapters/python/urirun_flow/run.py', '_flow_policy', 4, 5, 3).
+python_function('adapters/python/urirun_flow/run.py', 'run_flow', 2, 12, 15).
 python_function('adapters/python/urirun_node/_artifacts.py', '_artifact_extension', 2, 9, 3).
 python_function('adapters/python/urirun_node/_artifacts.py', '_decode_base64_artifact', 1, 6, 6).
 python_function('adapters/python/urirun_node/_artifacts.py', '_write_artifact', 1, 3, 12).
@@ -8145,6 +8291,8 @@ python_method('SkillSessionURITests', 'test_recall_missing_skill_is_found_false'
 python_method('SkillSessionURITests', 'test_session_record_export_and_promote', 0, 2, 6).
 python_method('SkillSessionURITests', 'test_session_append_rejects_empty_step', 0, 1, 2).
 python_method('SkillSessionURITests', 'test_connectors_register_and_expose_bindings', 0, 1, 5).
+python_class('adapters/python/tests/test_source_compiles.py', 'SourceCompilesTests').
+python_method('SourceCompilesTests', 'test_all_package_sources_compile', 0, 6, 9).
 python_class('adapters/python/tests/test_twin_store.py', 'TwinStoreTests').
 python_method('TwinStoreTests', 'setUp', 0, 1, 2).
 python_method('TwinStoreTests', 'test_known_good_survives_a_restart', 0, 1, 10).
@@ -8220,9 +8368,27 @@ python_method('ConnectorContractSuite', 'test_bindings_serializable', 0, 1, 1).
 python_method('ConnectorContractSuite', 'test_dry_run_routes_return_valid_reply_shape', 0, 4, 4).
 python_method('ConnectorContractSuite', 'test_execute_cases', 0, 4, 5).
 python_method('ConnectorContractSuite', 'test_failed_dispatch_carries_error', 0, 4, 4).
+python_class('adapters/python/urirun_contracts/__init__.py', 'RemediationClass').
+python_class('adapters/python/urirun_contracts/__init__.py', 'Remediation').
+python_method('Remediation', 'to_dict', 0, 1, 0).
 python_class('adapters/python/urirun_contracts/event_schema.py', '_StepTransition').
 python_class('adapters/python/urirun_contracts/event_schema.py', 'StepEvent').
 python_class('adapters/python/urirun_contracts/event_schema.py', 'FlowCompletedEvent').
+python_class('adapters/python/urirun_flow/__init__.py', 'FlowError').
+python_class('adapters/python/urirun_flow/__init__.py', 'Step').
+python_method('Step', '_check_uri', 2, 3, 3).
+python_method('Step', '_check_catch', 2, 3, 2).
+python_method('Step', '_derive_kind', 0, 4, 3).
+python_method('Step', 'ref', 1, 2, 0).
+python_class('adapters/python/urirun_flow/__init__.py', 'Flow').
+python_method('Flow', 'step', 1, 7, 6).
+python_method('Flow', '_validate', 0, 1, 2).
+python_method('Flow', '_validate_graph', 0, 11, 6).
+python_method('Flow', 'order', 0, 3, 4).
+python_method('Flow', 'to_dict', 0, 13, 1).
+python_method('Flow', 'to_yaml', 0, 1, 2).
+python_method('Flow', 'from_dict', 2, 1, 1).
+python_method('Flow', 'from_yaml', 2, 2, 2).
 python_class('adapters/python/urirun_flow/diagnostics.py', '_Rule').
 python_method('_Rule', '__init__', 4, 2, 1).
 python_method('_Rule', 'matches', 3, 6, 2).
@@ -8448,6 +8614,7 @@ makefile_target('version-check', '').
 makefile_target('sync-versions', '').
 makefile_target('release-bump', '').
 makefile_target('test-js', '').
+makefile_target('heal', '').
 makefile_target('test-python', '').
 makefile_target('test-c', '').
 makefile_target('conformance', '').
@@ -8465,6 +8632,7 @@ makefile_target('build', '').
 makefile_target('publish', '').
 makefile_target('release', '').
 makefile_target('test-published', '').
+makefile_target('test-local', '').
 makefile_target('clean', '').
 
 % ── Taskfile Tasks ───────────────────────────────────────
@@ -8500,6 +8668,8 @@ sumd_workflow('release-bump', 'manual').
 sumd_workflow_step('release-bump', 1, 'bash scripts/release-bump.sh $(V)').
 sumd_workflow('test-js', 'manual').
 sumd_workflow_step('test-js', 1, '$(NODE) --test adapters/js/*.test.js').
+sumd_workflow('heal', 'manual').
+sumd_workflow_step('heal', 1, '$(PYTHON) adapters/python/scripts/heal_future_imports.py adapters/python').
 sumd_workflow('test-python', 'manual').
 sumd_workflow_step('test-python', 1, 'PYTHONPATH=adapters/python $(PYTHON) -m unittest discover -s adapters/python/tests -p \'test_*.py\'').
 sumd_workflow('test-c', 'manual').
@@ -8540,36 +8710,38 @@ sumd_workflow_step('release', 5, 'git push "$$remote" "v$$v"').
 sumd_workflow_step('release', 6, 'echo "pushed tag v$$v to $$remote -> release.yml builds + publishes to PyPI"').
 sumd_workflow('test-published', 'manual').
 sumd_workflow_step('test-published', 1, 'bash scripts/test_pypi_install.sh $(V)').
+sumd_workflow('test-local', 'manual').
+sumd_workflow_step('test-local', 1, 'bash scripts/test_pypi_install.sh --local').
 sumd_workflow('clean', 'manual').
 sumd_workflow_step('clean', 1, 'rm -rf node_modules .pytest_cache adapters/python/tests/__pycache__ adapters/python/urirun/__pycache__ adapters/python/*.egg-info adapters/python/build adapters/python/dist __pycache__').
 ```
 
 ## Call Graph
 
-*465 nodes · 500 edges · 53 modules · CC̄=4.6*
+*477 nodes · 500 edges · 54 modules · CC̄=4.6*
 
 ### Hubs (by degree)
 
 | Function | CC | in | out | total |
 |----------|----|----|-----|-------|
-| `print` *(in scripts.test_pypi_install)* | 0 | 203 | 0 | **203** |
+| `print` *(in scripts.test_pypi_install)* | 0 | 209 | 0 | **209** |
 | `send_json` *(in adapters.python.urirun_node.server)* | 1 | 44 | 12 | **56** |
 | `print_report` *(in scripts.extraction_audit)* | 12 ⚠ | 1 | 36 | **37** |
 | `normalize_error` *(in adapters.python.urirun_flow.recovery)* | 10 ⚠ | 2 | 30 | **32** |
 | `_stream_events` *(in adapters.python.urirun_node.server.NodeHandler)* | 14 ⚠ | 0 | 31 | **31** |
-| `main` *(in scripts.transport_swap_proof)* | 5 | 0 | 29 | **29** |
 | `_handle_deploy` *(in adapters.python.urirun_node.server.NodeHandler)* | 11 ⚠ | 0 | 29 | **29** |
+| `main` *(in scripts.transport_swap_proof)* | 5 | 0 | 29 | **29** |
 | `verify_connector` *(in adapters.python.urirun.connectors.connector_lint)* | 6 | 1 | 27 | **28** |
 
 ```toon markpact:analysis path=project/calls.toon.yaml
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.22s
-# nodes: 465 | edges: 500 | modules: 53
+# generated in 0.23s
+# nodes: 477 | edges: 500 | modules: 54
 # CC̄=4.6
 
 HUBS[20]:
   scripts.test_pypi_install.print
-    CC=0  in:203  out:0  total:203
+    CC=0  in:209  out:0  total:209
   adapters.python.urirun_node.server.send_json
     CC=1  in:44  out:12  total:56
   scripts.extraction_audit.print_report
@@ -8578,22 +8750,22 @@ HUBS[20]:
     CC=10  in:2  out:30  total:32
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  scripts.transport_swap_proof.main
-    CC=5  in:0  out:29  total:29
   adapters.python.urirun_node.server.NodeHandler._handle_deploy
     CC=11  in:0  out:29  total:29
+  scripts.transport_swap_proof.main
+    CC=5  in:0  out:29  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun_node.server.NodeHandler._handle_run
     CC=14  in:0  out:27  total:27
-  adapters.python.urirun_runtime.v2.validate_binding_document
-    CC=12  in:3  out:24  total:27
-  adapters.python.urirun.node.flow_planner._append_target_steps
-    CC=14  in:1  out:26  total:27
   adapters.python.urirun_node.server.apply_deploy
     CC=12  in:2  out:25  total:27
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
+  adapters.python.urirun.node.flow_planner._append_target_steps
+    CC=14  in:1  out:26  total:27
+  adapters.python.urirun_runtime.v2.validate_binding_document
+    CC=12  in:3  out:24  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.connectors.connect_catalog._cmd_show
@@ -8604,10 +8776,10 @@ HUBS[20]:
     CC=12  in:2  out:22  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
+  adapters.python.urirun.node.routing.route_target
+    CC=1  in:21  out:1  total:22
   adapters.python.urirun_node.server.NodeHandler._handle_enroll
     CC=11  in:0  out:22  total:22
-  adapters.python.urirun_node.transport.http_json
-    CC=8  in:11  out:11  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -8638,6 +8810,10 @@ MODULES:
   adapters.php.Urirun  [2 funcs]
     bindings  CC=1  out:0
     bindingsJson  CC=1  out:2
+  adapters.python.scripts.heal_future_imports  [3 funcs]
+    _heal_file  CC=7  out:12
+    heal  CC=6  out:7
+    main  CC=5  out:9
   adapters.python.urirun  [3 funcs]
     manifest  CC=11  out:13
     handler  CC=1  out:1
@@ -8714,17 +8890,17 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.flow_planner  [30 funcs]
-    _append_session_guidance  CC=7  out:4
+  adapters.python.urirun.node.flow_planner  [14 funcs]
     _append_target_steps  CC=14  out:26
-    _build_session_map  CC=6  out:7
-    _collect_infeasible_constraints  CC=6  out:3
-    _fetch_env_profile  CC=1  out:1
-    _fetch_kvm_query  CC=6  out:6
-    _fetch_surface  CC=1  out:1
     _flow_intents  CC=6  out:3
     _flow_intents_llm  CC=6  out:8
-    _inject_cdp_ready_probes  CC=10  out:15
+    _normalize_flow_step  CC=7  out:16
+    _unique_step_id  CC=3  out:4
+    _uri_is_available  CC=4  out:2
+    _uri_matches_template  CC=6  out:8
+    _uri_segments  CC=1  out:3
+    _validate_step_payload  CC=7  out:5
+    append_if_available  CC=5  out:6
   adapters.python.urirun.node.flow_thin  [24 funcs]
     _action_error  CC=2  out:3
     _action_ok  CC=3  out:4
@@ -8790,7 +8966,7 @@ MODULES:
     _uri_session_promote  CC=7  out:8
     _uri_session_replay  CC=7  out:10
     _uri_session_start  CC=8  out:11
-  adapters.python.urirun.node.twin_store  [9 funcs]
+  adapters.python.urirun.node.twin_store  [8 funcs]
     __init__  CC=5  out:5
     drift  CC=3  out:2
     recall_episode  CC=9  out:8
@@ -8798,13 +8974,10 @@ MODULES:
     remember  CC=1  out:1
     _sig  CC=1  out:4
     default_memory_path  CC=2  out:2
-    durable_memory  CC=1  out:8
     environment_fingerprint  CC=2  out:8
   adapters.python.urirun.runtime.dispatch_protocol  [2 funcs]
     reply_fields  CC=9  out:10
     validate_reply  CC=6  out:8
-  adapters.python.urirun.runtime.v2_service  [1 funcs]
-    call  CC=9  out:10
   adapters.python.urirun_connectors_toolkit.backend_registry  [6 funcs]
     missing  CC=5  out:2
     platform_ok  CC=2  out:1
@@ -8835,7 +9008,8 @@ MODULES:
     index_local  CC=12  out:22
     resolve  CC=12  out:24
     resolve_command  CC=6  out:14
-  adapters.python.urirun_flow.flow  [1 funcs]
+  adapters.python.urirun_flow.flow  [2 funcs]
+    _flow_transport  CC=1  out:8
     execute_flow  CC=3  out:9
   adapters.python.urirun_flow.recovery  [22 funcs]
     _apply_one_remediation  CC=7  out:11
@@ -8918,8 +9092,25 @@ MODULES:
     _pids_on_port  CC=9  out:15
   adapters.python.urirun_runtime.v2  [1 funcs]
     validate_binding_document  CC=12  out:24
-  adapters.python.urirun_twin.planner  [1 funcs]
+  adapters.python.urirun_twin.planner  [7 funcs]
+    _action_matrix_hints  CC=11  out:9
+    _best_surface_hint  CC=3  out:0
+    _infeasible_constraints  CC=6  out:3
+    _planner_facts  CC=5  out:11
+    _planner_surface_guidance  CC=6  out:10
     planner_context  CC=6  out:9
+    plausibility  CC=14  out:14
+  adapters.python.urirun_twin.reversible  [20 funcs]
+    execute  CC=8  out:14
+    rollback_flow  CC=6  out:7
+    call  CC=1  out:0
+    rescan  CC=1  out:2
+    scan  CC=2  out:5
+    _build_ledger_transitions  CC=5  out:12
+    _inner_value  CC=5  out:6
+    _inverse_uri  CC=3  out:6
+    _normalize_stuck  CC=8  out:10
+    _rollback_from_ledger  CC=6  out:9
   adapters.ts.urirun  [2 funcs]
     document  CC=1  out:0
     toJSON  CC=1  out:2
