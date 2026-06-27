@@ -1,6 +1,6 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.42s
-# nodes: 464 | edges: 500 | modules: 46
+# generated in 0.30s
+# nodes: 473 | edges: 500 | modules: 48
 # CC̄=4.6
 
 HUBS[20]:
@@ -8,40 +8,40 @@ HUBS[20]:
     CC=1  in:1  out:78  total:79
   adapters.python.urirun.runtime.daemon.serve
     CC=14  in:1  out:40  total:41
-  scripts.extraction_audit.print_report
-    CC=12  in:1  out:36  total:37
-  adapters.python.urirun.runtime.errors.info
-    CC=13  in:2  out:27  total:29
   adapters.python.urirun.runtime.adopt_pack.adopt
     CC=13  in:1  out:28  total:29
-  adapters.python.urirun.runtime._scan.normalize_binding
-    CC=11  in:17  out:12  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
+  adapters.python.urirun.runtime.errors.info
+    CC=13  in:2  out:27  total:29
+  adapters.python.urirun.runtime._scan.normalize_binding
+    CC=11  in:17  out:12  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun.runtime._runtime.run
-    CC=16  in:1  out:27  total:28
-  adapters.python.urirun_runtime.v2.validate_binding_document
-    CC=12  in:3  out:24  total:27
-  adapters.python.urirun_runtime.v2._cmd_upgrade
-    CC=14  in:0  out:27  total:27
-  adapters.python.urirun.runtime.codegen.proto_from_registry
-    CC=13  in:2  out:25  total:27
   adapters.python.urirun.connectors.connector_lint.lint_connector
     CC=9  in:3  out:24  total:27
+  adapters.python.urirun.runtime.codegen.proto_from_registry
+    CC=13  in:2  out:25  total:27
+  adapters.python.urirun_runtime.v2._cmd_upgrade
+    CC=14  in:0  out:27  total:27
+  adapters.python.urirun_runtime.v2.validate_binding_document
+    CC=12  in:3  out:24  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun.runtime.v1.run
-    CC=14  in:2  out:23  total:25
   adapters.python.urirun.connectors.connect_catalog._cmd_show
     CC=9  in:0  out:25  total:25
+  adapters.python.urirun.runtime.v1.run
+    CC=14  in:2  out:23  total:25
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
   adapters.python.urirun_runtime.v2.scan_artifacts
     CC=11  in:4  out:19  total:23
   adapters.python.urirun.runtime.errors.problem
     CC=10  in:0  out:22  total:22
+  adapters.python.urirun_runtime._registry.discover_manifest
+    CC=14  in:2  out:19  total:21
+  adapters.python.urirun.runtime.v1._run_process_streaming
+    CC=7  in:1  out:20  total:21
   adapters.python.urirun.runtime.tree.collect_uris
     CC=11  in:1  out:20  total:21
 
@@ -109,22 +109,37 @@ MODULES:
     _load  CC=3  out:4
     smoke  CC=6  out:20
     smoke_command  CC=2  out:4
-  adapters.python.urirun.node.skill  [1 funcs]
-    register  CC=2  out:0
-  adapters.python.urirun.runtime._runtime  [23 funcs]
-    _build_fetch_body  CC=4  out:9
-    _fetch_fill  CC=1  out:6
-    _fetch_render  CC=6  out:7
-    _hydrate_local_function  CC=6  out:12
-    _is_payload_context_handler  CC=5  out:2
-    _looks_destructive  CC=5  out:10
-    _make_secret_injector  CC=3  out:12
-    _matches_any  CC=3  out:1
-    _policy_allow  CC=3  out:3
-    _policy_denial  CC=9  out:12
-  adapters.python.urirun.runtime._scan  [2 funcs]
+  adapters.python.urirun.node.episode  [9 funcs]
+    from_dict  CC=13  out:16
+    _outcome_from_dict  CC=4  out:4
+    _plan_from_dict  CC=4  out:4
+    _reality_from_dict  CC=3  out:3
+    _sha1  CC=2  out:3
+    episode_id  CC=1  out:1
+    intent_signature  CC=1  out:4
+    make_episode  CC=14  out:12
+    proof_key  CC=1  out:1
+  adapters.python.urirun.node.event_schema  [2 funcs]
+    _step_inverse  CC=5  out:1
+    step_category  CC=3  out:1
+  adapters.python.urirun.node.twin_store  [8 funcs]
+    __init__  CC=5  out:5
+    drift  CC=3  out:2
+    recall_episode  CC=9  out:8
+    recall_flow_by_intent  CC=8  out:8
+    remember  CC=1  out:1
+    _sig  CC=1  out:4
+    default_memory_path  CC=2  out:2
+    environment_fingerprint  CC=2  out:8
+  adapters.python.urirun.runtime._scan  [8 funcs]
+    binding_to_route_source  CC=3  out:3
+    build_binding_document  CC=3  out:6
+    compile_registry_document  CC=4  out:5
     infer_kind  CC=12  out:11
+    load_bindings_from_manifest  CC=14  out:16
     normalize_binding  CC=11  out:12
+    now_iso  CC=1  out:2
+    route_source_to_binding  CC=5  out:7
   adapters.python.urirun.runtime.adopt_pack  [11 funcs]
     _config_manifest  CC=4  out:6
     _document  CC=2  out:2
@@ -206,15 +221,6 @@ MODULES:
     npm_package_bindings  CC=4  out:12
     passthrough_schema  CC=2  out:1
     python_package_bindings  CC=4  out:6
-  adapters.python.urirun.runtime.v2_grpc  [8 funcs]
-    _method  CC=2  out:1
-    _route_list  CC=2  out:5
-    _validate  CC=5  out:4
-    call  CC=6  out:7
-    channel_target  CC=3  out:3
-    list_routes  CC=1  out:3
-    serve  CC=2  out:15
-    stream  CC=4  out:7
   adapters.python.urirun.runtime.v2_mcp  [11 funcs]
     _handle_mcp_request  CC=7  out:16
     _input_schema  CC=4  out:3
@@ -261,6 +267,10 @@ MODULES:
     index_local  CC=12  out:22
     resolve  CC=12  out:24
     resolve_command  CC=6  out:14
+  adapters.python.urirun_flow.flow  [1 funcs]
+    _flow_transport  CC=1  out:8
+  adapters.python.urirun_node.skill  [1 funcs]
+    register  CC=2  out:0
   adapters.python.urirun_runtime._registry  [36 funcs]
     _default_openapi_route  CC=9  out:11
     _discover_python_module  CC=1  out:2
@@ -303,6 +313,17 @@ MODULES:
     run_uri  CC=4  out:9
     _cli_ref_for_script  CC=3  out:2
     _pool_executors  CC=1  out:8
+  adapters.python.urirun_twin.reversible  [25 funcs]
+    execute  CC=8  out:14
+    rollback_flow  CC=6  out:7
+    rescan  CC=1  out:2
+    scan  CC=2  out:5
+    _action_matrix_hints  CC=11  out:9
+    _best_surface_hint  CC=3  out:0
+    _build_ledger_transitions  CC=5  out:12
+    _infeasible_constraints  CC=6  out:3
+    _inner_value  CC=5  out:6
+    _inverse_uri  CC=3  out:6
   adapters.ts.urirun  [2 funcs]
     document  CC=1  out:0
     toJSON  CC=1  out:2
@@ -318,17 +339,6 @@ MODULES:
     _iter_py  CC=8  out:6
     find_offenders  CC=6  out:7
     main  CC=3  out:10
-  scripts.extraction_audit  [11 funcs]
-    _allowed_down  CC=7  out:3
-    _resolve_from  CC=4  out:3
-    _selftest  CC=7  out:18
-    audit  CC=8  out:20
-    classify  CC=10  out:7
-    discover_modules  CC=3  out:3
-    edges_in_file  CC=9  out:12
-    main  CC=7  out:15
-    module_name  CC=3  out:4
-    print_report  CC=12  out:36
   scripts.lint_connectors  [6 funcs]
     _flags  CC=5  out:11
     _lint_exit_code  CC=13  out:13
@@ -365,17 +375,6 @@ EDGES:
   scripts.lint_connectors.main → scripts.lint_connectors.lint_fleet
   scripts.lint_connectors.main → scripts.lint_connectors._lint_exit_code
   scripts.lint_connectors.main → scripts.lint_connectors._print_fleet_report
-  scripts.extraction_audit.discover_modules → scripts.extraction_audit.module_name
-  scripts.extraction_audit.edges_in_file → scripts.extraction_audit._resolve_from
-  scripts.extraction_audit.classify → scripts.extraction_audit._allowed_down
-  scripts.extraction_audit.audit → scripts.extraction_audit.discover_modules
-  scripts.extraction_audit.audit → scripts.extraction_audit.resolve_package
-  scripts.extraction_audit.audit → scripts.extraction_audit.classify
-  scripts.extraction_audit._selftest → scripts.extraction_audit.classify
-  scripts.extraction_audit._selftest → scripts.extraction_audit._resolve_from
-  scripts.extraction_audit.main → scripts.extraction_audit.audit
-  scripts.extraction_audit.main → scripts.extraction_audit.print_report
-  scripts.extraction_audit.main → scripts.extraction_audit._selftest
   scripts.repin_connectors._pypi_write_guard → scripts.repin_connectors.pypi_has
   scripts.repin_connectors._repin_one → scripts.repin_connectors.classify
   scripts.repin_connectors._repin_one → scripts.repin_connectors.repin_text
@@ -397,7 +396,18 @@ EDGES:
   adapters.c.urirun.copy_token → adapters.c.urirun.memcpy
   adapters.c.urirun.memcpy → adapters.c.urirun.is_path_end
   adapters.c.urirun.parse_target → adapters.c.urirun.copy_token
-  adapters.python.urirun.connectors.connector_lint._connector_assignment → adapters.python.urirun.connectors.connector_lint._connector_call_target
-  adapters.python.urirun.connectors.connector_lint._connector_objects → adapters.python.urirun.connectors.connector_lint._connector_assignment
-  adapters.python.urirun.connectors.connector_lint._decorator_routes → adapters.python.urirun.connectors.connector_lint._route_uri
-  adapters.python.urirun.connectors.connector_lint._scan_code_routes → adapters.python.urirun.connectors.connector_lint._connector_objects
+  adapters.python.urirun.node.event_schema.step_category → adapters.python.urirun.node.event_schema._step_inverse
+  adapters.python.urirun_twin.reversible.path_of → adapters.python.urirun_twin.reversible.parse
+  adapters.python.urirun_twin.reversible.Twin.scan → adapters.python.urirun_twin.reversible.sig
+  adapters.python.urirun_twin.reversible.Twin.rescan → adapters.python.urirun_twin.reversible.sig
+  adapters.python.urirun_twin.reversible.ReversibleProcess.execute → adapters.python.urirun_twin.reversible.path_of
+  adapters.python.urirun_twin.reversible.ReversibleProcess.execute → adapters.python.urirun_twin.reversible._step_kind
+  adapters.python.urirun_twin.reversible._planner_surface_guidance → adapters.python.urirun_twin.reversible._best_surface_hint
+  adapters.python.urirun_twin.reversible._planner_surface_guidance → adapters.python.urirun_twin.reversible._action_matrix_hints
+  adapters.python.urirun_twin.reversible.planner_context → adapters.python.urirun_twin.reversible._planner_facts
+  adapters.python.urirun_twin.reversible.planner_context → adapters.python.urirun_twin.reversible._planner_surface_guidance
+  adapters.python.urirun_twin.reversible.planner_context → adapters.python.urirun_twin.reversible.plausibility
+  adapters.python.urirun_twin.reversible.planner_context → adapters.python.urirun_twin.reversible._infeasible_constraints
+  adapters.python.urirun_twin.reversible.local_transport → adapters.python.urirun_twin.reversible.parse
+  adapters.python.urirun_twin.reversible.rollback_partial_flow → adapters.python.urirun_twin.reversible.ledger_from_execution
+  adapters.python.urirun_twin.reversible._inverse_uri → adapters.python.urirun_twin.reversible.parse

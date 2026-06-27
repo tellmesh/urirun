@@ -32,7 +32,6 @@ import json
 import os
 from concurrent import futures
 
-import grpc
 from jsonschema import exceptions as jsonschema_exceptions
 
 from urirun.runtime import _registry as reglib, v2
@@ -64,6 +63,7 @@ def _route_list(registry: dict) -> dict:
 
 def serve(registry: dict, host: str = "0.0.0.0", port: int = DEFAULT_PORT, policy: dict | None = None,
           mode: str = "dry-run", max_workers: int = 8, block: bool = True):
+    import grpc
     from urirun.runtime.dispatch_protocol import dispatch as _dp_dispatch, normalize_request as _norm
 
     def do_run(request, _context):
@@ -126,6 +126,7 @@ def _validate(uri: str, payload: dict, registry: dict | None) -> dict | None:
 
 def call(uri: str, payload: dict | None = None, registry: dict | None = None, target: str | None = None,
          mode: str = "execute", timeout: float = 30.0, validate: bool = True) -> dict:
+    import grpc
     descriptor = reglib.parse_uri(uri)
     translation = reglib.translate(descriptor)
     if validate:
@@ -140,6 +141,7 @@ def call(uri: str, payload: dict | None = None, registry: dict | None = None, ta
 
 def stream(uri: str, payload: dict | None = None, target: str | None = None, mode: str = "execute",
            timeout: float = 30.0):
+    import grpc
     translation = reglib.translate(reglib.parse_uri(uri))
     address = channel_target(target or translation["target"])
     channel = grpc.insecure_channel(address)
@@ -152,6 +154,7 @@ def stream(uri: str, payload: dict | None = None, target: str | None = None, mod
 
 
 def list_routes(target: str, timeout: float = 5.0) -> dict:
+    import grpc
     with grpc.insecure_channel(channel_target(target)) as channel:
         return _method(channel, "ListRoutes")({}, timeout=timeout)
 

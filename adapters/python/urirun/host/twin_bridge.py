@@ -235,21 +235,30 @@ def _obs_episode_id(intent_sig: str, env_fp: str, steps: list) -> "str | None":
     return None
 
 
+def _node_from_step_uris(steps: list) -> "tuple[str | None, bool]":
+    """Return (first_remote_node, found_host) by scanning step URIs."""
+    found_host = False
+    for step in steps:
+        uri = step.get("uri") or ""
+        if "://" not in uri:
+            continue
+        authority = uri.split("://", 1)[1].split("/")[0]
+        if authority and authority != "host":
+            return authority, False
+        if authority == "host":
+            found_host = True
+    return None, found_host
+
+
 def _infer_node_from_flow(flow: dict, selected_targets: list) -> str:
     """Derive the actual node name from flow steps (URI authority), falling back to
     flow['selectedNodes'][0], then selected_targets[0], then 'host'.
     This avoids poisoning recall keys when the UI default 'host' selectedTarget is sent
     but steps actually execute on a remote node (e.g. 'lenovo')."""
     steps = (flow or {}).get("steps") or []
-    found_host = False
-    for step in steps:
-        uri = step.get("uri") or ""
-        if "://" in uri:
-            authority = uri.split("://", 1)[1].split("/")[0]
-            if authority and authority != "host":
-                return authority
-            if authority == "host":
-                found_host = True
+    remote_node, found_host = _node_from_step_uris(steps)
+    if remote_node:
+        return remote_node
     if found_host:
         return "host"
     # No step URIs found — fall back to planner's selectedNodes, then UI targets

@@ -123,6 +123,34 @@ def _remote_file_response(handler: BaseHTTPRequestHandler, node_url: str, path: 
     handler.wfile.write(body)
 
 
+def _post_to_node_run(node_base: str, uri: str, payload: dict) -> "dict | None":
+    import json as _json  # noqa: PLC0415
+    import urllib.request  # noqa: PLC0415
+    try:
+        data = _json.dumps({"uri": uri, "payload": payload, "mode": "execute"}).encode()
+        req = urllib.request.Request(
+            f"{node_base}/run", data=data,
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return _json.loads(resp.read())
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _safe_b64decode(b64: str) -> "bytes | None":
+    import base64 as _b64  # noqa: PLC0415
+    try:
+        return _b64.b64decode(b64)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _extract_file_b64(r: dict) -> str:
+    val = (r.get("result") or {}).get("value") or {}
+    return val.get("bytes_b64") or val.get("b64") or ""
+
+
 def _fetch_remote_file_bytes(node_base: str, path: str) -> "bytes | None":
     """Return raw bytes of a file living on a remote urirun node.
 
@@ -131,44 +159,23 @@ def _fetch_remote_file_bytes(node_base: str, path: str) -> "bytes | None":
     2. kvm://host/screen/query/capture with output+base64 — for screenshots only
        (re-captures the desktop at the moment of the request, not the original image)
     """
-    import base64 as _b64  # noqa: PLC0415
-    import json as _json  # noqa: PLC0415
-    import urllib.request  # noqa: PLC0415
-
-    def _post(uri: str, payload: dict) -> "dict | None":
-        try:
-            data = _json.dumps({"uri": uri, "payload": payload, "mode": "execute"}).encode()
-            req = urllib.request.Request(
-                f"{node_base}/run", data=data,
-                headers={"Content-Type": "application/json"}, method="POST",
-            )
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                return _json.loads(resp.read())
-        except Exception:  # noqa: BLE001
-            return None
-
     # Strategy 1: the fs file-transfer route (fs_transfer.read_b64) — the real, deployed read
     # capability. Returns {bytes_b64}; reads the ORIGINAL file (no re-capture, no clobber).
     # NOTE: kvm://host/fs/query/read does NOT exist — the kvm connector has no fs route.
-    r = _post("fs://host/file/query/read-b64", {"path": path})
+    r = _post_to_node_run(node_base, "fs://host/file/query/read-b64", {"path": path})
     if isinstance(r, dict) and r.get("ok"):
-        val = (r.get("result") or {}).get("value") or {}
-        b64 = val.get("bytes_b64") or val.get("b64") or ""
+        b64 = _extract_file_b64(r)
         if b64:
-            try:
-                return _b64.b64decode(b64)
-            except Exception:  # noqa: BLE001
-                pass
+            data = _safe_b64decode(b64)
+            if data is not None:
+                return data
 
     # Strategy 2: screenshots only — re-capture via kvm (fresh grab, not original)
     if path.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-        r2 = _post("kvm://host/screen/query/capture", {"output": path, "base64": True})
+        r2 = _post_to_node_run(node_base, "kvm://host/screen/query/capture", {"output": path, "base64": True})
         if isinstance(r2, dict) and r2.get("ok"):
-            b64 = ((r2.get("result") or {}).get("value") or {}).get("pngBase64") or ""
+            b64 = (((r2.get("result") or {}).get("value") or {}).get("pngBase64") or "")
             if b64:
-                try:
-                    return _b64.b64decode(b64)
-                except Exception:  # noqa: BLE001
-                    pass
+                return _safe_b64decode(b64)
 
     return None

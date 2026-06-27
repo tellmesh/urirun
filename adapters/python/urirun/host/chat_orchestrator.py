@@ -538,17 +538,10 @@ def _resolve_artifact_value(sr: dict) -> "dict | None":
     return None
 
 
-def _enrich_remote_attachments(attachments: list, results: dict) -> None:
-    """Set filePreviewUrl for attachments whose file lives on a remote node.
-
-    Matches attachment paths to step-result paths.  When a step ran on a remote node
-    (has a ``url`` field pointing to another machine) and the file is not locally
-    accessible, injects a ``/api/file/remote?nodeUrl=…&path=…`` proxy URL so the
-    dashboard can display the screenshot inline without an SSH transfer."""
-    from urllib.parse import quote as _quote  # noqa: PLC0415
-    import base64 as _b64, os as _os  # noqa: PLC0415
+def _build_remote_path_maps(results: dict) -> tuple[dict, dict]:
+    """Build (path_to_node, path_inline) from step results for remote-attachment enrichment."""
     path_to_node: dict[str, str] = {}
-    path_inline: dict[str, str] = {}   # remote path -> pngBase64 the node returned INLINE in /run
+    path_inline: dict[str, str] = {}
     for sr in results.values():
         if not isinstance(sr, dict):
             continue
@@ -563,6 +556,37 @@ def _enrich_remote_attachments(attachments: list, results: dict) -> None:
             path_to_node[p] = node_url
             if val.get("pngBase64"):
                 path_inline[p] = str(val.get("pngBase64"))
+    return path_to_node, path_inline
+
+
+def _save_inline_attachment(att: dict, b64: str, shot_dir: str) -> bool:
+    """Save base64 image to shot_dir, update att in-place. Returns True on success."""
+    import base64 as _b64  # noqa: PLC0415
+    import os as _os  # noqa: PLC0415
+    from urllib.parse import quote as _quote  # noqa: PLC0415
+    try:
+        _os.makedirs(shot_dir, exist_ok=True)
+        local = _os.path.join(shot_dir, _os.path.basename(str(att.get("path") or "")))
+        with open(local, "wb") as _fh:
+            _fh.write(_b64.b64decode(b64))
+        att["path"] = local
+        att["fileExists"] = True
+        att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
+        return True
+    except Exception:  # noqa: BLE001 - fall back to remote proxy
+        return False
+
+
+def _enrich_remote_attachments(attachments: list, results: dict) -> None:
+    """Set filePreviewUrl for attachments whose file lives on a remote node.
+
+    Matches attachment paths to step-result paths.  When a step ran on a remote node
+    (has a ``url`` field pointing to another machine) and the file is not locally
+    accessible, injects a ``/api/file/remote?nodeUrl=…&path=…`` proxy URL so the
+    dashboard can display the screenshot inline without an SSH transfer."""
+    import os as _os  # noqa: PLC0415
+    from urllib.parse import quote as _quote  # noqa: PLC0415
+    path_to_node, path_inline = _build_remote_path_maps(results)
     _shot_dir = _os.path.join(
         _os.path.expanduser(_os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")), "screenshots")
     for att in attachments:
@@ -573,23 +597,9 @@ def _enrich_remote_attachments(attachments: list, results: dict) -> None:
         path = str(att.get("path") or "")
         if not path:
             continue
-        # Preferred: the node returned the image INLINE (base64) in the /run result — save it to the
-        # host artifact dir and point at the LOCAL file. Works even for nodes without an fs read
-        # route (the only path that succeeds when the remote can't serve files), and avoids the
-        # proxy roundtrip. Falls through to the proxy when no inline bytes are present.
         b64 = path_inline.get(path)
-        if b64:
-            try:
-                _os.makedirs(_shot_dir, exist_ok=True)
-                local = _os.path.join(_shot_dir, _os.path.basename(path))
-                with open(local, "wb") as _fh:
-                    _fh.write(_b64.b64decode(b64))
-                att["path"] = local
-                att["fileExists"] = True
-                att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
-                continue
-            except Exception:  # noqa: BLE001 - fall back to the remote proxy below
-                pass
+        if b64 and _save_inline_attachment(att, b64, _shot_dir):
+            continue
         node_url = path_to_node.get(path)
         if node_url:
             att["fileExists"] = True
@@ -788,6 +798,34 @@ def _restore_run_credentials(old_token: str | None, old_identity: str | None) ->
         os.environ["URIRUN_RUN_IDENTITY"] = old_identity
 
 
+def _actual_nodes_from_steps(flow: dict, routes_by_uri: dict) -> tuple[list[str], bool]:
+    """Return (actual_remote_nodes, has_local) from the flow's steps and route table."""
+    actual: list[str] = []
+    seen: set[str] = set()
+    has_local = False
+    for step in (flow.get("steps") or []):
+        uri = str(step.get("uri") or "")
+        route = routes_by_uri.get(uri)
+        node = str((route or {}).get("node") or "") if route else ""
+        if not node or node == "host":
+            has_local = True
+        elif node not in seen:
+            actual.append(node)
+            seen.add(node)
+    return actual, has_local
+
+
+def _rebuild_node_targets(selected_targets: list[str], actual: list[str],
+                          has_local: bool, existing_remote: set[str]) -> list[str]:
+    targets: list[str] = [t for t in selected_targets if t.startswith("node:")]
+    if has_local:
+        targets = ["host"] + targets
+    for node in actual:
+        if node not in existing_remote:
+            targets.append(f"node:{node}")
+    return targets
+
+
 def _sync_targets_from_flow(
     flow: dict,
     discovered: dict,
@@ -802,33 +840,16 @@ def _sync_targets_from_flow(
     - adds newly discovered nodes to selected_nodes / selected_targets
     - removes the "host" default when ALL steps run on remote nodes (so the result envelope
       stays consistent with what actually executed and doesn't mislead twin/reporting)."""
-    routes_by_uri = {str(r.get("uri") or ""): r for r in (discovered.get("routes") or []) if r.get("uri")}
-    actual: list[str] = []
-    seen_actual: set[str] = set()
-    has_local = False
-    for step in (flow.get("steps") or []):
-        uri = str(step.get("uri") or "")
-        route = routes_by_uri.get(uri)
-        node = str((route or {}).get("node") or "") if route else ""
-        if not node or node == "host":
-            has_local = True
-        elif node not in seen_actual:
-            actual.append(node)
-            seen_actual.add(node)
+    routes_by_uri = {str(r.get("uri") or ""): r
+                     for r in (discovered.get("routes") or []) if r.get("uri")}
+    actual, has_local = _actual_nodes_from_steps(flow, routes_by_uri)
+    seen_actual = set(actual)
     new_nodes = [n for n in selected_nodes if n not in seen_actual]
     new_nodes.extend(actual)
     if set(new_nodes) == set(selected_nodes):
         return selected_nodes, selected_targets
-    # Rebuild targets: keep explicitly requested non-host targets; keep "host" only if
-    # some steps are local; add node: entries for newly discovered remote nodes.
     existing_remote = {t.split(":", 1)[1] for t in selected_targets if t.startswith("node:")}
-    targets: list[str] = [t for t in selected_targets if t.startswith("node:")]
-    if has_local:
-        targets = ["host"] + targets
-    for node in actual:
-        if node not in existing_remote:
-            targets.append(f"node:{node}")
-    return new_nodes, targets
+    return new_nodes, _rebuild_node_targets(selected_targets, actual, has_local, existing_remote)
 
 
 def _fetch_planner_environments_for_nodes(mesh: Any, selected_nodes: list[str], execute: bool,
@@ -1075,24 +1096,24 @@ def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
     return flow, generator
 
 
+def _is_selected_remote_node(n: dict, sel: set[str]) -> bool:
+    name = str(n.get("name") or n.get("node") or "")
+    url = str(n.get("url") or n.get("nodeUrl") or "")
+    return name in sel and "127.0.0.1" not in url and "localhost" not in url and bool(url)
+
+
 def _flag_remote_capture_inline(flow: dict, discovered: dict, selected_nodes: list[str]) -> None:
     """Set base64=True on screen/capture steps that target a remote (non-localhost) node.
 
     A capture run on a remote node leaves its PNG on that machine, unreadable by the host.
     Requesting inline base64 is the only path that works when the node serves no files.
     """
-    _sel = set(selected_nodes or [])
-    _is_remote = any(
-        str(n.get("name") or n.get("node") or "") in _sel
-        and "127.0.0.1" not in str(n.get("url") or n.get("nodeUrl") or "")
-        and "localhost" not in str(n.get("url") or n.get("nodeUrl") or "")
-        and str(n.get("url") or n.get("nodeUrl") or "")
-        for n in (discovered.get("nodes") or [])
-    )
-    if _is_remote:
-        for _s in (flow.get("steps") or []):
-            if "/screen/query/capture" in str(_s.get("uri") or ""):
-                _s.setdefault("payload", {})["base64"] = True
+    sel = set(selected_nodes or [])
+    if not any(_is_selected_remote_node(n, sel) for n in (discovered.get("nodes") or [])):
+        return
+    for step in (flow.get("steps") or []):
+        if "/screen/query/capture" in str(step.get("uri") or ""):
+            step.setdefault("payload", {})["base64"] = True
 
 
 def _suggest_recall_for_memory(flow: dict, twin_memory: object | None) -> dict | None:
@@ -1225,25 +1246,38 @@ def _chat_insert_twin_preview(db, prompt, selected_nodes, selected_targets, deps
         ))
 
 
+def _parse_chat_nodes_targets(payload: dict) -> tuple[list[str], list[str]]:
+    requested_nodes = [str(i).strip() for i in (payload.get("nodes") or []) if str(i).strip()]
+    requested_targets = [str(i).strip() for i in (payload.get("targets") or []) if str(i).strip()]
+    return requested_nodes, requested_targets
+
+
+def _init_selected_targets(requested_nodes: list[str], requested_targets: list[str]) -> list[str]:
+    if requested_targets:
+        return list(requested_targets)
+    return ["host", *[f"node:{name}" for name in requested_nodes]]
+
+
+def _infer_node_targets(prompt: str, requested_nodes: list[str], requested_targets: list[str],
+                        config: str | None, node_urls: list[str] | None, deps: "ChatDeps") -> list[str] | None:
+    """NL node inference — route to a named mesh node when not explicitly picked."""
+    if requested_targets or requested_nodes:
+        return None
+    matched = prompt_node_match(prompt, deps.node_alias_map_fn(config, node_urls))
+    return [f"node:{matched}"] if matched and matched != "host" else None
+
+
 def chat_ask(project: str, db: str | None, config: str | None, payload: dict, node_urls: list[str] | None,
              token: str | None, identity: str | None, deps: ChatDeps) -> dict:
     prompt = str(payload.get("prompt") or "").strip()
     if not prompt:
         raise ValueError("prompt is required")
-    requested_nodes = [str(item).strip() for item in (payload.get("nodes") or []) if str(item).strip()]
-    requested_targets = [str(item).strip() for item in (payload.get("targets") or []) if str(item).strip()]
-    selected_nodes = list(requested_nodes)
-    selected_targets = list(requested_targets)
-    if not selected_targets:
-        selected_targets = ["host", *[f"node:{name}" for name in selected_nodes]]
-    # NL node inference — when the user did not explicitly pick a target and the
-    # prompt names a known mesh node (e.g. "screenshot on lenovo"), route there.
-    if not requested_targets and not requested_nodes:
-        alias_map = deps.node_alias_map_fn(config, node_urls)
-        matched_node = prompt_node_match(prompt, alias_map)
-        if matched_node and matched_node != "host":
-            selected_targets = [f"node:{matched_node}"]
-    selected_nodes = selected_nodes_from_targets(selected_nodes, selected_targets)
+    requested_nodes, requested_targets = _parse_chat_nodes_targets(payload)
+    selected_targets = _init_selected_targets(requested_nodes, requested_targets)
+    inferred = _infer_node_targets(prompt, requested_nodes, requested_targets, config, node_urls, deps)
+    if inferred is not None:
+        selected_targets = inferred
+    selected_nodes = selected_nodes_from_targets(list(requested_nodes), selected_targets)
     execute = bool(payload.get("execute"))
     no_llm = bool(payload.get("no_llm") or payload.get("noLlm"))
     _add_chat_user_message(

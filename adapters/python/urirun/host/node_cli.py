@@ -141,66 +141,56 @@ def data_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _monitor_bindings(args: argparse.Namespace) -> int:
+    from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
+    doc = _hi.domain_monitor_bindings(
+        target=args.target, db=args.db, project=args.project,
+        screenshot_dir=args.screenshot_dir,
+    )
+    reglib._emit_json(doc, args.out)
+    if args.registry_out:
+        reglib.write_json(args.registry_out, v2.compile_registry(doc))
+    return 0
+
+
+def _emit_keyed_result(key: str, result: dict) -> int:
+    reglib._emit_json({"ok": result.get("ok"), key: result}, "-")
+    return 0 if result.get("ok") else 1
+
+
+def _emit_bare_result(result: dict) -> int:
+    reglib._emit_json(result, "-")
+    return 0 if result.get("ok") else 1
+
+
 def monitor_command(args: argparse.Namespace) -> int:
     from urirun import domain_monitor
 
     if args.monitor_command == "bindings":
-        from urirun.host import host_integrations as _hi  # noqa: PLC0415 — lazy host dep
-        doc = _hi.domain_monitor_bindings(
-            target=args.target,
-            db=args.db,
-            project=args.project,
-            screenshot_dir=args.screenshot_dir,
-        )
-        reglib._emit_json(doc, args.out)
-        if args.registry_out:
-            reglib.write_json(args.registry_out, v2.compile_registry(doc))
-        return 0
-
+        return _monitor_bindings(args)
     if args.monitor_command == "http":
-        result = domain_monitor.http_status(args.url, timeout=args.timeout, expected_status=args.expected_status)
-        reglib._emit_json({"ok": result.get("ok"), "http": result}, "-")
-        return 0 if result.get("ok") else 1
-
+        return _emit_keyed_result("http", domain_monitor.http_status(
+            args.url, timeout=args.timeout, expected_status=args.expected_status))
     if args.monitor_command == "dns":
-        result = domain_monitor.dns_records(args.domain, args.record_type)
-        reglib._emit_json({"ok": result.get("ok"), "dns": result}, "-")
-        return 0 if result.get("ok") else 1
-
+        return _emit_keyed_result("dns", domain_monitor.dns_records(args.domain, args.record_type))
     if args.monitor_command == "domain":
         expected = _parse_json_option(args.expected_records, {}) or {}
         if args.expected_a:
             expected["A"] = args.expected_a
         if args.expected_aaaa:
             expected["AAAA"] = args.expected_aaaa
-        result = domain_monitor.check_domain(
-            domain=args.domain,
-            url=args.url,
-            expected=expected,
-            db=args.db,
-            project=args.project,
-            execute=args.execute,
-            timeout=args.timeout,
-            screenshot_when=args.screenshot_when,
-            screenshot_dir=args.screenshot_dir,
+        return _emit_bare_result(domain_monitor.check_domain(
+            domain=args.domain, url=args.url, expected=expected, db=args.db,
+            project=args.project, execute=args.execute, timeout=args.timeout,
+            screenshot_when=args.screenshot_when, screenshot_dir=args.screenshot_dir,
             create_repair_ticket=not args.no_repair_ticket,
-        )
-        reglib._emit_json(result, "-")
-        return 0 if result.get("ok") else 1
-
+        ))
     if args.monitor_command == "daily":
-        result = domain_monitor.run_daily(
-            db=args.db,
-            project=args.project,
-            execute=args.execute,
-            dataset=args.dataset,
-            limit=args.limit,
-            screenshot_when=args.screenshot_when,
-            screenshot_dir=args.screenshot_dir,
-        )
-        reglib._emit_json(result, "-")
-        return 0 if result.get("ok") else 1
-
+        return _emit_bare_result(domain_monitor.run_daily(
+            db=args.db, project=args.project, execute=args.execute,
+            dataset=args.dataset, limit=args.limit,
+            screenshot_when=args.screenshot_when, screenshot_dir=args.screenshot_dir,
+        ))
     return 1
 
 
@@ -290,38 +280,25 @@ def _handle_add_node(args: argparse.Namespace) -> int:
     return 0
 
 
+def _init_host_command(args: argparse.Namespace) -> int:
+    reglib._emit_json(init_host(args.config, args.name), "-")
+    return 0
+
+
 def _host_delegated_command(args: argparse.Namespace) -> int | None:
     """Handle host subcommands that delegate to another module or need no mesh."""
     if args.host_command == "dashboard":
         from urirun import host_dashboard
-
         return host_dashboard.command(args)
-    if args.host_command == "init":
-        reglib._emit_json(init_host(args.config, args.name), "-")
-        return 0
-    if args.host_command == "add-node":
-        return _handle_add_node(args)
-    if args.host_command == "data":
-        return data_command(args)
-    if args.host_command == "monitor":
-        return monitor_command(args)
-    if args.host_command == "task":
-        return task_command(args)
-    if args.host_command == "deploy":
-        return deploy_command(args)
-    if args.host_command == "copy-id":
-        return copy_id_command(args)
-    if args.host_command == "watch":
-        return watch_command(args)
-    if args.host_command == "run":
-        return run_command(args)
-    if args.host_command == "ensure":
-        return ensure_command(args)
-    if args.host_command == "supply":
-        return supply_command(args)
-    if args.host_command == "probe":
-        return probe_command(args)
-    return None
+    _dispatch = {
+        "init": _init_host_command, "add-node": _handle_add_node,
+        "data": data_command, "monitor": monitor_command, "task": task_command,
+        "deploy": deploy_command, "copy-id": copy_id_command, "watch": watch_command,
+        "run": run_command, "ensure": ensure_command, "supply": supply_command,
+        "probe": probe_command,
+    }
+    handler = _dispatch.get(args.host_command)
+    return handler(args) if handler is not None else None
 
 
 def fulfill_need(client: Any, need: dict, roots: Any = None) -> dict:
@@ -796,6 +773,19 @@ def _render_probe_report(report: dict) -> None:
               f"etag {report['etag']}->{report['etagAfter']}, {report['churn409']} route(s) hit 409 (registry changed)")
 
 
+def _build_probe_report(health: dict, rows: list, etag0: Any, gen0: Any,
+                        etag1: Any, gen1: Any, churn: int, execute: bool) -> dict:
+    stable = etag0 == etag1 and gen0 == gen1 and churn == 0
+    return {
+        "ok": stable, "node": health.get("name"),
+        "etag": etag0, "generation": gen0, "stable": stable,
+        "routes": len(rows), "passed": sum(1 for r in rows if r["ok"]),
+        "degraded": sum(1 for r in rows if r.get("degraded")),
+        "churn409": churn, "etagAfter": etag1, "generationAfter": gen1,
+        "mode": "execute" if execute else "dry-run", "results": rows,
+    }
+
+
 def probe_command(args: argparse.Namespace) -> int:
     """`urirun host probe <node> [--execute] [--json]` — snapshot the node's surface
     (its registry etag), test every route PINNED to that snapshot, then re-read the
@@ -813,17 +803,12 @@ def probe_command(args: argparse.Namespace) -> int:
     churn = sum(1 for r in rows if r.get("churn"))
     health = http_json("GET", f"{url}/health")
     etag1, gen1 = health.get("registryEtag"), health.get("registryGeneration")
-    stable = etag0 == etag1 and gen0 == gen1 and churn == 0
-    report = {"ok": stable, "node": health.get("name"), "etag": etag0, "generation": gen0,
-              "stable": stable, "routes": len(rows), "passed": sum(1 for r in rows if r["ok"]),
-              "degraded": sum(1 for r in rows if r.get("degraded")),
-              "churn409": churn, "etagAfter": etag1, "generationAfter": gen1,
-              "mode": "execute" if args.execute else "dry-run", "results": rows}
+    report = _build_probe_report(health, rows, etag0, gen0, etag1, gen1, churn, args.execute)
     if getattr(args, "json", False):
         reglib._emit_json(report, "-")
-        return 0 if stable else 1
+        return 0 if report["ok"] else 1
     _render_probe_report(report)
-    return 0 if stable else 1
+    return 0 if report["ok"] else 1
 
 
 def node_list_command(args: argparse.Namespace) -> int:
@@ -847,28 +832,39 @@ def node_list_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def node_stop_command(args: argparse.Namespace) -> int:
-    host = getattr(args, "host", None) or "127.0.0.1"
+def _resolve_stop_ports(args: argparse.Namespace, host: str) -> tuple[list, int | None]:
+    """Returns (ports, early_rc). If early_rc is not None, caller should return it."""
     if getattr(args, "all", False):
         ports = [n["port"] for n in node_list_running(host)]
         if not ports:
             print("no running urirun nodes found")
-            return 0
-    elif getattr(args, "port", None):
-        ports = list(args.port)
-    else:
-        sys.stderr.write("pass --port N (repeatable) or --all\n")
-        return 2
+            return [], 0
+        return ports, None
+    if getattr(args, "port", None):
+        return list(args.port), None
+    sys.stderr.write("pass --port N (repeatable) or --all\n")
+    return [], 2
+
+
+def _print_stop_results(results: list) -> None:
+    for r in results:
+        state = "stopped" if r["stopped"] else "FAILED"
+        extra = f"  {r['error']}" if r.get("error") else ""
+        print(f"port {r['port']}: {state} (pids {r['pids'] or '-'}){extra}")
+    print("\nnote: a systemd --user service restarts on kill — for those use "
+          "`systemctl --user disable --now urirun-node`")
+
+
+def node_stop_command(args: argparse.Namespace) -> int:
+    host = getattr(args, "host", None) or "127.0.0.1"
+    ports, early_rc = _resolve_stop_ports(args, host)
+    if early_rc is not None:
+        return early_rc
     results = [stop_node_port(p, host) for p in ports]
     if getattr(args, "json", False):
         reglib._emit_json({"stopped": results}, "-")
     else:
-        for r in results:
-            state = "stopped" if r["stopped"] else "FAILED"
-            extra = f"  {r['error']}" if r.get("error") else ""
-            print(f"port {r['port']}: {state} (pids {r['pids'] or '-'}){extra}")
-        print("\nnote: a systemd --user service restarts on kill — for those use "
-              "`systemctl --user disable --now urirun-node`")
+        _print_stop_results(results)
     return 0 if all(r["stopped"] for r in results) else 1
 
 

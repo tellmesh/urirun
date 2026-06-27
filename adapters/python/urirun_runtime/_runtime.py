@@ -373,6 +373,24 @@ EXECUTORS = {
 }
 
 
+def _run_execute_step(executor, ctx: dict, policy: dict, envelope: dict) -> None:
+    try:
+        envelope["result"] = executor(ctx, policy)
+        exit_code = envelope["result"].get("exitCode", 0)
+        envelope["ok"] = exit_code == 0
+        if not envelope["ok"] and "error" not in envelope:
+            stderr = (envelope["result"].get("stderr") or "").strip()
+            envelope["error"] = {
+                "type": "subprocess",
+                "category": "ACTION_FAILED",
+                "message": stderr or f"subprocess exited with code {exit_code}",
+                "exitCode": exit_code,
+            }
+    except (PolicyError, subprocess.TimeoutExpired, OSError, ValueError) as err:
+        envelope["ok"] = False
+        envelope["error"] = {"type": type(err).__name__, "message": str(err)}
+
+
 def run(
     uri: str,
     registry: dict,
@@ -427,21 +445,7 @@ def run(
     if executor is None:
         raise ValueError(f"Executor not found: {route_entry.get('adapter') or route_entry.get('kind')}")
 
-    try:
-        envelope["result"] = executor(ctx, policy)
-        exit_code = envelope["result"].get("exitCode", 0)
-        envelope["ok"] = exit_code == 0
-        if not envelope["ok"] and "error" not in envelope:
-            stderr = (envelope["result"].get("stderr") or "").strip()
-            envelope["error"] = {
-                "type": "subprocess",
-                "category": "ACTION_FAILED",
-                "message": stderr or f"subprocess exited with code {exit_code}",
-                "exitCode": exit_code,
-            }
-    except (PolicyError, subprocess.TimeoutExpired, OSError, ValueError) as err:
-        envelope["ok"] = False
-        envelope["error"] = {"type": type(err).__name__, "message": str(err)}
+    _run_execute_step(executor, ctx, policy, envelope)
     return _errors.record(envelope)
 
 
