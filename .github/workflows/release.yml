@@ -63,12 +63,12 @@ jobs:
         run: |
           python -m venv /tmp/venv
           /tmp/venv/bin/pip install dist/*.whl
-          # Import the UNCONDITIONAL node/flow subpackages too: they resolve only if the extracted
-          # urirun_node / urirun_flow / urirun_runtime / urirun_contracts / urirun_twin bodies are
-          # bundled into the wheel (packages.find "urirun*"). A non-co-located future extraction would
-          # still pass `import urirun.v2` but FAIL here — this is the gate that catches a "shim points at
-          # an unbundled/unpublished package" break in a clean install BEFORE it reaches PyPI.
+          # Core bundled sub-packages: node/flow/runtime/contracts/twin bodies must be in the wheel.
           /tmp/venv/bin/python -c "import urirun, urirun.v1, urirun.v2, urirun.node.mesh, urirun.node.flow; print('urirun', getattr(urirun,'__version__','?'), 'ok — node/flow subpackages bundled')"
+          # Scanner bundled fallback: catches 'from __future__' placement bugs in urirun_scanner shims.
+          /tmp/venv/bin/python -c "import urirun_scanner.artifacts_admin as a; assert hasattr(a,'public_chat_attachment'), 'missing sentinel'; import urirun_scanner.document_sync as d; assert hasattr(d,'sync_documents_to_node'), 'missing sentinel'; print('ok  urirun_scanner bundled fallback')"
+          # Host dashboard import chain: must not require urirun_connector_scanner (not on PyPI).
+          /tmp/venv/bin/python -c "import urirun.host.host_dashboard, urirun.host.chat_orchestrator; print('ok  urirun.host imports clean (no urirun_connector_scanner needed)')"
           /tmp/venv/bin/urirun --help >/dev/null
           /tmp/venv/bin/urirun node serve --help >/dev/null   # exercises the CLI->mesh bridge (the "mesh not available" class)
 
