@@ -127,17 +127,24 @@
       renderUrlState();
     }
 
-    function applyUrlFilterControls(search) {
-      if ($('sprintFilter') && search.get('sprint')) $('sprintFilter').value = search.get('sprint');
-      if ($('queueFilter') && search.has('queue')) $('queueFilter').value = search.get('queue') || '';
-      if ($('chatExecute')) {
-        $('chatExecute').checked = search.get('execute') !== '0';
-        $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
-      }
-      if ($('chatNoLlm')) $('chatNoLlm').checked = search.get('no_llm') === '1' || search.get('noLlm') === '1';
+    function applyUrlChatExecute(search) {
+      if (!$('chatExecute')) return;
+      $('chatExecute').checked = search.get('execute') !== '0';
+      $('chatMode').textContent = $('chatExecute').checked ? 'execute' : 'dry-run';
+    }
+
+    function applyUrlChatPrompt(search) {
       if ($('chatPrompt') && (search.has('prompt') || search.has('message'))) {
         $('chatPrompt').value = search.get('prompt') || search.get('message') || '';
       }
+    }
+
+    function applyUrlFilterControls(search) {
+      if ($('sprintFilter') && search.get('sprint')) $('sprintFilter').value = search.get('sprint');
+      if ($('queueFilter') && search.has('queue')) $('queueFilter').value = search.get('queue') || '';
+      applyUrlChatExecute(search);
+      if ($('chatNoLlm')) $('chatNoLlm').checked = search.get('no_llm') === '1' || search.get('noLlm') === '1';
+      applyUrlChatPrompt(search);
     }
 
     function applyUrlTargetControls(search) {

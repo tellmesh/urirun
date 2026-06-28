@@ -454,7 +454,16 @@ urirun host run --node-url lenovo=http://192.168.188.201:8765 \
 ### Host — dashboard i chat
 
 ```bash
-# Uruchom lokalny dashboard operatora (chat, nody, zadania, artefakty)
+# Preferowana granica procesu: osobny serwis chat/operator dashboard
+urirun-service-chat restart \
+  --project . \
+  --db ~/.urirun/host.db \
+  --host 127.0.0.1 \
+  --port 8194
+
+# Dashboard dostępny: http://localhost:8194/
+
+# Ścieżka in-process/dev: ten sam backend przez CLI urirun
 urirun host dashboard serve \
   --project . \
   --db ~/.urirun/host.db \
@@ -528,7 +537,7 @@ urirun node serve --execute --port 8765 --key-auth
 | `urirun host ask PROMPT` | NL → plan URI → wykonaj na nodach |
 | `urirun host flow run FILE` | Uruchom zapisany przepływ YAML/JSON |
 | `urirun host doctor` | Diagnoza połączeń, auth i connectorów |
-| `urirun host dashboard serve` | Dashboard operatora (chat, nody, zadania) |
+| `urirun host dashboard serve` | Dashboard operatora in-process/dev; preferowany proces produkcyjny to `urirun-service-chat` |
 | `urirun host task ...` | Zarządzanie zadaniami planfile |
 | `urirun host data ...` | Kontekst SQLite (datasety, rekordy, artefakty) |
 | `urirun host monitor ...` | Monitoring HTTP/DNS domen |

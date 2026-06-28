@@ -453,6 +453,49 @@ Przykłady:
 
 Runtime jest odpowiedzialny za policy, walidację, wykonanie i wynik.
 
+## Podsystemy
+
+Poza obiektami runtime (host/node/service/connector/widget/artifact) urirun ma kilka
+przekrojowych podsystemów koordynujących wykonanie URI. Każdy żyje we własnym pakiecie i ma
+własny dokument szczegółowy.
+
+### Flow planner i autonomia (`urirun_flow`)
+
+Zamienia prompt w języku naturalnym na flow kroków URI. Planner LLM (`make_flow` → `llm_flow`)
+buduje kroki wyłącznie z `allowedRoutes`, a deterministyczne normalizatory naprawiają typowe
+pomyłki: wstrzykują `cdp/session/query/ready` po `ensure`, przepisują `user_data_dir=<żywy profil>`
+na `copy_from=<root profilu>` dla zadań wymagających logowania (`_rewrite_cdp_profile_for_auth`,
+żeby debug-Chrome nie walczył z SingletonLock i sklonował cookies), oraz mapują niedostępne
+`cdp/page/command/click|fill` na router `ui/command/*`. Wykonanie idzie przez jeden silnik
+(`_thin_driver`, „follow-the-intent"), z diagnostyką błędów (`diag://host/error/command/classify`)
+i rollbackiem kroków odwracalnych. Szczegóły: [Decision Loop](DECISION_LOOP.md).
+
+### Digital Twin i odwracalność (`urirun_twin`)
+
+Model środowiska + silnik odwracalny. `ReversibleProcess` wykonuje flow z niezmiennikiem „mutacja
+bez zarejestrowanego inverse jest NIEWYKONYWALNA", buduje ledger i robi rollback LIFO z dowodem
+pozycji (scan stanu przed/po). Schemat odwracalności (`list[CallSpec]`) pochodzi z kontraktu przez
+`schema_from_contracts` (jedyne źródło — strategia #3; runtime ledger nadal jedzie konwencją
+„inverse w wyniku"). Twin planner ocenia wykonalność i odwracalność kroków PRZED wykonaniem
+(twin-plan widoczny w chacie). Connector: `urirun-connector-twin`.
+
+### Warstwa kontraktowa (`urirun_connectors_toolkit` → `urirun-contract`)
+
+Kontrakt operacji (kształt I/O, efekt `query`/`command`, odwracalność, błędy, przykłady) jest
+deklarowanym artefaktem `contracts.json`, nie emergentny z kodu. Kernel (gate/codegen/lint/
+reversible/jsonschema/typescript/export) został wydzielony do osobnego repo `urirun-contract`;
+`urirun_connectors_toolkit` to fasada re-eksportująca. Bramy (`conform`, `lint_handler_signatures`,
+`regen-check`, `check_single_source`) trzymają kontrakt zgodny z kodem. Pokrycie floty jest
+ratchetowane (`fleet_coverage.py`). Szczegóły: `urirun-contract/ARCHITECTURE.md`.
+
+### Pakiety wydzielone
+
+Runtime jest rozbity na pakiety instalowane osobno: `urirun_node` (mesh/CLI/routing), `urirun_flow`
+(planner+wykonanie), `urirun_twin` (twin+odwracalność), `urirun_runtime` (registry/MCP/v2),
+`urirun_cdp` (CDP/Chrome), `urirun_scanner`, `urirun_connectors_toolkit` (fasada kontraktów).
+Flota ~40 connectorów i kernel kontraktu (`urirun-contract`) to osobne repozytoria
+`if-uri/urirun-connector-*`. Plan i stan podziału: [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md).
+
 ## Relacje między komponentami
 
 Typowy przepływ z chatu:

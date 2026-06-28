@@ -145,6 +145,16 @@ def schema_from_contracts(contracts: dict, *, conn_uri=None) -> list[CallSpec]:
     return callspecs_from_contracts(contracts, conn_uri=conn_uri)
 
 
+def schema_from_bindings(bindings: dict, *, conn_uri=None) -> list[CallSpec]:
+    """Build the reversibility schema from a COMPILED registry's bindings (each carrying its
+    contract under ``meta.contract``, joined by ``attach_contracts``). Same single-source guarantee
+    as ``schema_from_contracts``, but keyed off the live registry — the form host flow execution
+    already holds — so reversibility comes from the contract, not a parallel table. Lazy import
+    keeps the engine free of a hard dependency on the contract package."""
+    from urirun_contract.contract_reversible import callspecs_from_bindings
+    return callspecs_from_bindings(bindings, conn_uri=conn_uri)
+
+
 @dataclass
 class ReversibleProcess:
     """The engine: execute with the invariant, build the ledger, roll back with proof. It

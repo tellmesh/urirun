@@ -656,3 +656,31 @@ def test_reversible_engine_consumes_callspecs_from_contracts():
     blocked = ReversibleProcess(transport).execute(
         twin, schema, [Action("kv://host/item/command/purge", {})])
     assert blocked["ok"] is False and "unexecutable" in blocked["reason"]
+
+
+def test_schema_from_bindings_reads_registry_contract_reversibility():
+    """Registry→engine-schema bridge: a compiled registry already carries each route's contract
+    under meta.contract (attach_contracts). schema_from_bindings derives the CallSpec schema from
+    THAT — single source — so reversibility comes from the contract, not a parallel table."""
+    from urirun_twin.reversible import schema_from_bindings, ReversibleProcess, Twin, Action, CallableTransport
+
+    bindings = {
+        "kv://host/item/command/set": {"meta": {"contract": {
+            "effect": "command", "reversible": True, "inverseRoute": "/item/command/set"}}},
+        "kv://host/item/command/purge": {"meta": {"contract": {
+            "effect": "command", "reversible": False}}},
+        "kv://host/item/query/get": {"meta": {"contract": {"effect": "query", "reversible": False}}},
+        "kv://host/no/contract/here": {"meta": {}},   # no contract -> skipped (fail-safe default)
+    }
+    schema = schema_from_bindings(bindings)
+    by = {s.uri: s for s in schema}
+    assert by["kv://host/item/command/set"].mutates and by["kv://host/item/command/set"].reversible
+    assert by["kv://host/item/command/purge"].mutates and not by["kv://host/item/command/purge"].reversible
+    assert not by["kv://host/item/query/get"].mutates
+    assert "kv://host/no/contract/here" not in by                # contractless binding skipped
+
+    # and the engine acts on it: the contract-irreversible command is unexecutable
+    twin = Twin(scan_uri="kv://host/item/query/state", state={}, fingerprint="fp", state_sig="s0")
+    blocked = ReversibleProcess(CallableTransport(lambda u, p: {"state": {}})).execute(
+        twin, schema, [Action("kv://host/item/command/purge", {})])
+    assert blocked["ok"] is False and "unexecutable" in blocked["reason"]

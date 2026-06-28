@@ -65,6 +65,15 @@ lint: ## Ruff-lint the Python package (keeps main green; gated in CI).
 complexity: ## Fail if any Python function exceeds the cyclomatic-complexity limit (CC>15).
 	$(PYTHON) scripts/cc_gate.py
 
+.PHONY: docs-check
+docs-check: ## Docs↔source gate (semcod/docval): FAIL if any doc references a dead symbol/import/CLI (chunks_invalid>0); empty/TODO sections are advisory. Needs: pip install docval
+	docval scan docs/ --project . --no-llm -o /tmp/urirun-docval.json
+	@$(PYTHON) -c "import json,sys; n=json.load(open('/tmp/urirun-docval.json'))['summary']['chunks_invalid']; print(f'docval: {n} stale doc reference(s) (dead symbol/import/CLI)'); sys.exit(1 if n else 0)"
+
+.PHONY: dup-check
+dup-check: ## Duplication ratchet (semcod/redup): fail if dup grows past the current baseline (15 groups / 108 lines). Needs: pip install redup
+	redup check adapters/python --max-groups 15 --max-lines 108
+
 .PHONY: lint-connectors
 lint-connectors: ## Lint every sibling urirun-connector-* package; fail on code/manifest drift or a secrets-layer bypass (--strict via STRICT=1).
 	$(PYTHON) scripts/lint_connectors.py $(if $(STRICT),--strict,)

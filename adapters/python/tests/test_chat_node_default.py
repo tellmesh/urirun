@@ -46,6 +46,68 @@ class TestHostDefault(unittest.TestCase):
             result = co.chat_ask("proj", "db", None, payload, [], None, None, deps)
         return result, messages
 
+    def test_chat_ask_url_tab_autorun_filters_remote_routes_before_planning(self):
+        messages = []
+        captured = {}
+
+        class FakeMesh:
+            def discover_mesh(self, _config):
+                return {
+                    "nodes": [{"name": "lenovo", "url": "http://192.168.1.10:8765", "reachable": True}],
+                    "routes": [
+                        {"uri": "time://host/clock/query/now", "node": "host"},
+                        {"uri": "kvm://host/ui/command/click", "node": "lenovo"},
+                    ],
+                    "serviceMap": {"time": "local", "kvm": "http://192.168.1.10:8765"},
+                }
+
+            def registry_from_routes(self, routes):
+                return {"routes": routes}
+
+            def fetch_planner_environments(self, *args, **kwargs):
+                return []
+
+            def make_flow(self, prompt, discovered, selected_nodes=None, use_llm=True, environments=None):
+                captured["routes"] = [r["uri"] for r in discovered.get("routes") or []]
+                return (
+                    {"steps": [{"id": "now", "uri": "time://host/clock/query/now", "payload": {}}]},
+                    {"provider": "test"},
+                )
+
+            def execute_flow(self, *args, **kwargs):
+                return {
+                    "ok": True,
+                    "timeline": [{"id": "now", "uri": "time://host/clock/query/now", "ok": True}],
+                    "results": {"now": {"ok": True, "result": {"value": {"ok": True}}}},
+                }
+
+        deps = co.ChatDeps(
+            host_db_fn=MagicMock(),
+            mesh_fn=FakeMesh,
+            host_config_fn=MagicMock(return_value={}),
+            node_alias_map_fn=MagicMock(return_value=ALIAS),
+            add_chat_message_fn=lambda db, msg: messages.append(msg),
+            page_action_enqueue_fn=MagicMock(),
+            ensure_phone_scanner_fn=MagicMock(),
+            sync_documents_fn=MagicMock(),
+        )
+        payload = {
+            "prompt": "która godzina",
+            "nodes": ["lenovo"],
+            "targets": ["host", "node:lenovo"],
+            "target_explicit": False,
+            "execute": False,
+            "no_llm": True,
+        }
+
+        with patch.object(co, "_chat_insert_twin_preview", lambda *a, **k: None), \
+             patch.object(co, "capture_episode", lambda **k: {}), \
+             patch.object(co, "append_twin_widget", lambda *a, **k: None):
+            result = co.chat_ask("proj", "db", None, payload, [], None, None, deps)
+
+        self.assertEqual(result["selectedTargets"], ["host"])
+        self.assertEqual(captured["routes"], ["time://host/clock/query/now"])
+
     def test_no_node_in_prompt_strips_remote(self):
         nodes, targets = self._call(
             "opublikuj post na LinkedIn",

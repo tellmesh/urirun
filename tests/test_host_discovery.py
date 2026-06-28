@@ -79,3 +79,34 @@ def test_node_test_routes_query_mode_classifies_results() -> None:
     assert result["broken"] == 1
     statuses = {item["uri"]: item["status"] for item in result["results"]}
     assert statuses["fs://host/file/query/read-b64"] == "not-found"
+
+
+# ── classify_route_run / _classify_dict_value (CC-reduction extraction) ────────
+
+def test_classify_dict_value_handler_error_degraded_and_ok() -> None:
+    assert discovery._classify_dict_value({"ok": False, "error": "boom"}) == ("handler-error", "boom")
+    assert discovery._classify_dict_value({"degraded": True, "degradedReason": "slow"}) == ("degraded", "slow")
+    assert discovery._classify_dict_value({"degraded": True}) == ("degraded", "degraded result")
+    assert discovery._classify_dict_value({"ok": True}) == ("ok", "")
+
+
+def test_classify_dict_value_truncates_long_detail() -> None:
+    long = "x" * 500
+    status, detail = discovery._classify_dict_value({"ok": False, "error": long})
+    assert status == "handler-error"
+    assert len(detail) == discovery._ROUTE_DETAIL_MAX
+
+
+def test_classify_route_run_dispatches_by_value_shape() -> None:
+    # not-found wins over everything (read from the envelope error)
+    assert discovery.classify_route_run({"error": {"category": "NOT_FOUND", "message": "nope"}}, None) == (
+        "not-found", "nope")
+    # dict value → delegated to _classify_dict_value
+    assert discovery.classify_route_run({"ok": True}, {"ok": False, "error": "e"}) == ("handler-error", "e")
+    # string value → ok with trimmed/clamped text
+    assert discovery.classify_route_run({"ok": True}, "  hi  ") == ("ok", "hi")
+    assert discovery.classify_route_run({"ok": True}, " " + "y" * 500)[1] == "y" * discovery._ROUTE_VALUE_MAX
+    # non-dict/str value but failed envelope → unreachable with its detail
+    assert discovery.classify_route_run({"ok": False, "error": "down"}, None) == ("unreachable", "down")
+    # otherwise ok
+    assert discovery.classify_route_run({"ok": True}, 123) == ("ok", "")

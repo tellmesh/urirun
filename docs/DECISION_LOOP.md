@@ -237,3 +237,25 @@ If `urifix://` cannot fill the missing precondition, keep the next intent manual
   }
 }
 ```
+
+### Diagnostic playbook (named cause → remediation)
+
+A failed step is also matched against an experience playbook (`urirun_flow/diagnostics.py`,
+reachable by URI as `diag://host/error/command/classify`): a failure SIGNATURE → a named root
+cause + a partly auto-applicable remediation, attached to the timeline entry's
+`recovery.diagnosis` so a human, the dashboard, and a self-heal loop all read the same conclusion.
+
+**Login-gate case.** A `kvm://…/ui/query/verify` step with `{"required": true}` that fails with
+`required text not found on screen: '<label>'` matches `ui-target-not-located` (a role/label
+language mismatch, a page not loaded yet, OR an authwall where the control doesn't exist). When
+the foreground surface (`kvm://…/surface/query/current`) is a login page, the diagnosis is
+UPGRADED to `not-logged-in`, whose remediation relaunches the CDP Chrome with
+`copy_from=<user profile>` so it opens already authenticated — human-gated, since it needs a real
+logged-in profile to clone. So a login-gated flow (e.g. "publish a LinkedIn post") fails cleanly
+with an actionable cause instead of a cryptic error, and rolls back any reversible steps already run.
+
+> **Profile note.** For login tasks the planner emits `copy_from=<chrome user-data-dir root>` on
+> `cdp/session/command/ensure`, NOT `user_data_dir=<live profile>` — pointing a debug Chrome at the
+> live profile fights its SingletonLock and copies no cookies (`authCopied: []` → login wall). The
+> flow normalizer (`_rewrite_cdp_profile_for_auth`) rewrites the latter to the former. Likewise,
+> `cdp/page/command/click|fill` steps that aren't served fall back to the `ui/command/*` router.

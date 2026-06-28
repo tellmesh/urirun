@@ -108,6 +108,12 @@ def test_policy_allow_glob():
     assert "env://*" in reason
 
 
+def test_policy_allow_global_scope_overrides_route_allow():
+    allowed, reason = _policy_allow("browser://n/x", {"allowExecute": True}, {"allow": ["monitor://*"]})
+    assert allowed is False
+    assert reason == ""
+
+
 def test_policy_allow_default_deny():
     allowed, reason = _policy_allow("env://n/x", {}, {"allow": []})
     assert allowed is False

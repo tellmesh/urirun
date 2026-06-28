@@ -6,6 +6,9 @@ from urirun.host.chat_orchestrator import (
     _flag_remote_capture_inline,
     _suggest_recall_for_memory,
     _filter_mesh_for_targets,
+    _route_targets_active,
+    _inactive_node_urls,
+    _timeline_steps_all_ok,
 )
 
 
@@ -118,6 +121,63 @@ def test_filter_mesh_keeps_selected_remote_routes_even_when_uri_target_is_host()
 
     assert filtered["routes"] == discovered["routes"]
     assert filtered["serviceMap"] == discovered["serviceMap"]
+
+
+def test_filter_mesh_returns_same_object_when_nothing_filtered():
+    # No remote nodes to drop → identity (no needless copy), preserved across the CC refactor.
+    discovered = {"nodes": [], "routes": [{"uri": "twin://host/x", "node": "host"}], "serviceMap": {"twin": "local"}}
+    assert _filter_mesh_for_targets(discovered, ["host"]) is discovered
+
+
+# ── _timeline_steps_all_ok ───────────────────────────────────────────────────
+
+def test_timeline_rollup_folds_inner_result_value_ok_false():
+    timeline = [{"id": "click", "uri": "kvm://host/ui/command/click", "ok": True}]
+    results = {"click": {"ok": True, "result": {"value": {"ok": False, "error": "no target"}}}}
+
+    assert _timeline_steps_all_ok(timeline, True, results) is False
+
+
+def test_timeline_rollup_keeps_plain_data_payload_green():
+    timeline = [{"id": "read", "uri": "doc://host/file/query/text", "ok": True}]
+    results = {"read": {"ok": True, "result": {"value": {"text": "hello"}}}}
+
+    assert _timeline_steps_all_ok(timeline, False, results) is True
+
+
+# ── _route_targets_active (extracted predicate) ───────────────────────────────
+
+def test_route_targets_active_host_route_follows_include_host():
+    assert _route_targets_active({"node": "host"}, set(), True) is True
+    assert _route_targets_active({"node": "host"}, set(), False) is False
+
+
+def test_route_targets_active_blank_node_follows_include_host():
+    assert _route_targets_active({"node": ""}, {"lenovo"}, True) is True
+    assert _route_targets_active({}, {"lenovo"}, False) is False
+
+
+def test_route_targets_active_remote_node_requires_membership():
+    assert _route_targets_active({"node": "lenovo"}, {"lenovo"}, False) is True
+    assert _route_targets_active({"node": "lenovo"}, {"other"}, True) is False
+
+
+# ── _inactive_node_urls (extracted set comprehension) ─────────────────────────
+
+def test_inactive_node_urls_collects_reachable_unselected_with_url():
+    nodes = [
+        {"name": "lenovo", "url": "http://a:8765", "reachable": True},   # unselected → inactive
+        {"name": "phone", "url": "http://b:8765", "reachable": True},    # selected → active
+        {"name": "down", "url": "http://c:8765", "reachable": False},    # unreachable → skip
+        {"name": "nourl", "reachable": True},                            # no url → skip
+    ]
+    assert _inactive_node_urls(nodes, {"phone"}) == {"http://a:8765"}
+
+
+def test_inactive_node_urls_empty_when_all_active_or_unreachable():
+    nodes = [{"name": "x", "url": "http://x", "reachable": True}]
+    assert _inactive_node_urls(nodes, {"x"}) == set()
+    assert _inactive_node_urls([], set()) == set()
 
 
 # ── _suggest_recall_for_memory ────────────────────────────────────────────────

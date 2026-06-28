@@ -92,9 +92,11 @@ def _looks_destructive(route_entry: dict, ctx: dict) -> bool:
 def evaluate_policy(uri: str, route_entry: dict, ctx: dict, policy: dict) -> dict:
     """Return a decision dict for executing ``uri``.
 
-    Default-deny: a route only runs in execute mode if it is explicitly
-    allowed, either by the route's own ``policy.allowExecute`` flag or by an
-    ``execute.allow`` glob in the policy document. Explicit deny always wins.
+    Default-deny: a route only runs in execute mode if it is explicitly allowed.
+    With an operator-supplied ``execute.allow`` scope, the URI must match that
+    scope even when the route's own ``policy.allowExecute`` is true. Without a
+    global allow scope, ``policy.allowExecute`` remains the connector author's
+    local allow signal. Explicit deny always wins.
     """
     route_policy = route_entry.get("policy") or {}
     execute = policy.get("execute", {})
@@ -132,11 +134,14 @@ def _policy_denial(uri: str, route_entry: dict, ctx: dict, policy: dict, route_p
 
 def _policy_allow(uri: str, route_policy: dict, execute: dict) -> tuple[bool, str]:
     """Resolve whether execution is allowed and the human-readable reason."""
-    if route_policy.get("allowExecute") is True:
-        return True, "route policy allows execution"
-    allow_match = _matches_any(uri, execute.get("allow", []))
+    allow_patterns = execute.get("allow", [])
+    allow_match = _matches_any(uri, allow_patterns)
     if allow_match:
         return True, f"matched allow pattern {allow_match!r}"
+    if allow_patterns:
+        return False, ""
+    if route_policy.get("allowExecute") is True:
+        return True, "route policy allows execution"
     return False, ""
 
 

@@ -1,13 +1,13 @@
 # System Architecture Analysis
-<!-- generated in 0.01s -->
+<!-- generated in 0.02s -->
 
 ## Overview
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 200, json: 15, shell: 14, yaml: 5, javascript: 5
+- **Languages**: python: 200, json: 15, shell: 13, yaml: 5, javascript: 5
 - **Analysis Mode**: static
-- **Total Functions**: 2582
+- **Total Functions**: 2592
 - **Total Classes**: 63
 - **Modules**: 269
 - **Entry Points**: 1067
@@ -15,7 +15,7 @@
 ## Architecture by Module
 
 ### adapters.python.urirun.host.dashboard
-- **Functions**: 616
+- **Functions**: 618
 - **File**: `dashboard.js`
 
 ### adapters.python.urirun.host.scanner
@@ -35,6 +35,11 @@
 - **Functions**: 68
 - **File**: `urirun-v1.js`
 
+### adapters.python.urirun.host.chat_orchestrator
+- **Functions**: 58
+- **Classes**: 1
+- **File**: `chat_orchestrator.py`
+
 ### adapters.python.urirun.host.node_cli
 - **Functions**: 57
 - **File**: `node_cli.py`
@@ -48,11 +53,6 @@
 - **Functions**: 53
 - **Classes**: 1
 - **File**: `__init__.py`
-
-### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 53
-- **Classes**: 1
-- **File**: `chat_orchestrator.py`
 
 ### adapters.python.urirun_flow.flow
 - **Functions**: 50
@@ -72,7 +72,7 @@
 - **File**: `twin_store.py`
 
 ### adapters.python.urirun_flow.flow_planner
-- **Functions**: 39
+- **Functions**: 40
 - **File**: `flow_planner.py`
 
 ### adapters.python.urirun_node.client
@@ -90,18 +90,18 @@
 - **File**: `_runtime.py`
 
 ### adapters.python.urirun.host.discovery
-- **Functions**: 29
+- **Functions**: 30
 - **File**: `discovery.py`
+
+### adapters.python.urirun_twin.reversible
+- **Functions**: 28
+- **Classes**: 8
+- **File**: `reversible.py`
 
 ### adapters.python.urirun_flow.flow_thin
 - **Functions**: 28
 - **Classes**: 1
 - **File**: `flow_thin.py`
-
-### adapters.python.urirun.host.planfile_adapter
-- **Functions**: 27
-- **Classes**: 1
-- **File**: `planfile_adapter.py`
 
 ## Key Entry Points
 
@@ -403,9 +403,11 @@ child processes t
 - **Methods**: 4
 - **Key Methods**: adapters.ruby.urirun.Connector.initialize, adapters.ruby.urirun.Connector.command, adapters.ruby.urirun.Connector.bindings, adapters.ruby.urirun.Connector.bindings_json
 
-### adapters.python.urirun_connectors_toolkit.backend_registry.Backend
+### adapters.python.urirun_twin.reversible.Connector
+> The ADOPTION CONTRACT. A connector enters the engine by providing these three.
 - **Methods**: 3
-- **Key Methods**: adapters.python.urirun_connectors_toolkit.backend_registry.Backend.missing, adapters.python.urirun_connectors_toolkit.backend_registry.Backend.platform_ok, adapters.python.urirun_connectors_toolkit.backend_registry.Backend.available
+- **Key Methods**: adapters.python.urirun_twin.reversible.Connector.call, adapters.python.urirun_twin.reversible.Connector.scan_uri, adapters.python.urirun_twin.reversible.Connector.schema
+- **Inherits**: Protocol
 
 ## Data Transformation Functions
 
@@ -465,6 +467,10 @@ concurrency (If-Registry-
 ### adapters.python.urirun_node.transport._parse_sse_line
 - **Output to**: line.startswith, ev.setdefault, json.loads, line.startswith, None.strip
 
+### adapters.python.urirun_twin.reversible.parse
+> ``scheme://node/path`` -> (scheme, node, path).
+- **Output to**: uri.split, rest.partition
+
 ### adapters.python.urirun.connectors.connector_lint._format_secret_reads
 - **Output to**: sr.get, sr.get, lines.append, lines.append, sr.get
 
@@ -486,9 +492,6 @@ concurrency (If-Registry-
 
 ### adapters.python.urirun_flow.Flow._validate
 - **Output to**: model_validator, self._validate_graph
-
-### adapters.python.urirun_flow.Flow._validate_graph
-- **Output to**: set, len, len, FlowError, visit
 
 ## Behavioral Patterns
 

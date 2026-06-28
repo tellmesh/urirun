@@ -105,12 +105,14 @@ def test_flow_intents_llm_parses_response(monkeypatch):
 
 
 def test_flow_intents_default_when_no_llm(monkeypatch):
-    """Without LLM env var, _flow_intents returns all-False (no-op)."""
+    """Without LLM env var, _flow_intents uses the conservative lexical fallback."""
     monkeypatch.delenv("LLM_MODEL", raising=False)
     monkeypatch.delenv("URIRUN_LLM_MODEL", raising=False)
-    for prompt in ("take a screenshot", "open browser", "check health"):
-        intents = _flow_intents(prompt)
-        assert not any(intents.values()), f"expected all-False without LLM, got: {intents}"
+    intents = _flow_intents("check node health and show the current date")
+    assert intents["health"] is True
+    assert intents["date"] is True
+    assert intents["processes"] is False
+    assert not any(_flow_intents("something odd").values())
 
 
 def test_flow_intents_all_false_sets_processes(monkeypatch):
@@ -141,17 +143,17 @@ def test_flow_intents_uses_llm_result(monkeypatch):
 
 
 def test_flow_intents_use_llm_false_skips_llm(monkeypatch):
-    """use_llm=False returns all-False even when LLM_MODEL is set."""
+    """use_llm=False skips LLM but still classifies explicit read-only intents."""
     monkeypatch.setenv("LLM_MODEL", "gpt-4o")
     import urirun.node._util as _tp
     monkeypatch.setattr(_tp, "quiet_completion",
                         lambda **kw: (_ for _ in ()).throw(AssertionError("LLM must not be called")))
     intents = _flow_intents("pokaz procesy", use_llm=False)
-    assert not any(intents.values())
+    assert intents["processes"] is True
 
 
-def test_heuristic_flow_use_llm_false_always_empty(monkeypatch):
-    """heuristic_flow(..., use_llm=False) produces empty steps — LLM disabled means no intent guessing."""
+def test_heuristic_flow_use_llm_false_handles_explicit_read_intents(monkeypatch):
+    """heuristic_flow(..., use_llm=False) plans explicit read-only work without calling LLM."""
     monkeypatch.setenv("LLM_MODEL", "gpt-4o")
     import urirun.node._util as _tp
     monkeypatch.setattr(_tp, "quiet_completion",
@@ -162,7 +164,11 @@ def test_heuristic_flow_use_llm_false_always_empty(monkeypatch):
         {"uri": "proc://pc1/process/query/list", "safe": True},
     ]
     flow = heuristic_flow("pokaz procesy na pc1", routes, nodes, use_llm=False)
-    assert flow["steps"] == [], f"expected no steps with use_llm=False, got: {flow['steps']}"
+    assert [step["uri"] for step in flow["steps"]] == [
+        "env://pc1/runtime/query/health",
+        "proc://pc1/process/query/list",
+    ]
+    assert heuristic_flow("zrob cos", routes, nodes, use_llm=False)["steps"] == []
 
 
 # ─── _uri_segments ───────────────────────────────────────────────────────────

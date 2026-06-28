@@ -7,6 +7,11 @@ The CC-reduction refactor got every function in the Python adapter under CC=15. 
 makes that durable in CI so new code (whoever or whatever writes it) cannot merge a function
 above the limit without first extracting helpers / a dispatch table. Standard `radon` metric.
 
+This same gate also runs inside the default test lane via tests/test_cc_gate.py (it was
+previously only reachable through the standalone `make complexity` target, so regressions slipped
+in). Scope is the Python adapter; the JS/Go validators are covered by the xlang polyglot proofs
+and the code2llm HEALTH check.
+
 Usage:
     python scripts/cc_gate.py [--limit N] [--paths DIR ...]
 Exit code 0 when clean, 1 when any function is over the limit (offenders printed, worst first).

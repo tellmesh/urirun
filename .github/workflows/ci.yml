@@ -24,6 +24,14 @@ jobs:
         run: |
           python -m pip install radon
           make complexity
+      - name: Docs↔source gate (semcod/docval — no stale doc refs)
+        run: |
+          python -m pip install docval
+          make docs-check
+      - name: Duplication ratchet (semcod/redup — dup must not grow past baseline)
+        run: |
+          python -m pip install redup
+          make dup-check
       - name: Extraction boundary gate (core-creep guard)
         run: |
           python scripts/extraction_audit.py --selftest

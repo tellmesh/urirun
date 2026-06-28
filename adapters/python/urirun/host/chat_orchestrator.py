@@ -590,10 +590,49 @@ def _chat_ask_general_planner_failure(
     return result
 
 
-def _timeline_steps_all_ok(timeline: list, fallback: bool) -> bool:
-    """True when every non-recovery timeline step reported ok (or timeline is empty → fallback)."""
+def _result_envelope_ok(env: Any) -> bool:
+    """Fold transport ok with the connector payload's inner ``ok`` when present."""
+    if not isinstance(env, dict):
+        return True
+    if env.get("ok") is False:
+        return False
+    try:
+        from urirun import result_data  # noqa: PLC0415
+        value = result_data(env)
+    except Exception:  # noqa: BLE001 - keep roll-up best-effort for malformed envelopes
+        value = env
+    return not (isinstance(value, dict) and value.get("ok", True) is False)
+
+
+def _result_for_timeline_step(step: dict, results: dict) -> Any:
+    step_id = str(step.get("id") or "")
+    candidates = [step_id]
+    if ":" in step_id:
+        candidates.append(step_id.split(":", 1)[0])
+    for candidate in candidates:
+        if candidate in results:
+            return results[candidate]
+    return None
+
+
+def _timeline_step_ok(step: dict, results: dict) -> bool:
+    if step.get("ok") is False:
+        return False
+    step_result = _result_for_timeline_step(step, results)
+    if step_result is not None:
+        return _result_envelope_ok(step_result)
+    return step.get("ok", True) is not False
+
+
+def _timeline_steps_all_ok(timeline: list, fallback: bool, results: dict | None = None) -> bool:
+    """True when every non-recovery step is ok, including nested ``result.value.ok``."""
+    results = results or {}
     steps = [t for t in timeline if t.get("type") != "recovery"]
-    return all(t.get("ok", True) for t in steps) if steps else fallback
+    if steps:
+        return all(_timeline_step_ok(t, results) for t in steps)
+    if results:
+        return all(_result_envelope_ok(env) for env in results.values())
+    return fallback
 
 
 def _resolve_artifact_value(sr: dict) -> "dict | None":
@@ -785,7 +824,7 @@ def _general_path_complete(
     timeline = result.get("timeline") or []
     # Derive ok from user-facing timeline steps (not from execution.ok which includes
     # post-loop goal-verify/rollback that may fail even when every step succeeded).
-    steps_all_ok = _timeline_steps_all_ok(timeline, bool(result.get("ok")))
+    steps_all_ok = _timeline_steps_all_ok(timeline, bool(result.get("ok")), result.get("results") or {})
     status = ("degraded" if result.get("degraded") else "ok") if steps_all_ok else "failed"
     content = f"{status}: {len(timeline)} URI step(s)"
     if result.get("recovery"):
@@ -968,6 +1007,20 @@ def _rebuild_node_targets(selected_targets: list[str], actual: list[str],
     return targets
 
 
+def _inactive_node_urls(nodes: list, active_names: set[str]) -> set:
+    return {
+        n["url"] for n in nodes
+        if n.get("reachable") and n.get("name") not in active_names and n.get("url")
+    }
+
+
+def _route_targets_active(route: dict, active_names: set[str], include_host: bool) -> bool:
+    node = str(route.get("node") or "").strip()
+    if node and node != "host":
+        return node in active_names
+    return include_host
+
+
 def _filter_mesh_for_targets(discovered: dict, selected_targets: list[str]) -> dict:
     """Return a copy of discovered with serviceMap filtered to only route to selected nodes.
 
@@ -977,19 +1030,10 @@ def _filter_mesh_for_targets(discovered: dict, selected_targets: list[str]) -> d
     active_names = {t.split(":", 1)[1] for t in selected_targets if t.startswith("node:")}
     include_host = not selected_targets or "host" in selected_targets
 
-    def _keep_route(route: dict) -> bool:
-        node = str(route.get("node") or "").strip()
-        if node and node != "host":
-            return node in active_names
-        return include_host
-
     full_map = discovered.get("serviceMap") or {}
     nodes = discovered.get("nodes") or []
-    inactive_urls = {
-        n["url"] for n in nodes
-        if n.get("reachable") and n.get("name") not in active_names and n.get("url")
-    }
-    routes = [r for r in (discovered.get("routes") or []) if _keep_route(r)]
+    inactive_urls = _inactive_node_urls(nodes, active_names)
+    routes = [r for r in (discovered.get("routes") or []) if _route_targets_active(r, active_names, include_host)]
     service_map = {k: v for k, v in full_map.items() if v not in inactive_urls}
     if routes == (discovered.get("routes") or []) and service_map == full_map:
         return discovered
@@ -1401,12 +1445,14 @@ def _chat_ask_general(
     mesh = deps.mesh_fn()
     old_token, old_identity = _apply_run_credentials(token, identity)
     try:
-        discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
+        discovered = _filter_mesh_for_targets(
+            mesh.discover_mesh(deps.host_config_fn(config, node_urls)), selected_targets)
         _gap_resp, discovered = _screen_capability_gap_or_recall(
             prompt, discovered, selected_nodes, selected_targets, token, identity,
             execute, mesh, config, node_urls, db, deps)
         if _gap_resp is not None:
             return _gap_resp
+        discovered = _filter_mesh_for_targets(discovered, selected_targets)
         registry = mesh.registry_from_routes(discovered.get("routes") or [])
         offline_fail = _chat_ask_general_check_offline(
             selected_nodes, discovered, db, prompt, execute, selected_targets, deps)

@@ -102,24 +102,46 @@ def _flow_intents_llm(prompt: str) -> dict[str, bool] | None:
         return None
 
 
+def _flow_intents_lexical(prompt: str) -> dict[str, bool]:
+    """Conservative no-LLM classifier for explicit, read-oriented host tasks."""
+    lowered = nl_key(prompt)
+    intents = {k: False for k in _INTENT_NAMES}
+
+    def has(*patterns: str) -> bool:
+        return any(re.search(pattern, lowered) for pattern in patterns)
+
+    intents["health"] = has(r"\bhealth\b", r"\bhealthy\b", r"\bstatus\b", r"\bping\b", r"\bzdrow")
+    intents["date"] = has(r"\bdate\b", r"\bcurrent date\b", r"\bdata\b", r"\bczas\b", r"\bgodzin")
+    intents["processes"] = has(r"\bprocess(?:es)?\b", r"\bproces", r"\bps\b")
+    intents["logs"] = has(r"\blogs?\b", r"\bdziennik")
+    intents["python"] = has(r"\bpython3?\b")
+    intents["git"] = has(r"\bgit\b")
+    intents["uname"] = has(r"\buname\b", r"\bsystem info\b", r"\bkernel\b", r"\bos\b")
+    intents["files"] = has(r"\bfiles?\b", r"\bfolder\b", r"\bdirectory\b", r"\bdownloads?\b", r"\bpliki\b", r"\bpobrane\b")
+    intents["invoices"] = has(r"\binvoices?\b", r"\bfaktur", r"\brachun")
+    intents["screen"] = has(r"\bscreenshot\b", r"\bcapture\b", r"\bscreen\b", r"\bzrzut\b", r"\bekran")
+    return intents
+
+
 def _flow_intents(prompt: str, *, use_llm: bool = True) -> dict[str, bool]:
     """Classify the prompt into host intents.
 
-    With ``use_llm=True`` (default) attempts LLM classification.  Returns
-    LLM result when available; if LLM is not configured or fails, returns
-    all-False (no-op — heuristic_flow emits no steps rather than guessing).
-    When LLM IS available but classifies nothing, defaults to processes=True.
+    With ``use_llm=True`` (default) attempts LLM classification. Returns the LLM
+    result when available; if LLM is not configured or fails, falls back to a
+    conservative lexical classifier for explicit read-oriented tasks.
 
-    With ``use_llm=False`` skips LLM entirely and returns all-False —
-    callers that explicitly opt out of LLM get no heuristic steps rather
-    than a silent fallback guess."""
+    With ``use_llm=False`` skips LLM entirely and uses the same lexical
+    classifier. Unrecognized prompts still produce no steps rather than a silent
+    broad guess."""
     if not use_llm:
-        return {k: False for k in _INTENT_NAMES}
+        return _flow_intents_lexical(prompt)
     intents = _flow_intents_llm(prompt)
     if intents is None:
-        return {k: False for k in _INTENT_NAMES}
+        return _flow_intents_lexical(prompt)
     if not any(intents.values()):
-        intents["processes"] = True
+        intents = _flow_intents_lexical(prompt)
+        if not any(intents.values()):
+            intents["processes"] = True
     return intents
 
 

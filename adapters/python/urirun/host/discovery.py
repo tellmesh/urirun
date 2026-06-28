@@ -285,6 +285,14 @@ def _classify_not_found(err: Any) -> tuple[str, str] | None:
     return None
 
 
+def _classify_dict_value(value: dict) -> tuple[str, str]:
+    if value.get("ok") is False:
+        return "handler-error", str(value.get("error") or "")[:_ROUTE_DETAIL_MAX]
+    if value.get("degraded") is True:
+        return "degraded", str(value.get("degradedReason") or "degraded result")[:_ROUTE_DETAIL_MAX]
+    return "ok", ""
+
+
 def classify_route_run(envelope: Any, value: Any) -> tuple[str, str]:
     """Classify one route probe result."""
     err = (envelope.get("error") if isinstance(envelope, dict) else None) or {}
@@ -292,11 +300,7 @@ def classify_route_run(envelope: Any, value: Any) -> tuple[str, str]:
     if not_found is not None:
         return not_found
     if isinstance(value, dict):
-        if value.get("ok") is False:
-            return "handler-error", str(value.get("error") or "")[:_ROUTE_DETAIL_MAX]
-        if value.get("degraded") is True:
-            return "degraded", str(value.get("degradedReason") or "degraded result")[:_ROUTE_DETAIL_MAX]
-        return "ok", ""
+        return _classify_dict_value(value)
     if isinstance(value, str):
         return "ok", value.strip()[:_ROUTE_VALUE_MAX]
     if isinstance(envelope, dict) and not envelope.get("ok"):

@@ -1,10 +1,10 @@
-# code2llm/evolution | 2536 func | 126f | 2026-06-28
-# generated in 0.01s
+# code2llm/evolution | 2546 func | 126f | 2026-06-28
+# generated in 0.02s
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/dashboard.js
-      WHY: 2979L, 0 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 44685
+      WHY: 2986L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 41804
 
   [2] !! SPLIT           adapters/python/urirun_runtime/v2.py
       WHY: 2033L, 2 classes, max CC=14
@@ -16,15 +16,15 @@ NEXT[3] (ranked by impact):
 
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 441 import paths
+  ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 443 import paths
   ⚠ Splitting adapters/python/urirun_runtime/v2.py may break 120 import paths
   ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 102 import paths
 
 METRICS-TARGET:
-  CC̄:          4.6 → ≤3.2
-  max-CC:      18 → ≤9
-  god-modules: 23 → 0
-  high-CC(≥15): 3 → ≤1
+  CC̄:          4.5 → ≤3.1
+  max-CC:      14 → ≤7
+  god-modules: 24 → 0
+  high-CC(≥15): 0 → ≤0
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):
@@ -52,4 +52,4 @@ PATTERNS (language parser shared logic):
     - Standardized FunctionInfo/ClassInfo models
 
 HISTORY:
-  prev CC̄=4.5 → now CC̄=4.6
+  prev CC̄=4.6 → now CC̄=4.5

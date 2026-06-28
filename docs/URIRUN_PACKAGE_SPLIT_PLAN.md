@@ -4,24 +4,39 @@
 📖 **Dokumentacja urirun:** [← README](../README.md) · [Komponenty](COMPONENTS.md) · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · **Podział paczek** · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
 
-> **AKTUALNY KIERUNEK (2026-06, nadrzędny względem reszty dokumentu).**
-> `urirun` jest **samodzielnym backendem warstwowym**, nie cienkim runtime.
-> Pakiet jest podzielony na foldery-warstwy: `runtime/` (URI, registry, schema,
-> policy, executors, transporty), `connectors/` (SDK + narzędzia connectorów),
-> `host/` (host_db, domain_monitor, planfile_adapter, host_integrations,
-> dashboard, scheduler, task_planner) i `node/` (mesh).
+> **NOWY CEL REFAKTORYZACJI (2026-06-28, nadrzędny względem reszty dokumentu).**
+> `urirun` ma zostać **maksymalnie prostym kernelem URI + CLI**, a nie
+> samodzielnym backendem aplikacyjnym. Wszystko, co jest zdolnością domenową,
+> procesem long-running, UI, przepływem, integracją lub kontraktem, ma mieć
+> właściciela poza rdzeniem: `urirun-contract`, `urirun-connector-*`,
+> `urirun-service-*`, `urirun-flow`, `urirun-node`, `urirun-widgets`,
+> `urirun-artifacts` itd.
 >
-> **Warstwy host/node ZOSTAJĄ w urirun** jako jedyne źródło prawdy. Konsumują je:
-> zewnętrzne connectory (reużywają `urirun.host.*` bezpośrednio — patrz
-> `docs/generating-connectors.md`) oraz `if-uri/app` (operator UI) przez **CLI
-> urirun**. To odwraca pierwotny plan „wynieś mesh/dashboard do `if-uri/app`":
-> aplikacja jest cienkim klientem backendu, a nie nowym właścicielem logiki.
+> **Rdzeń `urirun` zostawia tylko minimalny zestaw:**
+> - parser URI, binding/registry compile-validate-list-run,
+> - policy gate, envelope, error taxonomy i dry-run/execute semantics,
+> - discovery entry pointów connectorów/services,
+> - minimalne adaptery wykonania (`python-call`, `argv-template`,
+>   `shell-template`, `http-service`) bez domenowych handlerów,
+> - kompatybilne shimy z ostrzeżeniami i testami, które nie importują ciężkich
+>   warstw przy `import urirun`.
 >
-> **Faktycznie wyniesiono z core tylko `namecheap_dns`** (API providera + sekrety)
-> do `urirun-connector-namecheap-dns`. Resztę dawnych „kandydatów do wyniesienia"
-> przeklasyfikowano na `owner="backend"` w `urirun.runtime.compat`
-> (`urirun compat list` / `check`). Stara, 7-fazowa „kolejność migracji" poniżej
-> jest zachowana jako kontekst historyczny.
+> **Reguła zależności:** connector/service/flow/node może zależeć od `urirun`;
+> `urirun` nie może importować implementacji connectorów, usług hosta, dashboardu,
+> skanera, digital twin ani domenowych integracji. Jeśli core potrzebuje zdolności,
+> wywołuje ją przez registry/URI albo przez mały publiczny kontrakt danych.
+>
+> **Kontrakty są osobnym kernelem jakości.** `urirun-contract` jest właścicielem
+> gate, JSON Schema, lint, reversible, compat i codegen. `urirun` tylko ładuje
+> `meta.contract` z registry i egzekwuje minimalne policy/envelope; nie utrzymuje
+> lokalnych kopii kernela kontraktowego.
+>
+> **Stan implementacji dziś:** `urirun` nadal fizycznie zawiera wiele warstw
+> (`host`, `node`, `urirun_runtime`, `urirun_flow`, `urirun_scanner` itd.) oraz
+> meta-paczki wskazujące z powrotem na `urirun`. Plan poniżej aktualizuje kierunek:
+> kod ma migrować na zewnątrz, a meta-paczki mają stać się realnymi paczkami albo
+> zostać jawnie oznaczone jako tylko-kompatybilnościowe. Nie dodawać nowych
+> zdolności do core, jeśli mogą być connector/service/contract package.
 
 > **STATUS DEKOMPOZYCJI (2026-06-23).** Dwa hotspoty wymienione niżej (`urirun.v2`
 > i `urirun.mesh`) zostały rozbite — bez zmiany API, z re-eksportem dla zgodności,
@@ -79,6 +94,68 @@
 > Zweryfikowane: 20 testów (15 kontrakt + 5 cdp), pełny pakiet urirun 1499 passed. UWAGA: rdzeń
 > jest aktywnie współedytowany — shim cdp.py bywa cofany przez drugi tor; bez commitu/koordynacji
 > dryfuje do dwóch kopii (nic się nie psuje, ale rozjeżdża).
+
+> **GRANICA AKTUALNOŚCI.** Blok powyżej oraz sekcje "Docelowy Model
+> Slim-Core", "Minimalne API `urirun`" i "Reguły Ekstrakcji" poniżej są
+> bieżącym planem: `urirun` jako slim-core, kontrakty w `urirun-contract`,
+> zdolności w `urirun-connector-*`, procesy w `urirun-service-*`. Sekcje od
+> "Cel (historyczny)" są historycznym planem dekompozycji i nie powinny być
+> używane jako bieżąca lista migracji bez ponownego audytu
+> `project/map.toon.yaml` oraz `scripts/extraction_audit.py`.
+
+## Docelowy Model Slim-Core
+
+| Odpowiedzialność | Właściciel docelowy | Zasada |
+| --- | --- | --- |
+| URI grammar, registry, policy, envelope, minimal dispatch | `urirun` | Core bez domeny i bez UI |
+| Route contract, schema, lint, reversible, compat, codegen | `urirun-contract` | Jedno źródło jakości kontraktów |
+| Authoring toolkit, scaffold, resolver, catalog helpers | `urirun-connectors-toolkit` | Narzędzia dla paczek, nie runtime core |
+| Domenowe możliwości (`fs`, `email`, `ksef`, `kvm`, `planfile`, `sqlite`, `domain-monitor`) | `urirun-connector-*` | Każda zdolność ma własny manifest, testy i opcjonalny `contracts.json` |
+| Long-running dashboard/scanner/android node | `urirun-service-*` | Procesy mają własne entry pointy i `service.manifest.json` |
+| Flow DSL, planner, diagnostics, recovery | `urirun-flow` | Flow jako osobny model/przepływ, core tylko wykonuje kroki URI |
+| Node server, mesh, deploy, keyauth, transport | `urirun-node` | Node to runtime usługi, nie import przy `import urirun` |
+| Widgets, artifacts, object registry | `urirun-widgets`, `urirun-artifacts` | UI/artefakty poza core |
+
+### Minimalne API `urirun`
+
+Docelowo publiczny import `urirun` powinien eksportować tylko:
+
+```text
+command, shell, connector, connector_bindings,
+validate, compile, list, run,
+load_registry, discover_entry_points,
+Envelope, PolicyDecision, UrirunError
+```
+
+CLI core:
+
+```text
+urirun validate
+urirun compile
+urirun list
+urirun run
+urirun connectors list/bindings/registry
+urirun services list/manifest
+urirun compat check
+```
+
+Komendy `urirun host ...`, `urirun node ...`, `urirun flow ...`,
+`urirun scanner ...` powinny stać się shimami do paczek właścicielskich albo
+zostać przeniesione do ich CLI (`urirun-service-chat`, `urirun-node`,
+`urirun-flow`, `urirun-service-scanner`).
+
+### Reguły Ekstrakcji
+
+1. Najpierw kontrakt: paczka z trasą mutującą ma `contracts.json` albo
+   `contracts.py` eksportujący do neutralnego JSON.
+2. Potem paczka: kod runtime przenosi się do właściciela (`connector`,
+   `service`, `flow`, `node`, `widgets`, `artifacts`).
+3. Potem shim: stara ścieżka w `urirun` re-eksportuje i emituje deprecation
+   warning, ale nie kopiuje implementacji.
+4. Potem brama: `scripts/extraction_audit.py`, fleet coverage i test importu
+   pilnują, że core nie importuje z powrotem ciężkiej warstwy.
+5. Ekstrakcja jest zakończona dopiero po publikacji/pinningu albo po jawnym
+   oznaczeniu paczki jako compatibility meta-package.
 
 Cel (historyczny): odchudzic `urirun` do malego runtime/contract core i wyniesc
 integracje oraz aplikacje hosta do osobnych paczek. Obecny stan miesza trzy
