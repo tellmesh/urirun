@@ -172,7 +172,7 @@ def dispatch(request: dict | str, registry: dict, *, policy: dict | None = None,
     Accepts a canonical/raw request dict or a bare URI string, validates it, then runs it
     through ``v2.run`` and returns the envelope (which IS the REPLY). ``mode`` overrides
     the request's mode when given (e.g. a node started in dry-run pins every call)."""
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     req = make_request(request) if isinstance(request, str) else normalize_request(request)
     problems = validate_request(req)

@@ -27,7 +27,7 @@ from __future__ import annotations
 import json
 import re
 
-from urirun.runtime import _registry as reglib
+from urirun_runtime import _registry as reglib
 
 PROTO_TYPES = {"string": "string", "integer": "int64", "number": "double", "boolean": "bool"}
 
@@ -329,7 +329,7 @@ def to_openapi(registry: dict, title: str = "urirun routes") -> dict:
 
 def to_client_python(registry: dict) -> str:
     out = ["# Generated from a urirun registry — one function per route.",
-           "import urirun", "from urirun.runtime import _runtime", "",
+           "import urirun", "from urirun_runtime import _runtime", "",
            "",
            "def _run(registry, uri, payload, allow):",
            "    policy = _runtime.build_policy(None, [allow], None)",
@@ -408,7 +408,7 @@ GENERATORS = {
 def gen_command(args) -> int:
     from pathlib import Path
 
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     if args.target not in GENERATORS:
         print(json.dumps({"error": f"unknown target '{args.target}'", "targets": sorted(GENERATORS)}))

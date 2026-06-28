@@ -37,8 +37,8 @@ def _fetch_render(value, payload: dict):
         return [_fetch_render(item, payload) for item in value]
     return value
 
-from urirun.runtime import _registry as reglib, _scan as scan
-from urirun.runtime import errors as _errors
+from urirun_runtime import _registry as reglib, _scan as scan
+from urirun_runtime import errors as _errors
 
 POLICY_VERSION = "urirun.policy.v1"
 OUTPUT_LIMIT = 4000
@@ -221,7 +221,7 @@ def _make_secret_injector(policy: dict):
     Secrets are resolved here, at the injection boundary, only in execute, under the
     policy allow-list; they go into headers/body (never the returned url).
     """
-    from urirun.runtime import secrets as _secrets
+    from urirun_runtime import secrets as _secrets
 
     secret_allow = policy.get("secretAllow") if isinstance(policy, dict) else None
     secrets_disabled = bool(policy.get("secretsDisabled")) if isinstance(policy, dict) else False
@@ -291,7 +291,7 @@ def _hydrate_local_function(route_entry: dict):
     raw = getattr(importlib.import_module(module), export, None)
     if not callable(raw):
         return None
-    from urirun.runtime.v2 import _handler_kwargs  # deferred: v2 imports this module
+    from urirun_runtime.v2 import _handler_kwargs  # deferred: v2 imports this module
 
     use_payload_context = _is_payload_context_handler(raw)
 

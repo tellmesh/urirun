@@ -25,8 +25,8 @@ import json
 import re
 import sys
 
-from urirun.runtime import _registry as reglib, v2
-from urirun.runtime.dispatch_protocol import dispatch as _dp_dispatch
+from urirun_runtime import _registry as reglib, v2
+from urirun_runtime.dispatch_protocol import dispatch as _dp_dispatch
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_INFO = {"name": "urirun", "version": "0.8.0"}

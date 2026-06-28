@@ -50,8 +50,8 @@ def call(socket_path: str, request: dict, timeout: float = _DAEMON_TIMEOUT_S) ->
 
 def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool = False) -> None:
     """Run the daemon: warm registry + worker pool, one Unix socket, one process."""
-    from urirun.runtime import _runtime, discovery, v2
-    from urirun.runtime.worker import ConnectorPools, _pool_executors  # was node.mesh (upward); now kernel-local
+    from urirun_runtime import _runtime, discovery, v2
+    from urirun_runtime.worker import ConnectorPools, _pool_executors  # was node.mesh (upward); now kernel-local
 
     registry = discovery.full_registry(v2.ENTRY_POINT_GROUP)     # #2: cached compile
     pools = ConnectorPools()                                     # #3: warm workers

@@ -26,8 +26,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from urirun.runtime import _registry as reglib, _scan as scan, _runtime as runtime
-from urirun.runtime import progress
+from urirun_runtime import _registry as reglib, _scan as scan, _runtime as runtime
+from urirun_runtime import progress
 
 PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z0-9_.]+)\}")
 PROCESS_CONFIG_KEYS = ("image", "mount", "env", "stdin", "timeout", "cwd", "params")

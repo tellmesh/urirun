@@ -73,7 +73,11 @@ class HostDashboardTests(unittest.TestCase):
                 self.assertIn("action === 'tab:chat'", js)
                 self.assertIn("target_explicit: targetExplicit", js)
                 self.assertIn("item.checked = item.value === 'host'", js)
-                self.assertIn("!== 'tab:chat'", js)
+                self.assertIn("function chatUrlTargetExplicit(search)", js)
+                self.assertIn("function urlTargetsAreImplicitAutorun(search)", js)
+                self.assertIn("urlTargetsAreImplicitAutorun(params) ? 'host'", js)
+                self.assertIn("if (!implicitAutorun)", js)
+                self.assertIn("return false;", js)
                 self.assertIn("normalizedKey !== key", js)
                 self.assertIn("documentReconcileBtn", html)  # index reconcile button is wired in
 

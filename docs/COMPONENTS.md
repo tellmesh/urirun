@@ -1,10 +1,13 @@
 # Komponenty systemu urirun
 
 <!-- docs-nav -->
-📖 **Dokumentacja urirun:** [← README](../README.md) · **Komponenty** · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
+📖 **Dokumentacja urirun:** [← README](../README.md) · [Architektura](ARCHITECTURE.md) · **Komponenty** · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
 
 > **Legenda (TL;DR):** **Host** — lokalne centrum sterowania (dashboard, planuje i rozsyła). · **Node** — kontrolowany runtime: komputer / VM / API / urządzenie (`node:*`). · **Service** — długodziałająca usługa z własnym portem/API (chat `8194`, scanner `8196`). · **Connector** — paczka zdolności URI (`ocr://`, `fs://`, `kvm://`). · **Widget** — żywy widok/panel kontroli. · **Artifact** — gotowy plik/wynik (PDF, JSON OCR, screenshot).
+
+Ten dokument jest słownikiem komponentów. Aktualny opis całościowego przepływu
+i ownership paczek jest w `docs/ARCHITECTURE.md`.
 
 Ten dokument opisuje podstawowe elementy systemu urirun i ich granice
 odpowiedzialności. Jest przeznaczony dla operatora i developera, który chce

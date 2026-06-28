@@ -98,7 +98,7 @@ def manifest_bindings(manifest: dict) -> list[dict]:
 
 
 def _document(manifest: dict) -> dict:
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     bindings = manifest_bindings(manifest)
     expanded = {b["uri"]: v2.expand_binding(b["uri"], b) for b in bindings}
@@ -207,7 +207,7 @@ def adopt(target: str | Path) -> dict:
             raise FileNotFoundError(f"no [tool.urirun]/urirun config or */manifest.yaml under {path}")
         if len(manifests) == 1:
             return adopt_document(manifests[0])
-        from urirun.runtime import v2
+        from urirun_runtime import v2
 
         merged: dict = {"version": v2.VERSION, "bindings": {}}
         for manifest in manifests:
@@ -225,7 +225,7 @@ def adopt(target: str | Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
-    from urirun.runtime import _registry as reglib
+    from urirun_runtime import _registry as reglib
 
     parser = argparse.ArgumentParser(prog="urirun-adopt-pack")
     parser.add_argument("target", help="manifest file, project dir ([tool.urirun]), or installed package name")

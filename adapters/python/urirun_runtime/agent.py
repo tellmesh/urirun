@@ -25,7 +25,7 @@ import importlib
 import json
 from typing import Any, Callable
 
-from urirun.runtime import _runtime, v2
+from urirun_runtime import _runtime, v2
 
 
 def action_space(registry: dict) -> list[dict[str, Any]]:
@@ -37,7 +37,7 @@ def action_space(registry: dict) -> list[dict[str, Any]]:
     tools use) is what lets it pick a command *and fill typed parameters* from a natural
     language intent, instead of guessing field names. ``inputs``/``required`` are kept as
     flat conveniences for simpler callers."""
-    from urirun.runtime import _registry as reglib
+    from urirun_runtime import _registry as reglib
 
     space = []
     for route in reglib.flatten_registry_document(registry):

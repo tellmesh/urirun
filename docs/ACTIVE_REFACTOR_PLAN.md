@@ -1,5 +1,9 @@
 # Active refactor plan
 
+<!-- docs-nav -->
+📖 **Dokumentacja urirun:** [← README](../README.md) · [Architektura](ARCHITECTURE.md) · [Komponenty](COMPONENTS.md) · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
+<!-- /docs-nav -->
+
 Status: 2026-06-28
 
 This is the active execution plan after the `urirun-contract` and
@@ -40,6 +44,12 @@ Checked against the repo on 2026-06-28:
   directly and have a light-import regression: `_util`, `envelope`,
   `flow_thin`, and `flow_verify` do not import the hub `urirun` runtime or
   `urirun_node`.
+- The recalled/LLM screenshot path has been hardened in `urirun-flow`: a
+  page-presence `ui/query/verify` that only gates final
+  `screen/query/capture` is downgraded to optional telemetry, and capture
+  depends on the last real predecessor. This closes the Lenovo/LinkedIn failure
+  mode where stale recall found a browser flow but blocked the screenshot
+  because the required text check did not see `LinkedIn`.
 - Example flow/scenario YAML files are now pre-dispatch checked by
   `tests/test_examples_router_diagnosis.py`: `37` curated example files / `143`
   URI steps diagnose through `urirun-connector-router`; the only accepted
@@ -186,6 +196,9 @@ Tasks:
   `diagnostics.py`, `recovery.py`) so static DSL/planning imports do not require
   the full hub runtime. (partially closed for `_util`, `envelope`,
   `flow_thin`/`flow_verify` and routing imports)
+- Normalize screenshot capture flows from both fresh plans and recalled
+  episodes so visual evidence is collected even when an informational page-text
+  verify fails. (closed)
 - Keep host chat as a consumer: it builds flow, asks router, calls flow engine.
 
 Acceptance:
@@ -273,7 +286,8 @@ Goal: docs describe the architecture that actually runs.
 Tasks:
 
 - Mark historical sections in `REFACTOR_ROADMAP.md` as landed/history.
-- Make `ACTIVE_REFACTOR_PLAN.md` the first link for current refactor work.
+- Make `ARCHITECTURE.md` the first link for current system shape and keep
+  `ACTIVE_REFACTOR_PLAN.md` as the execution plan for refactor work.
 - Update `COMPONENTS.md` to show real-source vs meta-wrapper packages.
 - Update examples README files to mention contract/router acceptance tests.
 - Remove docs that instruct editing old vendored contract/router copies.
@@ -287,24 +301,40 @@ Acceptance:
 
 ## Immediate Next Tasks
 
-1. Move remaining pure flow tests out of `urirun/adapters/python/tests` and into
+1. Restart/redeploy the host chat service and Lenovo node environment with the
+   new `urirun-flow`/hub code, then re-run the live command:
+   `otworz przegladarke i otworz w niej linkedin i zrob zrzut ekranu`. Expected
+   result: navigation and capture continue even if the page-text verify is
+   false; the failed verify appears as optional telemetry, not as the terminal
+   failure.
+2. Publish `urirun-connector-router` and `urirun-widgets` before the next hub
+   release, or the fresh-install path remains unsatisfiable for base routing and
+   `urirun[host]`.
+3. Reconcile Digital Twin environment preflight with router evidence. The recent
+   run showed routing/execution reaching Lenovo KVM while the planner-side twin
+   profile reported a layer as unreachable; that mismatch should become a typed
+   diagnostic instead of contradictory operator evidence.
+4. Add a replay regression for the exact recalled LinkedIn screenshot episode:
+   recall-generated flow, required verify before capture, execute path keeps the
+   capture reachable.
+5. Move remaining pure flow tests out of `urirun/adapters/python/tests` and into
    `urirun-flow/tests`, keeping host/dashboard-specific tests in the hub.
-2. Continue reducing `urirun-flow` top-level imports of hub runtime modules:
+6. Continue reducing `urirun-flow` top-level imports of hub runtime modules:
    remaining heavy edges are `flow.py`, `flow_planner.py`, `diagnostics.py`
    optional URI registration, and `recovery.py` error taxonomy.
-3. Convert `urirun-runtime` from meta-package to real-source package only after
+7. Convert `urirun-runtime` from meta-package to real-source package only after
    `urirun-flow` is stable; runtime is green but broader and should move second.
-4. Convert `urirun-cdp` from meta-package to real-source package or fold it into
+8. Convert `urirun-cdp` from meta-package to real-source package or fold it into
    `urirun-connector-webnode`/browser-control if the CDP surface is only used
    by browser connectors.
-5. Wire `urirun-contract` JSON Schema validation into connector/example CI,
+9. Wire `urirun-contract` JSON Schema validation into connector/example CI,
    using the KVM xlang proof as the reference shape.
-6. Extract `urirun-node` real source, excluding `node_cli` and `task_cli` host
+10. Extract `urirun-node` real source, excluding `node_cli` and `task_cli` host
    compatibility shims until host services own those commands.
-7. Audit `project/map.toon.yaml` for remaining large owners inside `urirun`:
+11. Audit `project/map.toon.yaml` for remaining large owners inside `urirun`:
    `host/chat_orchestrator.py`, `host/dashboard.js`, `host/host_dashboard.py`,
    `host/object_registry.py`, `urirun_node/server.py`.
-8. Create a top-level smoke suite for host/node/local/remote scenarios:
+12. Create a top-level smoke suite for host/node/local/remote scenarios:
    host-only, explicit node, inferred node, stale URL target, route.node override,
    missing route, unreachable node, unsafe command.
 

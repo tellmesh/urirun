@@ -1,12 +1,19 @@
-# code2llm | 276f 44136L | python:201,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-28
-# generated in 0.20s
-# CC̅=4.6 | critical:0/2590 | dups:0 | cycles:0
+# code2llm | 280f 43211L | python:205,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-28
+# generated in 0.23s
+# CC̅=4.5 | critical:6/2347 | dups:0 | cycles:0
 
-HEALTH[0]: ok
+HEALTH[6]:
+  🟡 CC    visible CC=21 (limit:15)
+  🟡 CC    updateServiceViews CC=24 (limit:15)
+  🟡 CC    render CC=21 (limit:15)
+  🟡 CC    _build_remote_path_maps CC=15 (limit:15)
+  🟡 CC    _enrich_remote_attachments CC=16 (limit:15)
+  🟡 CC    _try_recall_gate CC=17 (limit:15)
 
-REFACTOR[0]: none needed
+REFACTOR[1]:
+  1. split 6 high-CC methods  (CC>15)
 
-PIPELINES[903]:
+PIPELINES[852]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -109,14 +116,14 @@ PIPELINES[903]:
       PURITY: 100% pure
 
 LAYERS:
-  scripts/                        CC̄=5.2    ←in:163  →out:2
+  scripts/                        CC̄=5.2    ←in:160  →out:2
   │ extraction_audit           423L  2C   12m  CC=12     ←0
-  │ test_pypi_install.sh       267L  0C    2m  CC=0.0    ←36
+  │ test_pypi_install.sh       281L  0C    2m  CC=0.0    ←35
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
   │ transport_swap_proof       118L  0C    5m  CC=6      ←0
   │ cc_gate                     86L  0C    3m  CC=8      ←0
-  │ dev-install.sh              52L  0C    0m  CC=0.0    ←0
+  │ dev-install.sh              53L  0C    0m  CC=0.0    ←0
   │ sync-sibling-floors.sh      44L  0C    0m  CC=0.0    ←0
   │ release-bump.sh             29L  0C    0m  CC=0.0    ←0
   │ sync-versions.sh            25L  0C    0m  CC=0.0    ←0
@@ -135,34 +142,33 @@ LAYERS:
   │ gate                         0L  0C    1m  CC=3      ←0
   │ gate.mjs                     0L  0C    9m  CC=12     ←0
   │
-  adapters/                       CC̄=4.6    ←in:18  →out:12  !! split
-  │ !! dashboard.js              3035L  0C  446m  CC=14     ←51
+  adapters/                       CC̄=4.5    ←in:17  →out:12  !! split
+  │ !! dashboard.js              2794L  0C  403m  CC=24     ←42
   │ !! v2                        2033L  2C  120m  CC=14     ←5
-  │ !! host_dashboard            1934L  0C  102m  CC=14     ←1
-  │ !! chat_orchestrator         1660L  1C   60m  CC=14     ←0
+  │ !! host_dashboard            1932L  0C  102m  CC=14     ←1
+  │ !! chat_orchestrator         1673L  1C   60m  CC=17     ←0
   │ !! scanner_bridge            1548L  0C    0m  CC=0.0    ←0
   │ !! document_sync             1422L  0C    0m  CC=0.0    ←0
-  │ !! flow                      1033L  0C   54m  CC=10     ←6
   │ !! server                     997L  3C   55m  CC=14     ←3
   │ !! object_registry            981L  0C   46m  CC=14     ←0
-  │ !! flow_planner               938L  0C   40m  CC=14     ←3
   │ !! node_cli                   910L  0C   57m  CC=13     ←1
-  │ !! __init__                   766L  1C   53m  CC=14     ←14
+  │ !! __init__                   766L  1C   53m  CC=14     ←10
   │ !! _registry                  718L  0C   43m  CC=14     ←1
-  │ !! scanner.js                 681L  0C  121m  CC=14     ←2
+  │ !! cli                        716L  0C    7m  CC=1      ←1
+  │ !! scanner.js                 681L  0C  121m  CC=14     ←1
+  │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! _runtime                   602L  1C   30m  CC=13     ←2
-  │ !! flow_thin                  597L  1C   28m  CC=14     ←1
-  │ !! diagnostics                589L  1C   19m  CC=8      ←2
   │ !! client                     558L  1C   35m  CC=12     ←1
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! twin_bridge                528L  0C   26m  CC=12     ←1
   │ !! host_db                    527L  0C   33m  CC=11     ←0
   │ artifacts_admin            495L  0C    0m  CC=0.0    ←0
+  │ v1                         471L  0C   25m  CC=14     ←3
   │ document_metadata          471L  0C    0m  CC=0.0    ←0
   │ service_control            462L  0C   23m  CC=11     ←0
+  │ codegen                    438L  0C   19m  CC=14     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
-  │ reversible                 406L  8C   28m  CC=10     ←5
-  │ recovery                   393L  0C   23m  CC=10     ←2
+  │ reversible                 406L  8C   28m  CC=10     ←3
   │ discovery                  379L  0C   30m  CC=14     ←2
   │ host_integrations          374L  0C   16m  CC=8      ←0
   │ fs_transfer                362L  0C   15m  CC=14     ←5
@@ -172,55 +178,59 @@ LAYERS:
   │ scanner_service            342L  0C    0m  CC=0.0    ←0
   │ cdp                        339L  1C   24m  CC=8      ←0
   │ node_dispatch              315L  0C    7m  CC=14     ←3
-  │ mesh                       308L  0C    3m  CC=4      ←0
   │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ worker                     289L  3C   21m  CC=13     ←2
   │ dashboard_api              288L  0C   25m  CC=14     ←2
+  │ mesh                       279L  0C    4m  CC=4      ←0
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
   │ node_api                   260L  0C   12m  CC=13     ←0
+  │ adopt_pack                 245L  0C   12m  CC=13     ←0
   │ connector_admin            240L  0C    9m  CC=14     ←1
   │ v2_mcp                     239L  0C   12m  CC=9      ←0
-  │ run                        236L  0C   12m  CC=14     ←1
   │ config                     226L  0C   17m  CC=9      ←3
   │ node_health                224L  0C    9m  CC=13     ←0
   │ preconditions              218L  1C   14m  CC=12     ←0
-  │ __init__                   216L  3C   12m  CC=13     ←0
   │ v2_grpc                    207L  0C   11m  CC=9      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
   │ compat                     199L  0C    6m  CC=10     ←0
   │ dispatch                   197L  0C    8m  CC=12     ←1
+  │ v2_adopt                   193L  0C    8m  CC=7      ←0
   │ testing                    189L  0C    9m  CC=9      ←0
+  │ dispatch_protocol          184L  0C    8m  CC=10     ←1
   │ keyauth                    182L  0C   16m  CC=6      ←0
   │ dashboard_http             181L  0C   11m  CC=12     ←1
-  │ planner                    172L  0C    7m  CC=14     ←1
+  │ planner                    172L  0C    7m  CC=14     ←0
   │ resolver                   169L  0C   10m  CC=13     ←1
   │ new-connector.sh           168L  0C    1m  CC=0.0    ←0
   │ conformance                167L  0C    7m  CC=7      ←0
   │ routing                    164L  0C   10m  CC=14     ←1
   │ android_node               162L  0C    7m  CC=14     ←1
   │ capability                 160L  0C    6m  CC=12     ←0
-  │ html_templates             156L  0C    3m  CC=6      ←0
   │ scanner_net                153L  0C    0m  CC=0.0    ←0
+  │ v2_service                 152L  0C    5m  CC=9      ←0
+  │ agent                      151L  0C    6m  CC=10     ←0
   │ scheduler                  135L  0C    6m  CC=4      ←0
   │ decision_loop              134L  0C    5m  CC=13     ←1
   │ backend_registry           129L  2C   10m  CC=11     ←0
   │ contracts                  119L  0C    8m  CC=5      ←0
+  │ daemon                     115L  0C    3m  CC=14     ←0
+  │ introspect                 112L  0C    4m  CC=9      ←1
   │ _artifacts                 111L  0C    5m  CC=9      ←2
+  │ tree                        91L  0C    4m  CC=11     ←0
   │ progress                    89L  1C   11m  CC=3      ←0
-  │ connector_sdk               87L  0C    3m  CC=5      ←2
+  │ connector_sdk               87L  0C    3m  CC=5      ←1
   │ heal_future_imports         84L  0C    3m  CC=7      ←0
   │ urirun.go                   80L  3C    5m  CC=3      ←0
   │ formatting                  80L  0C    4m  CC=8      ←2
-  │ pyproject.toml              78L  0C    0m  CC=0.0    ←0
+  │ pyproject.toml              79L  0C    0m  CC=0.0    ←0
   │ __init__                    76L  2C    1m  CC=1      ←0
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
   │ project.assets.json         71L  0C    0m  CC=0.0    ←0
   │ urirun-connector.csproj.nuget.dgspec.json    66L  0C    0m  CC=0.0    ←0
-  │ cli                         65L  0C    3m  CC=12     ←0
-  │ widgets                     64L  0C    4m  CC=12     ←0
   │ exec                        61L  0C    2m  CC=10     ←0
+  │ html_templates              57L  0C    1m  CC=3      ←0
   │ index.test.js               52L  0C    1m  CC=1      ←0
   │ Urirun.pm                   47L  0C    4m  CC=0.0    ←1
   │ urifix_bridge               45L  0C    1m  CC=12     ←1
@@ -228,11 +238,12 @@ LAYERS:
   │ lib.rs                      39L  1C    4m  CC=1      ←0
   │ urirun.rb                   39L  1C    4m  CC=4      ←0
   │ Urirun.java                 38L  1C    3m  CC=1      ←1
-  │ index.js                    33L  0C   11m  CC=8      ←10
+  │ index.js                    33L  0C   11m  CC=8      ←9
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ cdp                         31L  0C    0m  CC=0.0    ←0
   │ main.go                     24L  0C    1m  CC=1      ←0
   │ urirun-connector.AssemblyInfo.cs    22L  0C    0m  CC=0.0    ←0
+  │ widgets                     21L  1C    3m  CC=2      ←0
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
   │ urirun.sh                   17L  0C    2m  CC=0.0    ←0
   │ routing                     17L  0C    0m  CC=0.0    ←0
@@ -247,29 +258,29 @@ LAYERS:
   │ __init__                    11L  0C    0m  CC=0.0    ←0
   │ v2                          11L  0C    0m  CC=0.0    ←0
   │ hash-connector.ts           10L  0C    1m  CC=1      ←0
-  │ v2_service                  10L  0C    5m  CC=9      ←0
-  │ cli                         10L  0C    7m  CC=1      ←1
-  │ v1                          10L  0C   25m  CC=14     ←3
   │ errors                      10L  0C   32m  CC=13     ←1
-  │ daemon                      10L  0C    3m  CC=14     ←0
-  │ codegen                     10L  0C   19m  CC=14     ←0
-  │ introspect                  10L  0C    4m  CC=9      ←1
-  │ agent                       10L  0C    6m  CC=10     ←0
-  │ v2_adopt                    10L  0C    8m  CC=7      ←0
-  │ adopt_pack                  10L  0C   12m  CC=13     ←0
-  │ tree                        10L  0C    4m  CC=11     ←0
-  │ _scan                       10L  0C   34m  CC=14     ←0
   │ Cargo.toml                  10L  0C    0m  CC=0.0    ←0
   │ contract_gate               10L  0C    0m  CC=0.0    ←0
+  │ v2_service                  10L  0C    0m  CC=0.0    ←0
   │ progress                    10L  0C    0m  CC=0.0    ←0
+  │ cli                         10L  0C    0m  CC=0.0    ←0
+  │ v1                          10L  0C    0m  CC=0.0    ←0
+  │ daemon                      10L  0C    0m  CC=0.0    ←0
+  │ codegen                     10L  0C    0m  CC=0.0    ←0
+  │ introspect                  10L  0C    0m  CC=0.0    ←0
   │ v2                          10L  0C    0m  CC=0.0    ←0
   │ _runtime                    10L  0C    0m  CC=0.0    ←0
   │ v2_grpc                     10L  0C    0m  CC=0.0    ←0
+  │ agent                       10L  0C    0m  CC=0.0    ←0
+  │ v2_adopt                    10L  0C    0m  CC=0.0    ←0
   │ v2_mcp                      10L  0C    0m  CC=0.0    ←0
+  │ adopt_pack                  10L  0C    0m  CC=0.0    ←0
   │ worker                      10L  0C    0m  CC=0.0    ←0
   │ _registry                   10L  0C    0m  CC=0.0    ←0
   │ compat                      10L  0C    0m  CC=0.0    ←0
   │ discovery                   10L  0C    0m  CC=0.0    ←0
+  │ tree                        10L  0C    0m  CC=0.0    ←0
+  │ _scan                       10L  0C    0m  CC=0.0    ←0
   │ secrets                     10L  0C    0m  CC=0.0    ←0
   │ hash-connector.sh            9L  0C    0m  CC=0.0    ←0
   │ package.json                 8L  0C    0m  CC=0.0    ←0
@@ -292,7 +303,6 @@ LAYERS:
   │ declarative                  6L  0C    0m  CC=0.0    ←0
   │ uinput                       6L  0C    0m  CC=0.0    ←0
   │ __init__                     6L  0C    0m  CC=0.0    ←0
-  │ dispatch_protocol            5L  0C    8m  CC=10     ←1
   │ host_db                      5L  0C    0m  CC=0.0    ←0
   │ domain_monitor               5L  0C    0m  CC=0.0    ←0
   │ connector_sdk                5L  0C    0m  CC=0.0    ←0
@@ -306,19 +316,19 @@ LAYERS:
   │ planfile_adapter             5L  0C    0m  CC=0.0    ←0
   │ connector_scaffold           5L  0C    0m  CC=0.0    ←0
   │ domain_monitor               5L  0C    0m  CC=0.0    ←0
+  │ dispatch_protocol            5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ event_schema                 4L  3C    2m  CC=5      ←1
   │ manage                       4L  0C   36m  CC=13     ←0
   │ skill                        4L  0C   17m  CC=12     ←1
-  │ _util                        4L  0C    6m  CC=2      ←7
+  │ _util                        4L  0C    6m  CC=2      ←5
   │ doctor                       4L  0C   13m  CC=9      ←1
   │ paths                        4L  0C    3m  CC=5      ←4
-  │ episode                      4L  6C   10m  CC=14     ←4
+  │ episode                      4L  6C   10m  CC=14     ←3
   │ connector_lint               4L  0C   38m  CC=14     ←1
   │ connect_catalog              4L  0C   17m  CC=13     ←0
   │ connector_smoke              4L  0C    3m  CC=6      ←0
   │ connector_contract           4L  1C   11m  CC=4      ←0
-  │ flow_verify                  4L  0C    7m  CC=10     ←1
   │ openapi_import               4L  0C    0m  CC=0.0    ←0
   │ scanner_net                  4L  0C    0m  CC=0.0    ←0
   │ document_metadata            4L  0C    0m  CC=0.0    ←0
@@ -342,6 +352,7 @@ LAYERS:
   │ _artifacts                   4L  0C    0m  CC=0.0    ←0
   │ reversible                   4L  0C    0m  CC=0.0    ←0
   │ formatting                   4L  0C    0m  CC=0.0    ←0
+  │ flow_verify                  4L  0C    0m  CC=0.0    ←0
   │ mesh                         4L  0C    0m  CC=0.0    ←0
   │ flow_thin                    4L  0C    0m  CC=0.0    ←0
   │ transport                    4L  0C    0m  CC=0.0    ←0
@@ -411,7 +422,7 @@ LAYERS:
 
 COUPLING:
                            adapters.python              scripts             adapters      examples.matrix                xlang                v1.js        adapters.java        adapters.perl  security.mesh-probe
-      adapters.python                   ──                  139                   18                   ←2                   ←3                    6                    1                    1                       hub
+      adapters.python                   ──                  136                   17                   ←2                   ←3                    6                    1                    1                       hub
               scripts                    2                   ──                  ←11                   ←7                   ←5                                                                                  ←1  hub
              adapters                    1                   11                   ──                                                                                                                                hub
       examples.matrix                    2                    7                                        ──                                                                                                           !! fan-out
@@ -421,14 +432,14 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                                                 ──                     
   security.mesh-probe                                         1                                                                                                                                                 ──
   CYCLES: none
-  HUB: scripts/ (fan-in=163)
-  HUB: adapters/ (fan-in=18)
+  HUB: scripts/ (fan-in=160)
   HUB: v1.js/ (fan-in=6)
   HUB: adapters.python/ (fan-in=8)
-  SMELL: adapters/ fan-out=12 → split needed
-  SMELL: examples.matrix/ fan-out=9 → split needed
+  HUB: adapters/ (fan-in=17)
   SMELL: xlang/ fan-out=8 → split needed
-  SMELL: adapters.python/ fan-out=165 → split needed
+  SMELL: adapters.python/ fan-out=161 → split needed
+  SMELL: examples.matrix/ fan-out=9 → split needed
+  SMELL: adapters/ fan-out=12 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

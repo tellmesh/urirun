@@ -147,7 +147,7 @@ class WorkerPool:
             return json.loads(self.proc.stdout.readline())
 
     def run_uri(self, uri: str, registry: dict, payload: dict) -> dict:
-        from urirun.runtime import _registry as reglib
+        from urirun_runtime import _registry as reglib
 
         entry = reglib.resolve_route(reglib.translate(reglib.parse_uri(uri)), registry)
         template = entry.get("argv") or (entry.get("config") or {}).get("argv") or []
@@ -267,7 +267,7 @@ def _pool_executors(pools):
     Pure runtime logic — operates only on ``ConnectorPools`` (this module) and the v2
     ``EXECUTORS`` map; lives here, next to the pool it wraps, so the kernel never has to
     reach up into ``node.mesh``/``node.server`` for it (re-exported from both for callers)."""
-    from urirun.runtime.v2 import EXECUTORS  # lazy: avoids worker<->v2 import-time cycle
+    from urirun_runtime.v2 import EXECUTORS  # lazy: avoids worker<->v2 import-time cycle
 
     def run_pooled(ctx, policy, execute):
         adapter = ctx["routeEntry"].get("adapter")

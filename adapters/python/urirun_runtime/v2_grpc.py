@@ -34,7 +34,7 @@ from concurrent import futures
 
 from jsonschema import exceptions as jsonschema_exceptions
 
-from urirun.runtime import _registry as reglib, v2
+from urirun_runtime import _registry as reglib, v2
 
 SERVICE = "urirun.UriHandler"
 DEFAULT_PORT = 50051
@@ -64,7 +64,7 @@ def _route_list(registry: dict) -> dict:
 def serve(registry: dict, host: str = "0.0.0.0", port: int = DEFAULT_PORT, policy: dict | None = None,
           mode: str = "dry-run", max_workers: int = 8, block: bool = True):
     import grpc
-    from urirun.runtime.dispatch_protocol import dispatch as _dp_dispatch, normalize_request as _norm
+    from urirun_runtime.dispatch_protocol import dispatch as _dp_dispatch, normalize_request as _norm
 
     def do_run(request, _context):
         return _dp_dispatch(_norm(request, default_mode=mode), registry, policy=policy)

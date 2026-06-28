@@ -649,10 +649,11 @@ def _resolve_artifact_value(sr: dict) -> "dict | None":
     return None
 
 
-def _build_remote_path_maps(results: dict) -> tuple[dict, dict]:
-    """Build (path_to_node, path_inline) from step results for remote-attachment enrichment."""
+def _build_remote_path_maps(results: dict) -> tuple[dict, dict, dict]:
+    """Build remote path maps from step results for attachment enrichment."""
     path_to_node: dict[str, str] = {}
     path_inline: dict[str, str] = {}
+    path_artifact: dict[str, str] = {}
     for sr in results.values():
         if not isinstance(sr, dict):
             continue
@@ -665,9 +666,12 @@ def _build_remote_path_maps(results: dict) -> tuple[dict, dict]:
         p = str(val.get("path") or "")
         if p:
             path_to_node[p] = node_url
-            if val.get("pngBase64"):
-                path_inline[p] = str(val.get("pngBase64"))
-    return path_to_node, path_inline
+            png = val.get("pngBase64")
+            if isinstance(png, str) and png:
+                path_inline[p] = png
+            elif isinstance(png, dict) and png.get("artifactPath"):
+                path_artifact[p] = str(png.get("artifactPath") or "")
+    return path_to_node, path_inline, path_artifact
 
 
 def _save_inline_attachment(att: dict, b64: str, shot_dir: str) -> bool:
@@ -700,7 +704,7 @@ def _enrich_remote_attachments(attachments: list, results: dict) -> None:
     dashboard can display the screenshot inline without an SSH transfer."""
     import os as _os  # noqa: PLC0415
     from urllib.parse import quote as _quote  # noqa: PLC0415
-    path_to_node, path_inline = _build_remote_path_maps(results)
+    path_to_node, path_inline, path_artifact = _build_remote_path_maps(results)
     _shot_dir = _os.path.join(
         _os.path.expanduser(_os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")), "screenshots")
     for att in attachments:
@@ -710,6 +714,13 @@ def _enrich_remote_attachments(attachments: list, results: dict) -> None:
             continue
         path = str(att.get("path") or "")
         if not path:
+            continue
+        artifact_path = path_artifact.get(path)
+        if artifact_path and _os.path.isfile(_os.path.expanduser(artifact_path)):
+            local = _os.path.expanduser(artifact_path)
+            att["path"] = local
+            att["fileExists"] = True
+            att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
             continue
         b64 = path_inline.get(path)
         if b64 and _save_inline_attachment(att, b64, _shot_dir):
@@ -1299,6 +1310,8 @@ def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
         return None, None
     flow = {"steps": _rec_steps,
             "task": {"id": "recall", "source": _recalled.get("source", "recall"), "title": prompt}}
+    from urirun_flow.flow_planner import prepare_screenshot_capture_flow  # noqa: PLC0415
+    flow = prepare_screenshot_capture_flow(flow, prompt, {str(s.get("uri") or "") for s in _rec_steps if isinstance(s, dict)})
     generator = {"provider": "recall", "fallback": False, "cached": True,
                  "episodeId": _recalled.get("episode_id"),
                  "flowKey": _recalled.get("flow_key"),

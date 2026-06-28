@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import argparse
 
-from urirun.runtime.v2 import ENTRY_POINT_GROUP, _package_version
+from urirun_runtime.v2 import ENTRY_POINT_GROUP, _package_version
 
 DEFAULT_NODE_PORT = 8765  # kept in sync with node.config.DEFAULT_NODE_PORT
 

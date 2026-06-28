@@ -121,6 +121,29 @@ class RecallGateShortCircuitsLLMTests(unittest.TestCase):
         self.assertEqual([s["uri"] for s in flow["steps"]], ["kvm://host/screen/query/capture"])
         self.assertTrue(gen["cached"] and gen["provider"] == "recall")
 
+    def test_found_recall_repairs_screenshot_capture_blocked_by_required_verify(self):
+        import urirun.host.chat_orchestrator as CO
+        import urirun.host.dispatch as D
+
+        recalled = {"ok": True, "found": True, "source": "episode", "episode_id": "ep-1", "steps": [
+            {"id": "ready", "uri": "kvm://host/cdp/page/query/ready", "payload": {}, "depends_on": []},
+            {"id": "verify", "uri": "kvm://host/ui/query/verify",
+             "payload": {"expect": "LinkedIn", "required": True}, "depends_on": ["ready"]},
+            {"id": "capture_screen", "uri": "kvm://host/screen/query/capture",
+             "payload": {"base64": True}, "depends_on": ["verify"]},
+        ]}
+        d_orig = D.inprocess_fallback
+        D.inprocess_fallback = lambda uri, payload=None: recalled
+        try:
+            mem = type("M", (), {"known_good": lambda self, n: {"fingerprint": "env-x"}})()
+            flow, _gen = CO._try_recall_gate(mem, ["lenovo"], "otworz linkedin i zrob zrzut ekranu")
+        finally:
+            D.inprocess_fallback = d_orig
+
+        self.assertTrue(flow["steps"][1]["optional"])
+        self.assertFalse(flow["steps"][1]["payload"]["required"])
+        self.assertEqual(flow["steps"][2]["depends_on"], ["ready"])
+
     def test_make_flow_is_not_called_on_hit(self):
         # Mirror the caller's exact branch: flow,_ = recall(); if flow is None: make_flow()
         import urirun.host.chat_orchestrator as CO

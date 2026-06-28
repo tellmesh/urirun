@@ -4,7 +4,7 @@ flowchart TD
     adapters__java["adapters.java<br/>4 funcs"]
     adapters__js["adapters.js<br/>12 funcs"]
     adapters__perl["adapters.perl<br/>4 funcs"]
-    adapters__python["adapters.python<br/>2364 funcs"]
+    adapters__python["adapters.python<br/>2121 funcs"]
     examples__matrix["examples.matrix<br/>3 funcs"]
     scripts__cc_gate["scripts.cc_gate<br/>3 funcs"]
     scripts__extraction_audit["scripts.extraction_audit<br/>12 funcs"]
@@ -17,9 +17,9 @@ flowchart TD
     xlang__driver["xlang.driver<br/>3 funcs"]
     xlang__emit_contracts["xlang.emit_contracts<br/>1 funcs"]
     xlang__peer["xlang.peer<br/>27 funcs"]
-    adapters__python ==>|139| scripts__test_pypi_install
+    adapters__python ==>|136| scripts__test_pypi_install
     scripts__extraction_audit ==>|20| scripts__test_pypi_install
-    adapters__python ==>|18| adapters__js
+    adapters__python ==>|17| adapters__js
     scripts__repin_connectors ==>|12| scripts__test_pypi_install
     adapters__conformance ==>|11| scripts__test_pypi_install
     scripts__transport_swap_proof ==>|9| scripts__test_pypi_install

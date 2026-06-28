@@ -14,7 +14,7 @@ route (`local-service`, `command`, ...) - to the coordinator every worker URI is
 reached over HTTP.
 
 ```python
-from urirun.runtime import v2_service
+from urirun_runtime import v2_service
 env = v2_service.call("python://python-worker/text/normalize", {"text": "Hi"}, registry)
 ```
 
@@ -31,7 +31,7 @@ import urllib.request
 
 from jsonschema import exceptions as jsonschema_exceptions
 
-from urirun.runtime import _registry as reglib, v2
+from urirun_runtime import _registry as reglib, v2
 
 DEFAULT_PORT = 8080
 

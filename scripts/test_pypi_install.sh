@@ -6,8 +6,8 @@
 #   --local      Install from the local adapters/python directory (no PyPI needed).
 #                Run any time; does not require a published version.
 #   --collision  Install the FULL local distribution set (bundle + the urirun-runtime /
-#                urirun-cdp / urirun-connectors-toolkit meta-packages + real urirun-flow) into one
-#                venv and assert each urirun_* import name resolves to exactly one distribution
+#                urirun-cdp / urirun-connectors-toolkit meta-packages + real urirun-flow/widgets)
+#                into one venv and assert each urirun_* import name resolves to exactly one distribution
 #                (`urirun`). Catches the Phase-5 shadowing hazard at install time.
 #   (default)    Install from PyPI == VERSION (root VERSION file). Run AFTER publish.
 #
@@ -49,7 +49,7 @@ if [ "$COLLISION" -eq 1 ]; then
   # Install real-source local siblings first so the local bundle can resolve unpublished floors
   # without fetching them from PyPI. Meta siblings must add no import package; real-source siblings
   # must be excluded from the bundle so they own their import name alone.
-  for real in urirun-contract urirun-connector-router urirun-flow; do
+  for real in urirun-contract urirun-connector-router urirun-flow urirun-widgets; do
     [ -d "$MONO/$real" ] && "$VENV/bin/pip" install --quiet "$MONO/$real"
   done
   "$VENV/bin/pip" install --quiet "$ROOT/adapters/python"
@@ -71,6 +71,7 @@ EXPECTED = {
     "urirun_twin": ["urirun"],
     "urirun_contracts": ["urirun"],
     "urirun_scanner": ["urirun"],
+    "urirun_widgets": ["urirun-widgets"],
 }
 failures = []
 for name, expected in EXPECTED.items():
@@ -82,11 +83,11 @@ for name, expected in EXPECTED.items():
 
 # the extracted names must also actually import, and the standalone flow DSL must work
 try:
-    import urirun_cdp, urirun_connectors_toolkit, urirun_runtime, urirun_flow  # noqa: F401
+    import urirun_cdp, urirun_connectors_toolkit, urirun_runtime, urirun_flow, urirun_widgets  # noqa: F401
     from urirun_flow import Flow  # was silently broken when urirun_flow was a path-loading shim
     from urirun_flow.run import run_flow  # noqa: F401
     from urirun_flow.flow import make_flow  # noqa: F401
-    print("  ok  urirun_cdp / urirun_connectors_toolkit / urirun_runtime import")
+    print("  ok  urirun_cdp / urirun_connectors_toolkit / urirun_runtime / urirun_widgets import")
     print("  ok  from urirun_flow import Flow  (standalone owner)")
     print("  ok  urirun_flow.run.run_flow + urirun_flow.flow.make_flow")
 except Exception as exc:  # noqa: BLE001

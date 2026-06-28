@@ -9,7 +9,11 @@ import os
 import tempfile
 import unittest
 
-from urirun.host.chat_orchestrator import _register_step_artifacts, compact_chat_result
+from urirun.host.chat_orchestrator import (
+    _enrich_remote_attachments,
+    _register_step_artifacts,
+    compact_chat_result,
+)
 
 
 class _FakeDB:
@@ -105,6 +109,53 @@ class CompactChatResultTests(unittest.TestCase):
         self.assertIn("artifactPath", ref)
         self.assertNotIn(base64.b64encode(png).decode(), str(out))
         self.assertEqual(out["artifacts"][0]["fields"], ["host-chat.results.capture.result.value.pngBase64"])
+
+
+class RemoteAttachmentEnrichmentTests(unittest.TestCase):
+    def test_compacted_png_artifact_path_replaces_remote_screenshot_attachment(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            artifact_path = os.path.join(tmpdir, "capture.png")
+            with open(artifact_path, "wb") as fh:
+                fh.write(b"\x89PNG\r\n\x1a\n" + (b"x" * 64))
+            remote_path = "/home/tom/.urirun/artifacts/screenshots/urirun-kvm-shot.png"
+            attachments = [{
+                "kind": "screenshot",
+                "path": remote_path,
+                "meta": {
+                    "kind": "screenshot",
+                    "path": remote_path,
+                    "pngBase64": {
+                        "artifactPath": artifact_path,
+                        "bytes": 72,
+                        "mime": "image/png",
+                    },
+                },
+            }]
+            results = {
+                "capture": {
+                    "url": "http://192.168.188.201:8765/run",
+                    "result": {
+                        "value": {
+                            "ok": True,
+                            "kind": "screenshot",
+                            "live": False,
+                            "path": remote_path,
+                            "pngBase64": {
+                                "artifactPath": artifact_path,
+                                "bytes": 72,
+                                "mime": "image/png",
+                            },
+                        }
+                    },
+                }
+            }
+
+            _enrich_remote_attachments(attachments, results)
+
+        self.assertEqual(attachments[0]["path"], artifact_path)
+        self.assertTrue(attachments[0]["fileExists"])
+        self.assertIn("capture.png", attachments[0]["filePreviewUrl"])
+        self.assertNotIn("pngBase64", attachments[0]["meta"])
 
 
 if __name__ == "__main__":

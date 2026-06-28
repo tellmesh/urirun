@@ -194,11 +194,6 @@ from .html_templates import (
     INDEX_HTML, NODE_TYPES_DOC_HTML, SCANNER_HTML,
     docs_nodes_html as _docs_nodes_html_impl,
 )
-from urirun_widgets.render import (
-    render_svg as _service_widget_svg_impl,
-    select_service_view as _select_service_view_impl,
-    service_widget_html as _service_widget_html_impl,
-)
 from .scanner_bridge import (
     PAGE_ACTION_LOCK as _SCANNER_PAGE_ACTION_LOCK,
     PAGE_ACTION_QUEUES as _SCANNER_PAGE_ACTION_QUEUES,
@@ -295,6 +290,7 @@ from .service_control import (
 from .widgets import (
     query_value as _widget_query_value,
     scanner_stream_summary as _scanner_stream_summary_impl,
+    select_service_view as _select_service_view_impl,
 )
 
 try:
@@ -360,10 +356,12 @@ def _service_view_from_query(project: str, query: dict[str, list[str]]) -> dict:
 
 
 def _service_widget_html(project: str, query: dict[str, list[str]]) -> str:
+    from urirun_widgets.render import service_widget_html as _service_widget_html_impl
     return _service_widget_html_impl(_service_view_from_query(project, query))
 
 
 def _service_widget_svg(project: str, query: dict[str, list[str]]) -> str:
+    from urirun_widgets.render import render_svg as _service_widget_svg_impl
     view = _service_view_from_query(project, query)
     width = max(320, min(1200, int(_first(query, "width", "720") or 720)))
     height = max(120, min(600, int(_first(query, "height", "180") or 180)))

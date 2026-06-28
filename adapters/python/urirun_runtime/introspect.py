@@ -17,7 +17,7 @@ executor. The registry to inspect is given in the payload (``registry: <path>``)
 
 from __future__ import annotations
 
-from urirun.runtime import _registry as reglib
+from urirun_runtime import _registry as reglib
 
 BINDINGS_VERSION = reglib.BINDINGS_VERSION if hasattr(reglib, "BINDINGS_VERSION") else "urirun.bindings.v2"
 
@@ -52,7 +52,7 @@ def registry_introspect_bindings(target: str = "local") -> dict:
 
 def run_registry_introspect(ctx: dict, policy: dict, execute: bool = True) -> dict:
     """Executor for registry:// routes — reads the target registry and reports it."""
-    from urirun.runtime import _runtime
+    from urirun_runtime import _runtime
 
     payload = ctx.get("payload") if isinstance(ctx.get("payload"), dict) else {}
     registry_path = payload.get("registry")
@@ -63,7 +63,7 @@ def run_registry_introspect(ctx: dict, policy: dict, execute: bool = True) -> di
             # default: introspect the live runtime — every installed connector
             # (via the urirun.bindings entry points) plus the builtin error:// /
             # registry:// routes, served from the fingerprint-cached full registry.
-            from urirun.runtime import discovery, v2
+            from urirun_runtime import discovery, v2
             registry = discovery.full_registry(v2.ENTRY_POINT_GROUP)
     except (FileNotFoundError, ValueError) as exc:
         return {"ok": False, "type": "registry", "error": f"cannot load registry: {exc}"}

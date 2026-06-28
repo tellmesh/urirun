@@ -24,7 +24,7 @@ name, schema prefix, Docker labels, and C adapter names are all `urirun`.
 ## Dokumentacja
 
 <!-- docs-nav -->
-📖 **Dokumentacja urirun:** [Komponenty](docs/COMPONENTS.md) · [URI Objects](docs/URI_OBJECTS.md) · [Łączenie node](docs/NODE_CONNECTIONS.md) · [Dashboard & chat](docs/HOST_DASHBOARD_CHAT.md) · [Host↔Node](docs/HOST_NODE_COMMUNICATION.md) · [Sekrety](docs/SECRETS.md) · [Archiwum dok.](docs/DOCUMENT_ARCHIVE.md) · [Decision Loop](docs/DECISION_LOOP.md) · [Roadmap](docs/REFACTOR_ROADMAP.md) · [Podział paczek](docs/URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](docs/PLANFILE_HOST_INTEGRATION_PLAN.md)
+📖 **Dokumentacja urirun:** [Architektura](docs/ARCHITECTURE.md) · [Komponenty](docs/COMPONENTS.md) · [URI Objects](docs/URI_OBJECTS.md) · [Łączenie node](docs/NODE_CONNECTIONS.md) · [Dashboard & chat](docs/HOST_DASHBOARD_CHAT.md) · [Host↔Node](docs/HOST_NODE_COMMUNICATION.md) · [Sekrety](docs/SECRETS.md) · [Archiwum dok.](docs/DOCUMENT_ARCHIVE.md) · [Decision Loop](docs/DECISION_LOOP.md) · [Roadmap](docs/REFACTOR_ROADMAP.md) · [Podział paczek](docs/URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](docs/PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
 
 ## Goal
@@ -74,6 +74,8 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
   `_version`, `_util`, `_artifacts`, `formatting` (CLI tables), `task_cli` (the host task/ticket
   DSL) + the node server, all re-exported from `mesh`)
 - `adapters/c/` - C firmware-style reference adapter
+- `docs/ARCHITECTURE.md` - current system architecture: hub, services,
+  widgets, artifacts, connectors, contracts, router, flow and node boundaries
 - `docs/URIRUN_PACKAGE_SPLIT_PLAN.md` - migration plan for splitting core,
   connectors, runtime SDKs and the host app (see its STATUS block for what's done)
 - `docs/SECRETS.md` - credentials by reference: `secret://`/`getv://` providers,

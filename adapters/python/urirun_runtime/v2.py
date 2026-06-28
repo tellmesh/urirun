@@ -28,7 +28,7 @@ from typing import Any, Callable, Iterable
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
 
-from urirun.runtime import _registry as reglib, _scan as scan, _runtime as runtime, errors as uri_errors, v1
+from urirun_runtime import _registry as reglib, _scan as scan, _runtime as runtime, errors as uri_errors, v1
 
 VERSION = "urirun.bindings.v2"
 ENTRY_POINT_GROUP = "urirun.bindings"
@@ -709,7 +709,7 @@ def _last_json_object(text: str) -> dict:
     return {"stdout": text}
 
 
-from urirun.runtime.introspect import run_registry_introspect
+from urirun_runtime.introspect import run_registry_introspect
 
 if not hasattr(v1, "EXECUTORS"):  # import-environment guard, not a logic error
     _pkg = sys.modules.get("urirun")  # already loaded — no upward import needed
@@ -1476,7 +1476,7 @@ def _cmd_discover(args, parser) -> int:
 
 
 def _cmd_adopt_pack(args, parser) -> int:
-    from urirun.runtime import adopt_pack as _adopt_pack
+    from urirun_runtime import adopt_pack as _adopt_pack
 
     doc = _adopt_pack.adopt(args.target)
     reglib._emit_json(doc, args.out)
@@ -1486,7 +1486,7 @@ def _cmd_adopt_pack(args, parser) -> int:
 
 
 def _cmd_tree(args, parser) -> int:
-    from urirun.runtime import tree as _tree
+    from urirun_runtime import tree as _tree
 
     document = _tree.build(reglib.load_json(args.source))
     if args.format == "json":
@@ -1541,7 +1541,7 @@ def _cmd_add_openapi(args, parser) -> int:
 
 
 def _cmd_gen(args, parser) -> int:
-    from urirun.runtime import codegen
+    from urirun_runtime import codegen
 
     return codegen.gen_command(args)
 
@@ -1774,7 +1774,7 @@ def _cmd_outdated(args, parser) -> int:
 
 
 def _cmd_agent(args, parser) -> int:
-    from urirun.runtime import agent as agent_mod
+    from urirun_runtime import agent as agent_mod
 
     return agent_mod.agent_command(args)
 
@@ -1848,7 +1848,7 @@ def _cmd_errors(args, parser) -> int:
 
 
 def _cmd_compat(args, parser) -> int:
-    from urirun.runtime import compat
+    from urirun_runtime import compat
 
     return compat.main(args.compat_args)
 
@@ -1891,8 +1891,8 @@ def _builtin_binding_items(target: str = "local") -> list[dict]:
     builtin fallback in ``_run_resolve_route``; surfacing them here keeps ``list``
     in sync with ``run`` so they are discoverable, not just runnable.
     """
-    from urirun.runtime.errors import bindings as _error_bindings  # noqa: PLC0415 — avoids urirun package import
-    from urirun.runtime.introspect import registry_introspect_bindings
+    from urirun_runtime.errors import bindings as _error_bindings  # noqa: PLC0415 — avoids urirun package import
+    from urirun_runtime.introspect import registry_introspect_bindings
 
     items: list[dict] = []
     for document in (_error_bindings(target), registry_introspect_bindings(target)):
@@ -1945,11 +1945,11 @@ def _resolve_list_registry(args):
         # `run` resolves a single URI: import only the connector that owns its
         # scheme (scheme-indexed cache), not every installed connector.
         if getattr(args, "command", None) == "run" and getattr(args, "uri", None):
-            from urirun.runtime import discovery
+            from urirun_runtime import discovery
             return discovery.registry_for_uri(args.uri, group)
         sources = [args.source] if args.source else ([registry_file] if registry_file else [])
         if not sources:                  # pure entry-point discovery -> cached full registry
-            from urirun.runtime import discovery
+            from urirun_runtime import discovery
             return discovery.full_registry(group)
         bindings = _load_many(sources, include_entry_points=True, entry_point_group=group)
         bindings.extend(_builtin_binding_items())
@@ -2020,7 +2020,7 @@ def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     executable = Path(sys.argv[0]).name
     prog = executable if executable in {"urirun", "urirun-v2"} else "urirun"
-    from urirun.runtime.cli import _build_parser  # lazy: avoids v2<->cli import cycle
+    from urirun_runtime.cli import _build_parser  # lazy: avoids v2<->cli import cycle
     parser = _build_parser(prog)
     args = parser.parse_args(argv)
     handler = _COMMANDS.get(args.command)

@@ -47,11 +47,13 @@ raise SystemExit(1 if loaded else 0)
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_core_import_does_not_load_host_node_scanner(self):
-        # Slim-core ratchet (ACTIVE_REFACTOR_PLAN.md Phase 3 acceptance): a bare `import urirun`
-        # must not pull in host, node or scanner implementation modules. This is the prefix-based
-        # invariant — sharper than the named denylist above — that keeps the kernel thin BEFORE
-        # the host/node extraction lands, so a stray reverse-import can't silently re-fatten it.
+    def test_core_import_stays_slim(self):
+        # Slim-core ratchet. The architecture doc (docs/ARCHITECTURE.md "Testy i bramy") states the
+        # invariant: a bare `import urirun` must not import host / node / flow / widgets (nor scanner)
+        # implementation modules. This prefix-based check — sharper than the named denylist above —
+        # locks that thin kernel BEFORE the host/node/flow/widgets extractions land, so a stray
+        # reverse-import can't silently re-fatten the hub. Matches ACTIVE_REFACTOR_PLAN Phase 3
+        # acceptance, widened to flow+widgets per the current architecture.
         adapter_root = Path(__file__).resolve().parents[1]
         code = """
 import json
@@ -59,10 +61,13 @@ import sys
 
 import urirun
 
-loaded = sorted(
-    m for m in sys.modules
-    if m.startswith(("urirun.host", "urirun_node", "urirun_scanner"))
+forbidden_prefixes = (
+    "urirun.host", "urirun_node", "urirun.node",
+    "urirun_scanner",
+    "urirun_flow", "urirun.flow",
+    "urirun_widgets", "urirun.widgets",
 )
+loaded = sorted(m for m in sys.modules if m.startswith(forbidden_prefixes))
 print(json.dumps({"loaded": loaded}, sort_keys=True))
 raise SystemExit(1 if loaded else 0)
 """
@@ -80,7 +85,7 @@ raise SystemExit(1 if loaded else 0)
         self.assertEqual(
             result.returncode,
             0,
-            "`import urirun` loaded host/node/scanner modules:\n" + result.stdout + result.stderr,
+            "`import urirun` loaded host/node/scanner/flow/widgets modules:\n" + result.stdout + result.stderr,
         )
 
     def test_host_binding_generation_keeps_executors_lazy(self):

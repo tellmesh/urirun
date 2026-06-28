@@ -24,7 +24,7 @@ import argparse
 from importlib import metadata
 from pathlib import Path
 
-from urirun.runtime import _registry as reglib, _scan as scan, v2
+from urirun_runtime import _registry as reglib, _scan as scan, v2
 
 
 def passthrough_schema(extra: dict | None = None) -> dict:

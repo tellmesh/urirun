@@ -42,7 +42,7 @@ def full_registry(group: str) -> dict:
     cached to disk keyed by the installed-set fingerprint. Used by ``list`` and
     ``registry://`` introspection so they don't re-import every connector each call.
     """
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     fingerprint = _fingerprint(group)
     path = Path(_REGISTRY_FILE)
@@ -105,7 +105,7 @@ def _candidate_sort_key(scheme: str, name: str, count: int, first_seen: int) -> 
 
 def build_index(group: str) -> dict:
     """Full discovery once → map every scheme to the entry points that serve it."""
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     counts: dict[str, dict[str, int]] = {}
     first_seen: dict[str, dict[str, int]] = {}
@@ -169,7 +169,7 @@ def registry_for_uri(uri: str, group: str):
     unknown — e.g. a builtin ``registry://`` / ``error://`` URI, or a freshly
     installed connector not yet in the cache.
     """
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     scheme = _scheme_of(uri)
     index = load_index(group)
@@ -191,7 +191,7 @@ def registry_for_uri(uri: str, group: str):
 
 
 def _bindings_for_entry_point(name: str, group: str) -> list[dict]:
-    from urirun.runtime import v2
+    from urirun_runtime import v2
 
     for entry_point in v2._select_entry_points(group):
         if entry_point.name == name:

@@ -2,7 +2,8 @@
     const params = new URLSearchParams(window.location.search);
     const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
     const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
-    const initialTargets = (params.get('targets') || 'host').split(',').map((item) => item.trim()).filter(Boolean);
+    const initialTargets = (urlTargetsAreImplicitAutorun(params) ? 'host' : (params.get('targets') || 'host'))
+      .split(',').map((item) => item.trim()).filter(Boolean);
     const initialDiscoveryTarget = (params.get('discovery') || params.get('registry') || '').trim();
     const state = {
       summary: null,
@@ -148,12 +149,15 @@
     }
 
     function applyUrlTargetControls(search) {
-      const targets = (search.get('targets') || 'host').split(',').map((item) => item.trim()).filter(Boolean);
+      const implicitAutorun = urlTargetsAreImplicitAutorun(search);
+      const targets = (implicitAutorun ? 'host' : (search.get('targets') || 'host')).split(',').map((item) => item.trim()).filter(Boolean);
       state.selectedTargets = targets.length ? targets : ['host'];
-      (search.get('nodes') || '').split(',').map((item) => item.trim()).filter(Boolean).forEach((node) => {
-        const target = node.startsWith('node:') ? node : `node:${node}`;
-        if (!state.selectedTargets.includes(target)) state.selectedTargets.push(target);
-      });
+      if (!implicitAutorun) {
+        (search.get('nodes') || '').split(',').map((item) => item.trim()).filter(Boolean).forEach((node) => {
+          const target = node.startsWith('node:') ? node : `node:${node}`;
+          if (!state.selectedTargets.includes(target)) state.selectedTargets.push(target);
+        });
+      }
       const discovery = (search.get('discovery') || search.get('registry') || '').trim();
       if (discovery) state.discoveryTarget = discovery;
     }
@@ -2504,7 +2508,7 @@
     }
 
     function chatAutoRunKey(search) {
-      return ['prompt', 'message', 'nodes', 'targets', 'execute', 'no_llm', 'noLlm']
+      return ['prompt', 'message', 'nodes', 'targets', 'target_explicit', 'targetExplicit', 'execute', 'no_llm', 'noLlm']
         .map((name) => `${name}=${search.get(name) || ''}`).join('&');
     }
 
@@ -2519,11 +2523,21 @@
       return false;
     }
 
+    function chatUrlTargetExplicit(search) {
+      const raw = search.has('target_explicit') ? search.get('target_explicit') : search.get('targetExplicit');
+      if (raw === null) return false;
+      return !['0', 'false', 'no', 'off'].includes(String(raw).trim().toLowerCase());
+    }
+
+    function urlTargetsAreImplicitAutorun(search) {
+      return chatAutoRunEnabled(search) && !chatUrlTargetExplicit(search);
+    }
+
     async function maybeAutoRunChatFromUrl(search) {
       if (!chatAutoRunEnabled(search)) return;
       const key = chatAutoRunKey(search);
       if (chatAutoRunAlreadySeen(key)) return;
-      const targetExplicit = (search.get('action') || '') !== 'tab:chat';
+      const targetExplicit = chatUrlTargetExplicit(search);
       state.view = 'chat';
       applyView('chat');
       $('chatStatus').textContent = 'running from URL...';
