@@ -517,8 +517,13 @@ Flota ~40 connectorów i kernel kontraktu (`urirun-contract`) to osobne repozyto
 (źródło w monorepo, sibling = wrapper PyPI). **Real-source** (własne źródło, monorepo shimuje):
 `contract`, `connector-router`, `twin`, `declarative`, `widgets`, `artifacts` oraz — od ekstrakcji
 2026-06-28 — `flow` (`urirun.node.flow` → shim do `urirun-flow/urirun_flow/flow.py`; standalone
-owner potwierdzony collision-smoke). `runtime` jest następny w kolejce do real-source (po opóźnieniu
-top-level importów). Reguła: paczka jest ALBO meta ALBO real-source, nigdy w pół — `dev-install.sh
+owner potwierdzony collision-smoke). `runtime` **pozostaje meta** (dystrybucja `urirun-runtime` =
+wrapper, bundle posiada `urirun_runtime`), ale decyzja, którą kod już podjął (2026-06-28): jego
+źródło jest skonsolidowane pod `urirun_runtime/` jako jedyne real-source (`v2.py` 2033, `_registry.py`
+718, `cli.py` 716…), a `urirun/runtime/*` to 10-liniowe shimy — NIE odwrotnie. Warunek „po opóźnieniu
+top-level importów" jest spełniony: slim-core import-smoke (`test_core_import_smoke.py`) zielony, z
+`urirun_runtime` na allowliście kernela (denylista: host/node/flow/scanner/widgets). Reguła: paczka
+jest ALBO meta ALBO real-source, nigdy w pół — `dev-install.sh
 --check` + slim-core import-smoke pilnują, że każda ekstrakcja nie zostawia cofki ani połowicznego
 właściciela.
 

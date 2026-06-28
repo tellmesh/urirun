@@ -18,8 +18,6 @@
         <button data-view="chat">Chat</button>
         <button data-view="discovery">Discovery</button>
         <button data-view="artifacts">Artifacts</button>
-        <button data-view="widgets">Widgets</button>
-        <button data-view="twin">Digital Twin</button>
         <button data-view="tasks">Tasks</button>
         <button data-view="host">Host</button>
         <button data-view="nodes">Nodes</button>
@@ -73,28 +71,6 @@
           </div>
           <div class="panel-body"><div class="artifact-file-grid" id="artifactFileGrid"></div></div>
         </article>
-      </section>
-      <section class="widget-layout view-block" data-section="widgets">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <h2>Widgets</h2>
-              <p class="subtle">Dashboard service previews and live views exposed by URI services.</p>
-            </div>
-            <div class="actions">
-              <span class="subtle" id="widgetCount"></span>
-              <button type="button" id="widgetRefreshBtn">Refresh widgets</button>
-            </div>
-          </div>
-          <div class="panel-body"><div class="widget-grid" id="widgetGrid"></div></div>
-        </article>
-      </section>
-
-      <section class="widget-layout view-block" data-section="twin" style="display: flex; flex-direction: column; height: 100%;">
-        <div class="panel-head"><h2>Digital Twin Monitor</h2></div>
-        <div class="panel-body" style="flex: 1; padding: 0;">
-          <iframe src="/twin?source=live" title="Digital Twin Monitor" style="width:100%;height:100%;border:none;min-height:70vh;"></iframe>
-        </div>
       </section>
 
       <section class="nodes-layout view-block" data-section="host">
@@ -488,8 +464,6 @@
     <button data-view="chat">Chat</button>
     <button data-view="discovery">Discovery</button>
     <button data-view="artifacts">Artifacts</button>
-    <button data-view="widgets">Widgets</button>
-    <button data-view="twin">Digital Twin</button>
     <button data-view="tasks">Tasks</button>
     <button data-view="host">Host</button>
     <button data-view="nodes">Nodes</button>

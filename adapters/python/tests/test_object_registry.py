@@ -4,6 +4,7 @@ from urirun.host.object_registry import (
     _uri_target,
     dedupe_routes,
     host_registry_routes,
+    local_entry_point_host_routes,
     phone_scanner_contact,
     route_owner_route,
 )
@@ -33,6 +34,62 @@ def test_host_registry_routes_safe_from_side_effects():
     by_uri = {r["uri"]: r for r in routes}
     assert by_uri["a://x"]["safe"] is True
     assert by_uri["b://x"]["safe"] is False
+
+
+# ─── local_entry_point_host_routes ───────────────────────────────────────────
+
+def test_local_entry_point_host_routes_filters_local_host_entry_points(monkeypatch):
+    import urirun
+    from urirun.runtime import discovery
+
+    monkeypatch.setattr(discovery, "full_registry", lambda group: {"version": "test"})
+    monkeypatch.setattr(urirun, "list_routes", lambda registry: [
+        {
+            "uri": "kvm://host/screen/query/capture",
+            "kind": "local-function",
+            "adapter": "local-function-subprocess",
+            "source": {"type": "python-entry-point", "name": "kvm"},
+            "inputSchema": {"type": "object", "properties": {"monitor": {"type": "integer"}}},
+            "meta": {
+                "contract": {
+                    "domains": {
+                        "monitor": {"type": "enum", "domain": "env:monitors.id"},
+                    },
+                },
+            },
+        },
+        {
+            "uri": "kvm://host/cdp/page/command/navigate",
+            "kind": "local-function",
+            "adapter": "local-function-subprocess",
+            "source": {"type": "python-entry-point", "name": "kvm"},
+        },
+        {
+            "uri": "kvm://lenovo/screen/query/capture",
+            "kind": "local-function",
+            "adapter": "local-function-subprocess",
+            "source": {"type": "python-entry-point", "name": "kvm"},
+        },
+        {
+            "uri": "dashboard://host/service/chat/query/status",
+            "kind": "query",
+            "source": "built-in",
+        },
+    ])
+
+    routes = local_entry_point_host_routes()
+
+    assert [route["uri"] for route in routes] == [
+        "kvm://host/screen/query/capture",
+        "kvm://host/cdp/page/command/navigate",
+    ]
+    assert routes[0]["kind"] == "query"
+    assert routes[0]["safe"] is True
+    assert routes[0]["inputSchema"]["properties"]["monitor"]["type"] == "integer"
+    assert routes[0]["meta"]["contract"]["domains"]["monitor"]["domain"] == "env:monitors.id"
+    assert routes[1]["kind"] == "command"
+    assert routes[1]["safe"] is None
+    assert routes[0]["node"] == "host"
 
 
 # ─── _uri_target ─────────────────────────────────────────────────────────────

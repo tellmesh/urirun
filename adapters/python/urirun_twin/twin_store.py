@@ -128,8 +128,21 @@ def environment_fingerprint(profile: dict) -> str:
     they change — platform, wayland, display geometry, monitor count, best surface, os-level
     reliability. Drift in THIS is the '3200x3800 <-> 1440x900 fluctuated mid-session' class: a
     moved target the planner must re-measure, not guess against."""
+    monitors = []
+    for m in profile.get("monitors") or []:
+        if not isinstance(m, dict):
+            continue
+        monitors.append({
+            "id": m.get("id") or m.get("connector") or m.get("name") or m.get("displayName"),
+            "x": m.get("x"),
+            "y": m.get("y"),
+            "width": m.get("width") or m.get("logicalWidth"),
+            "height": m.get("height") or m.get("logicalHeight"),
+            "scale": m.get("scale"),
+            "primary": bool(m.get("primary")),
+        })
     dims = {"platform": profile.get("platform"), "wayland": profile.get("wayland"),
-            "display": profile.get("display"), "monitors": len(profile.get("monitors") or []),
+            "display": profile.get("display"), "monitors": monitors,
             "best": profile.get("best"), "osLevelReliable": profile.get("osLevelReliable")}
     return "env-" + _sig(dims)
 
@@ -148,6 +161,7 @@ class TwinMemory:
     proof_store: dict = field(default_factory=dict)    # proof_key -> {uri, verdict, ...} (positives only)
     skill_store: dict = field(default_factory=dict)    # name -> {flow, episode_id, intent_sig, env_fingerprint, ts}
     session_store: dict = field(default_factory=dict)  # session_id -> {steps: [...], ts}
+    preference_store: dict = field(default_factory=dict) # node:name -> durable user/environment defaults
 
     def remember(self, node: str, profile: dict) -> dict:
         rec = {"fingerprint": environment_fingerprint(profile), "snapshot": profile}
@@ -287,6 +301,31 @@ class TwinMemory:
         """All named skills, newest-first (by ``ts``)."""
         return sorted(self.skill_store.values(), key=lambda r: str(r.get("ts") or ""), reverse=True)
 
+    # ── preferences: durable defaults learned from explicit user choices ────────────────
+    def _preference_key(self, node: str, name: str, fingerprint: str = "") -> str:
+        return f"{node}:{fingerprint}:{name}" if fingerprint else f"{node}:{name}"
+
+    def remember_preference(self, node: str, name: str, value: dict, fingerprint: str = "") -> dict:
+        """Persist a small durable default for a node, e.g. the preferred capture monitor.
+
+        Preferences are separate from known-good environment snapshots: a monitor layout drift
+        invalidates fingerprint-keyed recall instead of silently applying a stale monitor.
+        """
+        if not node or not name:
+            return {}
+        import time  # noqa: PLC0415
+        rec = {"node": node, "name": name, "value": dict(value or {}),
+               "fingerprint": fingerprint,
+               "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+        self.preference_store[self._preference_key(node, name, fingerprint)] = rec
+        return rec
+
+    def recall_preference(self, node: str, name: str, fingerprint: str = "") -> dict | None:
+        """Return a stored preference record for ``node`` and ``name``, or None."""
+        if fingerprint:
+            return self.preference_store.get(self._preference_key(node, name, fingerprint))
+        return self.preference_store.get(self._preference_key(node, name))
+
     # ── session recorder: trace-first authoring (append steps → export/promote) ──────────
     def session_start(self, session_id: str, goal: str = "", node: str = "host",
                       experience_id: str = "") -> dict:
@@ -346,7 +385,8 @@ def durable_memory(path: str | None = None) -> TwinMemory:
       ``_episodes``      → episode_id → Episode.to_dict()        (episodic memory)
       ``_proofs``        → proof_key  → {uri, verdict, …}        (reversibility proofs, positives only)
       ``_skills``        → name      → {flow, episode_id, …}     (promoted, replayable named skills)
-      ``_sessions``      → session_id → {steps: [...]}           (trace-first session recorder)"""
+      ``_sessions``      → session_id → {steps: [...]}           (trace-first session recorder)
+      ``_preferences``   → node:name → {value, ts}               (durable defaults like monitor choice)"""
     file_store = JsonFileStore(path)
     flow_store = _NamespacedStore(file_store, "_flows")
     degraded_store = _NamespacedStore(file_store, "_degraded_flows")
@@ -354,6 +394,8 @@ def durable_memory(path: str | None = None) -> TwinMemory:
     proof_store = _NamespacedStore(file_store, "_proofs")
     skill_store = _NamespacedStore(file_store, "_skills")
     session_store = _NamespacedStore(file_store, "_sessions")
+    preference_store = _NamespacedStore(file_store, "_preferences")
     return TwinMemory(store=file_store, flow_store=flow_store, degraded_store=degraded_store,
                       episode_store=episode_store, proof_store=proof_store,
-                      skill_store=skill_store, session_store=session_store)
+                      skill_store=skill_store, session_store=session_store,
+                      preference_store=preference_store)

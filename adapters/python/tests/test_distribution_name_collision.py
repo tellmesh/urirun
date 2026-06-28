@@ -56,6 +56,43 @@ def _iter_pyprojects(root: Path):
         yield path
 
 
+def _package_dir_name(child: Path, includes: list[str], excludes: list[str]) -> str | None:
+    """Return ``child``'s import name if it is a shippable package dir, else ``None``.
+
+    Shippable = a real importable package directory (has ``__init__.py``, not a skip/egg-info
+    dir) whose name matches an ``include`` pattern and no ``exclude`` pattern."""
+    name = child.name
+    if not child.is_dir() or name in _SKIP_DIRS or name.endswith(".egg-info"):
+        return None
+    if not (child / "__init__.py").exists():
+        return None
+    if not any(fnmatch(name, pat) for pat in includes):
+        return None
+    if any(fnmatch(name, pat) for pat in excludes):
+        return None
+    return name
+
+
+def _packages_from_find(dist_dir: Path, find: dict) -> set[str]:
+    """Physical packages discovered by a ``[tool.setuptools.packages.find]`` table.
+
+    Scans each ``where`` root (default ``.``) for immediate child package dirs that pass the
+    ``include`` / ``exclude`` globs."""
+    wheres = find.get("where", ["."])
+    includes = find.get("include", ["*"])
+    excludes = find.get("exclude", [])
+    found: set[str] = set()
+    for where in wheres:
+        base = (dist_dir / where).resolve()
+        if not base.is_dir():
+            continue
+        for child in base.iterdir():
+            name = _package_dir_name(child, includes, excludes)
+            if name is not None:
+                found.add(name)
+    return found
+
+
 def _top_level_packages(pyproject: Path) -> set[str]:
     """Top-level import packages a distribution would ship, from its setuptools config.
 
@@ -83,29 +120,7 @@ def _top_level_packages(pyproject: Path) -> set[str]:
 
     # `[tool.setuptools.packages.find]` → scan `where` roots; default to find-all from ".".
     find = pkgs_node.get("find", {}) if isinstance(pkgs_node, dict) else {}
-    wheres = find.get("where", ["."])
-    includes = find.get("include", ["*"])
-    excludes = find.get("exclude", [])
-
-    found: set[str] = set()
-    for where in wheres:
-        base = (dist_dir / where).resolve()
-        if not base.is_dir():
-            continue
-        for child in base.iterdir():
-            if not child.is_dir() or child.name in _SKIP_DIRS:
-                continue
-            if child.name.endswith(".egg-info"):
-                continue
-            if not (child / "__init__.py").exists():
-                continue
-            name = child.name
-            if not any(fnmatch(name, pat) for pat in includes):
-                continue
-            if any(fnmatch(name, pat) for pat in excludes):
-                continue
-            found.add(name)
-    return found
+    return _packages_from_find(dist_dir, find)
 
 
 def test_no_import_name_shipped_by_two_distributions():

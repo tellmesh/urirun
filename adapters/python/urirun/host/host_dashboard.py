@@ -101,6 +101,7 @@ from .object_registry import (
     annotate_node_tokens as _annotate_node_tokens_impl,
     host_object as _host_object_impl,
     host_registry_routes as _host_registry_routes_impl,
+    local_entry_point_host_routes as _local_entry_point_host_routes_impl,
     service_contacts as _service_contacts_impl,
     uri_objects as _uri_objects_impl,
     mirror_node_to_nodes_file as _mirror_node_to_nodes_file,
@@ -355,17 +356,17 @@ def _service_view_from_query(project: str, query: dict[str, list[str]]) -> dict:
     return _select_service_view_impl(data, target=target, view_id=view_id, utc_now=_utc_now)
 
 
-def _service_widget_html(project: str, query: dict[str, list[str]]) -> str:
-    from urirun_widgets.render import service_widget_html as _service_widget_html_impl
-    return _service_widget_html_impl(_service_view_from_query(project, query))
+def _standalone_service_html(project: str, query: dict[str, list[str]]) -> str:
+    from urirun_widgets.render import service_widget_html
+    return service_widget_html(_service_view_from_query(project, query))
 
 
-def _service_widget_svg(project: str, query: dict[str, list[str]]) -> str:
-    from urirun_widgets.render import render_svg as _service_widget_svg_impl
+def _standalone_service_svg(project: str, query: dict[str, list[str]]) -> str:
+    from urirun_widgets.render import render_svg
     view = _service_view_from_query(project, query)
     width = max(320, min(1200, int(_first(query, "width", "720") or 720)))
     height = max(120, min(600, int(_first(query, "height", "180") or 180)))
-    return _service_widget_svg_impl(view, width=width, height=height)
+    return render_svg(view, width=width, height=height)
 
 
 def _chat_message(role: str, content: str, *, detail: dict | None = None, attachments: list[dict] | None = None) -> dict:
@@ -1194,6 +1195,7 @@ def summary(project: str, db: str | None, config: str | None, node_urls: list[st
     routes = discovered.get("routes") or []
     services = _service_contacts()
     host_routes = _host_registry_routes_impl(_uri_action_catalog())
+    host_routes.extend(_local_entry_point_host_routes_impl())
     host = _host_object_impl(project, host_routes)
     objects = _uri_objects_impl(
         project=project,
@@ -1504,10 +1506,10 @@ def _handle_get_nodes_qr(handler, parsed) -> None:
 
 def _handle_get_services(handler, parsed, project) -> bool:
     if parsed.path == "/services/view":
-        _html_response(handler, _service_widget_html(project, parse_qs(parsed.query)))
+        _html_response(handler, _standalone_service_html(project, parse_qs(parsed.query)))
         return True
     if parsed.path == "/services/view.svg":
-        _asset_response(handler, _service_widget_svg(project, parse_qs(parsed.query)).encode("utf-8"),
+        _asset_response(handler, _standalone_service_svg(project, parse_qs(parsed.query)).encode("utf-8"),
                         "image/svg+xml; charset=utf-8")
         return True
     if parsed.path == "/assets/urirun.js":

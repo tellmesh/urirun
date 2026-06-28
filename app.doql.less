@@ -8,12 +8,14 @@ app {
 workflow[name="test"] {
   trigger: manual;
   step-1: depend target=version-check;
-  step-2: depend target=test-js;
-  step-3: depend target=test-python;
-  step-4: depend target=test-c;
-  step-5: depend target=conformance;
-  step-6: depend target=test-v1;
-  step-7: depend target=test-v2;
+  step-2: depend target=slim-import;
+  step-3: depend target=render-single-source;
+  step-4: depend target=test-js;
+  step-5: depend target=test-python;
+  step-6: depend target=test-c;
+  step-7: depend target=conformance;
+  step-8: depend target=test-v1;
+  step-9: depend target=test-v2;
 }
 
 workflow[name="version-check"] {
@@ -67,6 +69,27 @@ workflow[name="complexity"] {
   step-1: run cmd=$(PYTHON) scripts/cc_gate.py;
 }
 
+workflow[name="slim-import"] {
+  trigger: manual;
+  step-1: run cmd=$(PYTHON) -c "import sys; sys.path.insert(0, 'adapters/python/tests'); import test_core_import_smoke as t; t.test_bare_import_urirun_stays_slim(); print('slim-core OK: import urirun stays slim')";
+}
+
+workflow[name="render-single-source"] {
+  trigger: manual;
+  step-1: run cmd=PYTHONPATH=adapters/python $(PYTHON) -c "import sys; sys.path.insert(0, 'adapters/python/tests'); import test_widgets as t; t.test_host_does_not_redefine_widget_render_single_source(); print('widget-render OK: host consumes urirun-widgets')";
+}
+
+workflow[name="docs-check"] {
+  trigger: manual;
+  step-1: run cmd=docval scan docs/ --project . --no-llm -o /tmp/urirun-docval.json;
+  step-2: run cmd=$(PYTHON) -c "import json,sys; n=json.load(open('/tmp/urirun-docval.json'))['summary']['chunks_invalid']; print(f'docval: {n} stale doc reference(s) (dead symbol/import/CLI)'); sys.exit(1 if n else 0)";
+}
+
+workflow[name="dup-check"] {
+  trigger: manual;
+  step-1: run cmd=redup check adapters/python --max-groups 15 --max-lines 108;
+}
+
 workflow[name="lint-connectors"] {
   trigger: manual;
   step-1: run cmd=$(PYTHON) scripts/lint_connectors.py $(if $(STRICT),--strict,);
@@ -87,7 +110,7 @@ workflow[name="restart-chat"] {
   trigger: manual;
   step-1: run cmd=test -x "$(CHAT_SERVICE)" || { echo "missing $(CHAT_SERVICE); install urirun-service-chat in the venv"; exit 1; };
   step-2: run cmd=mkdir -p "$(LOG_DIR)";
-  step-3: run cmd=nohup "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 &;
+  step-3: run cmd=setsid "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 < /dev/null &;
   step-4: run cmd=for i in $$(seq 1 20); do curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null 2>&1 && break || sleep 0.5; done;
   step-5: run cmd=curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null || { echo "chat failed to start; log:"; tail -40 "$(LOG_DIR)/chat.log"; exit 1; };
   step-6: run cmd=echo "chat: http://$(CHAT_HOST):$(CHAT_PORT)/";
@@ -98,7 +121,7 @@ workflow[name="restart-scanner"] {
   trigger: manual;
   step-1: run cmd=test -x "$(SCANNER_SERVICE)" || { echo "missing $(SCANNER_SERVICE); install urirun-service-scanner in the venv"; exit 1; };
   step-2: run cmd=mkdir -p "$(LOG_DIR)";
-  step-3: run cmd=nohup "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 &;
+  step-3: run cmd=setsid "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 < /dev/null &;
   step-4: run cmd=for i in $$(seq 1 20); do curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null 2>&1 && break || sleep 0.5; done;
   step-5: run cmd=curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null || { echo "scanner failed to start; log:"; tail -40 "$(LOG_DIR)/scanner.log"; exit 1; };
   step-6: run cmd=echo "scanner: https://$(SCANNER_HOST):$(SCANNER_PORT)/scanner";

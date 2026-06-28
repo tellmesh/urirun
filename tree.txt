@@ -110,6 +110,7 @@
 │   │   │   ├── test_contract_jsonschema.py
 │   │   │   ├── test_contract_reversible.py
 │   │   │   ├── test_contracts.py
+│   │   │   ├── test_core_import_smoke.py
 │   │   │   ├── test_daemon.py
 │   │   │   ├── test_dashboard_api_characterizing.py
 │   │   │   ├── test_diagnostics.py
@@ -124,6 +125,7 @@
 │   │   │   ├── test_episode.py
 │   │   │   ├── test_errors.py
 │   │   │   ├── test_event_schema.py
+│   │   │   ├── test_examples_router_diagnosis.py
 │   │   │   ├── test_exec.py
 │   │   │   ├── test_flow.py
 │   │   │   ├── test_flow_reversible.py
@@ -168,6 +170,7 @@
 │   │   │   ├── test_registry.py
 │   │   │   ├── test_resolver.py
 │   │   │   ├── test_reversible.py
+│   │   │   ├── test_routing_extractable.py
 │   │   │   ├── test_routing.py
 │   │   │   ├── test_runtime_extractable.py
 │   │   │   ├── test_runtime.py
@@ -197,6 +200,7 @@
 │   │   │   ├── test_v2_mcp.py
 │   │   │   ├── test_v2_service.py
 │   │   │   ├── test_version.py
+│   │   │   ├── test_widget_render_single_source.py
 │   │   │   ├── test_widgets.py
 │   │   │   ├── test_worker_pool.py
 │   │   │   └── test_worker.py
@@ -378,15 +382,6 @@
 │   │   │   ├── SOURCES.txt
 │   │   │   └── top_level.txt
 │   │   ├── urirun_flow
-│   │   │   ├── cli.py
-│   │   │   ├── diagnostics.py
-│   │   │   ├── flow_planner.py
-│   │   │   ├── flow.py
-│   │   │   ├── flow_thin.py
-│   │   │   ├── flow_verify.py
-│   │   │   ├── __init__.py
-│   │   │   ├── recovery.py
-│   │   │   └── run.py
 │   │   ├── urirun_node
 │   │   │   ├── _artifacts.py
 │   │   │   ├── client.py
@@ -540,10 +535,12 @@
 ├── requirements.txt
 ├── scripts
 │   ├── cc_gate.py
+│   ├── dev-install.sh
 │   ├── extraction_audit.py
 │   ├── lint_connectors.py
 │   ├── release-bump.sh
 │   ├── repin_connectors.py
+│   ├── sync-sibling-floors.sh
 │   ├── sync-versions.sh
 │   ├── test_pypi_install.sh
 │   └── transport_swap_proof.py
@@ -565,6 +562,7 @@
 │   ├── conftest.py
 │   ├── __init__.py
 │   ├── test_acquire_precondition.py
+│   ├── test_cc_gate.py
 │   ├── test_host_contracts.py
 │   ├── test_host_dashboard.py
 │   ├── test_host_db.py
@@ -610,4 +608,4 @@
     ├── run_driver.sh
     └── run_wires.sh
 
-76 directories, 535 files
+76 directories, 533 files

@@ -1,12 +1,12 @@
-# redup/duplication | 9 groups | 131f 13530L | 2026-06-28
+# redup/duplication | 9 groups | 132f 13882L | 2026-06-28
 
 SUMMARY:
-  files_scanned: 131
-  total_lines:   13530
+  files_scanned: 132
+  total_lines:   13882
   dup_groups:    9
   dup_fragments: 21
   saved_lines:   90
-  scan_ms:       493
+  scan_ms:       459
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=40L  groups=3  frags=6  (0.3%)
@@ -23,9 +23,9 @@ DUPLICATES[9] (ranked by impact):
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
   [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=9 N=3 saved=18 sim=1.00
-      host/host_dashboard.py:1827-1835  (_free_port_from_old_scanner)
-      host/host_dashboard.py:1838-1846  (_free_port_from_old_chat)
-      host/host_dashboard.py:1849-1857  (_free_port_from_old_android_node)
+      host/host_dashboard.py:1829-1837  (_free_port_from_old_scanner)
+      host/host_dashboard.py:1840-1848  (_free_port_from_old_chat)
+      host/host_dashboard.py:1851-1859  (_free_port_from_old_android_node)
   [19899f9cfc86ca65]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
@@ -33,15 +33,15 @@ DUPLICATES[9] (ranked by impact):
       host/dashboard_api.py:137-144  (_api_checks)
       host/dashboard_api.py:147-154  (_api_logs)
   [b6b2d4461c71c62d]   STRU  chat_message  L=7 N=2 saved=7 sim=1.00
-      host/chat_orchestrator.py:48-54  (chat_message)
-      host/host_dashboard.py:371-377  (_chat_message)
+      host/chat_orchestrator.py:56-62  (chat_message)
+      host/host_dashboard.py:372-378  (_chat_message)
   [b7534632e49155f1]   STRU  _host_db  L=3 N=3 saved=6 sim=1.00
       host/dashboard_api.py:29-31  (_host_db)
       host/dashboard_api.py:34-36  (_mesh)
       host/dashboard_api.py:39-41  (_planfile_adapter)
   [b553f56ee7ce3380]   STRU  _artifact_meta_dict  L=3 N=2 saved=3 sim=1.00
-      host/host_dashboard.py:620-622  (_artifact_meta_dict)
-      host/host_dashboard.py:1077-1079  (_uri_action_payload)
+      host/host_dashboard.py:621-623  (_artifact_meta_dict)
+      host/host_dashboard.py:1078-1080  (_uri_action_payload)
   [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
       host/node_cli.py:97-99  (_data_artifact_register)
       host/node_cli.py:106-108  (_data_check_add)

@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from urirun.host import chat_orchestrator as co
 from urirun.host.chat_orchestrator import _apply_host_default_when_no_node_in_prompt
+from urirun.node.reversible import TwinMemory
 
 
 def _deps(alias_map: dict) -> MagicMock:
@@ -69,6 +70,7 @@ class TestHostDefault(unittest.TestCase):
 
             def make_flow(self, prompt, discovered, selected_nodes=None, use_llm=True, environments=None):
                 captured["routes"] = [r["uri"] for r in discovered.get("routes") or []]
+                captured["selected_nodes"] = selected_nodes
                 return (
                     {"steps": [{"id": "now", "uri": "time://host/clock/query/now", "payload": {}}]},
                     {"provider": "test"},
@@ -102,11 +104,13 @@ class TestHostDefault(unittest.TestCase):
 
         with patch.object(co, "_chat_insert_twin_preview", lambda *a, **k: None), \
              patch.object(co, "capture_episode", lambda **k: {}), \
-             patch.object(co, "append_twin_widget", lambda *a, **k: None):
+             patch.object(co, "append_twin_widget", lambda *a, **k: None), \
+             patch.object(co, "local_entry_point_host_routes", lambda: []):
             result = co.chat_ask("proj", "db", None, payload, [], None, None, deps)
 
         self.assertEqual(result["selectedTargets"], ["host"])
         self.assertEqual(captured["routes"], ["time://host/clock/query/now"])
+        self.assertEqual(captured["selected_nodes"], ["host"])
 
     def test_chat_execute_enables_router_guard(self):
         messages = []
@@ -163,6 +167,58 @@ class TestHostDefault(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertIs(captured["router_guard"], True)
+
+    def test_capture_preference_applies_only_to_ambiguous_capture(self):
+        mem = TwinMemory()
+        fp = mem.remember("host", {"platform": "linux", "display": {"width": 1, "height": 1}})["fingerprint"]
+        mem.remember_preference("host", "screen.capture.default", {"scope": "all", "monitor": -1}, fp)
+        flow = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture", "payload": {}}]}
+
+        updated = co._apply_capture_preferences(flow, mem)
+
+        self.assertEqual(updated["steps"][0]["payload"], {"scope": "all", "monitor": -1})
+
+        explicit = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture", "payload": {"monitor": 2}}]}
+        explicit_updated = co._apply_capture_preferences(explicit, mem)
+        self.assertEqual(explicit_updated["steps"][0]["payload"], {"monitor": 2})
+
+    def test_successful_explicit_capture_remembers_preference(self):
+        mem = TwinMemory()
+        fp = mem.remember("host", {"platform": "linux", "display": {"width": 1, "height": 1}})["fingerprint"]
+        flow = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture",
+                           "payload": {"scope": "all", "monitor": -1}}]}
+
+        co._remember_capture_preferences(flow, {"ok": True}, mem)
+
+        pref = mem.recall_preference("host", "screen.capture.default", fp)
+        self.assertIsNotNone(pref)
+        self.assertEqual(pref["value"], {"scope": "all", "monitor": -1})
+
+    def test_env_enum_resolution_requests_selection_for_ambiguous_monitor(self):
+        flow = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture", "payload": {}}]}
+        routes = [{
+            "uri": "kvm://host/screen/query/capture",
+            "meta": {"contract": {"domains": {"monitor": {
+                "type": "enum",
+                "domain": "env:monitors.id",
+                "emptyValues": [0, ""],
+                "preference": "screen.capture.default",
+            }}}},
+        }]
+
+        with patch("urirun_flow.flow._build_env_inventory", return_value={
+            "node": "host",
+            "fingerprint": "env-two",
+            "domains": {"env:monitors.id": [
+                {"value": 1, "label": "HDMI-1"},
+                {"value": 2, "label": "DP-2"},
+            ]},
+        }):
+            selection = co._resolve_env_enum_flow(flow, {}, routes, TwinMemory())
+
+        self.assertFalse(selection["ok"])
+        self.assertEqual(selection["kind"], "needs-selection")
+        self.assertEqual(selection["needsSelection"]["parameter"], "monitor")
 
     def test_chat_emits_routing_plan_before_execute(self):
         messages = []
@@ -240,7 +296,7 @@ class TestHostDefault(unittest.TestCase):
         self.assertEqual(targets, ["host"])
         self.assertEqual(nodes, [])
 
-    def test_chat_ask_preserves_explicit_dashboard_node_selection(self):
+    def test_chat_ask_defaults_to_host_even_with_stale_dashboard_node_selection(self):
         payload = {
             "prompt": "opublikuj post na LinkedIn",
             "nodes": ["lenovo"],
@@ -249,10 +305,10 @@ class TestHostDefault(unittest.TestCase):
         }
         result, messages = self._chat_ask_selection(payload)
 
-        self.assertEqual(result["selectedNodes"], ["lenovo"])
-        self.assertEqual(result["selectedTargets"], ["host", "node:lenovo"])
-        self.assertEqual(messages[0]["detail"]["resolvedNodes"], ["lenovo"])
-        self.assertEqual(messages[0]["detail"]["resolvedTargets"], ["host", "node:lenovo"])
+        self.assertEqual(result["selectedNodes"], [])
+        self.assertEqual(result["selectedTargets"], ["host"])
+        self.assertEqual(messages[0]["detail"]["resolvedNodes"], [])
+        self.assertEqual(messages[0]["detail"]["resolvedTargets"], ["host"])
 
     def test_chat_ask_url_tab_autorun_defaults_to_host_when_prompt_omits_node(self):
         payload = {
@@ -283,6 +339,70 @@ class TestHostDefault(unittest.TestCase):
         self.assertEqual(result["selectedTargets"], ["node:lenovo"])
         self.assertEqual(messages[0]["detail"]["resolvedNodes"], ["lenovo"])
         self.assertEqual(messages[0]["detail"]["resolvedTargets"], ["node:lenovo"])
+
+    def test_chat_ask_host_default_infers_node_from_prompt(self):
+        payload = {
+            "prompt": "otworz przegladarke i zrob zrzut ekranu na node lenovo laptop",
+            "targets": ["host"],
+            "execute": True,
+        }
+        result, messages = self._chat_ask_selection(payload)
+
+        self.assertEqual(result["selectedNodes"], ["lenovo"])
+        self.assertEqual(result["selectedTargets"], ["node:lenovo"])
+        self.assertEqual(messages[0]["detail"]["requestedTargets"], ["host"])
+        self.assertEqual(messages[0]["detail"]["resolvedNodes"], ["lenovo"])
+        self.assertEqual(messages[0]["detail"]["resolvedTargets"], ["node:lenovo"])
+
+    def test_chat_ask_named_offline_node_emits_human_task_with_beep(self):
+        messages = []
+
+        class FakeMesh:
+            def discover_mesh(self, _config):
+                return {
+                    "nodes": [{"name": "lenovo", "url": "http://lenovo:8765", "reachable": False}],
+                    "routes": [{"uri": "human://host/task/create", "node": "host", "nodeUrl": "http://host:8765"}],
+                    "serviceMap": {},
+                }
+
+        deps = co.ChatDeps(
+            host_db_fn=MagicMock(),
+            mesh_fn=FakeMesh,
+            host_config_fn=MagicMock(return_value={}),
+            node_alias_map_fn=MagicMock(return_value=ALIAS),
+            add_chat_message_fn=lambda db, msg: messages.append(msg),
+            page_action_enqueue_fn=MagicMock(),
+            ensure_phone_scanner_fn=MagicMock(),
+            sync_documents_fn=MagicMock(),
+        )
+        payload = {
+            "prompt": "otworz przegladarke i zrob zrzut ekranu na node lenovo laptop",
+            "targets": ["host"],
+            "execute": True,
+            "no_llm": True,
+        }
+        human_env = {
+            "ok": True,
+            "result": {
+                "value": {
+                    "task": {"id": "task-1"},
+                    "surface": {"queueUrl": "/tasks", "url": "/tasks"},
+                    "next": {},
+                }
+            },
+        }
+
+        with patch.object(co, "_chat_insert_twin_preview", lambda *a, **k: None), \
+             patch("urirun.host.node_dispatch.run_node_uri", return_value=human_env):
+            result = co.chat_ask("proj", "db", None, payload, [], None, None, deps)
+
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["humanEscalation"])
+        self.assertEqual(result["selectedTargets"], ["node:lenovo"])
+        system = [m for m in messages if m.get("role") == "system"][-1]
+        self.assertEqual(system["detail"]["kind"], "human-task")
+        self.assertEqual(system["detail"]["notify"]["sound"], "beep")
+        self.assertEqual(system["detail"]["humanTask"]["targetNode"], "lenovo")
 
     def test_node_name_in_prompt_keeps_remote(self):
         nodes, targets = self._call(

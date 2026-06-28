@@ -5,17 +5,17 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 205, json: 15, shell: 15, yaml: 5, javascript: 5
+- **Languages**: python: 207, json: 15, shell: 15, yaml: 5, javascript: 5
 - **Analysis Mode**: static
-- **Total Functions**: 2347
+- **Total Functions**: 2388
 - **Total Classes**: 59
-- **Modules**: 276
-- **Entry Points**: 1013
+- **Modules**: 278
+- **Entry Points**: 1026
 
 ## Architecture by Module
 
 ### adapters.python.urirun.host.dashboard
-- **Functions**: 556
+- **Functions**: 580
 - **File**: `dashboard.js`
 
 ### adapters.python.urirun.host.scanner
@@ -31,14 +31,14 @@
 - **Functions**: 102
 - **File**: `host_dashboard.py`
 
+### adapters.python.urirun.host.chat_orchestrator
+- **Functions**: 71
+- **Classes**: 1
+- **File**: `chat_orchestrator.py`
+
 ### v1.js.urirun-v1
 - **Functions**: 68
 - **File**: `urirun-v1.js`
-
-### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 60
-- **Classes**: 1
-- **File**: `chat_orchestrator.py`
 
 ### adapters.python.urirun.host.node_cli
 - **Functions**: 57
@@ -55,17 +55,17 @@
 - **File**: `__init__.py`
 
 ### adapters.python.urirun.host.object_registry
-- **Functions**: 46
+- **Functions**: 50
 - **File**: `object_registry.py`
+
+### adapters.python.urirun_twin.twin_store
+- **Functions**: 45
+- **Classes**: 3
+- **File**: `twin_store.py`
 
 ### adapters.python.urirun_runtime._registry
 - **Functions**: 43
 - **File**: `_registry.py`
-
-### adapters.python.urirun_twin.twin_store
-- **Functions**: 42
-- **Classes**: 3
-- **File**: `twin_store.py`
 
 ### adapters.python.urirun_node.client
 - **Functions**: 35
@@ -186,9 +186,6 @@ refresh. The token bundle lives in the keyring under ``oauth:<provider>``
 Reconnects automatically, replaying missed events via Last-Event-ID.
 - **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, getattr, getattr, bool, bool, sys.stderr.write, sys.stderr.flush
 
-### adapters.python.urirun.host.chat_orchestrator.chat_ask
-- **Calls**: None.strip, adapters.python.urirun.host.chat_orchestrator._parse_chat_nodes_targets, adapters.python.urirun.host.chat_orchestrator._target_selection_explicit, adapters.python.urirun.host.chat_orchestrator._init_selected_targets, adapters.python.urirun.host.chat_orchestrator._infer_node_targets, adapters.python.urirun.host.routing.selected_nodes_from_targets, bool, bool
-
 ### adapters.python.urirun.host.node_health.node_doctor
 > Run all health probes for a urirun node; return a structured per-class report.
 
@@ -197,6 +194,9 @@ Result shape::
     {
       ok: bool,            # True only when ever
 - **Calls**: adapters.python.urirun.host.node_health._probe_reachable, checks.append, adapters.python.urirun.host.node_health._probe_auth, checks.append, adapters.python.urirun.host.node_health._probe_version, checks.append, adapters.python.urirun.host.node_health._probe_schemes, checks.append
+
+### adapters.python.urirun.host.chat_orchestrator.chat_ask
+- **Calls**: None.strip, adapters.python.urirun.host.chat_orchestrator._parse_chat_nodes_targets, adapters.python.urirun.host.chat_orchestrator._target_selection_explicit, adapters.python.urirun.host.chat_orchestrator._init_selected_targets, adapters.python.urirun.host.chat_orchestrator._infer_node_targets, adapters.python.urirun.host.screen_capability.selected_nodes_from_targets, bool, bool
 
 ### adapters.python.urirun_node.server.NodeHandler._handle_enroll
 - **Calls**: adapters.python.urirun_node.server.read_raw, keyauth.verify_request, keyauth.token_matches, scripts.test_pypi_install.print, adapters.python.urirun_node.server.send_json, adapters.python.urirun_node.server.send_json, keyauth.available, adapters.python.urirun_node.server.send_json
@@ -312,7 +312,7 @@ so this is a normal
 ### adapters.python.urirun_twin.twin_store.TwinMemory
 > Remembers the KNOWN-GOOD environment fingerprint per node (snapshot-on-success), so a later
 run dete
-- **Methods**: 21
+- **Methods**: 24
 - **Key Methods**: adapters.python.urirun_twin.twin_store.TwinMemory.remember, adapters.python.urirun_twin.twin_store.TwinMemory.known_good, adapters.python.urirun_twin.twin_store.TwinMemory.drift, adapters.python.urirun_twin.twin_store.TwinMemory.remember_flow, adapters.python.urirun_twin.twin_store.TwinMemory.recall_flow, adapters.python.urirun_twin.twin_store.TwinMemory.known_good_flows, adapters.python.urirun_twin.twin_store.TwinMemory.degraded_flows, adapters.python.urirun_twin.twin_store.TwinMemory.remember_episode, adapters.python.urirun_twin.twin_store.TwinMemory.known_good_episodes, adapters.python.urirun_twin.twin_store.TwinMemory.recall_episode
 
 ### adapters.python.urirun.Connector
@@ -583,7 +583,7 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime._registry.main` - 56 calls
 - `adapters.python.urirun_runtime.v1.main` - 44 calls
 - `adapters.python.urirun_runtime.daemon.serve` - 40 calls
-- `adapters.python.urirun.host.host_dashboard.summary` - 38 calls
+- `adapters.python.urirun.host.host_dashboard.summary` - 40 calls
 - `scripts.extraction_audit.print_report` - 36 calls
 - `adapters.python.urirun_runtime._runtime.main` - 33 calls
 - `adapters.python.urirun_runtime.v2_adopt.main` - 31 calls
@@ -605,12 +605,13 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
-- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 24 calls
 - `adapters.python.urirun_runtime.v1.run` - 23 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
 - `adapters.python.urirun.host.node_health.node_doctor` - 23 calls
+- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 23 calls
 - `adapters.python.urirun.node.doctor.format_doctor_report` - 22 calls
+- `adapters.python.urirun_twin.twin_store.environment_fingerprint` - 22 calls
 - `adapters.python.urirun_connectors_toolkit.resolver.index_local` - 22 calls
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
 - `adapters.python.urirun_runtime._runtime.run` - 22 calls
@@ -618,7 +619,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
-- `examples.matrix.verify.main` - 20 calls
 
 ## System Interactions
 

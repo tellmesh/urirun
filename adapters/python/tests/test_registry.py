@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+import urirun
 from urirun.runtime._registry import (
     default_adapter,
     hash_uri,
@@ -115,3 +116,29 @@ def test_normalize_route_entry_config_dict():
 def test_normalize_route_entry_none_safe():
     entry = normalize_route_entry(None)
     assert entry["kind"] == "function"
+
+
+def test_list_routes_preserves_meta_contract_domains():
+    registry = urirun.compile_registry({
+        "version": "urirun.bindings.v2",
+        "bindings": {
+            "kvm://host/screen/query/capture": {
+                "kind": "query",
+                "adapter": "local-function",
+                "inputSchema": {"type": "object", "properties": {"monitor": {"type": "integer"}}},
+                "meta": {
+                    "contract": {
+                        "effect": "query",
+                        "domains": {
+                            "monitor": {"type": "enum", "domain": "env:monitors.id"},
+                        },
+                    },
+                },
+            },
+        },
+    })
+
+    routes = urirun.list_routes(registry)
+
+    assert routes[0]["inputSchema"]["properties"]["monitor"]["type"] == "integer"
+    assert routes[0]["meta"]["contract"]["domains"]["monitor"]["domain"] == "env:monitors.id"

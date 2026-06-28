@@ -1,6 +1,13 @@
-    const VALID_VIEWS = new Set(['overview', 'chat', 'discovery', 'artifacts', 'widgets', 'twin', 'tasks', 'host', 'nodes', 'activity']);
+    const VALID_VIEWS = new Set(['overview', 'chat', 'discovery', 'artifacts', 'tasks', 'host', 'nodes', 'activity']);
     const params = new URLSearchParams(window.location.search);
-    const initialView = VALID_VIEWS.has(params.get('view')) ? params.get('view') : (VALID_VIEWS.has(params.get('tab')) ? params.get('tab') : 'overview');
+    function normalizeViewName(view) {
+      if (view === 'twin') return 'chat';
+      return VALID_VIEWS.has(view) ? view : 'overview';
+    }
+    function normalizeActionName(action) {
+      return action === 'tab:twin' ? 'tab:chat' : action;
+    }
+    const initialView = normalizeViewName(params.get('view') || params.get('tab') || 'overview');
     const initialChatFull = params.get('chat') === 'full' || params.get('fullscreen') === 'chat';
     const initialTargets = (urlTargetsAreImplicitAutorun(params) ? 'host' : (params.get('targets') || 'host'))
       .split(',').map((item) => item.trim()).filter(Boolean);
@@ -21,6 +28,9 @@
       visibleChatMessages: [],
       visibleChatMessageIds: [],
       selectedChatMessageIds: new Set(),
+      humanTaskBeepedIds: new Set(),
+      chatHistoryLoaded: false,
+      humanTaskAudioContext: null,
       chatFullscreen: initialChatFull,
       discoveryTarget: initialDiscoveryTarget,
       selectedTargets: initialTargets.length ? initialTargets : ['host']
@@ -103,8 +113,16 @@
       });
     }
 
+    // Write-only breadcrumbs: described the *last* action for operator/telemetry
+    // visibility but were never read back on load, so they piled up in the URL
+    // across actions (e.g. a stale deleted=14&copied=1). Purge them each write so
+    // the URL only ever carries the current action's breadcrumb plus canonical
+    // state. Keys that ARE consumed on load (action, kind, nodes) are excluded.
+    const TRANSIENT_PARAMS = ['item', 'mode', 'node', 'uri', 'target', 'deleted', 'copied', 'pruned'];
+
     function writeUrlState(changes = {}, options = {}) {
       const search = new URLSearchParams(window.location.search);
+      TRANSIENT_PARAMS.forEach((key) => search.delete(key));
       const controls = currentControlState();
       setParam(search, 'view', state.view);
       setParam(search, 'tab', state.view);
@@ -116,7 +134,6 @@
       setParam(search, 'targets', controls.targets || 'host');
       setParam(search, 'discovery', controls.discovery);
       setParam(search, 'prompt', controls.prompt);
-      setParam(search, 'prompt_len', controls.prompt ? controls.prompt.length : '');
       Object.entries(changes).forEach(([key, value]) => setParam(search, key, value));
       const query = search.toString();
       const nextUrl = `${window.location.pathname}${query ? '?' + query : ''}${window.location.hash}`;
@@ -1891,29 +1908,6 @@
       $('chatStreamList').innerHTML = render
         ? visible.map(render).join('')
         : empty('Widget renderer bundle is loading');
-      if (state.dashboardWidgets && typeof state.dashboardWidgets.renderDashboardWidget === 'function') {
-        const services = state.summary && Array.isArray(state.summary.services) ? state.summary.services : [];
-        const views = state.serviceViews || [];
-        const used = new Set();
-        const cards = services.map((service) => {
-          const view = views.find((item) => item.target === service.id || item.serviceId === service.id || item.serviceId === service.name || item.target === service.name);
-          if (view) used.add(view.id || view.target || view.serviceId);
-          return state.dashboardWidgets.renderDashboardWidget('widget-card', { service, view });
-        });
-        views.forEach((view) => {
-          const key = view.id || view.target || view.serviceId;
-          if (used.has(key)) return;
-          cards.push(state.dashboardWidgets.renderDashboardWidget('widget-card', {
-            service: { id: view.target || view.serviceId, label: view.title || view.serviceId || view.target, status: view.status || view.kind || 'live' },
-            view,
-          }));
-        });
-        $('widgetCount').textContent = `${cards.length} widget(s)`;
-        $('widgetGrid').innerHTML = cards.join('') || empty('No services or widgets available');
-      } else {
-        $('widgetCount').textContent = '0 widget(s)';
-        $('widgetGrid').innerHTML = empty('Widget renderer bundle is loading');
-      }
     }
 
     // Load the chat-stream widgets from the widget:// connector over a URI request, so the page
@@ -1992,6 +1986,83 @@
       return c;
     }
 
+    function isHumanTaskMessage(message) {
+      const detail = message.detail || {};
+      const escalation = detail.escalation || {};
+      return detail.kind === 'human-task'
+        || detail.humanEscalation === true
+        || !!detail.humanTask
+        || (detail.notify && detail.notify.sound === 'beep')
+        || (escalation.notify && escalation.notify.sound === 'beep');
+    }
+
+    function humanTaskKey(message) {
+      const detail = message.detail || {};
+      const task = detail.humanTask || (detail.escalation && detail.escalation.humanTask) || {};
+      const error = detail.error || {};
+      return String(message.id || task.id || error.humanTaskId || `${message.created_at || ''}:${message.content || ''}`);
+    }
+
+    function startHumanTaskBeep(ctx) {
+      const now = ctx.currentTime;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.18, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      gain.connect(ctx.destination);
+      [0, 0.28].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now + offset);
+        osc.connect(gain);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.18);
+      });
+    }
+
+    function playHumanTaskBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = state.humanTaskAudioContext || new AudioCtx();
+        state.humanTaskAudioContext = ctx;
+        const run = () => startHumanTaskBeep(ctx);
+        if (ctx.state === 'suspended') {
+          ctx.resume().then(run).catch(() => {});
+        } else {
+          run();
+        }
+      } catch (error) {
+        // Notification sound is best-effort; the visible human-task banner is authoritative.
+      }
+    }
+
+    function notifyHumanTaskMessages(messages) {
+      (messages || []).forEach((message) => {
+        if (!isHumanTaskMessage(message)) return;
+        const key = humanTaskKey(message);
+        if (!key || state.humanTaskBeepedIds.has(key)) return;
+        state.humanTaskBeepedIds.add(key);
+        playHumanTaskBeep();
+      });
+    }
+
+    function humanTaskBanner(detail) {
+      const escalation = detail.escalation || {};
+      const task = detail.humanTask || escalation.humanTask || {};
+      const next = detail.next || escalation.next || {};
+      const notify = detail.notify || escalation.notify || {};
+      const active = detail.kind === 'human-task' || detail.humanEscalation === true || task.id || notify.sound === 'beep';
+      if (!active) return '';
+      const title = task.title || detail.humanAction || next.instruction || 'Human action required';
+      const url = task.surfaceUrl || detail.dashboardUrl || next.dashboardUrl || '';
+      return `<div class="human-task-alert" style="border:1px solid var(--warn,#f59e0b);background:rgba(245,158,11,.10);border-radius:4px;padding:8px 10px;margin:6px 0">
+        <strong>Human task</strong>
+        <span>${esc(title)}</span>
+        ${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">Open</a>` : ''}
+      </div>`;
+    }
+
     // Per-message action controls (select checkbox + repeat/copy/delete buttons). Returns the
     // raw HTML fragments; absent for messages without an id (transient/system rows).
     function chatMessageControls(message, role) {
@@ -2028,6 +2099,7 @@
             ${ctl.remove}
           </span>
         </div>
+        ${humanTaskBanner(detail)}
         <div>${linkify(reconcileChatContent(message, timeline))}</div>
         ${lines ? `<pre>${esc(lines)}</pre>` : ''}
         ${attachments.length ? `<div class="attachments">${attachments.map(renderAttachment).join('')}</div>` : ''}
@@ -2307,12 +2379,14 @@
       const renderKey = chatRenderSignature(visible);
       if (!options.force && renderKey === state.chatRenderKey) {
         updateChatSelectionControls();
+        if (options.notify) notifyHumanTaskMessages(visible);
         return;
       }
       state.chatRenderKey = renderKey;
       resultEl.innerHTML = visible.map(renderChatMessage).join('') || empty('No chat messages yet');
       if (stickToBottom) resultEl.scrollTop = resultEl.scrollHeight;
       updateChatSelectionControls();
+      if (options.notify) notifyHumanTaskMessages(visible);
     }
 
     let _loadChatHistoryInflight = false;
@@ -2321,8 +2395,10 @@
       _loadChatHistoryInflight = true;
       try {
         const history = await api('/api/chat/history?limit=80');
+        const notify = state.chatHistoryLoaded;
         state.chatMessages = history.messages || [];
-        renderChatHistory();
+        renderChatHistory({ notify });
+        state.chatHistoryLoaded = true;
       } finally {
         _loadChatHistoryInflight = false;
       }
@@ -2407,9 +2483,9 @@
 	      }
 	    }
 
-	    function applyView(view) {
-	      if (!VALID_VIEWS.has(view)) view = 'overview';
-	      state.view = view;
+    function applyView(view) {
+      view = normalizeViewName(view);
+      state.view = view;
       document.body.dataset.view = view;
       document.querySelectorAll('.view-block').forEach((block) => {
         block.classList.toggle('hidden', view !== 'overview' && block.dataset.section !== view);
@@ -2469,7 +2545,7 @@
       const nodes = selectedNodeNames();
       const execute = $('chatExecute').checked;
       state.view = 'chat';
-      writeUrlState({ action: 'chat:run', prompt, prompt_len: prompt.length, nodes: nodes.join(','), targets: state.selectedTargets.join(',') });
+      writeUrlState({ action: 'chat:run', prompt, nodes: nodes.join(','), targets: state.selectedTargets.join(',') });
       $('chatMode').textContent = execute ? 'execute' : 'dry-run';
       $('chatStatus').textContent = 'running...';
       $('chatAskBtn').disabled = true;
@@ -2568,7 +2644,7 @@
       const { prompt, nodes, targets, execute } = req;
       if ($('chatPrompt')) $('chatPrompt').value = prompt;
       state.view = 'chat';
-      writeUrlState({ action: 'chat:repeat', prompt, prompt_len: prompt.length, nodes: (nodes || []).join(','), targets: (targets || []).join(',') });
+      writeUrlState({ action: 'chat:repeat', prompt, nodes: (nodes || []).join(','), targets: (targets || []).join(',') });
       $('chatStatus').textContent = 'repeating...';
       try {
         const result = await api('/api/chat/ask', {
@@ -2671,7 +2747,7 @@
       clearTimeout(chatPromptUrlTimer);
       chatPromptUrlTimer = setTimeout(() => {
         const prompt = $('chatPrompt').value.trim();
-        writeUrlState({ prompt, prompt_len: prompt ? prompt.length : '' }, { replace: true });
+        writeUrlState({ prompt }, { replace: true });
       }, 250);
     });
     $('refreshBtn').addEventListener('click', () => {
@@ -2713,10 +2789,6 @@
     });
     $('artifactCopyJsonBtn').addEventListener('click', () => {
       copyArtifactsJson().catch((error) => alert(error.message));
-    });
-    $('widgetRefreshBtn').addEventListener('click', () => {
-      writeUrlState({ action: 'widgets:refresh' }, { replace: true });
-      loadServiceViews().catch((error) => alert(error.message));
     });
     $('chatFullscreenBtn').addEventListener('click', () => setChatFullscreen(!state.chatFullscreen));
     $('chatTwinBtn').addEventListener('click', () => {
@@ -2775,7 +2847,7 @@
     });
     window.addEventListener('popstate', () => {
       const search = new URLSearchParams(window.location.search);
-      const nextView = VALID_VIEWS.has(search.get('view')) ? search.get('view') : (VALID_VIEWS.has(search.get('tab')) ? search.get('tab') : 'overview');
+      const nextView = normalizeViewName(search.get('view') || search.get('tab') || 'overview');
       state.view = nextView;
       applyControlsFromUrl();
       setChatFullscreen(search.get('chat') === 'full' || search.get('fullscreen') === 'chat', { silent: true });
@@ -2790,7 +2862,7 @@
     if (initialKind && document.querySelector('.node-kind-tab[data-kind="' + initialKind + '"]')) {
       selectNodeKind(initialKind);
     }
-    writeUrlState({ action: params.get('action') || 'load' }, { replace: true });
+    writeUrlState({ action: normalizeActionName(params.get('action') || 'load') }, { replace: true });
     renderChatHistory();
     setInterval(() => loadChatHistory().catch(() => {}), 4000);
     setInterval(() => loadServiceViews().catch(() => {}), 2000);

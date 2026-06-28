@@ -1,7 +1,7 @@
 # Architektura systemu urirun
 
 <!-- docs-nav -->
-📖 **Dokumentacja urirun:** [← README](../README.md) · **Architektura** · [Komponenty](COMPONENTS.md) · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
+📖 **Dokumentacja urirun:** [← README](../README.md) · **Architektura** · [Autonomia](AUTONOMY_ARCHITECTURE.md) · [Komponenty](COMPONENTS.md) · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
 
 Status: 2026-06-28.
@@ -276,11 +276,18 @@ Router ma URI surface:
 
 ```text
 router://host/plan/query/diagnose
+router://host/plan/query/accept
 ```
 
 W dashboardzie wynik routera powinien być widoczny przed dispatch. Celem jest,
 żeby autonomia wiedziała gdzie wykonać każdą akcję jeszcze przed pierwszym
 side-effectem.
+
+`diagnose` odpowiada na pytanie „co wiadomo o trasie?". `accept` odpowiada na
+pytanie „czy wolno ten kandydat planu puścić dalej?". To jest uniwersalna brama
+akceptacji planu: LLM, recall albo heurystyka mogą proponować różne flow, ale
+każdy kandydat przechodzi przez ten sam deterministyczny predykat router +
+contracts + policy.
 
 ## Flow i recovery
 
@@ -308,9 +315,9 @@ Screen-intent ma dodatkową normalizację środowiskową. Prompt typu
 `zrob zrzut ekranu wszystkich monitorow`/`all monitors` ustawia payload
 `{"scope": "all", "monitor": -1}` na `kvm://.../screen/query/capture`.
 Prompt `monitor 2` ustawia `{"monitor": 2}`. Jeżeli prompt nie wybiera monitora,
-flow może użyć preferencji Digital Twin `screen.capture.default`, zapamiętanej
-po wcześniejszym jawnym wyborze użytkownika. Dzięki temu system nie musi zgadywać
-monitora za każdym razem, ale jawny prompt zawsze wygrywa nad pamięcią.
+flow może użyć preferencji Digital Twin `screen.capture.default`, ale tylko dla
+tego samego `environment_fingerprint`. Dzięki temu odpięcie docka albo zmiana
+układu ekranów nie stosuje po cichu starego monitora.
 
 ## Widgets
 
@@ -353,6 +360,7 @@ widgetu, ale nie powinny mnożyć rekordów dla tego samego dokumentu.
 `urirun-connector-twin` dostarcza warstwę planowania środowiska:
 
 - drift środowiska (`known-good` vs current),
+- inventory środowiska (`twin://<target>/env/query/inventory`),
 - mock/sandbox/proof,
 - recall epizodów,
 - browser/monitor diagnostics,
@@ -363,14 +371,27 @@ jest wykonywalna, a twin preflight mówi, że dana warstwa jest unreachable, to 
 być typed diagnostic, nie dwa sprzeczne zielone/czerwone raporty.
 
 Środowisko desktopowe jest częścią Twin, a nie efektem ubocznym kliknięcia.
-Przed planowaniem dla hosta/node system powinien mieć:
+`drift` i `inventory` są rozdzielone: drift odpowiada, czy znany dobry profil
+się zmienił, a inventory zwraca aktualne stopnie swobody przed dispatch. Thin
+driver wstawia inventory obok driftu dla flow z trasami KVM.
+
+Inventory zwraca między innymi:
 
 - `kvm://<target>/display/query/info`: liczba monitorów, connector, pozycja,
   skala, rozmiar fizyczny i logiczny;
 - `kvm://<target>/env/query/profile`: Wayland/X11, controllability,
   recommended surfaces i ograniczenia;
 - `kvm://<target>/surface/query/current`: foreground app/page, gdy dostępne;
-- durable preferences, np. `screen.capture.default`.
+- domeny runtime, np. `env:monitors.id`, `env:cdp_endpoints.id`,
+  `env:audio_sinks.id`, `env:cameras.id`;
+- durable preferences fingerprint-keyed, np. `screen.capture.default`.
+
+Parametry zależne od środowiska są deklarowane w kontrakcie trasy jako
+`env-enum`. Dla `kvm://.../screen/query/capture` kontrakt mówi, że `monitor`
+pochodzi z domeny `env:monitors.id`. Brama `urirun_flow.env_selection` czyta
+`meta.contract.domains`, inventory i pamięć twina; zwraca zmieniony payload albo
+typed `needs-selection`. Chat/dashboard mają renderować ten typ, nie duplikować
+warunku `if monitors > 1`.
 
 Dla GNOME/Wayland multi-monitor `scope=all` używa Mutter ScreenCast
 `RecordArea` po bounding-boxie logicznych monitorów, a nie `RecordVirtual`
@@ -378,14 +399,14 @@ Dla GNOME/Wayland multi-monitor `scope=all` używa Mutter ScreenCast
 niesie `scope=all-monitors`, `monitors`, `bbox`, `width` i `height`, więc UI i
 kolejne kroki widzą, co dokładnie zostało uchwycone.
 
-Docelowa reguła decyzyjna:
+Reguła decyzyjna:
 
 1. jeżeli prompt wybiera monitor/zakres, użyj promptu;
-2. jeżeli prompt jest niejednoznaczny i istnieje zgodna preferencja Twin, użyj
-   preferencji;
-3. jeżeli prompt jest niejednoznaczny, monitorów jest więcej niż jeden i brak
-   preferencji, pokaż human task/clarification zamiast wykonywać ukryty wybór;
-4. jeżeli jest jeden monitor, użyj defaultu bez pytania.
+2. jeżeli domena ma jedną opcję, użyj jej bez pytania;
+3. jeżeli jest wiele opcji i istnieje zgodna preferencja dla aktualnego
+   fingerprintu, użyj jej;
+4. jeżeli jest wiele opcji i brak zgodnej preferencji, emituj typed
+   `needs-selection` z listą opcji.
 
 ## Registry, MCP i A2A
 
@@ -477,6 +498,7 @@ Makefile poszczególnych paczek.
 ## Gdzie szukać szczegółów
 
 - [Komponenty](COMPONENTS.md): pojęcia operatora i granice host/node/service.
+- [Autonomia](AUTONOMY_ARCHITECTURE.md): LLM proponuje plan, kernel go akceptuje lub blokuje.
 - [URI Objects](URI_OBJECTS.md): kontrakt objectów, artifactów i widgetów.
 - [Dashboard & chat](HOST_DASHBOARD_CHAT.md): UI operatora, chat, recovery.
 - [Host↔Node](HOST_NODE_COMMUNICATION.md): API i transport host-node.

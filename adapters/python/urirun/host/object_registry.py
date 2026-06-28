@@ -97,6 +97,73 @@ def dedupe_routes(routes: list[dict]) -> list[dict]:
     return out
 
 
+def _route_kind_from_uri(uri: str) -> str:
+    if "/query/" in uri:
+        return "query"
+    if "/command/" in uri:
+        return "command"
+    return ""
+
+
+def _entry_point_source_label(source: Any) -> str:
+    if isinstance(source, dict) and source.get("name"):
+        return f"python entry point: {source['name']}"
+    return "python entry point"
+
+
+def _entry_point_safe(route: dict, kind: str) -> bool | None:
+    """Declared `safe` flag if explicit, else infer: queries are read-only/safe, commands unknown."""
+    declared_safe = route.get("safe")
+    if isinstance(declared_safe, bool):
+        return declared_safe
+    return True if kind == "query" else None
+
+
+def _host_entry_point_route(route: dict) -> dict | None:
+    """Project a discovered route to a host entry-point catalogue entry, or None if it isn't one
+    (not host-targeted, or not a python-entry-point source)."""
+    uri = str(route.get("uri") or "")
+    source = route.get("source") or {}
+    if _uri_target(uri) != "host":
+        return None
+    if not (isinstance(source, dict) and source.get("type") == "python-entry-point"):
+        return None
+    kind = _route_kind_from_uri(uri) or str(route.get("kind") or "")
+    safe = _entry_point_safe(route, kind)
+    meta = route.get("meta") if isinstance(route.get("meta"), dict) else {}
+    return {
+        "uri": uri,
+        "kind": kind,
+        "title": route.get("title") or route.get("label") or uri,
+        "source": _entry_point_source_label(source),
+        "adapter": route.get("adapter") or route.get("kind") or "python-entry-point",
+        "inputSchema": route.get("inputSchema") or {"type": "object"},
+        "meta": meta,
+        "safe": safe,
+        "layer": "connector",
+        "node": "host",
+        "target": "host",
+    }
+
+
+def local_entry_point_host_routes(group: str = "urirun.bindings") -> list[dict]:
+    """Return installed local connector routes that target the host process.
+
+    This is a read-only capability catalogue. It does not deploy anything to the
+    mesh and it does not execute handlers; execution still goes through the
+    local-first dispatch path.
+    """
+    try:
+        import urirun
+        from urirun.runtime import discovery
+
+        routes = urirun.list_routes(discovery.full_registry(group))
+    except Exception:  # noqa: BLE001 - broken optional connector must not break dashboard summary
+        return []
+    out = [entry for entry in (_host_entry_point_route(route) for route in routes) if entry is not None]
+    return dedupe_routes(out)
+
+
 def _node_owner_dict(node: dict, name: str, typed_node: dict) -> dict:
     return {
         "id": f"node:{name}",

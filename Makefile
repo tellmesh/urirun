@@ -14,6 +14,7 @@ NODE_URLS ?=
 FORCE_REPLACE ?=
 NODE_URL_ARGS = $(foreach url,$(NODE_URLS),--node-url $(url))
 FORCE_REPLACE_ARG = $(if $(FORCE_REPLACE),--force-replace,)
+DEV_PYTHONPATH := $(CURDIR)/adapters/python:$(CURDIR)/../urirun-flow:$(CURDIR)/../urirun-connector-kvm:$(CURDIR)/../urirun-connector-router:$(CURDIR)/../urirun-connector-twin:$(CURDIR)/../urirun-widgets:$(CURDIR)/../urirun-contract
 
 .DEFAULT_GOAL := help
 
@@ -22,7 +23,7 @@ help: ## Show available commands.
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "%-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: test
-test: version-check slim-import test-js test-python test-c conformance test-v1 test-v2 ## Run all runtime checks.
+test: version-check slim-import render-single-source test-js test-python test-c conformance test-v1 test-v2 ## Run all runtime checks.
 
 .PHONY: version-check
 version-check: ## Verify root, Python and npm (urirun) package versions match. (urirun-js / adapters/js versions independently.)
@@ -69,6 +70,10 @@ complexity: ## Fail if any Python function exceeds the cyclomatic-complexity lim
 slim-import: ## Slim-core ratchet: `import urirun` must NOT load host/node/flow/widgets/scanner (runtime kernel is allowed).
 	$(PYTHON) -c "import sys; sys.path.insert(0, 'adapters/python/tests'); import test_core_import_smoke as t; t.test_bare_import_urirun_stays_slim(); print('slim-core OK: import urirun stays slim')"
 
+.PHONY: render-single-source
+render-single-source: ## Widget render ratchet: host consumes urirun-widgets; it must not define service/widget renderers.
+	PYTHONPATH=adapters/python $(PYTHON) -c "import sys; sys.path.insert(0, 'adapters/python/tests'); import test_widgets as t; t.test_host_does_not_redefine_widget_render_single_source(); print('widget-render OK: host consumes urirun-widgets')"
+
 .PHONY: docs-check
 docs-check: ## Docs↔source gate (semcod/docval): FAIL if any doc references a dead symbol/import/CLI (chunks_invalid>0); empty/TODO sections are advisory. Needs: pip install docval
 	docval scan docs/ --project . --no-llm -o /tmp/urirun-docval.json
@@ -92,7 +97,7 @@ restart-services: restart-chat restart-scanner ## Restart chat dashboard and pho
 restart-chat: heal ## Restart urirun-service-chat on CHAT_PORT (default 8194).
 	@test -x "$(CHAT_SERVICE)" || { echo "missing $(CHAT_SERVICE); install urirun-service-chat in the venv"; exit 1; }
 	@mkdir -p "$(LOG_DIR)"
-	@nohup "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 &
+	@PYTHONPATH="$(DEV_PYTHONPATH):$${PYTHONPATH:-}" setsid "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 < /dev/null &
 	@for i in $$(seq 1 20); do curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null 2>&1 && break || sleep 0.5; done
 	@curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null || { echo "chat failed to start; log:"; tail -40 "$(LOG_DIR)/chat.log"; exit 1; }
 	@echo "chat: http://$(CHAT_HOST):$(CHAT_PORT)/"
@@ -102,7 +107,7 @@ restart-chat: heal ## Restart urirun-service-chat on CHAT_PORT (default 8194).
 restart-scanner: heal ## Restart urirun-service-scanner on SCANNER_PORT (default 8196).
 	@test -x "$(SCANNER_SERVICE)" || { echo "missing $(SCANNER_SERVICE); install urirun-service-scanner in the venv"; exit 1; }
 	@mkdir -p "$(LOG_DIR)"
-	@nohup "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 &
+	@PYTHONPATH="$(DEV_PYTHONPATH):$${PYTHONPATH:-}" setsid "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 < /dev/null &
 	@for i in $$(seq 1 20); do curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null 2>&1 && break || sleep 0.5; done
 	@curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null || { echo "scanner failed to start; log:"; tail -40 "$(LOG_DIR)/scanner.log"; exit 1; }
 	@echo "scanner: https://$(SCANNER_HOST):$(SCANNER_PORT)/scanner"

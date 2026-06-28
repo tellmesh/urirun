@@ -507,12 +507,20 @@ def list_routes(registry: dict, policy: dict | None = None) -> list[dict]:
     items: list[dict] = []
     for route in reglib.flatten_registry_document(registry):
         route_entry = route["routeEntry"]
+        meta = route_entry.get("meta") or {}
+        config = route_entry.get("config") or {}
         item = {
             "uri": route["uri"],
             "kind": route_entry.get("kind"),
             "adapter": route_entry.get("adapter"),
+            "meta": meta,
+            "inputSchema": config.get("inputSchema") or route_entry.get("inputSchema") or {"type": "object"},
             "source": route.get("source", {}),
         }
+        if "safe" in config:
+            item["safe"] = config["safe"]
+        elif "safe" in meta:
+            item["safe"] = meta["safe"]
         if resolved_policy is not None:
             descriptor = reglib.parse_uri(route["uri"])
             translation = reglib.translate(descriptor)

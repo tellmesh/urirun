@@ -409,6 +409,91 @@ def twin_plan_preview(prompt: str, node: str = "") -> "dict | None":
     }
 
 
+def _apply_routing_report_to_plan(plan: dict, routing_report: dict | None) -> dict:
+    """Overlay router acceptance failures onto a Twin diagnostic plan.
+
+    Twin annotation answers "can this step be represented on the current surface?".
+    Router acceptance answers "is this concrete payload admissible under the
+    route contract and live inventory?". The preview must show the latter too, so
+    invalid env-domain values do not appear as feasible.
+    """
+    if not isinstance(plan, dict) or not isinstance(routing_report, dict):
+        return plan
+    violations = [v for v in (routing_report.get("violations") or []) if isinstance(v, dict)]
+    if not violations:
+        return plan
+    by_uri: dict[str, list[dict]] = {}
+    for violation in violations:
+        uri = str(violation.get("uri") or "")
+        if uri:
+            by_uri.setdefault(uri, []).append(violation)
+    if not by_uri:
+        return plan
+    out = {**plan}
+    steps = []
+    for step in plan.get("steps") or []:
+        if not isinstance(step, dict):
+            steps.append(step)
+            continue
+        matches = by_uri.get(str(step.get("uri") or "")) or []
+        if not matches:
+            steps.append(step)
+            continue
+        first = matches[0]
+        updated = {
+            **step,
+            "feasible": False,
+            "blocked_by": first.get("kind") or "routing-acceptance",
+            "fix": first,
+            "routingViolations": matches,
+        }
+        steps.append(updated)
+    infeasible_steps = [s for s in steps if isinstance(s, dict) and not s.get("feasible", True)]
+    out["steps"] = steps
+    out["infeasibleSteps"] = len(infeasible_steps)
+    out["feasibleSteps"] = max(0, int(out.get("totalSteps") or len(steps)) - len(infeasible_steps))
+    out["needsMock"] = bool(out.get("needsMock") or infeasible_steps)
+    out["routing"] = {
+        "accepted": bool(routing_report.get("accepted", routing_report.get("ok", True))),
+        "violations": violations,
+    }
+    return out
+
+
+def twin_flow_preview(prompt: str, flow: dict, node: str = "",
+                      routing_report: dict | None = None) -> "dict | None":
+    """Diagnose an already generated URI flow as a Twin preview.
+
+    This is the preferred chat path: NL interpretation belongs to the flow
+    planner/LLM, while Twin describes feasibility and overlays router acceptance.
+    """
+    try:
+        from urirun_connector_twin.core import plan_generate  # type: ignore  # noqa: PLC0415
+        result = plan_generate(
+            flow=flow,
+            prompt=prompt,
+            node=node,
+            include_mock=True,
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(result, dict) or not result.get("ok"):
+        return None
+    plan = _apply_routing_report_to_plan(result.get("plan") or {}, routing_report)
+    task = flow.get("task") if isinstance(flow.get("task"), dict) else {}
+    return {
+        "kind": "twin-plan",
+        "prompt": prompt,
+        "taskType": task.get("source") or "uri-flow",
+        "domain": None,
+        "needsAuth": None,
+        "plan": plan,
+        "environment": result.get("environment") or {},
+        "mock": result.get("mock"),
+        "path": "Digital Twin Plan",
+    }
+
+
 def twin_plan_summary(att: dict) -> str:
     """One-line chat bubble text for a twin-plan attachment."""
     plan = att.get("plan") or {}

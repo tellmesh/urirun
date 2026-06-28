@@ -1161,19 +1161,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-d1f79ee4
-    name: Fix magic-numbers issues
-    description: Resolve 1 magic-numbers issues in adapters/python/urirun/host/routing.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/host/routing.py
-    rule_id: magic-numbers
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-62be83f7
     name: Fix string-concat issues
     description: Resolve 1 string-concat issues in adapters/python/urirun/host/chat_orchestrator.py
@@ -1314,6 +1301,19 @@ sprints:
     - adapters/python/urirun/runtime/cli.py
     rule_id: ai-boilerplate
     count: 1
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-79d4412b
+    name: Fix string-concat issues
+    description: Resolve 3 string-concat issues in adapters/python/scripts/heal_future_imports.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/scripts/heal_future_imports.py
+    rule_id: string-concat
+    count: 3
     model_hints:
       planning: balanced
       implementation: balanced

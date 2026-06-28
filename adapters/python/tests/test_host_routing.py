@@ -1,7 +1,7 @@
-"""Tests for urirun.host.routing — target-scoping and capability-gap helpers."""
+"""Tests for urirun.host.screen_capability — target-scoping and capability-gap helpers."""
 from __future__ import annotations
 
-from urirun.host.routing import (
+from urirun.host.screen_capability import (
     route_in_selected_targets,
     has_screen_capture_route,
     screen_document_capability_gap,
@@ -13,6 +13,12 @@ from urirun.host.routing import (
 
 def test_no_inputs_returns_empty():
     assert selected_nodes_from_targets([], []) == []
+
+
+def test_legacy_host_routing_module_is_a_shim():
+    from urirun.host import routing
+
+    assert routing.screen_document_capability_gap is screen_document_capability_gap
 
 
 def test_selected_nodes_deduped():
@@ -171,6 +177,17 @@ def test_gap_connector_hint_includes_node_name():
     hint = result["connectorHint"]
     assert "lenovo" in hint["installCommand"]
     assert hint["installCommand"] == "urirun host ensure lenovo kvm"
+
+
+def test_gap_connector_hint_for_host_is_local_install():
+    result = screen_document_capability_gap(
+        _SCREEN_ONLY_PROMPT,
+        {"routes": []},
+        [], ["host"],
+    )
+    assert result is not None
+    assert "Host nie ma lokalnej trasy" in result["message"]
+    assert result["connectorHint"]["installCommand"] == "urirun install kvm"
 
 
 def test_gap_includes_related_routes():

@@ -112,6 +112,19 @@ class CompactChatResultTests(unittest.TestCase):
 
 
 class RemoteAttachmentEnrichmentTests(unittest.TestCase):
+    def test_local_attachment_path_gets_file_preview_metadata(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "local.png")
+            with open(path, "wb") as fh:
+                fh.write(b"\x89PNG\r\n\x1a\n" + (b"x" * 64))
+            attachments = [{"kind": "screenshot", "path": path, "meta": {}}]
+
+            _enrich_remote_attachments(attachments, {})
+
+        self.assertTrue(attachments[0]["fileExists"])
+        self.assertIn("local.png", attachments[0]["filePreviewUrl"])
+        self.assertEqual(attachments[0]["previewUrl"], attachments[0]["filePreviewUrl"])
+
     def test_compacted_png_artifact_path_replaces_remote_screenshot_attachment(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             artifact_path = os.path.join(tmpdir, "capture.png")

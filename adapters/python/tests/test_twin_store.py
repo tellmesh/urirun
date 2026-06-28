@@ -47,6 +47,35 @@ class TwinStoreTests(unittest.TestCase):
         self.assertFalse(mem.drift("lap", dict(self.GOOD))["drifted"])
         self.assertTrue(default_memory_path().endswith(".json"))
 
+    def test_preferences_survive_a_restart(self):
+        mem = durable_memory(self.path)
+        rec = mem.remember_preference("host", "screen.capture.default", {"scope": "all", "monitor": -1})
+        self.assertEqual(rec["value"]["scope"], "all")
+
+        reborn = durable_memory(self.path)
+        pref = reborn.recall_preference("host", "screen.capture.default")
+        self.assertIsNotNone(pref)
+        self.assertEqual(pref["value"], {"scope": "all", "monitor": -1})
+
+    def test_fingerprint_keyed_preferences_miss_after_env_change(self):
+        mem = durable_memory(self.path)
+        mem.remember_preference(
+            "host",
+            "screen.capture.default",
+            {"monitor": 2},
+            fingerprint="env-three-monitors",
+        )
+
+        reborn = durable_memory(self.path)
+
+        self.assertEqual(
+            reborn.recall_preference("host", "screen.capture.default", "env-three-monitors")["value"],
+            {"monitor": 2},
+        )
+        self.assertIsNone(
+            reborn.recall_preference("host", "screen.capture.default", "env-one-monitor")
+        )
+
 
 # ─── remember_flow / recall_flow ─────────────────────────────────────────────
 

@@ -1,39 +1,37 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.40s
-# nodes: 454 | edges: 500 | modules: 55
+# generated in 0.34s
+# nodes: 451 | edges: 500 | modules: 53
 # CC̄=4.5
 
 HUBS[20]:
   scripts.test_pypi_install.print
     CC=0  in:211  out:0  total:211
   adapters.python.urirun.host.dashboard.list
-    CC=8  in:103  out:4  total:107
+    CC=8  in:105  out:4  total:109
   adapters.python.urirun_node.server.send_json
     CC=1  in:44  out:12  total:56
   adapters.python.urirun_runtime.v1.main
     CC=13  in:0  out:44  total:44
-  adapters.python.urirun_runtime.daemon.serve
-    CC=14  in:1  out:40  total:41
   scripts.extraction_audit.print_report
     CC=12  in:1  out:36  total:37
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  adapters.python.urirun.runtime.errors.info
-    CC=13  in:2  out:27  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
-  adapters.python.urirun_node.server.NodeHandler._handle_run
-    CC=14  in:0  out:29  total:29
+  adapters.python.urirun.runtime.errors.info
+    CC=13  in:2  out:27  total:29
   adapters.python.urirun_node.server.NodeHandler._handle_deploy
     CC=11  in:0  out:29  total:29
+  adapters.python.urirun_node.server.NodeHandler._handle_run
+    CC=14  in:0  out:29  total:29
   adapters.python.urirun.connectors.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
+  adapters.python.urirun.connectors.connector_lint.lint_connector
+    CC=9  in:3  out:24  total:27
   adapters.python.urirun_runtime.v2.validate_binding_document
     CC=12  in:3  out:24  total:27
   adapters.python.urirun_node.server.apply_deploy
     CC=12  in:2  out:25  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
   adapters.python.urirun.connectors.connect_catalog._cmd_show
@@ -42,6 +40,8 @@ HUBS[20]:
     CC=14  in:1  out:23  total:24
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
+  adapters.python.urirun_twin.twin_store.environment_fingerprint
+    CC=9  in:2  out:22  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
 
@@ -113,8 +113,9 @@ MODULES:
     _load  CC=3  out:4
     smoke  CC=6  out:20
     smoke_command  CC=2  out:4
-  adapters.python.urirun.host.dashboard  [1 funcs]
+  adapters.python.urirun.host.dashboard  [2 funcs]
     list  CC=8  out:4
+    next  CC=3  out:0
   adapters.python.urirun.node._util  [3 funcs]
     json_load  CC=1  out:3
     json_write  CC=1  out:4
@@ -223,8 +224,10 @@ MODULES:
     latest_version  CC=5  out:16
     version_line  CC=3  out:1
     version_status  CC=5  out:4
-  adapters.python.urirun_node.client  [6 funcs]
+  adapters.python.urirun_node.client  [8 funcs]
     __init__  CC=1  out:5
+    _local_connector_deploy_payload  CC=8  out:11
+    _narrow_specs_to_route  CC=8  out:7
     deploy  CC=9  out:8
     get  CC=1  out:3
     routes  CC=1  out:3
@@ -288,18 +291,6 @@ MODULES:
     _mqtt_publish_fn  CC=2  out:3
     _parse_sse_line  CC=6  out:8
     _pids_on_port  CC=9  out:15
-  adapters.python.urirun_runtime.codegen  [8 funcs]
-    _disambiguate_rpc_name  CC=8  out:9
-    _msg_pascal  CC=3  out:3
-    _pascal  CC=3  out:3
-    _routes  CC=7  out:9
-    _rpc_name  CC=5  out:2
-    _snake  CC=2  out:3
-    _uri_parts  CC=5  out:3
-    assign_rpc_names  CC=8  out:5
-  adapters.python.urirun_runtime.daemon  [2 funcs]
-    _main  CC=9  out:7
-    serve  CC=14  out:40
   adapters.python.urirun_runtime.dispatch_protocol  [2 funcs]
     reply_fields  CC=9  out:10
     validate_reply  CC=6  out:8
@@ -323,8 +314,12 @@ MODULES:
     call  CC=9  out:10
     make_dispatch  CC=1  out:6
     service_base  CC=5  out:6
-  adapters.python.urirun_runtime.worker  [1 funcs]
-    _pool_executors  CC=1  out:8
+  adapters.python.urirun_twin.capture_preferences  [5 funcs]
+    apply_capture_preferences  CC=15  out:18
+    capture_preference_fingerprint  CC=6  out:5
+    capture_preference_from_payload  CC=8  out:6
+    capture_step_node  CC=5  out:4
+    remember_capture_preferences  CC=11  out:10
   adapters.python.urirun_twin.planner  [7 funcs]
     _action_matrix_hints  CC=11  out:9
     _best_surface_hint  CC=3  out:0

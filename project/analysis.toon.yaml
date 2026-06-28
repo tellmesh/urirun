@@ -1,19 +1,17 @@
-# code2llm | 280f 43211L | python:205,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-28
-# generated in 0.23s
-# CC̅=4.5 | critical:6/2347 | dups:0 | cycles:0
+# code2llm | 282f 43776L | python:207,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-28
+# generated in 0.19s
+# CC̅=4.5 | critical:4/2388 | dups:0 | cycles:0
 
-HEALTH[6]:
-  🟡 CC    visible CC=21 (limit:15)
-  🟡 CC    updateServiceViews CC=24 (limit:15)
-  🟡 CC    render CC=21 (limit:15)
+HEALTH[4]:
+  🟡 CC    apply_capture_preferences CC=15 (limit:15)
+  🟡 CC    humanTaskBanner CC=19 (limit:15)
   🟡 CC    _build_remote_path_maps CC=15 (limit:15)
-  🟡 CC    _enrich_remote_attachments CC=16 (limit:15)
-  🟡 CC    _try_recall_gate CC=17 (limit:15)
+  🟡 CC    _chat_ask_general CC=17 (limit:15)
 
 REFACTOR[1]:
-  1. split 6 high-CC methods  (CC>15)
+  1. split 4 high-CC methods  (CC>15)
 
-PIPELINES[852]:
+PIPELINES[858]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -98,7 +96,7 @@ PIPELINES[852]:
       PURITY: 100% pure
   [42] Src [connector_install]: connector_install → _classify_source
       PURITY: 100% pure
-  [43] Src [connector_discover]: connector_discover → _scan_local_connectors → _read_connector_manifest → _read_tellmesh_manifest
+  [43] Src [connector_discover]: connector_discover → _scan_local_connectors → _read_connector_manifest → _read_tellmesh_manifest → ...(1 more)
       PURITY: 100% pure
   [44] Src [registry_installed]: registry_installed
       PURITY: 100% pure
@@ -143,19 +141,19 @@ LAYERS:
   │ gate.mjs                     0L  0C    9m  CC=12     ←0
   │
   adapters/                       CC̄=4.5    ←in:17  →out:12  !! split
-  │ !! dashboard.js              2794L  0C  403m  CC=24     ←42
+  │ !! dashboard.js              2874L  0C  421m  CC=19     ←49
   │ !! v2                        2033L  2C  120m  CC=14     ←5
-  │ !! host_dashboard            1932L  0C  102m  CC=14     ←1
-  │ !! chat_orchestrator         1673L  1C   60m  CC=17     ←0
+  │ !! chat_orchestrator         1942L  1C   71m  CC=17     ←0
+  │ !! host_dashboard            1934L  0C  102m  CC=14     ←1
   │ !! scanner_bridge            1548L  0C    0m  CC=0.0    ←0
   │ !! document_sync             1422L  0C    0m  CC=0.0    ←0
+  │ !! object_registry           1038L  0C   50m  CC=14     ←1
   │ !! server                     997L  3C   55m  CC=14     ←3
-  │ !! object_registry            981L  0C   46m  CC=14     ←0
   │ !! node_cli                   910L  0C   57m  CC=13     ←1
   │ !! __init__                   766L  1C   53m  CC=14     ←10
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! cli                        716L  0C    7m  CC=1      ←1
-  │ !! scanner.js                 681L  0C  121m  CC=14     ←1
+  │ !! scanner.js                 681L  0C  121m  CC=14     ←0
   │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! _runtime                   602L  1C   30m  CC=13     ←2
   │ !! client                     558L  1C   35m  CC=12     ←1
@@ -169,10 +167,10 @@ LAYERS:
   │ codegen                    438L  0C   19m  CC=14     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
   │ reversible                 406L  8C   28m  CC=10     ←3
+  │ twin_store                 401L  3C   45m  CC=9      ←0
   │ discovery                  379L  0C   30m  CC=14     ←2
   │ host_integrations          374L  0C   16m  CC=8      ←0
   │ fs_transfer                362L  0C   15m  CC=14     ←5
-  │ twin_store                 359L  3C   42m  CC=9      ←0
   │ task_planner               355L  2C   15m  CC=12     ←0
   │ task_cli                   346L  0C   25m  CC=12     ←0
   │ scanner_service            342L  0C    0m  CC=0.0    ←0
@@ -199,12 +197,12 @@ LAYERS:
   │ testing                    189L  0C    9m  CC=9      ←0
   │ dispatch_protocol          184L  0C    8m  CC=10     ←1
   │ keyauth                    182L  0C   16m  CC=6      ←0
+  │ screen_capability          182L  0C   10m  CC=14     ←1
   │ dashboard_http             181L  0C   11m  CC=12     ←1
   │ planner                    172L  0C    7m  CC=14     ←0
   │ resolver                   169L  0C   10m  CC=13     ←1
   │ new-connector.sh           168L  0C    1m  CC=0.0    ←0
   │ conformance                167L  0C    7m  CC=7      ←0
-  │ routing                    164L  0C   10m  CC=14     ←1
   │ android_node               162L  0C    7m  CC=14     ←1
   │ capability                 160L  0C    6m  CC=12     ←0
   │ scanner_net                153L  0C    0m  CC=0.0    ←0
@@ -220,6 +218,7 @@ LAYERS:
   │ tree                        91L  0C    4m  CC=11     ←0
   │ progress                    89L  1C   11m  CC=3      ←0
   │ connector_sdk               87L  0C    3m  CC=5      ←1
+  │ !! capture_preferences         84L  0C    5m  CC=15     ←0
   │ heal_future_imports         84L  0C    3m  CC=7      ←0
   │ urirun.go                   80L  3C    5m  CC=3      ←0
   │ formatting                  80L  0C    4m  CC=8      ←2
@@ -301,6 +300,7 @@ LAYERS:
   │ contract_export              7L  0C    0m  CC=0.0    ←0
   │ Program.cs                   7L  0C    0m  CC=0.0    ←0
   │ declarative                  6L  0C    0m  CC=0.0    ←0
+  │ routing                      6L  0C    0m  CC=0.0    ←0
   │ uinput                       6L  0C    0m  CC=0.0    ←0
   │ __init__                     6L  0C    0m  CC=0.0    ←0
   │ host_db                      5L  0C    0m  CC=0.0    ←0
@@ -400,9 +400,9 @@ LAYERS:
   │
   ./                              CC̄=0.0    ←in:0  →out:0
   │ !! planfile.yaml             1319L  0C    0m  CC=0.0    ←0
-  │ !! tree.txt                   613L  0C    0m  CC=0.0    ←0
+  │ !! tree.txt                   611L  0C    0m  CC=0.0    ←0
   │ !! goal.yaml                  538L  0C    0m  CC=0.0    ←0
-  │ Makefile                   177L  0C    0m  CC=0.0    ←0
+  │ Makefile                   186L  0C    0m  CC=0.0    ←0
   │ prefact.yaml                94L  0C    0m  CC=0.0    ←0
   │ project.sh                  69L  0C    0m  CC=0.0    ←0
   │ requirements.txt            32L  0C    0m  CC=0.0    ←0
@@ -432,14 +432,14 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                                                 ──                     
   security.mesh-probe                                         1                                                                                                                                                 ──
   CYCLES: none
-  HUB: scripts/ (fan-in=160)
-  HUB: v1.js/ (fan-in=6)
-  HUB: adapters.python/ (fan-in=8)
   HUB: adapters/ (fan-in=17)
+  HUB: v1.js/ (fan-in=6)
+  HUB: scripts/ (fan-in=160)
+  HUB: adapters.python/ (fan-in=8)
+  SMELL: adapters/ fan-out=12 → split needed
   SMELL: xlang/ fan-out=8 → split needed
   SMELL: adapters.python/ fan-out=161 → split needed
   SMELL: examples.matrix/ fan-out=9 → split needed
-  SMELL: adapters/ fan-out=12 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

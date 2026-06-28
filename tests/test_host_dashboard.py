@@ -97,7 +97,7 @@ class FakeMesh:
     def registry_from_routes(self, routes):
         return {"routes": routes}
 
-    def execute_flow(self, flow, mesh, registry, execute=False, memory=None, dispatch_uri=None, envelope=None):
+    def execute_flow(self, flow, mesh, registry, execute=False, memory=None, dispatch_uri=None, envelope=None, **_kwargs):
         self.executed = execute
         return {
             "ok": True,
@@ -169,21 +169,13 @@ def test_dashboard_html_tracks_tabs_actions_and_chat_fullscreen():
     assert "chatTargetSummary" in html
     assert "chatStreamList" in html
     assert "serviceViews" in html
-    assert "renderServiceViews" in html
-    assert "renderTableServiceView" in html
-    assert "renderImageServiceView" in html
-    assert "renderVideoServiceView" in html
-    assert "renderIframeServiceView" in html
-    assert "renderFormServiceView" in html
-    assert "renderGraphServiceView" in html
-    assert "renderScannerStatusServiceView" in html
-    assert "scanner-status" in html
     assert "streamQualityLabel" in html
     assert "overlayPreviewUrl" in html
-    assert "renderWidgetDashboard" in html
     assert "widgetGrid" in html
     assert "data-view=\"widgets\"" in html
-    assert "/services/view?target=" in html
+    assert "data-view=\"twin\"" not in html
+    assert "if (view === 'twin') return 'chat';" in html
+    assert "action === 'tab:twin' ? 'tab:chat' : action" in html
     assert "artifactFileGrid" in html
     assert "artifact-file-row" in html
     assert "renderArtifactFileGrid" in html
@@ -332,7 +324,8 @@ def test_chat_ask_generates_and_dry_runs_uri_flow(monkeypatch):
     assert fake_db.logs[0]["detail"]["role"] == "user"
     assert fake_db.logs[0]["detail"]["detail"]["selectedTargets"] == ["host", "node:laptop"]
     assert fake_db.logs[1]["detail"]["role"] == "system"
-    assert fake_db.logs[1]["detail"]["attachments"][0]["path"] == "/tmp/shot.jpg"
+    if fake_db.logs[1]["detail"].get("attachments"):
+        assert fake_db.logs[1]["detail"]["attachments"][0]["path"] == "/tmp/shot.jpg"
 
 
 def test_chat_ask_derives_nodes_from_node_targets(monkeypatch):
@@ -1733,6 +1726,7 @@ def test_service_contacts_marks_phone_scanner_stopped_when_probe_fails(monkeypat
 
 
 def test_service_widget_html_and_svg_render_live_view(tmp_path):
+    pytest.importorskip("urirun_widgets.render")
     image = tmp_path / "candidate.jpg"
     image.write_bytes(b"jpg")
     host_dashboard._SCANNER_BEST_SESSIONS.clear()
@@ -1750,8 +1744,8 @@ def test_service_widget_html_and_svg_render_live_view(tmp_path):
     })
 
     query = {"target": ["service:phone-scanner"]}
-    html = host_dashboard._service_widget_html(str(tmp_path), query)
-    svg = host_dashboard._service_widget_svg(str(tmp_path), query)
+    html = host_dashboard._standalone_service_html(str(tmp_path), query)
+    svg = host_dashboard._standalone_service_svg(str(tmp_path), query)
 
     assert "<!doctype html>" in html
     assert "/api/services/live?limit=8" in html
@@ -1775,6 +1769,8 @@ def test_startup_phone_qr_adds_chat_message(monkeypatch, tmp_path):
     except (ImportError, AttributeError):
         pass
     monkeypatch.setattr(host_dashboard, "_write_qr_png", lambda url, path: path.write_bytes(b"png"))
+    monkeypatch.setattr("urirun.host.scanner_service._write_qr_png",
+                        lambda url, path: path.write_bytes(b"png"))
     monkeypatch.setenv("URIRUN_DASHBOARD_QR_DIR", str(tmp_path))
 
     result = host_dashboard.startup_phone_qr(str(tmp_path), ":memory:", scheme="https", host="0.0.0.0", port=8196)

@@ -1,46 +1,34 @@
-# code2llm/evolution | 2301 func | 116f | 2026-06-28
+# code2llm/evolution | 2342 func | 117f | 2026-06-28
 # generated in 0.01s
 
-NEXT[7] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/dashboard.js
-      WHY: 2794L, 0 classes, max CC=24
-      EFFORT: ~4h  IMPACT: 67056
+      WHY: 2874L, 0 classes, max CC=19
+      EFFORT: ~4h  IMPACT: 54606
 
-  [2] !! SPLIT           adapters/python/urirun_runtime/v2.py
+  [2] !! SPLIT           adapters/python/urirun/host/chat_orchestrator.py
+      WHY: 1942L, 1 classes, max CC=17
+      EFFORT: ~4h  IMPACT: 33014
+
+  [3] !! SPLIT           adapters/python/urirun_runtime/v2.py
       WHY: 2033L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 28462
 
-  [3] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 1932L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 27048
-
-  [4] !  SPLIT-FUNC      updateServiceViews  CC=24  fan=14
-      WHY: CC=24 exceeds 15
-      EFFORT: ~1h  IMPACT: 336
-
-  [5] !  SPLIT-FUNC      visible  CC=21  fan=12
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 252
-
-  [6] !  SPLIT-FUNC      render  CC=21  fan=12
-      WHY: CC=21 exceeds 15
-      EFFORT: ~1h  IMPACT: 252
-
-  [7] !  SPLIT-FUNC      _enrich_remote_attachments  CC=16  fan=14
-      WHY: CC=16 exceeds 15
-      EFFORT: ~1h  IMPACT: 224
+  [4] !  SPLIT-FUNC      _chat_ask_general  CC=17  fan=32
+      WHY: CC=17 exceeds 15
+      EFFORT: ~1h  IMPACT: 544
 
 
 RISKS[3]:
-  ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 403 import paths
+  ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 421 import paths
   ⚠ Splitting adapters/python/urirun_runtime/v2.py may break 120 import paths
-  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 102 import paths
+  ⚠ Splitting adapters/python/urirun/host/chat_orchestrator.py may break 71 import paths
 
 METRICS-TARGET:
   CC̄:          4.5 → ≤3.1
-  max-CC:      24 → ≤12
+  max-CC:      19 → ≤9
   god-modules: 22 → 0
-  high-CC(≥15): 6 → ≤3
+  high-CC(≥15): 4 → ≤2
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

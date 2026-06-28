@@ -10,7 +10,7 @@ import os
 import re
 from typing import Any, Callable
 
-from .routing import selected_nodes_from_targets, screen_document_capability_gap
+from .screen_capability import selected_nodes_from_targets, screen_document_capability_gap
 from .urifix_bridge import try_urifix_repair
 from .document_sync import (
     DOCUMENT_SYNC_URI,
@@ -29,8 +29,24 @@ from .scanner_bridge import (
     is_camera_start_prompt,
     is_phone_scanner_prompt,
 )
-from .twin_bridge import append_twin_widget, capture_episode, twin_plan_preview, twin_plan_summary, is_desktop_task_prompt
+from .twin_bridge import (
+    append_twin_widget,
+    capture_episode,
+    flow_has_desktop_step,
+    twin_flow_preview,
+    twin_plan_preview,
+    twin_plan_summary,
+    is_desktop_task_prompt,
+)
 from .discovery import prompt_node_match
+from .object_registry import local_entry_point_host_routes
+from urirun_twin.capture_preferences import (
+    apply_capture_preferences as _apply_capture_preferences,
+    capture_preference_fingerprint as _capture_preference_fingerprint,
+    capture_preference_from_payload as _capture_preference_from_payload,
+    capture_step_node as _capture_step_node,
+    remember_capture_preferences as _remember_capture_preferences,
+)
 
 
 @dataclasses.dataclass
@@ -509,6 +525,7 @@ def _build_escalation_block(remediation: dict, prompt: str, execute: bool) -> di
     return {
         "ok": False,
         "humanEscalation": True,
+        "kind": "human-task",
         "dryRun": not execute,
         "remediationClass": cls,
         "node": node,
@@ -517,11 +534,13 @@ def _build_escalation_block(remediation: dict, prompt: str, execute: bool) -> di
         "dashboardUrl": dashboard_url,
         "retryUri": remediation.get("retryUri", ""),
         "message": human_action or f"Awaria klasy '{cls}' na node '{node}'.",
+        "notify": {"sound": "beep", "reason": "human-task"},
         "next": {
-            "kind": "human-action",
+            "kind": "human-task",
             "instruction": human_action,
             "command": command,
             "dashboardUrl": dashboard_url,
+            "notify": {"sound": "beep", "reason": "human-task"},
         },
     }
 
@@ -695,42 +714,53 @@ def _save_inline_attachment(att: dict, b64: str, shot_dir: str) -> bool:
         return False
 
 
+def _resolve_attachment_preview(att, path_to_node: dict, path_inline: dict,
+                                path_artifact: dict, shot_dir: str) -> None:
+    """Resolve ONE attachment's preview URL: local file → artifact copy → inline b64 → remote proxy.
+
+    A step that ran on a remote node leaves its file there; the remote-proxy fallback injects a
+    ``/api/file/remote?nodeUrl=…&path=…`` URL so the dashboard can display it without an SSH transfer."""
+    import os as _os  # noqa: PLC0415
+    from urllib.parse import quote as _quote  # noqa: PLC0415
+    if not isinstance(att, dict) or att.get("fileExists") or att.get("filePreviewUrl"):
+        return
+    path = str(att.get("path") or "")
+    if not path:
+        return
+    local_path = _os.path.expanduser(path)
+    if _os.path.isfile(local_path):
+        att["fileExists"] = True
+        att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local_path)}"
+        return
+    artifact_path = path_artifact.get(path)
+    if artifact_path and _os.path.isfile(_os.path.expanduser(artifact_path)):
+        local = _os.path.expanduser(artifact_path)
+        att["path"] = local
+        att["fileExists"] = True
+        att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
+        return
+    b64 = path_inline.get(path)
+    if b64 and _save_inline_attachment(att, b64, shot_dir):
+        return
+    node_url = path_to_node.get(path)
+    if node_url:
+        att["fileExists"] = True
+        att["filePreviewUrl"] = f"/api/file/remote?nodeUrl={_quote(node_url)}&path={_quote(path)}"
+        if not att.get("previewUrl"):
+            att["previewUrl"] = att["filePreviewUrl"]
+
+
 def _enrich_remote_attachments(attachments: list, results: dict) -> None:
     """Set filePreviewUrl for attachments whose file lives on a remote node.
 
-    Matches attachment paths to step-result paths.  When a step ran on a remote node
-    (has a ``url`` field pointing to another machine) and the file is not locally
-    accessible, injects a ``/api/file/remote?nodeUrl=…&path=…`` proxy URL so the
-    dashboard can display the screenshot inline without an SSH transfer."""
+    Matches attachment paths to step-result paths via _build_remote_path_maps, then resolves each
+    attachment's preview (see _resolve_attachment_preview)."""
     import os as _os  # noqa: PLC0415
-    from urllib.parse import quote as _quote  # noqa: PLC0415
     path_to_node, path_inline, path_artifact = _build_remote_path_maps(results)
     _shot_dir = _os.path.join(
         _os.path.expanduser(_os.environ.get("URIRUN_ARTIFACT_DIR", "~/.urirun/artifacts")), "screenshots")
     for att in attachments:
-        if not isinstance(att, dict):
-            continue
-        if att.get("fileExists") or att.get("filePreviewUrl"):
-            continue
-        path = str(att.get("path") or "")
-        if not path:
-            continue
-        artifact_path = path_artifact.get(path)
-        if artifact_path and _os.path.isfile(_os.path.expanduser(artifact_path)):
-            local = _os.path.expanduser(artifact_path)
-            att["path"] = local
-            att["fileExists"] = True
-            att["filePreviewUrl"] = att["previewUrl"] = f"/api/file?path={_quote(local)}"
-            continue
-        b64 = path_inline.get(path)
-        if b64 and _save_inline_attachment(att, b64, _shot_dir):
-            continue
-        node_url = path_to_node.get(path)
-        if node_url:
-            att["fileExists"] = True
-            att["filePreviewUrl"] = f"/api/file/remote?nodeUrl={_quote(node_url)}&path={_quote(path)}"
-            if not att.get("previewUrl"):
-                att["previewUrl"] = att["filePreviewUrl"]
+        _resolve_attachment_preview(att, path_to_node, path_inline, path_artifact, _shot_dir)
     # Strip large pngBase64 blobs from attachment meta regardless of capture path.
     # The image is accessible via previewUrl/filePreviewUrl; base64 in meta is redundant
     # and would be sent to the browser on every chat-history load.
@@ -1053,6 +1083,21 @@ def _filter_mesh_for_targets(discovered: dict, selected_targets: list[str]) -> d
     return {**discovered, "routes": routes, "serviceMap": service_map}
 
 
+def _with_local_host_routes(discovered: dict, selected_targets: list[str]) -> dict:
+    include_host = not selected_targets or "host" in selected_targets
+    if not include_host:
+        return discovered
+    local_routes = local_entry_point_host_routes()
+    if not local_routes:
+        return discovered
+    routes = list(discovered.get("routes") or [])
+    seen = {str(route.get("uri") or "") for route in routes}
+    extra = [route for route in local_routes if str(route.get("uri") or "") not in seen]
+    if not extra:
+        return discovered
+    return {**discovered, "routes": [*routes, *extra], "localHostRoutes": local_routes}
+
+
 def _sync_targets_from_flow(
     flow: dict,
     discovered: dict,
@@ -1108,13 +1153,11 @@ def _escalate_offline_to_human(
 ) -> dict | None:
     """Create a human:// task on any reachable node; routes through run_node_uri for classification.
 
-    Returns a pending-escalation envelope or None if no human node is found.
+    Returns a pending-escalation envelope. If no human:// route is active, the
+    envelope still carries a local humanTask so the dashboard can show and beep
+    instead of silently falling back to host execution.
     """
     from urirun.host.node_dispatch import run_node_uri  # noqa: PLC0415
-
-    human_node, human_url = _find_human_node(discovered)
-    if not human_node or not human_url:
-        return None
 
     node_name = offline_nodes[0]
     title = f"Uruchom node urirun na {node_name}"
@@ -1125,17 +1168,65 @@ def _escalate_offline_to_human(
         f"  urirun node serve --name {node_name}\n"
         f"Naciśnij Done po uruchomieniu."
     )
+    notify = {"sound": "beep", "reason": "human-task"}
+    human_node, human_url = _find_human_node(discovered)
 
     if not execute:
         return {
             "ok": False,
             "humanEscalation": True,
+            "kind": "human-task",
             "dryRun": True,
             "offlineNodes": offline_nodes,
+            "humanTask": {
+                "id": None,
+                "title": title,
+                "node": human_node or "host",
+                "targetNode": node_name,
+                "instruction": instruction,
+            },
+            "notify": notify,
+            "next": {"kind": "human-task", "instruction": instruction, "notify": notify},
             "message": (
                 f"Node(s) {offline_nodes!r} są offline. "
-                f"W trybie execute zostałoby stworzone zadanie dla człowieka na '{human_node}'."
+                f"W trybie execute zostałoby stworzone zadanie dla człowieka na '{human_node or 'host'}'."
             ),
+        }
+
+    if not human_node or not human_url:
+        return {
+            "ok": False,
+            "humanEscalation": True,
+            "kind": "human-task",
+            "offlineNode": node_name,
+            "offlineNodes": offline_nodes,
+            "humanTask": {
+                "id": None,
+                "title": title,
+                "node": "host",
+                "targetNode": node_name,
+                "instruction": instruction,
+                "surfaceUrl": "",
+                "status": "pending-local",
+            },
+            "next": {"kind": "human-task", "instruction": instruction, "notify": notify},
+            "notify": notify,
+            "error": {
+                "type": "NodeOffline",
+                "message": (
+                    f"Node '{node_name}' jest offline. "
+                    "Brak aktywnej trasy human://task/create; pokaż operatorowi instrukcję z humanTask."
+                ),
+                "offlineNodes": offline_nodes,
+            },
+            "selectedTargets": [f"node:{node_name}"],
+            "timeline": [{
+                "id": "human:offline-escalation",
+                "uri": "human://host/task/create",
+                "ok": False,
+                "target": "host",
+                "reversible": False,
+            }],
         }
 
     task_payload = {
@@ -1156,18 +1247,29 @@ def _escalate_offline_to_human(
     val = (env.get("result") or {}).get("value") or {}
     task = val.get("task") or {}
     surface = val.get("surface") or {}
+    next_action = val.get("next") if isinstance(val.get("next"), dict) else {}
+    next_action = {
+        **next_action,
+        "kind": "human-task",
+        "instruction": next_action.get("instruction") or instruction,
+        "notify": notify,
+    }
     return {
         "ok": False,
         "humanEscalation": True,
+        "kind": "human-task",
         "offlineNode": node_name,
         "offlineNodes": offline_nodes,
         "humanTask": {
             "id": task.get("id"),
             "title": title,
             "node": human_node,
+            "targetNode": node_name,
+            "instruction": instruction,
             "surfaceUrl": surface.get("queueUrl"),
         },
-        "next": val.get("next"),
+        "next": next_action,
+        "notify": notify,
         "error": {
             "type": "NodeOffline",
             "message": (
@@ -1215,6 +1317,7 @@ def _chat_ask_general_check_offline(
         deps.add_chat_message_fn(db, chat_message(
             "system", content,
             detail={
+                "kind": "human-task",
                 "prompt": prompt,
                 "execute": execute,
                 "ok": False,
@@ -1223,6 +1326,7 @@ def _chat_ask_general_check_offline(
                 "selectedTargets": selected_targets,
                 "humanTask": task,
                 "next": human_result.get("next"),
+                "notify": human_result.get("notify") or {"sound": "beep", "reason": "human-task"},
                 "timeline": human_result.get("timeline") or [],
                 "error": human_result.get("error"),
             },
@@ -1283,31 +1387,43 @@ def _chat_ask_general_build_result(
     return result
 
 
-def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
-    """Check the episode recall gate; return (flow, generator) or (None, None) on miss.
+def _recall_env_fp(twin_memory, node: str) -> str:
+    """Fingerprint to probe recall with: the pinned node's known-good, else the host's.
 
-    Episodes are captured against the HOST env (reality.fingerprint = host's known-good), so the
-    recall must probe with that fingerprint. We use the pinned node's known-good when it has one and
-    fall back to the host's — passing env_fp="" used to skip the (working) episode-recall tier and
-    leave only the intent-only flow_store tier, which made the gate miss in practice."""
+    Episodes are captured against the HOST env (reality.fingerprint = host's known-good), so passing
+    env_fp="" used to skip the (working) episode-recall tier and leave only the intent-only flow_store
+    tier, which made the gate miss in practice."""
+    for key in (node, "host"):
+        fp = (twin_memory.known_good(key) or {}).get("fingerprint")
+        if fp:
+            return fp
+    return ""
+
+
+def _unwrap_recall(recalled) -> dict | None:
+    """Unwrap the inprocess {ok,result,error} envelope and return the recall dict only on a real hit.
+
+    The recall fields (found/steps/source/episode_id) live INSIDE ``result``; reading them at the top
+    level is why the gate missed even on a real episode hit. Returns None on miss or empty steps."""
+    if isinstance(recalled, dict) and isinstance(recalled.get("result"), dict):
+        recalled = recalled["result"]
+    if not (isinstance(recalled, dict) and recalled.get("ok") and recalled.get("found")):
+        return None
+    return recalled if (recalled.get("steps") or []) else None
+
+
+def _try_recall_gate(twin_memory, selected_nodes: list, prompt: str) -> tuple:
+    """Check the episode recall gate; return (flow, generator) or (None, None) on miss."""
     if twin_memory is None:
         return None, None
     from urirun.host.dispatch import inprocess_fallback as _iproc  # noqa: PLC0415
     _node = selected_nodes[0] if selected_nodes else "host"
-    _env_fp = ((twin_memory.known_good(_node) or {}).get("fingerprint")
-               or (twin_memory.known_good("host") or {}).get("fingerprint") or "")
-    _recalled = _iproc("twin://host/flow/query/recall",
-                       {"prompt": prompt, "env_fp": _env_fp, "node": _node})
-    # inprocess_fallback wraps the handler return in an {ok, result, error} envelope; the recall
-    # fields (found/steps/source/episode_id) live INSIDE `result`, so unwrap before reading them —
-    # reading them at the top level is why the gate missed even on a real episode hit.
-    if isinstance(_recalled, dict) and isinstance(_recalled.get("result"), dict):
-        _recalled = _recalled["result"]
-    if not (isinstance(_recalled, dict) and _recalled.get("ok") and _recalled.get("found")):
+    _env_fp = _recall_env_fp(twin_memory, _node)
+    _recalled = _unwrap_recall(_iproc("twin://host/flow/query/recall",
+                                      {"prompt": prompt, "env_fp": _env_fp, "node": _node}))
+    if _recalled is None:
         return None, None
     _rec_steps = _recalled.get("steps") or []
-    if not _rec_steps:
-        return None, None
     flow = {"steps": _rec_steps,
             "task": {"id": "recall", "source": _recalled.get("source", "recall"), "title": prompt}}
     from urirun_flow.flow_planner import prepare_screenshot_capture_flow  # noqa: PLC0415
@@ -1351,10 +1467,22 @@ def _screen_capability_gap_or_recall(prompt, discovered, selected_nodes, selecte
     """Return (early_response, discovered): an escalation response when the prompt needs screen
     capture, no route exists, auto-ensure could not deploy one, AND recall has no episode to replay;
     otherwise (None, discovered). A known-good Episode is itself proof the capability is reachable,
-    so it pre-empts the gap. `discovered` is re-fetched after a successful auto-ensure."""
+    so it pre-empts the gap. `discovered` is re-fetched after a successful auto-ensure.
+
+    Host-only requests augment remote discovery with locally installed host
+    entry-point routes before this check. The local KVM fallback below remains
+    a last-resort guard for stale discovery/catalogue data."""
     gap = screen_document_capability_gap(prompt, discovered, selected_nodes, selected_targets)
+    # Host-only fast path: if the KVM scheme is installed locally in the host's
+    # Python environment, the local_first dispatch will handle it — no gap.
+    if gap and _is_host_only_with_local_kvm(selected_targets):
+        gap = None
     if gap and _try_auto_ensure_screen_capture(discovered, selected_nodes, selected_targets, token, identity):
-        discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
+        discovered = _with_local_host_routes(
+            _filter_mesh_for_targets(
+                mesh.discover_mesh(deps.host_config_fn(config, node_urls)), selected_targets),
+            selected_targets,
+        )
         gap = screen_document_capability_gap(prompt, discovered, selected_nodes, selected_targets)
     if gap:
         from urirun.node.twin_store import durable_memory as _dm_gap  # noqa: PLC0415
@@ -1364,6 +1492,21 @@ def _screen_capability_gap_or_recall(prompt, discovered, selected_nodes, selecte
     return None, discovered
 
 
+def _is_host_only_with_local_kvm(selected_targets: list[str]) -> bool:
+    """True when targeting only the host AND the kvm connector is installed locally.
+
+    discover_mesh only aggregates routes from remote nodes; the host's own
+    installed connectors are invisible to the route catalogue.  When the user
+    targets 'host' (no remote node), the capability gap fires because there
+    are no kvm:// routes in the mesh — but make_local_dispatch_uri with
+    local_first=True will find the connector via entry-point discovery.
+    Returning True here suppresses the false-positive gap."""
+    if sorted(selected_targets) != ["host"]:
+        return False
+    from urirun.host.dispatch import _local_scheme_installed  # noqa: PLC0415
+    return _local_scheme_installed("kvm://host/screen/query/capture")
+
+
 _LOCAL_NL_KWS = ("lokalnym", "lokalny", "lokalnie", "lokalnego", "lokalnej",
                  "local computer", "my computer", "this computer", "this machine")
 
@@ -1371,13 +1514,40 @@ _REMOTE_NL_KWS = ("zdalny", "zdalnym", "zdalnego", "zdalne", "zdalnej", "zdalnie
                    "remote", "zewnętrznym", "zewnetrznym", "external",
                    "on node", "na nodzie", "na node")
 
+_NODE_NAME_STOPWORDS = {
+    "host", "local", "lokalny", "lokalnym", "zdalny", "zdalnym", "remote",
+    "komputer", "komputerze", "laptop", "laptopie", "maszyna", "machine",
+    "node", "nodzie", "wezel", "wezle", "węzeł", "węźle", "na", "w",
+}
+
+
+def _explicit_node_name_from_prompt(prompt: str, alias_map: dict) -> str:
+    """Return a node named by NL even when the UI currently has only host selected."""
+    matched = prompt_node_match(prompt, alias_map)
+    if matched and matched != "host":
+        return matched
+    text = prompt.casefold()
+    patterns = (
+        r"(?<![\w.-])(?:node|nodzie|wezel|wezle|węzeł|węźle)\s+(?P<node>[a-z0-9][a-z0-9_.-]*)",
+        r"(?<![\w.-])(?:laptop|laptopie|komputer|komputerze|machine)\s+(?P<node>[a-z0-9][a-z0-9_.-]*)",
+        r"(?<![\w.-])(?P<node>[a-z0-9][a-z0-9_.-]*)\s+(?:laptop|node)(?![\w.-])",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        node = (match.group("node") or "").strip("._-")
+        if node and node not in _NODE_NAME_STOPWORDS:
+            return node
+    return ""
+
 
 def _prompt_names_remote(prompt: str, alias_map: dict) -> bool:
     """Return True when the prompt explicitly mentions a remote node by name or remote keyword."""
     low = prompt.lower()
     if any(kw in low for kw in _REMOTE_NL_KWS):
         return True
-    node = prompt_node_match(prompt, alias_map)
+    node = _explicit_node_name_from_prompt(prompt, alias_map)
     return bool(node and node != "host")
 
 
@@ -1441,6 +1611,98 @@ def _apply_local_nl_override(prompt, selected_nodes, selected_targets):
     return selected_nodes, selected_targets, local_first
 
 
+def _planner_nodes_for_targets(selected_nodes: list[str], selected_targets: list[str]) -> list[str]:
+    """Internal planner/Twin node list.
+
+    Public chat selection keeps host as a target, not a node (``selectedNodes=[]``,
+    ``selectedTargets=["host"]``). The NL planner, however, only understands node
+    names; if we pass an empty list while a remote node is reachable, it falls back
+    to that remote node. For host-only planning, pin an internal synthetic
+    ``host`` node without changing the public result shape.
+    """
+    out = [str(n) for n in (selected_nodes or []) if str(n)]
+    include_host = not selected_targets or "host" in selected_targets
+    if include_host and "host" not in out:
+        out.insert(0, "host")
+    return out
+
+
+def _flow_route_domains(flow: dict, routes: list[dict]) -> dict[str, dict]:
+    by_uri = {str(r.get("uri") or ""): r for r in routes or []}
+    out: dict[str, dict] = {}
+    for step in flow.get("steps") or []:
+        uri = str(step.get("uri") or "")
+        contract = (by_uri.get(uri, {}).get("meta") or {}).get("contract") or {}
+        domains = contract.get("domains") or {}
+        if domains:
+            out[uri] = domains
+    return out
+
+
+def _env_enum_inventories(flow: dict, registry: dict, routes: list[dict]) -> dict[str, dict]:
+    if not _flow_route_domains(flow, routes):
+        return {}
+    from urirun_flow.flow import _build_env_inventory  # noqa: PLC0415
+    nodes = sorted({
+        _capture_step_node(step)
+        for step in flow.get("steps") or []
+        if str(step.get("uri") or "").startswith("kvm://")
+    })
+    return {node: _build_env_inventory(node, registry) for node in nodes}
+
+
+def _resolve_env_enum_flow(flow: dict, registry: dict, routes: list[dict], memory: object | None) -> dict:
+    domains = _flow_route_domains(flow, routes)
+    if not domains:
+        return {"ok": True, "flow": flow, "inventories": {}}
+    from urirun_flow.env_selection import resolve_env_enums  # noqa: PLC0415
+    inventories = _env_enum_inventories(flow, registry, routes)
+    result = resolve_env_enums(flow, routes, inventories, memory=memory)
+    return {**result, "inventories": inventories}
+
+
+def _chat_ask_general_needs_selection(selection: dict, db: str | None, prompt: str, execute: bool,
+                                      selected_nodes: list[str], selected_targets: list[str],
+                                      deps: ChatDeps) -> dict:
+    need = selection.get("needsSelection") or {}
+    options = need.get("options") or []
+    label = need.get("parameter") or "option"
+    content = f"Wymagany wybór: {label} ({len(options)} opcje)"
+    attachment = {"kind": "needs-selection", "path": "Needs selection", **need}
+    deps.add_chat_message_fn(db, {
+        "role": "system",
+        "content": content,
+        "detail": selection,
+        "attachments": [attachment],
+    })
+    return {
+        "ok": False,
+        "kind": "needs-selection",
+        "prompt": prompt,
+        "execute": execute,
+        "selectedNodes": selected_nodes,
+        "selectedTargets": selected_targets,
+        "needsSelection": need,
+        "next": selection.get("next") or {"kind": "needs-selection"},
+        "notify": {"sound": "beep"},
+        "flow": selection.get("flow") or {},
+        "attachments": [attachment],
+    }
+
+
+def _attach_known_good_recall(result: dict, recall: dict | None) -> dict:
+    """Attach a knownGoodRecall summary to the result when a recall suggestion was made."""
+    if recall is not None:
+        result["knownGoodRecall"] = {
+            "flowKey": recall.get("flowKey"),
+            "ts": recall.get("ts"),
+            "prompt": recall.get("prompt"),
+            "stepCount": len(recall.get("steps") or []),
+            "nodes": recall.get("nodes") or [],
+        }
+    return result
+
+
 def _chat_ask_general(
     project: str,
     db: str | None,
@@ -1460,24 +1722,28 @@ def _chat_ask_general(
     mesh = deps.mesh_fn()
     old_token, old_identity = _apply_run_credentials(token, identity)
     try:
-        discovered = _filter_mesh_for_targets(
-            mesh.discover_mesh(deps.host_config_fn(config, node_urls)), selected_targets)
+        full_discovered = mesh.discover_mesh(deps.host_config_fn(config, node_urls))
+        offline_fail = _chat_ask_general_check_offline(
+            selected_nodes, full_discovered, db, prompt, execute, selected_targets, deps)
+        if offline_fail is not None:
+            return offline_fail
+        discovered = _with_local_host_routes(
+            _filter_mesh_for_targets(full_discovered, selected_targets),
+            selected_targets,
+        )
         _gap_resp, discovered = _screen_capability_gap_or_recall(
             prompt, discovered, selected_nodes, selected_targets, token, identity,
             execute, mesh, config, node_urls, db, deps)
         if _gap_resp is not None:
             return _gap_resp
-        discovered = _filter_mesh_for_targets(discovered, selected_targets)
+        discovered = _with_local_host_routes(_filter_mesh_for_targets(discovered, selected_targets), selected_targets)
         registry = mesh.registry_from_routes(discovered.get("routes") or [])
-        offline_fail = _chat_ask_general_check_offline(
-            selected_nodes, discovered, db, prompt, execute, selected_targets, deps)
-        if offline_fail is not None:
-            return offline_fail
         from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
         twin_memory = _durable_memory() if execute else None
+        planner_nodes = _planner_nodes_for_targets(selected_nodes, selected_targets)
         try:
             environments = _fetch_planner_environments_for_nodes(
-                mesh, selected_nodes, execute, registry, discovered, memory=twin_memory)
+                mesh, planner_nodes, execute, registry, discovered, memory=twin_memory)
             # Recall gate: skip LLM for known intent × environment combinations.
             # Dispatched via twin://host/flow/query/recall so the gate itself is a URI
             # (introspectable, replaceable, remoteable).  Three-tier priority inside the
@@ -1486,8 +1752,15 @@ def _chat_ask_general(
             # closing the loop that the episode gate alone left open.
             flow, generator = _try_recall_gate(twin_memory, selected_nodes, prompt)
             if flow is None:
-                flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=selected_nodes,
+                flow, generator = mesh.make_flow(prompt, discovered, selected_nodes=planner_nodes,
                                                  use_llm=not no_llm, environments=environments)
+            flow = _apply_capture_preferences(flow, twin_memory)
+            selection = _resolve_env_enum_flow(flow, registry, discovered.get("routes") or [], twin_memory)
+            if not selection.get("ok"):
+                return _chat_ask_general_needs_selection(
+                    selection, db, prompt, execute, selected_nodes, selected_targets, deps)
+            flow = selection.get("flow") or flow
+            env_inventories = selection.get("inventories") or {}
             selected_nodes, selected_targets = _apply_explicit_target_sync(
                 payload, flow, discovered, selected_nodes, selected_targets)
         except Exception as exc:  # noqa: BLE001 - return a recovery contract instead of a raw API failure.
@@ -1497,11 +1770,15 @@ def _chat_ask_general(
         selected_nodes, selected_targets, _local_first = _apply_local_nl_override(
             prompt, selected_nodes, selected_targets)
         execution_mesh = _filter_mesh_for_targets(discovered, selected_targets)
+        if env_inventories:
+            execution_mesh = {**execution_mesh, "inventories": env_inventories}
         execution_registry = mesh.registry_from_routes(execution_mesh.get("routes") or [])
         _dispatch = make_local_dispatch_uri(execution_registry, _run_mode, local_first=_local_first)
-        _chat_insert_routing_preview(db, flow, execution_mesh, selected_targets, execute, deps)
+        routing_report = _chat_insert_routing_preview(db, flow, execution_mesh, selected_targets, execute, deps)
+        _chat_insert_twin_flow_preview(db, prompt, flow, selected_targets, routing_report, deps)
         execution = mesh.execute_flow(flow, execution_mesh, execution_registry, execute=execute, memory=twin_memory,
                                       dispatch_uri=_dispatch, router_guard=execute)
+        _remember_capture_preferences(flow, execution, twin_memory)
     finally:
         _restore_run_credentials(old_token, old_identity)
     result = _chat_ask_general_build_result(
@@ -1509,15 +1786,7 @@ def _chat_ask_general(
         selected_nodes, selected_targets,
         prompt, execute, payload, project, db, deps,
     )
-    if _recall is not None:
-        result["knownGoodRecall"] = {
-            "flowKey": _recall.get("flowKey"),
-            "ts": _recall.get("ts"),
-            "prompt": _recall.get("prompt"),
-            "stepCount": len(_recall.get("steps") or []),
-            "nodes": _recall.get("nodes") or [],
-        }
-    return result
+    return _attach_known_good_recall(result, _recall)
 
 
 def _add_chat_user_message(db: str | None, prompt: str, config: str | None, node_urls: list[str] | None,
@@ -1571,12 +1840,34 @@ def _chat_insert_twin_preview(db, prompt, selected_nodes, selected_targets, deps
         ))
 
 
+def _chat_insert_twin_flow_preview(db: str | None, prompt: str, flow: dict, selected_targets: list[str],
+                                   routing_report: dict | None, deps: ChatDeps) -> None:
+    if not flow_has_desktop_step(flow):
+        return
+    node = (selected_targets[0] if selected_targets else "host")
+    if node.startswith("node:"):
+        node = node.split(":", 1)[1] or "host"
+    twin_att = twin_flow_preview(prompt, flow, node=node, routing_report=routing_report)
+    if twin_att:
+        deps.add_chat_message_fn(db, chat_message(
+            "system",
+            twin_plan_summary(twin_att),
+            detail={"kind": "twin-plan", "selectedTargets": selected_targets, "twinPlan": twin_att},
+            attachments=[twin_att],
+        ))
+
+
 def _routing_plan_content(report: dict) -> str:
     step_count = int(report.get("stepCount") or 0)
     blocked = report.get("blockedSteps") or []
     if blocked:
         first = blocked[0]
         return f"Routing Plan: blocked at {first.get('blockedAt') or 'unknown'} for {first.get('uri') or '<unknown>'}"
+    violations = report.get("violations") or []
+    if report.get("accepted") is False or violations:
+        first = violations[0] if violations else {}
+        reason = first.get("kind") or "plan-rejected"
+        return f"Routing Plan: rejected, {step_count} URI step(s), {reason}"
     runs_on = [str(v) for v in (report.get("runsOnByStep") or {}).values() if v]
     ordered = []
     for target in runs_on:
@@ -1596,10 +1887,21 @@ def _chat_insert_routing_preview(
 ) -> dict | None:
     """Emit a pre-dispatch routing report so the operator sees where each URI will run."""
     try:
-        from urirun.node.routing import diagnose_plan  # noqa: PLC0415
-        report = diagnose_plan(flow.get("steps") or [], execution_mesh, probe=False)
+        from urirun.node.routing import accept_plan  # noqa: PLC0415
+        verdict = accept_plan(flow.get("steps") or [], execution_mesh, probe=False)
+        report = dict(verdict.get("report") or {})
+        report["accepted"] = bool(verdict.get("accepted"))
+        report["violations"] = list(verdict.get("violations") or [])
     except Exception:  # noqa: BLE001 - routing preview is diagnostic; execution guard remains authoritative
         return None
+    step_payloads = [
+        {
+            "id": step.get("id"),
+            "uri": step.get("uri"),
+            "payload": step.get("payload") or {},
+        }
+        for step in flow.get("steps") or []
+    ]
     deps.add_chat_message_fn(db, chat_message(
         "system",
         _routing_plan_content(report),
@@ -1609,6 +1911,7 @@ def _chat_insert_routing_preview(
             "probe": False,
             "selectedTargets": selected_targets,
             "routing": report,
+            "stepPayloads": step_payloads,
         },
     ))
     return report
@@ -1629,9 +1932,12 @@ def _init_selected_targets(requested_nodes: list[str], requested_targets: list[s
 def _infer_node_targets(prompt: str, requested_nodes: list[str], requested_targets: list[str],
                         config: str | None, node_urls: list[str] | None, deps: "ChatDeps") -> list[str] | None:
     """NL node inference — route to a named mesh node when not explicitly picked."""
-    if requested_targets or requested_nodes:
+    if requested_nodes:
         return None
-    matched = prompt_node_match(prompt, deps.node_alias_map_fn(config, node_urls))
+    target_set = {str(target).strip() for target in (requested_targets or []) if str(target).strip()}
+    if target_set and target_set != {"host"}:
+        return None
+    matched = _explicit_node_name_from_prompt(prompt, deps.node_alias_map_fn(config, node_urls))
     return [f"node:{matched}"] if matched and matched != "host" else None
 
 
@@ -1654,11 +1960,10 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
     execute = bool(payload.get("execute"))
     no_llm = bool(payload.get("no_llm") or payload.get("noLlm"))
     # Rule: if the prompt doesn't mention which node to use, default to host.
-    # But do not override an explicit UI/API node target. URL tab autorun can mark targets as
-    # non-explicit because those params are copied UI state, not a routing command.
-    if not _has_explicit_remote_selection(requested_nodes, requested_targets, target_explicit):
-        selected_nodes, selected_targets = _apply_host_default_when_no_node_in_prompt(
-            prompt, selected_nodes, selected_targets, config, node_urls, deps)
+    # The chat prompt is the routing command; stale contact/URL selections must
+    # not make a host-local command run on a remote laptop.
+    selected_nodes, selected_targets = _apply_host_default_when_no_node_in_prompt(
+        prompt, selected_nodes, selected_targets, config, node_urls, deps)
     _add_chat_user_message(
         db, prompt, config, node_urls, execute=execute, no_llm=no_llm,
         requested_nodes=requested_nodes, requested_targets=requested_targets,
@@ -1669,5 +1974,4 @@ def chat_ask(project: str, db: str | None, config: str | None, payload: dict, no
         return _chat_ask_phone_scanner(project, db, config, node_urls, token, identity, prompt, execute, selected_nodes, selected_targets, deps)
     if _is_document_sync_prompt(prompt, selected_nodes, selected_targets, config, node_urls, deps):
         return _chat_ask_document_sync(project, db, config, payload, node_urls, token, identity, prompt, execute, no_llm, selected_nodes, selected_targets, deps)
-    _chat_insert_twin_preview(db, prompt, selected_nodes, selected_targets, deps)
     return _chat_ask_general(project, db, config, payload, node_urls, token, identity, prompt, execute, no_llm, selected_nodes, selected_targets, deps)

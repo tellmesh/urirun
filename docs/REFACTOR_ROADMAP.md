@@ -52,6 +52,18 @@ Derived from the router-extraction + atomization-audit work. Ordered by blast ra
   `urirun-flow/tests/test_flow_planner_helpers.py` plus hub recall-gate tests; verified with the
   router/chat/flow subset (`157 passed`) and `urirun-flow` build. Next operational step: restart the
   service/node code and retry the same LinkedIn screenshot URI command live.
+- **[P1 / live flow] CDP session never became ready — Chrome launched with NO page tab. DONE
+  2026-06-28, deployed + verified live.** Complementary to the verify-gating fix above: the same
+  LinkedIn flow ALSO failed at `cdp/session/query/ready` ("debugger not reachable within timeout") even
+  though Chrome WAS up. Found by making the kvm cdp launch diagnosable (capture Chrome stderr instead
+  of DEVNULL + a raw `/json` probe): the probe showed `/json 200: 1 targets {browser_ui:1}, usable
+  pages=0` — a fresh dedicated-profile Chrome came up showing only its browser UI, with ZERO `page`
+  targets, and `reachable()`/`navigate` (urirun_cdp `_pages()`) require a `type==page`. Fix:
+  `start_session` now launches with `about:blank` (`argv.append(url or "about:blank")`) so a page
+  target always exists, plus `--remote-allow-origins=*` (modern Chrome >=111 CDP). Also vendored
+  `urirun_cdp/cdp.py` → kvm `_cdp_impl.py` (stdlib-only, drift-guarded test) so a node WITHOUT
+  `urirun-cdp` is still CDP-capable (shim prefers the real package, falls back to the bundle). Proven
+  end-to-end live on `.201`: ensure→ready→navigate(LinkedIn)→capture 389 KB real. kvm 173 passed.
 - **[P2 / orchestrator] Commit + consolidate the router preflight.** Two integrations coexist (both
   reach the connector kernel, no logic duplication): `chat_orchestrator._router_preflight` (via the
   `router://` URI → `result["routing"]`) and `_chat_insert_routing_preview` (via the core shim →
@@ -66,6 +78,18 @@ command/service/artifact examples in docs; the `about.ifuri.com` repo.)
 (`scripts/cc_gate.py`, wired into `.github/workflows/ci.yml`) fails the build if any function
 exceeds CC=15. The OCR/LLM metadata and scanner-networking concerns were also extracted out of
 `host_dashboard.py` into `host/document_metadata.py` and `host/scanner_net.py`.
+
+**Landed (single-source gates, 2026-06-28).** The two ratchets that make Phase 3 (host/node code
+moves) reversibly safe are both wired and green: (1) **slim-core import gate**
+(`tests/test_minimal_imports.py`) — a clean `import urirun` must not load `urirun.host`,
+`urirun_node`/`urirun.node`, `urirun_scanner`, `urirun_flow`/`urirun.flow` or `urirun_widgets`
+(`urirun_runtime` is allow-listed as the kernel); verified leaking none. (2) **render single-source
+gate** (`tests/test_widgets.py::test_host_does_not_redefine_widget_render_single_source`) — a pure
+AST scan that fails if any `host/` module DEFINES (vs imports) a render-owned name
+(`service_widget_html/svg`, `select_service_view`, `service_widget_summary`, the `render*ServiceView`
+family). Host's `_service_widget_*` controllers (import + delegate via `_WidgetRenderCallable`) are
+allowed. The widget render logic already lives solely in `urirun-widgets`; this locks it so a "quick
+dashboard fix" can't regrow a third copy.
 
 ## Lessons from real operator runs (2026-06-24)
 

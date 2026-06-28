@@ -10,6 +10,7 @@ from urirun.host.chat_orchestrator import (
     _inactive_node_urls,
     _timeline_steps_all_ok,
     _chat_insert_routing_preview,
+    _routing_plan_content,
 )
 
 
@@ -242,3 +243,14 @@ def test_routing_preview_attaches_runs_on_by_step():
     assert r["blockedSteps"] == [{"uri": "kvm://ghost/x/query/y", "blockedAt": "target"}]
     assert messages[0]["detail"]["kind"] == "routing-plan"
     assert messages[0]["detail"]["routing"] == r
+
+
+def test_routing_plan_content_rejected_plan_is_not_reported_ok():
+    content = _routing_plan_content({
+        "accepted": False,
+        "stepCount": 1,
+        "violations": [{"kind": "env-domain-invalid"}],
+        "runsOnByStep": {"kvm://host/screen/query/capture": "host"},
+    })
+
+    assert content == "Routing Plan: rejected, 1 URI step(s), env-domain-invalid"
