@@ -94,6 +94,16 @@ def is_ambiguous(prompt: str) -> bool:
 
 
 def is_destructive(prompt: str) -> bool:
+    """LEGACY prompt-word heuristic — flags a ticket for human review in the no-LLM planner
+    (``heuristic_plan_chat_request``) ONLY. It runs before any flow exists, so it cannot read a
+    contract; it is a guess, not the safety decision.
+
+    It is NOT the authoritative destructiveness signal. In the autonomy path that is decided
+    per-step from the route's contract effect (``query`` vs ``command``) and reversibility by the
+    router gate — ``urirun_connector_router.routing.route_is_safe`` / ``effect_of`` (the single
+    source of truth: "deny wins over any declared safe flag"). Do not grow ``DESTRUCTIVE_WORDS`` as
+    if it governed execution. See docs/EXPERIENCE_RETRIEVAL.md (Granice Implementacyjne) and
+    AUTONOMY_ARCHITECTURE.md: the heuristic stays a debug/no-LLM path, not the target model."""
     normalized = normalize_text(prompt)
     words = set(re.findall(r"[a-z0-9]+", normalized))
     return bool(words & DESTRUCTIVE_WORDS) or "namecheap" in words and "dns" in words and "zmien" in words

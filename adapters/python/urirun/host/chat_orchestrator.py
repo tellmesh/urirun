@@ -1773,7 +1773,8 @@ def _chat_ask_general(
         if _gap_resp is not None:
             return _gap_resp
         discovered = _with_local_host_routes(_filter_mesh_for_targets(discovered, selected_targets), selected_targets)
-        registry = mesh.registry_from_routes(discovered.get("routes") or [])
+        _routes = discovered.get("routes") or []
+        registry = mesh.registry_from_routes(_routes)
         from urirun.node.twin_store import durable_memory as _durable_memory  # noqa: PLC0415
         twin_memory = _durable_memory() if execute else None
         planner_nodes = _planner_nodes_for_targets(selected_nodes, selected_targets)
@@ -1787,14 +1788,14 @@ def _chat_ask_general(
             # The flow_store fallback fires even when env_fp is empty — new install, offline node —
             # closing the loop that the episode gate alone left open.
             flow, generator = _try_recall_gate(
-                twin_memory, selected_nodes, prompt, discovered.get("routes") or [], registry)
+                twin_memory, selected_nodes, prompt, _routes, registry)
             if flow is None:
                 retrieval = _retrieve_experience_context(
-                    twin_memory, selected_nodes, prompt, discovered.get("routes") or [])
+                    twin_memory, selected_nodes, prompt, _routes)
                 flow, generator = _make_flow_with_retrieval(
                     mesh, prompt, discovered, planner_nodes, no_llm, environments, retrieval)
             flow = _apply_capture_preferences(flow, twin_memory)
-            selection = _resolve_env_enum_flow(flow, registry, discovered.get("routes") or [], twin_memory)
+            selection = _resolve_env_enum_flow(flow, registry, _routes, twin_memory)
             if not selection.get("ok"):
                 return _chat_ask_general_needs_selection(
                     selection, db, prompt, execute, selected_nodes, selected_targets, deps)
