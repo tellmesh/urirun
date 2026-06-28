@@ -71,6 +71,60 @@ do wykonania dopóki router nie powie, gdzie ma zostać uruchomiony. Każdy krok
 dostaje `runsOn` albo typed block, np. `ROUTING_BLOCKED`, `connector_required`,
 `unreachable_node`, `missing_route`.
 
+## Dwie translacje wokół stabilnego URI
+
+Esencją komunikacji URI jest translacja wokół stabilnego adresu. Ten sam URI
+wiąże dwa ruchy:
+
+1. kontrakt -> kod: `contracts.json`/bindings generują sygnaturę handlera,
+   schema, SDK, MCP/A2A i lintery;
+2. `query`/`command` -> runtime -> JSON: planner, recall albo człowiek wybiera
+   URI, router ustala `runsOn`, adapter wykonuje trasę, a wynik wraca jako
+   przenośna koperta JSON.
+
+Kontrakt jest wspólnym niezmiennikiem dla obu translacji. Ten sam opis trasy
+pilnuje, że wygenerowany handler pasuje do deklaracji i że koperta wracająca
+przez sieć pasuje do oczekiwanego kształtu, efektu i odwracalności.
+
+```text
+                         contracts.json / bindings
+                                  |
+        contract -> code          |          contract -> wire/runtime guard
+  handler signatures, SDK,        v          input/output, effect, inverse,
+  MCP/A2A, JSON Schema      stable URI       examples, golden envelopes
+                         kvm://host/cdp/page/command/navigate
+                                  |
+NL / recall / UI flow ------------+
+                                  |
+                                  v
+                         urirun-connector-router
+                         route exists? safe? runsOn?
+                                  |
+                                  v
+                      adapter: local-function-subprocess
+                                  |
+                                  v
+                         runtime CDP / KVM / node
+                                  |
+                                  v
+                         JSON envelope + artifacts
+```
+
+Przykład ze śladu LinkedIn:
+
+```text
+kvm://host/cdp/page/command/navigate
+```
+
+`command` oznacza side effect i wymaga polityki wykonania; jeśli trasa jest
+odwracalna, krok niesie `inverse`. Natomiast kroki typu
+`kvm://host/cdp/page/query/ready` albo `kvm://host/screen/query/capture` są
+read-only: nie potrzebują inverse, ale nadal mają kontrakt koperty wyjściowej.
+
+Ważne: `authority` w URI (`host`) jest powierzchnią logiczną. Miejsce wykonania
+jest wynikiem routingu. Ten sam URI może `runsOn=host` albo `runsOn=lenovo`,
+ale ta decyzja musi być widoczna w routing planie przed dispatch.
+
 ## URI i target
 
 Kanoniczny kształt operacji:
@@ -246,7 +300,17 @@ Flow odpowiada za:
 Aktualny istotny fix: flow screenshotów normalizuje `ui/query/verify` przed
 `screen/query/capture`. Jeżeli verify tylko informacyjnie sprawdza tekst strony,
 nie może blokować samego screenshotu; capture zostaje reachable, a verify staje
-się optional telemetry.
+się optional telemetry. Normalizacja działa na wspólnym chokepoincie
+`execute_flow`, więc obejmuje też ścieżkę **recall** (odtworzenie zapisanego
+epizodu bez ponownego planowania), nie tylko świeżo zaplanowane flow.
+
+Screen-intent ma dodatkową normalizację środowiskową. Prompt typu
+`zrob zrzut ekranu wszystkich monitorow`/`all monitors` ustawia payload
+`{"scope": "all", "monitor": -1}` na `kvm://.../screen/query/capture`.
+Prompt `monitor 2` ustawia `{"monitor": 2}`. Jeżeli prompt nie wybiera monitora,
+flow może użyć preferencji Digital Twin `screen.capture.default`, zapamiętanej
+po wcześniejszym jawnym wyborze użytkownika. Dzięki temu system nie musi zgadywać
+monitora za każdym razem, ale jawny prompt zawsze wygrywa nad pamięcią.
 
 ## Widgets
 
@@ -298,6 +362,31 @@ Twin daje operatorowi evidence przed wykonaniem. Jeżeli router mówi, że trasa
 jest wykonywalna, a twin preflight mówi, że dana warstwa jest unreachable, to ma
 być typed diagnostic, nie dwa sprzeczne zielone/czerwone raporty.
 
+Środowisko desktopowe jest częścią Twin, a nie efektem ubocznym kliknięcia.
+Przed planowaniem dla hosta/node system powinien mieć:
+
+- `kvm://<target>/display/query/info`: liczba monitorów, connector, pozycja,
+  skala, rozmiar fizyczny i logiczny;
+- `kvm://<target>/env/query/profile`: Wayland/X11, controllability,
+  recommended surfaces i ograniczenia;
+- `kvm://<target>/surface/query/current`: foreground app/page, gdy dostępne;
+- durable preferences, np. `screen.capture.default`.
+
+Dla GNOME/Wayland multi-monitor `scope=all` używa Mutter ScreenCast
+`RecordArea` po bounding-boxie logicznych monitorów, a nie `RecordVirtual`
+(na tej sesji `RecordVirtual` potrafi zwrócić placeholder 1x1). Wynik capture
+niesie `scope=all-monitors`, `monitors`, `bbox`, `width` i `height`, więc UI i
+kolejne kroki widzą, co dokładnie zostało uchwycone.
+
+Docelowa reguła decyzyjna:
+
+1. jeżeli prompt wybiera monitor/zakres, użyj promptu;
+2. jeżeli prompt jest niejednoznaczny i istnieje zgodna preferencja Twin, użyj
+   preferencji;
+3. jeżeli prompt jest niejednoznaczny, monitorów jest więcej niż jeden i brak
+   preferencji, pokaż human task/clarification zamiast wykonywać ukryty wybór;
+4. jeżeli jest jeden monitor, użyj defaultu bez pytania.
+
 ## Registry, MCP i A2A
 
 Runtime registry kompiluje lokalne i entry-pointowe trasy. Te same kontrakty są
@@ -336,7 +425,14 @@ Minimalny zestaw bram architektonicznych:
 - hub tests dla chat/orchestrator/recall gate,
 - widget render single-source w `urirun-widgets`,
 - collision smoke dla paczek real-source,
-- slim import smoke: `import urirun` nie może importować host/node/flow/widgets.
+- slim import smoke: `import urirun` nie może importować host/node/flow/widgets,
+- extraction-boundary ratchet (`scripts/extraction_audit.py` presety + `test_*_extractable`):
+  kernel/warstwa nie rośnie importem W GÓRĘ (znane krawędzie zbaselinowane, nowe = fail),
+- dev-env ratchet (`scripts/dev-install.sh --check`): po każdej ekstrakcji każdy real-source
+  sibling jest zainstalowany i shimy się resolvują — łapie „ModuleNotFound po ekstrakcji",
+- floor drift (`scripts/sync-sibling-floors.sh --check`): `urirun>=X` siblingów == hub VERSION,
+- docs↔kod i duplikacja (`make docs-check`/`dup-check`, semcod `docval`/`redup`): brak martwych
+  referencji w docs ani wzrostu duplikacji ponad baseline.
 
 W hubie domyślne `make test` odpala oba ratchety strukturalne przed cięższymi
 suite'ami:
@@ -359,10 +455,13 @@ Makefile poszczególnych paczek.
 1. `urirun-connector-router` i `urirun-widgets` są **publish-ready** (LICENSE,
    `connector.manifest.json`, `python -m build` + `twine check` zielone 2/2,
    czysty wheel importuje); pozostaje sam **upload na PyPI** przed kolejnym release
-   hub — inaczej świeża instalacja może mieć niespełnialne zależności. Ta sama
-   zależność dotyczy real-source `urirun-flow`/`urirun-runtime`: w środowiskach z
-   zainstalowanymi paczkami system jest zgodny, ryzyko jest tylko przy fresh
-   install bez publikacji.
+   hub — inaczej świeża instalacja może mieć niespełnialne zależności (to osobne
+   paczki-deps, nie bundlowane). `urirun-flow`/`urirun-runtime` są real-source, ale
+   **bundlowane w wheelu `urirun`** (patrz README: wheel zawiera `urirun_flow`,
+   `urirun_runtime`, `urirun_node`, `urirun_connectors_toolkit`), więc `pip install
+   urirun` jest samowystarczalny — fresh-install ich nie dotyczy; ryzyko z tego
+   shimu występuje tylko w dev-monorepo z editable installami bez
+   `pip install -e urirun-flow`.
 2. `urirun-service-chat` istnieje, ale pełny kod operator chat/dashboard nadal
    jest głównie w hub `urirun.host`.
 3. `urirun-node` jest meta-package; real-source split node/mesh jest następny po

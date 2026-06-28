@@ -15,9 +15,10 @@ host. It is grounded in the current analysis snapshots:
 
 The current bottleneck is not duplicated code. It is concentration of too many
 communication responsibilities in `adapters/python/urirun/node/mesh.py`. Flow
-planning and saved-flow execution have been split into
-`adapters/python/urirun/node/flow.py`; the remaining concentration is mostly the
-HTTP handler, CLI dispatch, deploy/enrollment and event streaming.
+planning and saved-flow execution now live in the real-source `urirun-flow`
+package (`urirun-flow/urirun_flow/flow.py`); `adapters/python/urirun/node/flow.py`
+is a re-export shim. The remaining concentration is mostly the HTTP handler, CLI
+dispatch, deploy/enrollment and event streaming.
 
 ## Roles
 
@@ -240,6 +241,13 @@ Mutter.ScreenCast.CreateSession → RecordMonitor(primary connector from
 DisplayConfig.GetCurrentState) → Start → PipeWireStreamAdded(node)
 → gst: pipewiresrc path=N num-buffers=1 ! videoconvert ! pngenc snapshot=true ! filesink
 ```
+
+For multi-monitor capture, `kvm://host/screen/query/capture` accepts
+`{"scope":"all","monitor":-1}`. On GNOME/Wayland this uses `RecordArea` over the
+bounding box of all logical monitors from `DisplayConfig.GetCurrentState`; this avoids
+the `RecordVirtual` 1x1 placeholder observed on the NVIDIA host. The result includes
+`scope=all-monitors`, `monitors`, `bbox`, `width` and `height`. A positive `monitor`
+payload still selects a specific logical monitor through `RecordMonitor`.
 
 It runs via a system python carrying `dbus`+`gi`+`gstreamer` (found by `_mutter_python`; the node
 venv usually lacks them), produces a real full-resolution PNG headless, and **falls through
