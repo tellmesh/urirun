@@ -547,62 +547,82 @@ def format_route_table(items: list[dict], show_decision: bool = False) -> str:
     return "\n".join(out)
 
 
-def main(argv: list[str] | None = None) -> int:
-    argv = list(sys.argv[1:] if argv is None else argv)
+def _add_source_args(p, with_uri: bool = True) -> None:
+    """Attach the common source/registry/policy arguments to a subparser."""
+    if with_uri:
+        p.add_argument("uri")
+    p.add_argument("source", nargs="?", help="project directory, registry, or bindings file")
+    p.add_argument("--registry", default=".urirun/reglib.merged.json")
+    p.add_argument("--policy")
+    p.add_argument("--allow", action="append", default=[], metavar="GLOB", help="allow URIs matching glob (repeatable)")
+    p.add_argument("--deny", action="append", default=[], metavar="GLOB", help="deny URIs matching glob (repeatable)")
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
+    """Build and return the top-level argument parser for the ``urirun`` CLI."""
     parser = argparse.ArgumentParser(prog="urirun")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    def add_source(p, with_uri=True):
-        if with_uri:
-            p.add_argument("uri")
-        p.add_argument("source", nargs="?", help="project directory, registry, or bindings file")
-        p.add_argument("--registry", default=".urirun/reglib.merged.json")
-        p.add_argument("--policy")
-        p.add_argument("--allow", action="append", default=[], metavar="GLOB", help="allow URIs matching glob (repeatable)")
-        p.add_argument("--deny", action="append", default=[], metavar="GLOB", help="deny URIs matching glob (repeatable)")
-
     run_parser = subparsers.add_parser("run", help="Resolve and run a URI through the policy gate")
-    add_source(run_parser)
+    _add_source_args(run_parser)
     run_parser.add_argument("--payload", default="null")
     run_parser.add_argument("--execute", action="store_true", help="Actually run (default is dry-run)")
     run_parser.add_argument("--confirm", action="store_true", help="Approve routes that require confirmation")
 
     check_parser = subparsers.add_parser("check", help="Show the policy decision for a URI without running it")
-    add_source(check_parser)
+    _add_source_args(check_parser)
 
     list_parser = subparsers.add_parser("list", help="List the URIs available in a project or registry")
-    add_source(list_parser, with_uri=False)
+    _add_source_args(list_parser, with_uri=False)
     list_parser.add_argument("--json", action="store_true", help="Emit JSON instead of a table")
 
+    return parser
+
+
+def _cmd_run(args, registry: dict, policy: dict | None) -> int:
+    """Execute the ``run`` subcommand and print the result as JSON."""
+    result = run(
+        args.uri,
+        registry,
+        json.loads(args.payload),
+        mode="execute" if args.execute else "dry-run",
+        policy=policy,
+        confirm=args.confirm,
+    )
+    reglib._emit_json(result, "-")
+    return 0 if result.get("ok") else 1
+
+
+def _cmd_check(args, registry: dict, policy: dict | None) -> int:
+    """Execute the ``check`` subcommand and print the policy decision as JSON."""
+    result = check(args.uri, registry, policy)
+    reglib._emit_json(result, "-")
+    return 0 if result["decision"]["allowed"] else 1
+
+
+def _cmd_list(args, registry: dict, policy: dict | None) -> int:
+    """Execute the ``list`` subcommand, emitting a table or JSON."""
+    items = list_routes(registry, policy)
+    if args.json:
+        reglib._emit_json(items, "-")
+    else:
+        print(format_route_table(items, show_decision=policy is not None))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    parser = _build_arg_parser()
     args = parser.parse_args(argv)
     registry = load_registry_arg(args.source or args.registry)
     policy = build_policy(getattr(args, "policy", None), args.allow, args.deny)
 
     if args.command == "run":
-        result = run(
-            args.uri,
-            registry,
-            json.loads(args.payload),
-            mode="execute" if args.execute else "dry-run",
-            policy=policy,
-            confirm=args.confirm,
-        )
-        reglib._emit_json(result, "-")
-        return 0 if result.get("ok") else 1
-
+        return _cmd_run(args, registry, policy)
     if args.command == "check":
-        result = check(args.uri, registry, policy)
-        reglib._emit_json(result, "-")
-        return 0 if result["decision"]["allowed"] else 1
-
+        return _cmd_check(args, registry, policy)
     if args.command == "list":
-        items = list_routes(registry, policy)
-        if args.json:
-            reglib._emit_json(items, "-")
-        else:
-            print(format_route_table(items, show_decision=policy is not None))
-        return 0
-
+        return _cmd_list(args, registry, policy)
     return 1
 
 
