@@ -83,13 +83,7 @@ class ChatDeps:
     sync_documents_fn: Callable  # replaces sync_documents_to_node(project, db, config, payload, node_urls=..., token=..., identity=...)
 
 
-def chat_message(role: str, content: str, *, detail: dict | None = None, attachments: list[dict] | None = None) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "detail": detail or {},
-        "attachments": attachments or [],
-    }
+from ._chat_message import chat_message  # noqa: E402 – re-exported for callers
 
 
 def compact_chat_result(result: dict, payload: dict) -> dict:

@@ -17,16 +17,7 @@ from .scanner_bridge import (
     scanner_flow_result,
     torch_enabled_from_prompt,
 )
-
-
-def chat_message(role: str, content: str, *, detail: dict | None = None,
-                 attachments: list[dict] | None = None) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "detail": detail or {},
-        "attachments": attachments or [],
-    }
+from ._chat_message import chat_message
 
 
 def chat_ask_phone_scanner(

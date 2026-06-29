@@ -20,16 +20,7 @@ from .document_sync import (
 )
 from .screen_capability import selected_nodes_from_targets
 from .urifix_bridge import try_urifix_repair
-
-
-def chat_message(role: str, content: str, *, detail: dict | None = None,
-                 attachments: list[dict] | None = None) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "detail": detail or {},
-        "attachments": attachments or [],
-    }
+from ._chat_message import chat_message
 
 
 def is_document_sync_prompt(prompt: str, selected_nodes: list[str] | None = None,

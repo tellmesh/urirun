@@ -377,13 +377,7 @@ def _standalone_service_svg(project: str, query: dict[str, list[str]]) -> str:
     return render_svg(view, width=width, height=height)
 
 
-def _chat_message(role: str, content: str, *, detail: dict | None = None, attachments: list[dict] | None = None) -> dict:
-    return {
-        "role": role,
-        "content": content,
-        "detail": detail or {},
-        "attachments": attachments or [],
-    }
+from ._chat_message import chat_message as _chat_message
 
 
 def _add_chat_message(db: str | None, message: dict) -> dict | None:
