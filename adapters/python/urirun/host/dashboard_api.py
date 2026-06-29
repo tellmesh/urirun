@@ -293,18 +293,20 @@ def chat_delete_messages(db: "str | None", payload: dict) -> dict:
     return {"ok": True, "deleted": deleted, "ids": ids}
 
 
-def task_create(project: str, payload: dict) -> dict:
-    from typing import Any as _Any  # noqa: PLC0415
-    planfile_adapter = _planfile_adapter()
-    payload = payload if isinstance(payload, dict) else {}
+def _task_fields_from_payload(payload: dict) -> tuple[str, str, str]:
+    """Extract and normalise (name, prompt, description) from a task-create payload."""
     name = str(payload.get("name") or payload.get("title") or "").strip()
     prompt = str(payload.get("prompt") or "").strip()
     description = str(payload.get("description") or "").strip()
     if not name and prompt:
         name = prompt.splitlines()[0].strip()[:120]
         description = description or prompt
-    if not name:
-        return {"ok": False, "error": "ticket name (or chat prompt) is required"}
+    return name, prompt, description
+
+
+def _task_data_dict(name: str, description: str, payload: dict) -> dict:
+    """Build the planfile data dict from extracted task fields."""
+    from typing import Any as _Any  # noqa: PLC0415
     data: dict[str, _Any] = {"name": name, "source_tool": payload.get("source_tool") or "urirun-host-dashboard"}
     if description:
         data["description"] = description
@@ -312,5 +314,14 @@ def task_create(project: str, payload: dict) -> dict:
         value = payload.get(key)
         if value not in (None, ""):
             data[key] = value
-    ticket = planfile_adapter.create_ticket(project, data)
+    return data
+
+
+def task_create(project: str, payload: dict) -> dict:
+    payload = payload if isinstance(payload, dict) else {}
+    name, _prompt, description = _task_fields_from_payload(payload)
+    if not name:
+        return {"ok": False, "error": "ticket name (or chat prompt) is required"}
+    data = _task_data_dict(name, description, payload)
+    ticket = _planfile_adapter().create_ticket(project, data)
     return {"ok": True, "ticket": ticket}

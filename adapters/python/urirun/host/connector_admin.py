@@ -200,6 +200,46 @@ def _connector_install_node(node: str, payload: dict, *, config: "str | None",
             "error": None if ok else (res.get("error") or "ensure_scheme failed")}
 
 
+def _parse_connector_host_args(payload: dict) -> tuple[str, str]:
+    """Extract (source, spec) from a host-install payload."""
+    source = str(payload.get("source") or "pip").strip().lower()
+    spec = str(payload.get("spec") or "").strip()
+    return source, spec
+
+
+def _pip_not_installable_error(source: str, spec: str) -> dict:
+    """Return an error dict for sources that are not host pip-installable."""
+    hints = {
+        "npm": "npm install -g " + spec + "   # expose via a urirun node argv connector",
+        "docker": "docker pull " + spec + "   # run via a docker-exec / docker-run adapter route",
+        "http": "register " + spec + " as an http:// connector route (no host install needed)",
+    }
+    return {"ok": False, "source": source, "spec": spec,
+            "error": "source '" + source + "' is not host pip-installable",
+            "hint": hints.get(source, "unsupported source")}
+
+
+def _output_tail(text: str) -> str:
+    return "\n".join((text or "").strip().splitlines()[-12:])
+
+
+def _run_connector_pip_install(source: str, spec: str, cmd: list) -> dict:
+    """Run pip install and return the result dict."""
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=CONNECTOR_INSTALL_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "source": source, "spec": spec, "command": " ".join(cmd),
+                "error": "pip install timed out after " + str(CONNECTOR_INSTALL_TIMEOUT) + "s"}
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "source": source, "spec": spec, "command": " ".join(cmd), "error": str(exc)}
+    ok = proc.returncode == 0
+    schemes = refresh_connector_schemes() if ok else []
+    return {"ok": ok, "source": source, "spec": spec, "command": " ".join(cmd),
+            "returncode": proc.returncode, "schemes": schemes,
+            "stdout": _output_tail(proc.stdout), "stderr": _output_tail(proc.stderr),
+            "error": None if ok else (_output_tail(proc.stderr) or "pip install failed")}
+
+
 def connector_install(project: str, payload: dict, *, config: "str | None" = None,
                       node_urls: "list[str] | None" = None, token: "str | None" = None,
                       identity: "str | None" = None,
@@ -217,35 +257,11 @@ def connector_install(project: str, payload: dict, *, config: "str | None" = Non
             node_token_for=node_token_for,
             node_client=node_client,
         )
-    source = str(payload.get("source") or "pip").strip().lower()
-    spec = str(payload.get("spec") or "").strip()
+    source, spec = _parse_connector_host_args(payload)
     if not spec:
         return {"ok": False, "error": "spec is required (package, repo, path or image)"}
     pip_tail = connector_pip_tail(source, spec)
     if pip_tail is None:
-        hints = {
-            "npm": "npm install -g " + spec + "   # expose via a urirun node argv connector",
-            "docker": "docker pull " + spec + "   # run via a docker-exec / docker-run adapter route",
-            "http": "register " + spec + " as an http:// connector route (no host install needed)",
-        }
-        return {"ok": False, "source": source, "spec": spec,
-                "error": "source '" + source + "' is not host pip-installable",
-                "hint": hints.get(source, "unsupported source")}
+        return _pip_not_installable_error(source, spec)
     cmd = [sys.executable, "-m", "pip", "install", *pip_tail]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=CONNECTOR_INSTALL_TIMEOUT)
-    except subprocess.TimeoutExpired:
-        return {"ok": False, "source": source, "spec": spec, "command": " ".join(cmd),
-                "error": "pip install timed out after " + str(CONNECTOR_INSTALL_TIMEOUT) + "s"}
-    except Exception as exc:  # noqa: BLE001
-        return {"ok": False, "source": source, "spec": spec, "command": " ".join(cmd), "error": str(exc)}
-    ok = proc.returncode == 0
-    schemes = refresh_connector_schemes() if ok else []
-
-    def _tail(text: str) -> str:
-        return "\n".join((text or "").strip().splitlines()[-12:])
-
-    return {"ok": ok, "source": source, "spec": spec, "command": " ".join(cmd),
-            "returncode": proc.returncode, "schemes": schemes,
-            "stdout": _tail(proc.stdout), "stderr": _tail(proc.stderr),
-            "error": None if ok else (_tail(proc.stderr) or "pip install failed")}
+    return _run_connector_pip_install(source, spec, cmd)

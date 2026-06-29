@@ -123,22 +123,33 @@ def host_only_with_local_kvm(
     return bool(local_scheme_installed("kvm://host/screen/query/capture"))
 
 
-def route_in_selected_targets(route: dict, selected_nodes: list[str], selected_targets: list[str]) -> bool:
-    if not selected_nodes and not selected_targets:
-        return True
-    route_node = str(route.get("node") or "")
-    uri = str(route.get("uri") or "")
-    target_names = set(selected_nodes)
+def _expand_target_names(selected_nodes: list[str], selected_targets: list[str]) -> set[str]:
+    """Build the set of node names to match against from the nodes + targets lists."""
+    target_names: set[str] = set(selected_nodes)
     for target in selected_targets:
         if target.startswith("node:"):
             target_names.add(target.split(":", 1)[1])
         elif target == "host":
             target_names.add("host")
+    return target_names
+
+
+def _route_matches_targets(route_node: str, uri: str, target_names: set[str]) -> bool:
+    """Return True when the route's node/URI string matches any of the target names."""
     if route_node and route_node in target_names:
         return True
     if "host" in target_names and "://host/" in uri:
         return True
     return any(f"://{name}/" in uri for name in target_names if name)
+
+
+def route_in_selected_targets(route: dict, selected_nodes: list[str], selected_targets: list[str]) -> bool:
+    if not selected_nodes and not selected_targets:
+        return True
+    route_node = str(route.get("node") or "")
+    uri = str(route.get("uri") or "")
+    target_names = _expand_target_names(selected_nodes, selected_targets)
+    return _route_matches_targets(route_node, uri, target_names)
 
 
 def has_screen_capture_route(routes: list[dict], selected_nodes: list[str], selected_targets: list[str]) -> bool:
