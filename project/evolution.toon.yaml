@@ -1,5 +1,5 @@
-# code2llm/evolution | 2495 func | 127f | 2026-06-29
-# generated in 0.02s
+# code2llm/evolution | 2511 func | 128f | 2026-06-29
+# generated in 0.01s
 
 NEXT[3] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/dashboard.js
@@ -7,18 +7,18 @@ NEXT[3] (ranked by impact):
       EFFORT: ~4h  IMPACT: 41370
 
   [2] !! SPLIT           adapters/python/urirun_runtime/v2.py
-      WHY: 2033L, 2 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 28462
+      WHY: 2054L, 2 classes, max CC=13
+      EFFORT: ~4h  IMPACT: 26702
 
   [3] !! SPLIT           adapters/python/urirun/host/host_dashboard.py
-      WHY: 1891L, 0 classes, max CC=14
-      EFFORT: ~4h  IMPACT: 26474
+      WHY: 1885L, 0 classes, max CC=14
+      EFFORT: ~4h  IMPACT: 26390
 
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 436 import paths
-  ⚠ Splitting adapters/python/urirun_runtime/v2.py may break 120 import paths
-  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 101 import paths
+  ⚠ Splitting adapters/python/urirun_runtime/v2.py may break 124 import paths
+  ⚠ Splitting adapters/python/urirun/host/host_dashboard.py may break 100 import paths
 
 METRICS-TARGET:
   CC̄:          4.4 → ≤3.1
