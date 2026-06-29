@@ -74,6 +74,17 @@ def _post(url: str, body: dict, timeout: float):
         return json.loads(err.read().decode("utf-8") or "{}"), err.code
 
 
+def _schema_error(err: Exception) -> dict | None:
+    if isinstance(err, (jsonschema_exceptions.ValidationError, jsonschema_exceptions.SchemaError)):
+        return {"type": "schema", "message": getattr(err, "message", str(err))}
+    # In long-lived/test processes jsonschema may be loaded through different
+    # import paths; keep transport behavior stable by recognizing validation
+    # exceptions by shape rather than leaking a Python exception.
+    if getattr(err, "validator", None) is not None or getattr(err, "schema", None) is not None:
+        return {"type": "schema", "message": getattr(err, "message", str(err))}
+    return None
+
+
 def call(uri: str, payload: dict | None = None, registry: dict | None = None, mode: str = "execute",
          timeout: float = 30.0, validate: bool = True) -> dict:
     descriptor = reglib.parse_uri(uri)
@@ -93,9 +104,12 @@ def call(uri: str, payload: dict | None = None, registry: dict | None = None, mo
     if validate and route_entry is not None:
         try:
             v2.validate_input(route_entry, descriptor, translation, payload)
-        except (jsonschema_exceptions.ValidationError, jsonschema_exceptions.SchemaError) as err:
+        except Exception as err:  # noqa: BLE001 - schema aliases can differ across import paths
+            schema_error = _schema_error(err)
+            if schema_error is None:
+                raise
             envelope["ok"] = False
-            envelope["error"] = {"type": "schema", "message": err.message}
+            envelope["error"] = schema_error
             return envelope
 
     url = f"{service_base(translation['target'], descriptor['normalized'])}/run"
