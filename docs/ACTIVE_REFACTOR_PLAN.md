@@ -4,7 +4,9 @@
 📖 **Dokumentacja urirun:** [← README](../README.md) · [Architektura](ARCHITECTURE.md) · [Autonomia](AUTONOMY_ARCHITECTURE.md) · [Komponenty](COMPONENTS.md) · [URI Objects](URI_OBJECTS.md) · [Łączenie node](NODE_CONNECTIONS.md) · [Dashboard & chat](HOST_DASHBOARD_CHAT.md) · [Host↔Node](HOST_NODE_COMMUNICATION.md) · [Sekrety](SECRETS.md) · [Archiwum dok.](DOCUMENT_ARCHIVE.md) · [Decision Loop](DECISION_LOOP.md) · [Roadmap](REFACTOR_ROADMAP.md) · [Podział paczek](URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
 
-Status: 2026-06-28
+Status: 2026-06-29
+
+Latest operational snapshot: [Refactor Status - 2026-06-29](REFACTOR_STATUS_2026-06-29.md).
 
 This is the active execution plan after the `urirun-contract` and
 `urirun-connector-router` extractions. Older roadmap sections remain useful as
@@ -105,6 +107,13 @@ Checked against the repo on 2026-06-28:
   (`_apply_host_default_when_no_node_in_prompt`, `_prompt_names_remote` and the
   remote-keyword heuristics) stays in chat, which owns intent — it is not pure
   routing and would drag Polish NL keywords into a leaf routing connector.
+- Target/node preflight diagnosis is now a router connector route:
+  `router://host/target/query/diagnose` / `diagnose_targets` classifies explicit
+  node selections into `missing-node-url`, `uri-process-unreachable` and `ok`
+  with per-layer evidence and typed remediation (`humanAction`, `command`,
+  `errorType`). `chat_orchestrator` consumes that diagnosis to render
+  human-task/beep envelopes; an AST regression forbids returning to the old
+  local `reachable_names` offline kernel.
 - Twin flow preview no longer lets the global `bestSurface=cdp` overwrite
   route-specific read-only desktop surfaces: `window/query/list` is annotated as
   `surface=window`, and `screen/query/capture` as `surface=screen`. The
@@ -166,6 +175,11 @@ Everything else moves to an owner package:
    twin or connector implementations at top level.
 5. Examples are acceptance tests. Every `examples/*` flow must run through the
    same `urirun-contract-*` and `urirun-connector-*` path as production.
+6. The no-LLM path is a bounded fallback, not the autonomy path. Do not raise
+   `53/108` by growing lexical prompt heuristics; new open-ended intent
+   coverage belongs in LLM + action_space + router/twin gates. The heuristic
+   word/regex budget is covered by
+   `urirun/adapters/python/tests/test_no_llm_heuristic_budget.py`.
 
 ## Phase 0 - Stabilize Current Extraction (Closed)
 
@@ -370,7 +384,12 @@ Acceptance:
 
 ## Immediate Next Tasks
 
-1. **Move target/capture decision helpers out of host chat.** The latest codemap
+1. **Move target/node diagnosis out of host chat first.** First slice closed:
+   router owns `router://host/target/query/diagnose`, including typed
+   remediation facts; chat consumes it for missing-node / unreachable-node
+   human tasks. Remaining work is to move auth/key, registry-route and richer
+   version-skew checks behind the same typed route.
+2. **Then move target/capture decision helpers out of host chat.** The latest codemap
    still has `_chat_ask_general` as the top fan-out hotspot, and the monitor
    bug showed why: chat currently sequences LLM planning, recall, twin
    inventory, env-enum resolution, capture preferences, routing preview and
@@ -381,13 +400,13 @@ Acceptance:
    - fingerprint preferences and environment memory: `urirun_twin`.
    `chat_orchestrator` should keep conversation state, typed UI blocks and
    persistence only.
-2. **Dashboard JS split by view/controller.** `dashboard.js` is now the largest
+3. **Dashboard JS split by view/controller.** `dashboard.js` is now the largest
    single frontend owner and includes routing, discovery, artifacts, chat,
    scanner stream rendering, widget loading and human-task sound handling.
    Extract by view modules behind the existing API surface before adding more UI
    logic. Start with chat rendering/actions and artifact rendering because they
    already have clear function groups.
-3. **Scanner single-source burn-down.** `urirun_scanner/*` in the hub and
+4. **Scanner single-source burn-down.** `urirun_scanner/*` in the hub and
    `urirun-connector-scanner/urirun_connector_scanner/*` are both full
    implementations today. The package dependency cycle blocker is now removed:
    `urirun-connector-scanner` no longer declares a dependency on the hub
@@ -395,41 +414,41 @@ Acceptance:
    make the scanner package available wherever `urirun[host]` runs, replace hub
    `urirun_scanner` fallback bodies with thin shims to
    `urirun_connector_scanner`, and add a scanner single-source gate.
-4. Publish `urirun-connector-router` and `urirun-widgets` before the next hub
+5. Publish `urirun-connector-router` and `urirun-widgets` before the next hub
    release, or the fresh-install path remains unsatisfiable for base routing and
    `urirun[host]`.
-5. Finish the UI side of typed environment selection. The kernel already emits
+6. Finish the UI side of typed environment selection. The kernel already emits
    `needs-selection` from env-enum resolution; chat/dashboard still need a
    first-class clickable card that writes the selection/preference and resumes
    the flow without requiring a manual payload edit.
-6. Extend `accept_plan` beyond reachability/effect mismatch: required inputs,
+7. Extend `accept_plan` beyond reachability/effect mismatch: required inputs,
    destructive policy, human-gated tasks and contract envelope conformance should
    become plan-level `violations` before execution.
-7. Replace the no-LLM `task_planner.is_destructive` ticket heuristic with route
+8. Replace the no-LLM `task_planner.is_destructive` ticket heuristic with route
    contract/effect evidence where a flow/action space is available. Until then,
    keep it clearly scoped to ticket triage only; do not treat it as an autonomy
    safety gate.
-8. Add a replay regression for the exact recalled LinkedIn screenshot episode:
+9. Add a replay regression for the exact recalled LinkedIn screenshot episode:
    recall-generated flow, required verify before capture, execute path keeps the
    capture reachable.
-9. Move remaining pure flow tests out of `urirun/adapters/python/tests` and into
+10. Move remaining pure flow tests out of `urirun/adapters/python/tests` and into
    `urirun-flow/tests`, keeping host/dashboard-specific tests in the hub.
-10. Continue reducing `urirun-flow` top-level imports of hub runtime modules:
+11. Continue reducing `urirun-flow` top-level imports of hub runtime modules:
    remaining heavy edges are `flow.py`, `flow_planner.py`, `diagnostics.py`
    optional URI registration, and `recovery.py` error taxonomy.
-11. Convert `urirun-runtime` from meta-package to real-source package only after
+12. Convert `urirun-runtime` from meta-package to real-source package only after
    `urirun-flow` is stable; runtime is green but broader and should move second.
-12. Convert `urirun-cdp` from meta-package to real-source package or fold it into
+13. Convert `urirun-cdp` from meta-package to real-source package or fold it into
    `urirun-connector-webnode`/browser-control if the CDP surface is only used
    by browser connectors.
-13. Wire `urirun-contract` JSON Schema validation into connector/example CI,
+14. Wire `urirun-contract` JSON Schema validation into connector/example CI,
    using the KVM xlang proof as the reference shape.
-14. Extract `urirun-node` real source, excluding `node_cli` and `task_cli` host
+15. Extract `urirun-node` real source, excluding `node_cli` and `task_cli` host
    compatibility shims until host services own those commands.
-15. Audit `project/map.toon.yaml` for remaining large owners inside `urirun`:
+16. Audit `project/map.toon.yaml` for remaining large owners inside `urirun`:
    `host/chat_orchestrator.py`, `host/dashboard.js`, `host/host_dashboard.py`,
    `host/object_registry.py`, `urirun_node/server.py`.
-16. Create a top-level smoke suite for host/node/local/remote scenarios:
+17. Create a top-level smoke suite for host/node/local/remote scenarios:
    host-only, explicit node, inferred node, stale URL target, route.node override,
    missing route, unreachable node, unsafe command.
 
