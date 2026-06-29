@@ -1,12 +1,12 @@
-# redup/duplication | 14 groups | 132f 14076L | 2026-06-29
+# redup/duplication | 14 groups | 132f 14166L | 2026-06-29
 
 SUMMARY:
   files_scanned: 132
-  total_lines:   14076
+  total_lines:   14166
   dup_groups:    14
   dup_fragments: 31
   saved_lines:   115
-  scan_ms:       31730
+  scan_ms:       47809
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=63L  groups=4  frags=8  (0.4%)
@@ -36,7 +36,7 @@ DUPLICATES[14] (ranked by impact):
       host/dashboard_api.py:150-157  (_api_checks)
       host/dashboard_api.py:160-167  (_api_logs)
   [2457e38796cc6919]   STRU  chat_message  L=7 N=2 saved=7 sim=1.00
-      host/chat_orchestrator.py:76-82  (chat_message)
+      host/chat_orchestrator.py:77-83  (chat_message)
       host/host_dashboard.py:372-378  (_chat_message)
   [b7534632e49155f1]   STRU  _host_db  L=3 N=3 saved=6 sim=1.00
       host/dashboard_api.py:29-31  (_host_db)

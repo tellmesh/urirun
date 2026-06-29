@@ -1,30 +1,34 @@
-# code2llm/evolution | 2375 func | 118f | 2026-06-29
-# generated in 0.01s
+# code2llm/evolution | 2401 func | 118f | 2026-06-29
+# generated in 0.02s
 
-NEXT[3] (ranked by impact):
+NEXT[4] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/dashboard.js
       WHY: 2955L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 41370
 
   [2] !! SPLIT           adapters/python/urirun/host/chat_orchestrator.py
-      WHY: 1983L, 1 classes, max CC=15
-      EFFORT: ~4h  IMPACT: 29745
+      WHY: 2039L, 1 classes, max CC=15
+      EFFORT: ~4h  IMPACT: 30585
 
   [3] !! SPLIT           adapters/python/urirun_runtime/v2.py
       WHY: 2033L, 2 classes, max CC=14
       EFFORT: ~4h  IMPACT: 28462
 
+  [4] !  SPLIT-FUNC      _chat_ask_general  CC=15  fan=35
+      WHY: CC=15 exceeds 15
+      EFFORT: ~1h  IMPACT: 525
+
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 436 import paths
+  ⚠ Splitting adapters/python/urirun/host/chat_orchestrator.py may break 73 import paths
   ⚠ Splitting adapters/python/urirun_runtime/v2.py may break 120 import paths
-  ⚠ Splitting adapters/python/urirun/host/chat_orchestrator.py may break 72 import paths
 
 METRICS-TARGET:
   CC̄:          4.5 → ≤3.1
   max-CC:      15 → ≤7
   god-modules: 23 → 0
-  high-CC(≥15): 1 → ≤0
+  high-CC(≥15): 2 → ≤1
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

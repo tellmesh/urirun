@@ -226,7 +226,7 @@ def test_make_dispatch_uri_not_found_attempts_inprocess(monkeypatch):
     fake_disc = types.ModuleType("urirun.runtime.discovery")
     fake_disc.registry_for_uri = lambda uri, ep: {}
     import sys
-    sys.modules.setdefault("urirun.runtime.discovery", fake_disc)
+    monkeypatch.setitem(sys.modules, "urirun.runtime.discovery", fake_disc)
     fn = make_dispatch_uri({}, "execute")
     r = fn("twin://host/unknown/x", {})
     # result is whatever the last fallback returns (not_found pass-through)
@@ -287,6 +287,36 @@ def test_thin_driver_resolves_step_payload_from_prior_result(monkeypatch):
     send_call = next((c for c in dispatch_log if "send" in c["uri"]), None)
     assert send_call is not None
     assert send_call["payload"].get("to") == "alice@x.com"
+
+
+def test_thin_driver_dry_run_marks_unresolved_dataflow_without_dispatching_consumer():
+    from urirun.node.flow import _thin_driver, FlowEnvelope
+    calls = []
+
+    def _dispatch(uri, payload=None):
+        calls.append({"uri": uri, "payload": payload})
+        if uri.endswith("/window/query/list"):
+            return {"ok": True, "next": {"kind": "continue"}, "result": {"dryRun": True}}
+        return {"ok": True, "next": {"kind": "continue"}}
+
+    steps = [
+        {"id": "list_windows", "uri": "kvm://host/window/query/list", "payload": {"app": "chrome"}},
+        {
+            "id": "capture",
+            "uri": "kvm://host/screen/query/capture",
+            "payload": {"monitor_from": "list_windows.result.value.selected.monitor"},
+            "depends_on": ["list_windows"],
+        },
+    ]
+
+    result = _thin_driver(steps, FlowEnvelope(goal="preview"), _dispatch, registry={}, execute=False)
+
+    assert result["ok"] is True
+    assert calls == [{"uri": "kvm://host/window/query/list", "payload": {"app": "chrome"}}]
+    assert result["timeline"][1]["id"] == "capture"
+    assert result["timeline"][1]["dryRun"] is True
+    assert result["timeline"][1]["unresolved"] is True
+    assert result["results"]["capture"]["unresolved"] is True
 
 
 def test_chrome_profile_root_trims_default_subdir():

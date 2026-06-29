@@ -278,6 +278,26 @@ def test_make_local_dispatch_uri_delegates_to_make_dispatch(monkeypatch):
     assert calls[0]["has_fallback"] is True
 
 
+def test_make_local_dispatch_uri_local_first_preserves_dry_run_mode(monkeypatch):
+    from urirun.host import dispatch as D
+    from urirun.runtime import v2_service
+    calls = []
+
+    monkeypatch.setattr(D, "_local_scheme_installed", lambda uri: True)
+    monkeypatch.setattr(D, "inprocess_fallback", lambda uri, payload=None, *, mode="execute": (
+        calls.append({"uri": uri, "mode": mode}) or {"ok": True, "mode": mode}
+    ))
+    monkeypatch.setattr(v2_service, "make_dispatch", lambda registry, mode, fallback=None: (
+        lambda uri, payload=None: {"ok": False, "error": {"category": "NOT_FOUND"}}
+    ))
+
+    dispatch = D.make_local_dispatch_uri({}, "dry-run", local_first=True)
+    result = dispatch("kvm://host/screen/query/capture", {})
+
+    assert result == {"ok": True, "mode": "dry-run"}
+    assert calls == [{"uri": "kvm://host/screen/query/capture", "mode": "dry-run"}]
+
+
 def test_inprocess_fallback_reaches_twin_preflight():
     """Full end-to-end: make_local_dispatch_uri with an empty mesh registry must route
     twin://host/flow/command/preflight through inprocess_fallback to the registered

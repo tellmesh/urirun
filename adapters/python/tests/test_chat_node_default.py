@@ -171,6 +171,30 @@ class TestHostDefault(unittest.TestCase):
         system = [m for m in messages if m.get("role") == "system"][-1]
         self.assertIs(system.get("detail", {}).get("noLlm"), True)
 
+    def test_planner_environment_fetch_runs_for_host_preview(self):
+        captured = {}
+
+        class FakeMesh:
+            def fetch_planner_environments(self, nodes, registry, discovered, **kwargs):
+                captured["nodes"] = nodes
+                captured["memory"] = kwargs.get("memory")
+                return [{"node": "host", "windows": []}]
+
+        envs = co._fetch_planner_environments_for_nodes(
+            FakeMesh(),
+            ["host"],
+            {"routes": []},
+            {
+                "nodes": [],
+                "routes": [{"uri": "kvm://host/window/query/list", "node": "host"}],
+            },
+            memory=TwinMemory(),
+        )
+
+        self.assertEqual(envs, [{"node": "host", "windows": []}])
+        self.assertEqual(captured["nodes"], ["host"])
+        self.assertIsInstance(captured["memory"], TwinMemory)
+
     def test_capture_preference_applies_only_to_ambiguous_capture(self):
         mem = TwinMemory()
         fp = mem.remember("host", {"platform": "linux", "display": {"width": 1, "height": 1}})["fingerprint"]
@@ -222,6 +246,37 @@ class TestHostDefault(unittest.TestCase):
         self.assertFalse(selection["ok"])
         self.assertEqual(selection["kind"], "needs-selection")
         self.assertEqual(selection["needsSelection"]["parameter"], "monitor")
+
+    def test_env_domain_invalid_is_reported_as_block_not_empty_selection(self):
+        messages = []
+        deps = co.ChatDeps(
+            host_db_fn=MagicMock(),
+            mesh_fn=MagicMock(),
+            host_config_fn=MagicMock(return_value={}),
+            node_alias_map_fn=MagicMock(return_value=ALIAS),
+            add_chat_message_fn=lambda db, msg: messages.append(msg),
+            page_action_enqueue_fn=MagicMock(),
+            ensure_phone_scanner_fn=MagicMock(),
+            sync_documents_fn=MagicMock(),
+        )
+        selection = {
+            "ok": False,
+            "kind": "env-domain-invalid",
+            "violation": {"value": 99, "allowed": [1, 2, 3], "parameter": "monitor"},
+            "next": {"kind": "replan", "reason": "env-domain-invalid"},
+            "flow": {"steps": []},
+        }
+
+        result = co._chat_ask_general_env_block(
+            selection, "db", "zrob zrzut monitora 99", False, [], ["host"], deps,
+            no_llm=True, generator={"provider": "heuristic"},
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["kind"], "env-domain-invalid")
+        self.assertNotIn("needsSelection", result)
+        self.assertEqual(result["next"]["kind"], "replan")
+        self.assertEqual(messages[-1]["attachments"][0]["kind"], "env-domain-invalid")
 
     def test_chat_emits_routing_plan_before_execute(self):
         messages = []

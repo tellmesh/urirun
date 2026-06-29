@@ -7,10 +7,10 @@
 - **Primary Language**: python
 - **Languages**: python: 209, json: 15, shell: 15, yaml: 5, javascript: 5
 - **Analysis Mode**: static
-- **Total Functions**: 2421
+- **Total Functions**: 2447
 - **Total Classes**: 59
 - **Modules**: 280
-- **Entry Points**: 1034
+- **Entry Points**: 1033
 
 ## Architecture by Module
 
@@ -32,7 +32,7 @@
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 72
+- **Functions**: 73
 - **Classes**: 1
 - **File**: `chat_orchestrator.py`
 
@@ -93,14 +93,14 @@
 - **Functions**: 30
 - **File**: `discovery.py`
 
+### adapters.python.urirun.host.task_cli
+- **Functions**: 29
+- **File**: `task_cli.py`
+
 ### adapters.python.urirun_twin.reversible
 - **Functions**: 28
 - **Classes**: 8
 - **File**: `reversible.py`
-
-### adapters.python.urirun.host.dashboard_api
-- **Functions**: 27
-- **File**: `dashboard_api.py`
 
 ## Key Entry Points
 
@@ -124,9 +124,6 @@ Main execution flows into the system:
 ### adapters.python.urirun_node.server.NodeHandler._stream_events
 - **Calls**: self.path.partition, adapters.python.urirun_node.server._parse_sse_query, adapters.python.urirun_node.server._sse_initial_cursor, c.hub.subscribe, adapters.python.urirun_node.server.send_json, self.send_response, self.send_header, self.send_header
 
-### adapters.python.urirun_runtime.v2_adopt.main
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, py.add_argument, py.add_argument, sub.add_parser, npm.add_argument, npm.add_argument
-
 ### scripts.transport_swap_proof.main
 - **Calls**: CallableTransport, subprocess.Popen, CallableTransport, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.transport_swap_proof.timed, scripts.transport_swap_proof.timed
 
@@ -146,15 +143,15 @@ Main execution flows into the system:
 ``--all`` upgrades every installed connector; ``--check`` reports wha
 - **Calls**: getattr, getattr, getattr, getattr, adapters.python.urirun_runtime.v2._resolve_pip_targets, adapters.python.urirun_runtime.v2._pip_command, scripts.test_pypi_install.print, adapters.python.urirun_runtime.v2.connector_health
 
+### adapters.python.urirun.Connector._build_cli_parser
+> Build the connector argparse parser (one subcommand per route).
+- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
+
 ### adapters.python.urirun_runtime.worker._handler_worker_main
 > Warm runner for ``local-function`` handlers — the pooled twin of
 ``python -m urirun.exec``. Reads ``{"ref": "module:export", "payload": {...}}``
 line 
 - **Calls**: sys.stdout.write, sys.stdout.flush, cache.get, line.strip, json.loads, sys.stdout.flush, ref.partition, getattr
-
-### adapters.python.urirun.Connector._build_cli_parser
-> Build the connector argparse parser (one subcommand per route).
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, sub.add_parser, sub.add_parser, self._add_route_arguments, None.get, None.split
 
 ### adapters.python.urirun_node.client.NodeClient.resolve_refs
 > Chain steps: replace "$ref:<i>.<field.path>" with an earlier step's output.
@@ -162,12 +159,6 @@ line
 
 ### adapters.python.urirun.connectors.connect_catalog._cmd_show
 - **Calls**: adapters.python.urirun.connectors.connect_catalog.fetch_connector, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, document.get, adapters.python.urirun.connectors.connect_catalog._emit_json
-
-### adapters.python.urirun_runtime.v2_grpc.main
-- **Calls**: argparse.ArgumentParser, parser.add_subparsers, sub.add_parser, s.add_argument, s.add_argument, s.add_argument, s.add_argument, s.add_argument
-
-### adapters.python.urirun_runtime.worker._worker_main
-- **Calls**: cli_ref.partition, getattr, sys.stdout.write, sys.stdout.flush, importlib.import_module, line.strip, json.loads, io.StringIO
 
 ### adapters.python.urirun_runtime.v2.run_local_function_subprocess
 > Run a ``local-function`` handler in a fresh process via the shared
@@ -224,6 +215,24 @@ Result shape::
 node; with --stream, start it async and print the node's live progres
 - **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, NodeClient, client.concretize, float, adapters.python.urirun.host.node_cli._maybe_ensure_scheme, adapters.python.urirun.host.node_cli._run_streamed, getattr
 
+### adapters.python.urirun.host.contracts.file_transfer_verification
+> Return the standard verification contract for file-copy style URI flows.
+
+`uploaded` means the remote write acknowledged the file. `verified` means th
+- **Calls**: adapters.python.urirun.host.dashboard.list, set, set, adapters.python.urirun.host.contracts.verification_check, adapters.python.urirun.host.contracts.verification_check, all, len, len
+
+### adapters.python.urirun.connectors.connector_lint.lint_kernel_symbols
+> Static-scan a connector package for calls to kernel symbols absent from the contract.
+
+Returns ``{"violations": [...], "ok": bool}`` where each violat
+- **Calls**: Path, adapters.python.urirun.connectors.connector_lint._connector_py_files, adapters.python.urirun.connectors.connector_lint._kernel_direct_imports, adapters.python.urirun.connectors.connector_lint._collect_kernel_imports, adapters.python.urirun.connectors.connector_lint._kernel_attribute_accesses, len, path.read_text, ast.parse
+
+### adapters.python.urirun_runtime.discovery.registry_for_uri
+> Compile a registry for just the connector owning ``uri``'s scheme (+ builtins).
+
+Falls back to full discovery (and refreshes the index) when the schem
+- **Calls**: adapters.python.urirun_runtime.discovery._scheme_of, adapters.python.urirun_runtime.discovery.load_index, adapters.python.urirun.host.dashboard.list, adapters.python.urirun_runtime.discovery.build_index, v2.entry_point_bindings, bindings.extend, v2.compile_registry, None.get
+
 ## Process Flows
 
 Key execution flows identified:
@@ -279,14 +288,14 @@ _cmd_upgrade [adapters.python.urirun_runtime.v2]
       └─ →> list
 ```
 
-### Flow 8: _handler_worker_main
-```
-_handler_worker_main [adapters.python.urirun_runtime.worker]
-```
-
-### Flow 9: _build_cli_parser
+### Flow 8: _build_cli_parser
 ```
 _build_cli_parser [adapters.python.urirun.Connector]
+```
+
+### Flow 9: _handler_worker_main
+```
+_handler_worker_main [adapters.python.urirun_runtime.worker]
 ```
 
 ### Flow 10: resolve_refs
@@ -349,16 +358,16 @@ TwinMemory
 - **Methods**: 7
 - **Key Methods**: adapters.python.urirun_twin.twin_store.JsonFileStore.__init__, adapters.python.urirun_twin.twin_store.JsonFileStore.get, adapters.python.urirun_twin.twin_store.JsonFileStore.items, adapters.python.urirun_twin.twin_store.JsonFileStore.__getitem__, adapters.python.urirun_twin.twin_store.JsonFileStore.__contains__, adapters.python.urirun_twin.twin_store.JsonFileStore.__setitem__, adapters.python.urirun_twin.twin_store.JsonFileStore._flush
 
-### adapters.python.urirun_runtime.worker.WorkerPool
-> A single long-lived connector worker. Reuse across many URI calls.
-- **Methods**: 6
-- **Key Methods**: adapters.python.urirun_runtime.worker.WorkerPool.__init__, adapters.python.urirun_runtime.worker.WorkerPool.run_argv, adapters.python.urirun_runtime.worker.WorkerPool.run_uri, adapters.python.urirun_runtime.worker.WorkerPool.close, adapters.python.urirun_runtime.worker.WorkerPool.__enter__, adapters.python.urirun_runtime.worker.WorkerPool.__exit__
-
 ### adapters.python.urirun_runtime.secrets.SecretStr
 > An opaque secret value. ``str``/``repr``/JSON show ``****``; ``reveal()``
 returns the plaintext (cal
 - **Methods**: 6
 - **Key Methods**: adapters.python.urirun_runtime.secrets.SecretStr.__init__, adapters.python.urirun_runtime.secrets.SecretStr.reveal, adapters.python.urirun_runtime.secrets.SecretStr.ref, adapters.python.urirun_runtime.secrets.SecretStr.__str__, adapters.python.urirun_runtime.secrets.SecretStr.__repr__, adapters.python.urirun_runtime.secrets.SecretStr.__bool__
+
+### adapters.python.urirun_runtime.worker.WorkerPool
+> A single long-lived connector worker. Reuse across many URI calls.
+- **Methods**: 6
+- **Key Methods**: adapters.python.urirun_runtime.worker.WorkerPool.__init__, adapters.python.urirun_runtime.worker.WorkerPool.run_argv, adapters.python.urirun_runtime.worker.WorkerPool.run_uri, adapters.python.urirun_runtime.worker.WorkerPool.close, adapters.python.urirun_runtime.worker.WorkerPool.__enter__, adapters.python.urirun_runtime.worker.WorkerPool.__exit__
 
 ### adapters.php.Urirun.Urirun.Connector
 - **Methods**: 5
@@ -488,14 +497,11 @@ concurrency (If-Registry-
 > The bindings document must pass urirun.validate_binding_document.
 - **Output to**: urirun.validate_binding_document, result.get, result.get
 
-### adapters.python.urirun_runtime.cli._add_connectors_subparser
-> The `connectors` command tree (list/show/install/index/resolve/check/lint/
-verify/new/smoke/from-spe
-- **Output to**: subparsers.add_parser, connectors_parser.add_subparsers, argparse.ArgumentParser, connectors_common.add_argument, connectors_sub.add_parser
+### adapters.python.urirun_runtime.v1._run_process
+- **Output to**: config.get, config.get, subprocess.run, policy.get, progress.active
 
-### adapters.python.urirun_runtime.cli._add_node_subparser
-> The `node` command tree (init/config/list/stop/routes/serve). Extracted from _build_parser to cut fa
-- **Output to**: subparsers.add_parser, node_parser.add_subparsers, argparse.ArgumentParser, node_common.add_argument, node_sub.add_parser
+### adapters.python.urirun_runtime.v1._run_process_streaming
+- **Output to**: subprocess.Popen, progress.register_proc, threading.Timer, timer.start, enumerate
 
 ## Behavioral Patterns
 
@@ -585,7 +591,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.host.host_dashboard.summary` - 40 calls
 - `scripts.extraction_audit.print_report` - 36 calls
 - `adapters.python.urirun_runtime._runtime.main` - 33 calls
-- `adapters.python.urirun_runtime.v2_adopt.main` - 31 calls
 - `adapters.python.urirun.host.node_cli.copy_id_command` - 30 calls
 - `scripts.transport_swap_proof.main` - 29 calls
 - `adapters.python.urirun.host.connector_admin.connector_install` - 29 calls
@@ -597,7 +602,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.host.discovery.node_alias_map_from_env` - 26 calls
 - `adapters.python.urirun_node.server.apply_deploy` - 25 calls
 - `adapters.python.urirun_runtime.codegen.proto_from_registry` - 25 calls
-- `adapters.python.urirun_runtime.v2_grpc.main` - 25 calls
 - `adapters.python.urirun.connectors.connector_lint.lint_connector` - 24 calls
 - `adapters.python.urirun_connectors_toolkit.resolver.resolve` - 24 calls
 - `adapters.python.urirun_runtime.v2.run_local_function_subprocess` - 24 calls
@@ -618,6 +622,8 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls
+- `examples.matrix.verify.main` - 20 calls
+- `scripts.extraction_audit.audit` - 20 calls
 
 ## System Interactions
 
