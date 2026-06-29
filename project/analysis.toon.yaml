@@ -1,12 +1,12 @@
-# code2llm | 299f 49423L | python:224,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
-# generated in 0.23s
-# CC̅=4.2 | critical:0/2708 | dups:0 | cycles:0
+# code2llm | 300f 49451L | python:225,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
+# generated in 0.28s
+# CC̅=4.2 | critical:0/2709 | dups:0 | cycles:0
 
 HEALTH[0]: ok
 
 REFACTOR[0]: none needed
 
-PIPELINES[908]:
+PIPELINES[909]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -140,15 +140,15 @@ LAYERS:
   │ !! host_dashboard            1733L  0C   92m  CC=12     ←1
   │ !! v2                        1657L  3C  102m  CC=12     ←7
   │ !! scanner_bridge            1635L  0C    0m  CC=0.0    ←0
-  │ !! chat_orchestrator         1535L  1C   64m  CC=11     ←0
   │ !! document_sync             1528L  0C    0m  CC=0.0    ←0
+  │ !! chat_orchestrator         1252L  1C   53m  CC=11     ←0
   │ !! server                    1117L  3C   75m  CC=12     ←3
   │ !! node_cli                   928L  0C   60m  CC=12     ←1
   │ !! object_registry            873L  0C   45m  CC=12     ←1
   │ !! connector_lint             786L  0C   48m  CC=11     ←1
   │ !! cli                        739L  0C   13m  CC=2      ←1
   │ !! _registry                  723L  0C   47m  CC=11     ←1
-  │ !! scanner.js                 681L  0C  121m  CC=14     ←1
+  │ !! scanner.js                 681L  0C  121m  CC=14     ←0
   │ !! _scan                      675L  0C   41m  CC=12     ←0
   │ !! _runtime                   655L  1C   39m  CC=11     ←2
   │ !! twin_bridge                624L  0C   31m  CC=12     ←1
@@ -176,10 +176,11 @@ LAYERS:
   │ task_cli                   367L  0C   29m  CC=10     ←0
   │ document_sync_chat         361L  0C    9m  CC=12     ←0
   │ _connector                 354L  1C   23m  CC=12     ←10
-  │ node_dispatch              343L  0C   10m  CC=13     ←5
+  │ node_dispatch              343L  0C   10m  CC=13     ←6
   │ cdp                        339L  1C   24m  CC=8      ←0
   │ dashboard_api              327L  0C   30m  CC=8      ←3
   │ worker                     321L  3C   28m  CC=10     ←2
+  │ _orchestrator_offline      311L  0C   12m  CC=9      ←1
   │ adopt_pack                 298L  0C   20m  CC=11     ←0
   │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ mesh                       279L  0C    4m  CC=4      ←0
@@ -254,7 +255,7 @@ LAYERS:
   │ Urirun.cs                   32L  1C    3m  CC=1      ←0
   │ cdp                         31L  0C    0m  CC=0.0    ←0
   │ main.go                     24L  0C    1m  CC=1      ←0
-  │ _chat_message               22L  0C    1m  CC=3      ←3
+  │ _chat_message               22L  0C    1m  CC=3      ←4
   │ urirun-connector.AssemblyInfo.cs    22L  0C    0m  CC=0.0    ←0
   │ widgets                     21L  1C    3m  CC=2      ←0
   │ urirun_test.c               18L  0C    2m  CC=2      ←0
@@ -444,14 +445,14 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                                                 ──                     
   security.mesh-probe                                         1                                                                                                                                                 ──
   CYCLES: none
-  HUB: adapters.python/ (fan-in=8)
-  HUB: scripts/ (fan-in=160)
   HUB: v1.js/ (fan-in=6)
   HUB: adapters/ (fan-in=18)
-  SMELL: adapters.python/ fan-out=162 → split needed
-  SMELL: examples.matrix/ fan-out=9 → split needed
+  HUB: scripts/ (fan-in=160)
+  HUB: adapters.python/ (fan-in=8)
   SMELL: xlang/ fan-out=8 → split needed
+  SMELL: examples.matrix/ fan-out=9 → split needed
   SMELL: adapters/ fan-out=12 → split needed
+  SMELL: adapters.python/ fan-out=162 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

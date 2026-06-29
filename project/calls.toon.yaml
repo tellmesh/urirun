@@ -1,5 +1,5 @@
-# code2llm call graph | ~/github/if-uri/urirun
-# generated in 0.26s
+# code2llm call graph | /home/tom/github/if-uri/urirun
+# generated in 0.29s
 # nodes: 467 | edges: 500 | modules: 54
 # CC̄=4.2
 
@@ -32,18 +32,18 @@ HUBS[20]:
     CC=8  in:11  out:11  total:22
   adapters.python.urirun_node.server.NodeHandler._handle_enroll
     CC=11  in:0  out:22  total:22
-  adapters.python.urirun_runtime.v1._run_process_streaming
-    CC=7  in:1  out:20  total:21
   adapters.python.urirun.connectors.connector_smoke.smoke
     CC=6  in:1  out:20  total:21
-  adapters.python.urirun_connectors_toolkit.connect_catalog._cmd_list
-    CC=9  in:0  out:20  total:20
-  adapters.python.urirun_node.transport.copy_id
-    CC=8  in:2  out:18  total:20
-  adapters.python.urirun_node.transport.discover_node
-    CC=12  in:0  out:20  total:20
+  adapters.python.urirun_runtime.v1._run_process_streaming
+    CC=7  in:1  out:20  total:21
   scripts.extraction_audit._selftest
     CC=7  in:2  out:18  total:20
+  adapters.python.urirun_node.transport.discover_node
+    CC=12  in:0  out:20  total:20
+  adapters.python.urirun_connectors_toolkit.connect_catalog._cmd_list
+    CC=9  in:0  out:20  total:20
+  examples.matrix.verify.main
+    CC=9  in:0  out:20  total:20
 
 MODULES:
   adapters.c.urirun  [4 funcs]

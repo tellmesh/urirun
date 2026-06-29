@@ -1,4 +1,4 @@
-# urirun | 2708 func | 141f | 49423L | python | 2026-06-29
+# urirun | 2709 func | 142f | 49451L | python | 2026-06-29
 # generated in 0.00s
 
 HEALTH:
@@ -16,23 +16,23 @@ ALERTS[20]:
   !!  high_fan_out     _provider_oauth = 18 (limit:10)
   !!  high_fan_out     serve = 18 (limit:10)
 
-MODULES[299] (top by size):
+MODULES[300] (top by size):
   M[adapters/python/urirun/host/dashboard.js] 3032L C:0 F:452 CC↑14 D:44 (javascript)
   M[adapters/python/urirun/host/host_dashboard.py] 1733L C:0 F:92 CC↑12 D:1 (python)
   M[adapters/python/urirun_runtime/v2.py] 1657L C:3 F:102 CC↑12 D:7 (python)
   M[adapters/python/urirun_scanner/scanner_bridge.py] 1635L C:0 F:0 CC↑0 D:0 (python)
-  M[adapters/python/urirun/host/chat_orchestrator.py] 1535L C:1 F:64 CC↑11 D:0 (python)
   M[adapters/python/urirun_scanner/document_sync.py] 1528L C:0 F:0 CC↑0 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
+  M[adapters/python/urirun/host/chat_orchestrator.py] 1252L C:1 F:53 CC↑11 D:0 (python)
   M[adapters/python/urirun_node/server.py] 1117L C:3 F:75 CC↑12 D:3 (python)
   M[adapters/python/urirun/host/node_cli.py] 928L C:0 F:60 CC↑12 D:1 (python)
   M[adapters/python/urirun/host/object_registry.py] 873L C:0 F:45 CC↑12 D:1 (python)
   M[adapters/python/urirun_connectors_toolkit/connector_lint.py] 786L C:0 F:48 CC↑11 D:1 (python)
   M[adapters/python/urirun_runtime/cli.py] 739L C:0 F:13 CC↑2 D:1 (python)
   M[adapters/python/urirun_runtime/_registry.py] 723L C:0 F:47 CC↑11 D:1 (python)
-  M[adapters/python/urirun/host/scanner.js] 681L C:0 F:121 CC↑14 D:1 (javascript)
+  M[adapters/python/urirun/host/scanner.js] 681L C:0 F:121 CC↑14 D:0 (javascript)
   M[adapters/python/urirun_runtime/_scan.py] 675L C:0 F:41 CC↑12 D:0 (python)
-  LANGS: python:225/shell:15/json:15/javascript:7/yaml:5/csharp:4/txt:4/go:3/c:3/ruby:2/typescript:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
+  LANGS: python:226/shell:15/json:15/javascript:7/yaml:5/csharp:4/txt:4/go:3/c:3/ruby:2/typescript:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
   ★ _build_parser fan=25  // Orchestrates 25 calls
@@ -49,4 +49,4 @@ REFACTOR[15]:
   [5] H/H Split god module adapters/python/urirun/host/object_registry.py (873L, 0 classes)
 
 EVOLUTION:
-  2026-06-29 CC̄=4.2 crit=213 49423L // Automated analysis
+  2026-06-29 CC̄=4.2 crit=213 49451L // Automated analysis

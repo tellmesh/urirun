@@ -5,12 +5,12 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 224, json: 15, shell: 15, yaml: 5, javascript: 5
+- **Languages**: python: 225, json: 15, shell: 15, yaml: 5, javascript: 5
 - **Analysis Mode**: static
-- **Total Functions**: 2708
+- **Total Functions**: 2709
 - **Total Classes**: 61
-- **Modules**: 295
-- **Entry Points**: 1086
+- **Modules**: 296
+- **Entry Points**: 1087
 
 ## Architecture by Module
 
@@ -40,14 +40,14 @@
 - **Functions**: 68
 - **File**: `urirun-v1.js`
 
-### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 64
-- **Classes**: 1
-- **File**: `chat_orchestrator.py`
-
 ### adapters.python.urirun.host.node_cli
 - **Functions**: 60
 - **File**: `node_cli.py`
+
+### adapters.python.urirun.host.chat_orchestrator
+- **Functions**: 53
+- **Classes**: 1
+- **File**: `chat_orchestrator.py`
 
 ### adapters.python.urirun_connectors_toolkit.connector_lint
 - **Functions**: 48
@@ -167,16 +167,16 @@ Reconnects automatically, replaying missed events via Last-Event-ID.
 ### adapters.python.urirun_runtime.codegen.gen_command
 - **Calls**: v2.load_registry_arg, getattr, scripts.test_pypi_install.print, adapters.python.urirun_runtime.codegen.proto_from_registry, getattr, None.write_text, None.write_text, scripts.test_pypi_install.print
 
-### adapters.python.urirun.host.node_cli.run_command
-> `urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
-node; with --stream, start it async and print the node's live progres
-- **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, NodeClient, client.concretize, float, adapters.python.urirun.host.node_cli._maybe_ensure_scheme, adapters.python.urirun.host.node_cli._run_streamed, getattr
-
 ### adapters.python.urirun.host.contracts.file_transfer_verification
 > Return the standard verification contract for file-copy style URI flows.
 
 `uploaded` means the remote write acknowledged the file. `verified` means th
 - **Calls**: adapters.python.urirun.host.dashboard.list, set, set, adapters.python.urirun.host.contracts.verification_check, adapters.python.urirun.host.contracts.verification_check, all, len, len
+
+### adapters.python.urirun.host.node_cli.run_command
+> `urirun host run <node> <uri> [--payload JSON] [--stream]` — dispatch a URI to a
+node; with --stream, start it async and print the node's live progres
+- **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, NodeClient, client.concretize, float, adapters.python.urirun.host.node_cli._maybe_ensure_scheme, adapters.python.urirun.host.node_cli._run_streamed, getattr
 
 ### adapters.python.urirun_connectors_toolkit.connector_lint.lint_kernel_symbols
 > Static-scan a connector package for calls to kernel symbols absent from the contract.
@@ -201,9 +201,6 @@ Falls back to full discovery (and refreshes the index) when the schem
 health — the fastest way to diagnose a version split (stale binary on PATH)
 - **Calls**: getattr, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, scripts.test_pypi_install.print, adapters.python.urirun_runtime.v2.connector_health, adapters.python.urirun_runtime.v2_cmds._package_version, reglib._emit_json
 
-### adapters.python.urirun.host.node_cli.node_command
-- **Calls**: adapters.python.urirun_node.config.load_node_config, dict, adapters.python.urirun.host.node_cli._resolve_registry_source, v2.load_registry_arg, reglib._emit_json, adapters.python.urirun.host.node_cli.node_list_command, adapters.python.urirun.host.node_cli.node_stop_command, reglib._emit_json
-
 ### adapters.python.urirun.host.android_node.restart_android_node_service
 - **Calls**: adapters.python.urirun.host.host_dashboard._service_restart_argv, meta.setdefault, int, adapters.python.urirun.host.android_node.start_android_node_service, isinstance, None.lower, _schedule_restart_command, free_port_fn
 
@@ -215,6 +212,9 @@ health — the fastest way to diagnose a version split (stale binary on PATH)
 
 ### xlang.gate.main
 - **Calls**: xlang.gate.Abs, xlang.gate.Dir, xlang.gate.Getenv, xlang.gate.ReadFile, xlang.gate.Join, xlang.gate.Fprintln, xlang.gate.Exit, xlang.gate.Unmarshal
+
+### adapters.python.urirun.host.node_cli.node_command
+- **Calls**: adapters.python.urirun_node.config.load_node_config, dict, adapters.python.urirun.host.node_cli._resolve_registry_source, v2.load_registry_arg, reglib._emit_json, adapters.python.urirun.host.node_cli.node_list_command, adapters.python.urirun.host.node_cli.node_stop_command, reglib._emit_json
 
 ### adapters.python.urirun_node.client.NodeClient.push_folder
 > Host-side: find a folder (abs path, or a dir named `name_or_path` under roots /
@@ -607,8 +607,8 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.connectors.connector_smoke.smoke` - 20 calls
 - `adapters.python.urirun_runtime.codegen.gen_command` - 20 calls
 - `adapters.python.urirun_runtime.tree.collect_uris` - 20 calls
-- `adapters.python.urirun.host.node_cli.run_command` - 20 calls
 - `adapters.python.urirun.host.contracts.file_transfer_verification` - 20 calls
+- `adapters.python.urirun.host.node_cli.run_command` - 20 calls
 - `adapters.python.urirun_connectors_toolkit.connector_lint.lint_kernel_symbols` - 19 calls
 - `adapters.python.urirun_runtime.v2.scan_artifacts` - 19 calls
 - `adapters.python.urirun_runtime.discovery.build_index` - 19 calls
