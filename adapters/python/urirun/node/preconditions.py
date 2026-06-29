@@ -385,8 +385,16 @@ def _need_from_known_pattern(msg: str, lower: str) -> dict | None:
     return None
 
 
-def _need_from_all_backends_failed(msg: str, lower: str) -> dict:
+def _need_from_all_backends_failed(msg: str, lower: str) -> dict | None:
     """Return a need dict for generic 'all backends failed' / 'no available backend' messages."""
+    actionable = (
+        "install:" in lower
+        or "grant:" in lower
+        or "permission" in lower
+        or "portal" in lower
+    )
+    if "options: none" in lower and not actionable:
+        return None
     need = _acquire_dict("backend-available", {
         "provider": "backend",
         "hint": msg[:120],
