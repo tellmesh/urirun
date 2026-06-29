@@ -141,41 +141,58 @@ def _disambiguate_rpc_name(uri, base, uris, naive, counts, seen_groups, nuances)
 # JSON Schema -> protobuf field types (records nuances, never lies)
 # --------------------------------------------------------------------------- #
 
+def _field_type_enum(field, schema, ctx, *, enums, nuances) -> str:
+    """Handle an enum JSON-Schema type: register the enum and return its proto name."""
+    ename = _msg_pascal(f"{ctx}_{field}")
+    if ename not in enums:
+        enums[ename] = [str(v) for v in schema["enum"]]
+        nuances.append(
+            f"enum `{ename}` for `{field}`: zero value `{ename.upper()}_UNSPECIFIED` "
+            f"injected (proto3 requires a 0), values prefixed to avoid C++ scope clash"
+        )
+    return ename
+
+
+def _field_type_object(field, schema, ctx, *, nested, enums, nuances, needs_struct) -> str:
+    """Handle an object JSON-Schema type: open objects become Struct, closed become nested messages."""
+    props = schema.get("properties")
+    if not props or schema.get("additionalProperties", False) is True:
+        needs_struct[0] = True
+        nuances.append(
+            f"`{field}` is an open object (no/additional properties) "
+            f"-> google.protobuf.Struct (field typing is lost on the wire)"
+        )
+        return "google.protobuf.Struct"
+    mname = _msg_pascal(f"{ctx}_{field}")
+    if mname not in nested:
+        nested[mname] = None  # reserve
+        nested[mname] = _message_fields(mname, schema, nested=nested, enums=enums,
+                                        nuances=nuances, needs_struct=needs_struct)
+        nuances.append(f"nested object `{field}` -> message `{mname}`")
+    return mname
+
+
+def _field_type_array(field, schema, ctx, *, nested, enums, nuances, needs_struct) -> str:
+    """Handle an array JSON-Schema type: returns 'repeated <inner_type>'."""
+    items = schema.get("items") or {}
+    inner = _field_type(field, items, ctx, nested=nested, enums=enums,
+                        nuances=nuances, needs_struct=needs_struct)
+    return f"repeated {inner}"
+
+
 def _field_type(field, schema, ctx, *, nested, enums, nuances, needs_struct) -> str:
     jtype = schema.get("type")
 
     if "enum" in schema and jtype in (None, "string"):
-        ename = _msg_pascal(f"{ctx}_{field}")
-        if ename not in enums:
-            enums[ename] = [str(v) for v in schema["enum"]]
-            nuances.append(
-                f"enum `{ename}` for `{field}`: zero value `{ename.upper()}_UNSPECIFIED` "
-                f"injected (proto3 requires a 0), values prefixed to avoid C++ scope clash"
-            )
-        return ename
+        return _field_type_enum(field, schema, ctx, enums=enums, nuances=nuances)
 
     if jtype == "array":
-        items = schema.get("items") or {}
-        inner = _field_type(field, items, ctx, nested=nested, enums=enums,
-                            nuances=nuances, needs_struct=needs_struct)
-        return f"repeated {inner}"
+        return _field_type_array(field, schema, ctx, nested=nested, enums=enums,
+                                 nuances=nuances, needs_struct=needs_struct)
 
     if jtype == "object" or (jtype is None and "properties" in schema):
-        props = schema.get("properties")
-        if not props or schema.get("additionalProperties", False) is True:
-            needs_struct[0] = True
-            nuances.append(
-                f"`{field}` is an open object (no/additional properties) "
-                f"-> google.protobuf.Struct (field typing is lost on the wire)"
-            )
-            return "google.protobuf.Struct"
-        mname = _msg_pascal(f"{ctx}_{field}")
-        if mname not in nested:
-            nested[mname] = None  # reserve
-            nested[mname] = _message_fields(mname, schema, nested=nested, enums=enums,
-                                            nuances=nuances, needs_struct=needs_struct)
-            nuances.append(f"nested object `{field}` -> message `{mname}`")
-        return mname
+        return _field_type_object(field, schema, ctx, nested=nested, enums=enums,
+                                  nuances=nuances, needs_struct=needs_struct)
 
     if jtype in PROTO_TYPES:
         return PROTO_TYPES[jtype]
@@ -229,6 +246,74 @@ def dispatch_field_collisions(schema: dict) -> list[str]:
     return clashes
 
 
+def _build_proto_preamble(package: str, needs_struct: list) -> list:
+    """Build the syntax/package/import/envelope/carrier header lines."""
+    out: list[str] = ['syntax = "proto3";', f"package {package};", ""]
+    if needs_struct[0]:
+        out += ['import "google/protobuf/struct.proto";', ""]
+    out += [
+        "// Canonical urirun envelope - same shape for every route and for the",
+        "// generic carrier. `data` is open because outputs are not schematised.",
+        "message Envelope {",
+        "  bool ok = 1;",
+        "  google.protobuf.Struct data = 2;",
+        "  string error = 3;",
+        "  bool dry_run = 4;",
+        "}",
+        "",
+        "// Generic CARRIER request - route-agnostic. One rpc carries every URI.",
+        "message RunRequest {",
+        "  string uri = 1;",
+        "  google.protobuf.Struct payload = 2;",
+        '  string mode = 3;  // "dry-run" | "execute"',
+        "}",
+        "",
+    ]
+    return out
+
+
+def _build_proto_enums(enums: dict) -> list:
+    """Emit proto enum blocks for all collected enum types."""
+    out: list[str] = []
+    for ename, values in enums.items():
+        out.append(f"enum {ename} {{")
+        out.append(f"  {ename.upper()}_UNSPECIFIED = 0;")
+        for i, v in enumerate(values, start=1):
+            out.append(f"  {ename.upper()}_{_field_snake(v).upper()} = {i};")
+        out += ["}", ""]
+    return out
+
+
+def _build_proto_messages(nested: dict, request_msgs: list) -> list:
+    """Emit proto message blocks for nested types and per-route request messages."""
+    out: list[str] = []
+    for mname, fields in nested.items():
+        out.append(f"message {mname} {{")
+        out.extend(fields or ["  // (empty)"])
+        out += ["}", ""]
+    for req, fields in request_msgs:
+        out.append(f"message {req} {{")
+        out.extend(fields or ["  // (no inputs)"])
+        out += ["}", ""]
+    return out
+
+
+def _build_proto_service(rpcs: list) -> list:
+    """Emit the service Urirun block with one typed rpc per route."""
+    out: list[str] = [
+        "service Urirun {",
+        "  // route-agnostic carrier (this is what ssh/http/ws/mqtt also do)",
+        "  rpc Run(RunRequest) returns (Envelope);",
+        "",
+    ]
+    for rpc, req, uri, kind in rpcs:
+        tag = "read" if kind == "query" else ("write" if kind == "command" else "?")
+        out.append(f"  // {uri}  ({tag})")
+        out.append(f"  rpc {rpc}({req}) returns (Envelope);")
+    out += ["}", ""]
+    return out
+
+
 def proto_from_registry(registry: dict, package: str = "urirun") -> tuple[str, list[str]]:
     """Project a registry to a gRPC ``.proto`` and the list of nuances surfaced."""
     routes = list(_routes(registry))
@@ -254,52 +339,10 @@ def proto_from_registry(registry: dict, package: str = "urirun") -> tuple[str, l
     )
     needs_struct[0] = True
 
-    out: list[str] = ['syntax = "proto3";', f"package {package};", ""]
-    if needs_struct[0]:
-        out += ['import "google/protobuf/struct.proto";', ""]
-    out += [
-        "// Canonical urirun envelope - same shape for every route and for the",
-        "// generic carrier. `data` is open because outputs are not schematised.",
-        "message Envelope {",
-        "  bool ok = 1;",
-        "  google.protobuf.Struct data = 2;",
-        "  string error = 3;",
-        "  bool dry_run = 4;",
-        "}",
-        "",
-        "// Generic CARRIER request - route-agnostic. One rpc carries every URI.",
-        "message RunRequest {",
-        "  string uri = 1;",
-        "  google.protobuf.Struct payload = 2;",
-        '  string mode = 3;  // "dry-run" | "execute"',
-        "}",
-        "",
-    ]
-    for ename, values in enums.items():
-        out.append(f"enum {ename} {{")
-        out.append(f"  {ename.upper()}_UNSPECIFIED = 0;")
-        for i, v in enumerate(values, start=1):
-            out.append(f"  {ename.upper()}_{_field_snake(v).upper()} = {i};")
-        out += ["}", ""]
-    for mname, fields in nested.items():
-        out.append(f"message {mname} {{")
-        out.extend(fields or ["  // (empty)"])
-        out += ["}", ""]
-    for req, fields in request_msgs:
-        out.append(f"message {req} {{")
-        out.extend(fields or ["  // (no inputs)"])
-        out += ["}", ""]
-    out += [
-        "service Urirun {",
-        "  // route-agnostic carrier (this is what ssh/http/ws/mqtt also do)",
-        "  rpc Run(RunRequest) returns (Envelope);",
-        "",
-    ]
-    for rpc, req, uri, kind in rpcs:
-        tag = "read" if kind == "query" else ("write" if kind == "command" else "?")
-        out.append(f"  // {uri}  ({tag})")
-        out.append(f"  rpc {rpc}({req}) returns (Envelope);")
-    out += ["}", ""]
+    out = _build_proto_preamble(package, needs_struct)
+    out += _build_proto_enums(enums)
+    out += _build_proto_messages(nested, request_msgs)
+    out += _build_proto_service(rpcs)
     return "\n".join(out), nuances
 
 

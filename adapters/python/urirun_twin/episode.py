@@ -122,6 +122,60 @@ def _outcome_from_dict(d: dict) -> EpisodeOutcome:
                           recovery=d.get("recovery") or [])
 
 
+def _episode_from_dict_core(d: dict) -> "Episode":
+    """Build an Episode with only the scalar core fields from a dict."""
+    return Episode(
+        experience_id=d.get("experience_id") or "",
+        episode_id=d.get("episode_id") or "",
+        goal=d.get("goal") or "",
+        execution=d.get("execution") or {},
+        ts=d.get("ts") or "",
+    )
+
+
+def _proofs_from_dicts(pf_list: list) -> "list[EpisodeProof]":
+    """Convert a list of proof dicts to EpisodeProof dataclasses."""
+    return [EpisodeProof(**pf) for pf in pf_list]
+
+
+def _artifacts_from_dicts(a_list: list) -> "list[EpisodeArtifact]":
+    """Convert a list of artifact dicts to EpisodeArtifact dataclasses."""
+    return [EpisodeArtifact(**a) for a in a_list]
+
+
+def _make_episode_reality(env_fingerprint: str, env_snapshot: "dict | None") -> EpisodeReality:
+    """Build an EpisodeReality from fingerprint and optional snapshot."""
+    return EpisodeReality(fingerprint=env_fingerprint, snapshot=env_snapshot or {})
+
+
+def _make_episode_plan(flow_d: dict, flow_key: str) -> EpisodePlan:
+    """Build an EpisodePlan from a flow dict and optional flow_key override."""
+    return EpisodePlan(
+        steps=flow_d.get("steps") or [],
+        flow_key=flow_key or flow_d.get("flow_key") or "",
+        classes={},
+    )
+
+
+def _make_episode_artifacts(artifacts: "list[dict] | None") -> "list[EpisodeArtifact]":
+    """Convert raw artifact dicts into EpisodeArtifact dataclasses."""
+    return [
+        EpisodeArtifact(
+            uri=a.get("uri") or "",
+            sha256=a.get("sha256") or "",
+            kind=a.get("kind") or "",
+            path=a.get("path") or "",
+        )
+        for a in (artifacts or [])
+    ]
+
+
+def _make_episode_outcome(outcome_status: str, next_intent: str,
+                           recovery: "list[dict] | None") -> EpisodeOutcome:
+    """Build an EpisodeOutcome from status, next_intent, and recovery steps."""
+    return EpisodeOutcome(status=outcome_status, next_intent=next_intent, recovery=recovery or [])
+
+
 # ─────────────────────────────────────────────────────────────── Episode envelope ──── #
 
 @dataclass
@@ -148,17 +202,11 @@ class Episode:
 
     @staticmethod
     def from_dict(d: dict) -> "Episode":
-        ep = Episode(
-            experience_id=d.get("experience_id") or "",
-            episode_id=d.get("episode_id") or "",
-            goal=d.get("goal") or "",
-            execution=d.get("execution") or {},
-            ts=d.get("ts") or "",
-        )
+        ep = _episode_from_dict_core(d)
         ep.reality = _reality_from_dict(d.get("reality") or {})
         ep.plan = _plan_from_dict(d.get("plan") or {})
-        ep.proofs = [EpisodeProof(**pf) for pf in (d.get("proofs") or [])]
-        ep.artifacts = [EpisodeArtifact(**a) for a in (d.get("artifacts") or [])]
+        ep.proofs = _proofs_from_dicts(d.get("proofs") or [])
+        ep.artifacts = _artifacts_from_dicts(d.get("artifacts") or [])
         ep.outcome = _outcome_from_dict(d.get("outcome") or {})
         return ep
 
@@ -187,38 +235,15 @@ def make_episode(
     far the run got before it was recorded."""
     eid = episode_id(experience_id, goal, ts)
     flow_d = flow or {}
-    reality = EpisodeReality(
-        fingerprint=env_fingerprint,
-        snapshot=env_snapshot or {},
-    )
-    plan = EpisodePlan(
-        steps=flow_d.get("steps") or [],
-        flow_key=flow_key or flow_d.get("flow_key") or "",
-        classes={},
-    )
-    ep_artifacts = [
-        EpisodeArtifact(
-            uri=a.get("uri") or "",
-            sha256=a.get("sha256") or "",
-            kind=a.get("kind") or "",
-            path=a.get("path") or "",
-        )
-        for a in (artifacts or [])
-    ]
-    outcome = EpisodeOutcome(
-        status=outcome_status,
-        next_intent=next_intent,
-        recovery=recovery or [],
-    )
     return Episode(
         experience_id=experience_id,
         episode_id=eid,
         goal=goal,
-        reality=reality,
-        plan=plan,
+        reality=_make_episode_reality(env_fingerprint, env_snapshot),
+        plan=_make_episode_plan(flow_d, flow_key),
         proofs=[],
         execution=execution or {},
-        artifacts=ep_artifacts,
-        outcome=outcome,
+        artifacts=_make_episode_artifacts(artifacts),
+        outcome=_make_episode_outcome(outcome_status, next_intent, recovery),
         ts=ts,
     )

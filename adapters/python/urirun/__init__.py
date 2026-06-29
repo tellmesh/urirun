@@ -246,6 +246,31 @@ def result_degraded(env: dict):
     return None
 
 
+def _step_uri_and_payload(step):
+    """Extract (uri, payload) from a step that is either a dict or a sequence."""
+    if isinstance(step, dict):
+        return step["uri"], (step.get("payload") or {})
+    return step[0], ((step[1] if len(step) > 1 else None) or {})
+
+
+def _step_allow_policy(allow, scheme: str) -> list:
+    """Return the allow list: caller-supplied list or a default scheme wildcard."""
+    return list(allow) if allow else [f"{scheme}://*"]
+
+
+def _step_ok(env: dict, data) -> bool:
+    """Compute whether a step succeeded from its envelope and unwrapped data."""
+    return bool(env.get("ok")) and (data.get("ok", True) if isinstance(data, dict) else True)
+
+
+def _step_record(uri: str, ok: bool, data, step) -> dict:
+    """Build the per-step output record."""
+    rec = {"uri": uri, "ok": ok, "data": data}
+    if isinstance(step, dict) and "id" in step:
+        rec["id"] = step["id"]
+    return rec
+
+
 def run_steps(steps, registry: dict, *, execute: bool = True, allow=None, stop_on_error: bool = True):
     """Run a list of ``{uri, payload}`` steps against a registry and return one
     ``{uri, ok, data}`` (plus ``id`` when given) per step — the loop every agent /
@@ -263,17 +288,13 @@ def run_steps(steps, registry: dict, *, execute: bool = True, allow=None, stop_o
     mode = "execute" if execute else "dry-run"
     out = []
     for step in steps:
-        uri = step["uri"] if isinstance(step, dict) else step[0]
-        payload = (step.get("payload") if isinstance(step, dict) else (step[1] if len(step) > 1 else {})) or {}
+        uri, payload = _step_uri_and_payload(step)
         scheme = uri.split("://", 1)[0]
         env = run(uri, registry, payload, mode=mode,
-                  policy=policy(allow=list(allow) if allow else [f"{scheme}://*"]))
+                  policy=policy(allow=_step_allow_policy(allow, scheme)))
         data = result_data(env)
-        ok = bool(env.get("ok")) and (data.get("ok", True) if isinstance(data, dict) else True)
-        record = {"uri": uri, "ok": ok, "data": data}
-        if isinstance(step, dict) and "id" in step:
-            record["id"] = step["id"]
-        out.append(record)
+        ok = _step_ok(env, data)
+        out.append(_step_record(uri, ok, data, step))
         if stop_on_error and not ok:
             break
     return out

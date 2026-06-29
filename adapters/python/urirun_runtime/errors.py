@@ -317,10 +317,8 @@ def fix_hints(rec: dict) -> list[str]:
     return hints
 
 
-def info(code: str, store: str | None = None) -> dict:
-    recs = [r for r in _load(store) if r.get("code") == code]
-    if not recs:
-        return {"code": code, "found": False, "address": address(code), "help": help_url(code)}
+def _info_found(code: str, recs: list) -> dict:
+    """Build the full info dict for a code that has records."""
     last = recs[-1]
     uris = sorted({r.get("uri") for r in recs if r.get("uri")})
     category = last.get("category") or classify(str(last.get("type") or ""), str(last.get("message") or ""))
@@ -343,6 +341,13 @@ def info(code: str, store: str | None = None) -> dict:
         "help": help_url(code, category),
         "fixHints": fix_hints(last),
     }
+
+
+def info(code: str, store: str | None = None) -> dict:
+    recs = [r for r in _load(store) if r.get("code") == code]
+    if not recs:
+        return {"code": code, "found": False, "address": address(code), "help": help_url(code)}
+    return _info_found(code, recs)
 
 
 def _aggregate(store: str | None) -> dict[str, dict]:
