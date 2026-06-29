@@ -701,16 +701,34 @@ class NodeHandler(BaseHTTPRequestHandler):
     def _stream_events(self):
         # SSE: a long-lived GET streaming the node's run/error events (node->host). Gated
         # like /run when --require-run-auth. Replay only on an explicit cursor.
+        if not self._sse_check_auth():
+            return
+        schemes, runs, last_id = self._sse_parse_params()
+        if not self._sse_send_headers_and_replay(schemes, runs, last_id):
+            return
+        self._sse_live_loop(schemes, runs)
+
+    def _sse_check_auth(self) -> bool:
+        """Return True if the request is authorised for SSE; send 403 and return False otherwise."""
         c = self.ctx
         if c.run_auth_enforced and not self._run_ok(b""):
             send_json(self, 403, {"ok": False, "error": "unauthorized (/events requires X-Urirun-Token or an enrolled-key signature)"})
-            return
+            return False
+        return True
+
+    def _sse_parse_params(self):
+        """Parse query-string filters; return (schemes, runs, last_id) for the SSE stream."""
+        c = self.ctx
         _, _, query = self.path.partition("?")
         params = _parse_sse_query(query)
         schemes = {s for s in (params.get("scheme", "").split(",")) if s}
         runs = {r for r in (params.get("run", "").split(",")) if r}  # stream one run's progress
         last_id = _sse_initial_cursor(c.hub, params, self.headers)
+        return schemes, runs, last_id
 
+    def _sse_send_headers_and_replay(self, schemes, runs, last_id) -> bool:
+        """Send SSE response headers and replay buffered events; return False on a broken connection."""
+        c = self.ctx
         try:
             self.send_response(200)
             self.send_header("Content-Type", "text/event-stream")
@@ -724,7 +742,12 @@ class NodeHandler(BaseHTTPRequestHandler):
                     self.wfile.write(_sse_frame(ev))
             self.wfile.flush()
         except (BrokenPipeError, ConnectionResetError, OSError):
-            return
+            return False
+        return True
+
+    def _sse_live_loop(self, schemes, runs) -> None:
+        """Subscribe to the hub and stream live events until the client disconnects."""
+        c = self.ctx
         q = c.hub.subscribe()
         try:
             while True:
