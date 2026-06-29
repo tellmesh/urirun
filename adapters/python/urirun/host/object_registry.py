@@ -72,17 +72,29 @@ def _uri_target(uri: str) -> str:
     return rest.split("/", 1)[0]
 
 
+def _resolve_route_source(route: dict) -> str:
+    return route.get("source") or route.get("where") or route.get("adapter") or "registry"
+
+
+def _resolve_route_adapter(route: dict) -> str:
+    return route.get("adapter") or route.get("source") or "registry"
+
+
+def _resolve_route_target(route: dict, uri: str, owner: dict) -> str:
+    return route.get("target") or route.get("node") or _uri_target(uri) or owner.get("id")
+
+
 def _route_core_fields(route: dict, uri: str, owner: dict) -> dict:
     return {
         "uri": uri,
         "kind": route.get("kind") or "",
         "title": route.get("title") or route.get("label") or "",
-        "source": route.get("source") or route.get("where") or route.get("adapter") or "registry",
-        "adapter": route.get("adapter") or route.get("source") or "registry",
+        "source": _resolve_route_source(route),
+        "adapter": _resolve_route_adapter(route),
         "safe": route.get("safe"),
         "layer": route.get("layer") or "",
         "node": route.get("node") or "",
-        "target": route.get("target") or route.get("node") or _uri_target(uri) or owner.get("id"),
+        "target": _resolve_route_target(route, uri, owner),
     }
 
 
@@ -130,14 +142,27 @@ def _entry_point_safe(route: dict, kind: str) -> bool | None:
     return True if kind == "query" else None
 
 
+def _entry_point_guard(uri: str, source: Any) -> bool:
+    """Return True iff the route targets host and comes from a python-entry-point source."""
+    if _uri_target(uri) != "host":
+        return False
+    return isinstance(source, dict) and source.get("type") == "python-entry-point"
+
+
+def _entry_point_title(route: dict, uri: str) -> str:
+    return route.get("title") or route.get("label") or uri
+
+
+def _entry_point_adapter_val(route: dict) -> str:
+    return route.get("adapter") or route.get("kind") or "python-entry-point"
+
+
 def _host_entry_point_route(route: dict) -> dict | None:
     """Project a discovered route to a host entry-point catalogue entry, or None if it isn't one
     (not host-targeted, or not a python-entry-point source)."""
     uri = str(route.get("uri") or "")
     source = route.get("source") or {}
-    if _uri_target(uri) != "host":
-        return None
-    if not (isinstance(source, dict) and source.get("type") == "python-entry-point"):
+    if not _entry_point_guard(uri, source):
         return None
     kind = _route_kind_from_uri(uri) or str(route.get("kind") or "")
     safe = _entry_point_safe(route, kind)
@@ -145,9 +170,9 @@ def _host_entry_point_route(route: dict) -> dict | None:
     return {
         "uri": uri,
         "kind": kind,
-        "title": route.get("title") or route.get("label") or uri,
+        "title": _entry_point_title(route, uri),
         "source": _entry_point_source_label(source),
-        "adapter": route.get("adapter") or route.get("kind") or "python-entry-point",
+        "adapter": _entry_point_adapter_val(route),
         "inputSchema": route.get("inputSchema") or {"type": "object"},
         "meta": meta,
         "safe": safe,
@@ -213,22 +238,31 @@ def node_object(node: dict, all_routes: list[dict]) -> dict:
     }
 
 
-def service_object(service: dict) -> dict:
-    owner = {
-        "id": service.get("id") or f"service:{service.get('name')}",
+def _service_owner_dict(service: dict) -> dict:
+    name = service.get("name")
+    return {
+        "id": service.get("id") or f"service:{name}",
         "kind": "service",
-        "label": service.get("label") or f"urirun service: {service.get('name')}",
+        "label": service.get("label") or f"urirun service: {name}",
         "status": service.get("status") or ("running" if service.get("reachable") else "stopped"),
         "reachable": bool(service.get("reachable")),
         "url": service.get("url") or "",
         "transport": service.get("transport") or "http",
         "runtime": service.get("runtime") or service.get("name") or "service",
     }
+
+
+def _service_route_rows(service: dict) -> "list[dict]":
     routes = service.get("routes") if isinstance(service.get("routes"), list) else []
-    route_rows = [
+    return [
         route if isinstance(route, dict) else {"uri": route, "kind": "command", "adapter": "service"}
         for route in routes
     ]
+
+
+def service_object(service: dict) -> dict:
+    owner = _service_owner_dict(service)
+    route_rows = _service_route_rows(service)
     return {
         **owner,
         "routes": dedupe_routes([route_owner_route(route, owner) for route in route_rows]),
@@ -698,6 +732,49 @@ def node_envelope_error(envelope: dict) -> str:
     return "odrzucone"
 
 
+def _fetch_node_health(url: str, timeout: float, name: str) -> "tuple[str, bool]":
+    """Fetch /health from a node and return (self_name, key_auth).
+    Raises on network/parse failure so the caller can emit a structured error."""
+    request = urllib.request.Request(url.rstrip("/") + "/health", method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as resp:
+        health = json.loads(resp.read().decode("utf-8") or "{}")
+    self_name = str(health.get("name") or name)
+    key_auth = bool(health.get("keyAuth") or (health.get("policy") or {}).get("keyAuth"))
+    return self_name, key_auth
+
+
+def _probe_check_token(
+    run_node_uri: "Callable",
+    url: str,
+    probe: str,
+    token: str,
+    timeout: float,
+) -> dict:
+    """Try the probe URI with a bearer token and return token-validity fields."""
+    try:
+        res = run_node_uri(url, probe, {}, token=token, timeout=timeout)
+        result: dict = {"tokenValid": bool(res.get("ok"))}
+        if not res.get("ok"):
+            result["tokenReason"] = node_envelope_error(res)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        return {"tokenValid": False, "tokenReason": str(exc)}
+
+
+def _probe_check_identity(
+    run_node_uri: "Callable",
+    url: str,
+    probe: str,
+    identity: str,
+    timeout: float,
+) -> dict:
+    """Try the probe URI with a signed identity and return key-validity field."""
+    try:
+        return {"keyValid": bool(run_node_uri(url, probe, {}, identity=identity, timeout=timeout).get("ok"))}
+    except Exception:  # noqa: BLE001
+        return {"keyValid": False}
+
+
 def probe_node_token(
     name: str,
     *,
@@ -714,32 +791,60 @@ def probe_node_token(
     url = node_url_fn(name) or (known_nodes_file_urls() or {}).get(name, "")
     if not url:
         return {"reachable": False, "reason": "nieznany URL węzła — najpierw dodaj node"}
-    self_name, key_auth = name, False
     try:
-        request = urllib.request.Request(url.rstrip("/") + "/health", method="GET")
-        with urllib.request.urlopen(request, timeout=timeout) as resp:
-            health = json.loads(resp.read().decode("utf-8") or "{}")
-        self_name = str(health.get("name") or name)
-        key_auth = bool(health.get("keyAuth") or (health.get("policy") or {}).get("keyAuth"))
+        self_name, key_auth = _fetch_node_health(url, timeout, name)
     except Exception as exc:  # noqa: BLE001
         return {"reachable": False, "reason": f"węzeł nieosiągalny: {exc}"}
     probe = f"node://{self_name}/registry/query/installed"
     out: dict = {"reachable": True, "keyAuth": key_auth}
     if token:
-        try:
-            res = _run_node_uri(url, probe, {}, token=token, timeout=timeout)
-            out["tokenValid"] = bool(res.get("ok"))
-            if not res.get("ok"):
-                out["tokenReason"] = node_envelope_error(res)
-        except Exception as exc:  # noqa: BLE001
-            out["tokenValid"] = False
-            out["tokenReason"] = str(exc)
+        out.update(_probe_check_token(_run_node_uri, url, probe, token, timeout))
     if identity:
-        try:
-            out["keyValid"] = bool(_run_node_uri(url, probe, {}, identity=identity, timeout=timeout).get("ok"))
-        except Exception:  # noqa: BLE001
-            out["keyValid"] = False
+        out.update(_probe_check_identity(_run_node_uri, url, probe, identity, timeout))
     return out
+
+
+def _store_keyring_token(name: str, secret: str) -> "dict | None":
+    """Store the token in the OS keyring; return an error dict on failure, else None."""
+    try:
+        import keyring  # noqa: PLC0415
+        keyring.set_password("urirun-node-token", name, secret)
+        return None
+    except Exception as exc:  # noqa: BLE001 - never fall back to plaintext
+        return {"ok": False, "error": f"could not store token securely (keyring): {exc}. "
+                                      f"Install keyring or set X-Urirun-Token via host env instead."}
+
+
+def _mark_token_ref_in_config(config: "str | None", name: str, token_ref: str) -> None:
+    """Best-effort: record the non-secret token_ref on the matching node config entry."""
+    try:  # mark a non-secret reference on the node so the UI/run path know a token is set
+        from urirun.node import config as node_config  # noqa: PLC0415
+        cfg = node_config.load_host_config(config)
+        for node in cfg.get("nodes", []):
+            if isinstance(node, dict) and node.get("name") == name:
+                node["tokenRef"] = token_ref
+                node.pop("token", None)  # defensive: never keep a plaintext token in config
+                node_config.save_host_config(cfg, config)
+                break
+    except Exception:  # noqa: BLE001 - the marker is best-effort; the keyring store is authoritative
+        pass
+
+
+def _validate_stored_token(
+    result: dict,
+    name: str,
+    secret: str,
+    identity: "str | None",
+    node_url_fn: "Callable[[str], str | None]",
+) -> None:
+    """Best-effort: probe the node with the just-stored token and record validity in *result*."""
+    try:
+        check = probe_node_token(name, node_url_fn=node_url_fn, token=secret, identity=identity)
+        result["check"] = check
+        result["valid"] = check.get("tokenValid") if check.get("reachable") else None
+    except Exception as exc:  # noqa: BLE001 - validation is best-effort; the store already succeeded
+        result["check"] = {"reachable": False, "reason": str(exc)}
+        result["valid"] = None
 
 
 def node_set_token(
@@ -758,30 +863,11 @@ def node_set_token(
     secret = str(payload.get("token") or "")
     if not name or not secret:
         return {"ok": False, "error": "name and token are required"}
-    try:
-        import keyring  # noqa: PLC0415
-        keyring.set_password("urirun-node-token", name, secret)
-    except Exception as exc:  # noqa: BLE001 - never fall back to plaintext
-        return {"ok": False, "error": f"could not store token securely (keyring): {exc}. "
-                                      f"Install keyring or set X-Urirun-Token via host env instead."}
+    err = _store_keyring_token(name, secret)
+    if err:
+        return err
     token_ref = f"secret://keyring/urirun-node-token/{name}"
-    try:  # mark a non-secret reference on the node so the UI/run path know a token is set
-        from urirun.node import config as node_config  # noqa: PLC0415
-        cfg = node_config.load_host_config(config)
-        for node in cfg.get("nodes", []):
-            if isinstance(node, dict) and node.get("name") == name:
-                node["tokenRef"] = token_ref
-                node.pop("token", None)  # defensive: never keep a plaintext token in config
-                node_config.save_host_config(cfg, config)
-                break
-    except Exception:  # noqa: BLE001 - the marker is best-effort; the keyring store is authoritative
-        pass
+    _mark_token_ref_in_config(config, name, token_ref)
     result = {"ok": True, "name": name, "stored": "keyring", "tokenRef": token_ref}
-    try:
-        check = probe_node_token(name, node_url_fn=node_url_fn, token=secret, identity=identity)
-        result["check"] = check
-        result["valid"] = check.get("tokenValid") if check.get("reachable") else None
-    except Exception as exc:  # noqa: BLE001 - validation is best-effort; the store already succeeded
-        result["check"] = {"reachable": False, "reason": str(exc)}
-        result["valid"] = None
+    _validate_stored_token(result, name, secret, identity, node_url_fn)
     return result
