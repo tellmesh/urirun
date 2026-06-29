@@ -457,17 +457,21 @@ def _schema_for(route_entry: dict) -> dict | None:
     return config.get("inputSchema") or route_entry.get("inputSchema")
 
 
+def _apply_object_defaults(schema: dict, value: dict) -> dict:
+    output = dict(value)
+    for name, property_schema in (schema.get("properties") or {}).items():
+        if name not in output and isinstance(property_schema, dict) and "default" in property_schema:
+            output[name] = property_schema["default"]
+        elif name in output:
+            output[name] = _apply_defaults(property_schema, output[name])
+    return output
+
+
 def _apply_defaults(schema: dict, value):
     if not isinstance(schema, dict):
         return value
     if schema.get("type") == "object" and isinstance(value, dict):
-        output = dict(value)
-        for name, property_schema in (schema.get("properties") or {}).items():
-            if name not in output and isinstance(property_schema, dict) and "default" in property_schema:
-                output[name] = property_schema["default"]
-            elif name in output:
-                output[name] = _apply_defaults(property_schema, output[name])
-        return output
+        return _apply_object_defaults(schema, value)
     if schema.get("type") == "array" and isinstance(value, list):
         item_schema = schema.get("items") or {}
         return [_apply_defaults(item_schema, item) for item in value]
@@ -1657,6 +1661,44 @@ def _cmd_install(args, parser) -> int:
     return subprocess.run(cmd).returncode
 
 
+def _upgrade_check_report(args) -> int:
+    connectors = connector_health(ENTRY_POINT_GROUP)
+    reglib._emit_json({"ok": True, "version": _package_version(),
+                       "installed": [{"name": c.get("name"), "bindings": c.get("bindingCount"),
+                                      "ok": c.get("ok")} for c in connectors]}, "-")
+    return 0
+
+
+def _upgrade_core(args, source: str, org: str, ref) -> int:
+    """Upgrade the urirun package itself (no connector ids given)."""
+    import subprocess
+    if _is_pipx_env():
+        cmd, manager = ["pipx", "upgrade", "urirun"], "pipx"
+    else:
+        if source == "github":
+            suffix = f"@{ref}" if ref else ""
+            target = f"urirun @ git+https://github.com/{org}/urirun.git{suffix}#subdirectory=adapters/python"
+        else:
+            target = "urirun"
+        cmd, manager = _pip_command(["install", "--upgrade", target])
+    if args.dry_run:
+        reglib._emit_json({"ok": True, "dryRun": True, "target": "urirun", "manager": manager, "cmd": cmd}, "-")
+        return 0
+    print(json.dumps({"upgrading": "urirun", "via": manager}), flush=True)
+    return subprocess.run(cmd).returncode
+
+
+def _upgrade_connector_ids(args) -> list[str] | None:
+    """Resolve connector ids to upgrade; emits result and returns None when nothing to do."""
+    if not args.all:
+        return list(args.ids)
+    ids = [c.get("name") for c in connector_health(ENTRY_POINT_GROUP) if c.get("name")]
+    if not ids:
+        reglib._emit_json({"ok": True, "upgraded": [], "note": "no connectors installed"}, "-")
+        return None
+    return ids
+
+
 def _cmd_upgrade(args, parser) -> int:
     """Upgrade urirun itself (no ids) or installed connectors (``install --upgrade``).
 
@@ -1670,35 +1712,14 @@ def _cmd_upgrade(args, parser) -> int:
     ref = getattr(args, "ref", None)
 
     if getattr(args, "check", False):
-        connectors = connector_health(ENTRY_POINT_GROUP)
-        reglib._emit_json({"ok": True, "version": _package_version(),
-                           "installed": [{"name": c.get("name"), "bindings": c.get("bindingCount"),
-                                          "ok": c.get("ok")} for c in connectors]}, "-")
-        return 0
+        return _upgrade_check_report(args)
 
     if not args.ids and not args.all:
-        # upgrade the urirun core itself
-        if _is_pipx_env():
-            cmd, manager = ["pipx", "upgrade", "urirun"], "pipx"
-        else:
-            if source == "github":
-                suffix = f"@{ref}" if ref else ""
-                target = f"urirun @ git+https://github.com/{org}/urirun.git{suffix}#subdirectory=adapters/python"
-            else:
-                target = "urirun"
-            cmd, manager = _pip_command(["install", "--upgrade", target])
-        if args.dry_run:
-            reglib._emit_json({"ok": True, "dryRun": True, "target": "urirun", "manager": manager, "cmd": cmd}, "-")
-            return 0
-        print(json.dumps({"upgrading": "urirun", "via": manager}), flush=True)
-        return subprocess.run(cmd).returncode
+        return _upgrade_core(args, source, org, ref)
 
-    ids = args.ids
-    if args.all:
-        ids = [c.get("name") for c in connector_health(ENTRY_POINT_GROUP) if c.get("name")]
-        if not ids:
-            reglib._emit_json({"ok": True, "upgraded": [], "note": "no connectors installed"}, "-")
-            return 0
+    ids = _upgrade_connector_ids(args)
+    if ids is None:
+        return 0
     targets, editable, detail = _resolve_pip_targets(ids, source, args.catalog, org=org, ref=ref)
     cmd, manager = _pip_command(_pip_install_args(targets, upgrade=True, editable=editable))
     if args.dry_run:
