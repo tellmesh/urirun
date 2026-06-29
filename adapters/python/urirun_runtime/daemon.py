@@ -48,17 +48,22 @@ def call(socket_path: str, request: dict, timeout: float = _DAEMON_TIMEOUT_S) ->
         client.close()
 
 
-def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool = False) -> None:
-    """Run the daemon: warm registry + worker pool, one Unix socket, one process."""
+def _init_runtime(allow, allow_secrets):
+    """Import heavy deps, warm registry and worker pool; return runtime objects."""
     from urirun_runtime import _runtime, discovery, v2
     from urirun_runtime.worker import ConnectorPools, _pool_executors  # was node.mesh (upward); now kernel-local
 
-    registry = discovery.full_registry(v2.ENTRY_POINT_GROUP)     # #2: cached compile
-    pools = ConnectorPools()                                     # #3: warm workers
+    registry = discovery.full_registry(v2.ENTRY_POINT_GROUP)     # cached compile
+    pools = ConnectorPools()                                       # warm workers
     executors = _pool_executors(pools)
     base_policy = _runtime.build_policy(None, list(allow or ["*"]), None) or {}
     base_policy["secretsDisabled"] = not allow_secrets
+    n_routes = len(_runtime.list_routes(registry))
+    return registry, pools, executors, base_policy, v2, n_routes
 
+
+def _bind_socket(socket_path: str):
+    """Create, bind, and start listening on a Unix socket; return (server, path)."""
     path = os.path.abspath(socket_path)
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     if os.path.exists(path):
@@ -66,39 +71,68 @@ def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool 
     server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     server.bind(path)
     server.listen(64)
+    return server, path
+
+
+def _log_started(path: str, n_routes: int) -> None:
+    """Emit the startup JSON line so supervisors can detect readiness."""
     print(json.dumps({"event": "urirun.daemon.started", "socket": path,
-                      "routes": len(_runtime.list_routes(registry))}), flush=True)
+                      "routes": n_routes}), flush=True)
+
+
+def _handle_connection(conn, v2, registry, base_policy, executors) -> bool:
+    """Read, dispatch, and respond to one connection. Returns True on shutdown."""
+    data = b""
+    while not data.endswith(b"\n"):
+        chunk = conn.recv(65536)
+        if not chunk:
+            break
+        data += chunk
+    if not data.strip():
+        return False
+    request = json.loads(data)
+    if request.get("uri") == "__shutdown__":
+        conn.sendall(b'{"ok": true, "shutdown": true}\n')
+        return True
+    result = v2.run(
+        str(request["uri"]), registry, payload=request.get("payload") or {},
+        mode="execute" if request.get("execute", True) else "dry-run",
+        policy=base_policy, executors=executors,
+    )
+    conn.sendall(json.dumps(result).encode("utf-8") + b"\n")
+    return False
+
+
+def _send_error(conn, exc: Exception) -> None:
+    """Send a JSON error envelope on *conn* without raising."""
+    conn.sendall(json.dumps({"ok": False, "error": str(exc)}).encode("utf-8") + b"\n")
+
+
+def _cleanup(server, pools, path: str) -> None:
+    """Tear down worker pool, close server socket, and remove socket file."""
+    pools.close()
+    server.close()
+    if os.path.exists(path):
+        os.remove(path)
+
+
+def serve(socket_path: str = DEFAULT_SOCKET, *, allow=None, allow_secrets: bool = False) -> None:
+    """Run the daemon: warm registry + worker pool, one Unix socket, one process."""
+    registry, pools, executors, base_policy, v2, n_routes = _init_runtime(allow, allow_secrets)
+    server, path = _bind_socket(socket_path)
+    _log_started(path, n_routes)
     try:
         while True:
             conn, _ = server.accept()
             try:
-                data = b""
-                while not data.endswith(b"\n"):
-                    chunk = conn.recv(65536)
-                    if not chunk:
-                        break
-                    data += chunk
-                if not data.strip():
-                    continue
-                request = json.loads(data)
-                if request.get("uri") == "__shutdown__":
-                    conn.sendall(b'{"ok": true, "shutdown": true}\n')
+                if _handle_connection(conn, v2, registry, base_policy, executors):
                     break
-                result = v2.run(
-                    str(request["uri"]), registry, payload=request.get("payload") or {},
-                    mode="execute" if request.get("execute", True) else "dry-run",
-                    policy=base_policy, executors=executors,
-                )
-                conn.sendall(json.dumps(result).encode("utf-8") + b"\n")
             except Exception as exc:  # noqa: BLE001 - never let one bad request kill the daemon
-                conn.sendall(json.dumps({"ok": False, "error": str(exc)}).encode("utf-8") + b"\n")
+                _send_error(conn, exc)
             finally:
                 conn.close()
     finally:
-        pools.close()
-        server.close()
-        if os.path.exists(path):
-            os.remove(path)
+        _cleanup(server, pools, path)
 
 
 def _main(argv) -> int:
