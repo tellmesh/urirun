@@ -743,6 +743,11 @@
         f.style.display = (f.id === 'nodeForm-' + kind) ? '' : 'none');
       // browser-debug/webpage nodes can show a QR: opening it registers a webpage node.
       if (kind === 'browser-debug' || kind === 'webpage') renderConnectQr(kind);
+      // smartphone: show the install QR immediately (no extra click), once it isn't already up.
+      if (kind === 'smartphone') {
+        const qc = document.getElementById('phoneNodeQrContainer');
+        if (!qc || qc.style.display === 'none') showAddPhoneNodeQR();
+      }
       // webpage = relay only: poll for pages that opened the QR and offer to save them.
       if (kind === 'webpage') startWebpagePolling();
       // Reflect the picked kind in the URL so it is shareable/bookmarkable, like the

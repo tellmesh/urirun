@@ -574,11 +574,25 @@ def _schema_for(route_entry: dict) -> dict | None:
     return config.get("inputSchema") or route_entry.get("inputSchema")
 
 
+def _schema_allows_null(schema: dict) -> bool:
+    schema_type = schema.get("type")
+    if schema_type == "null":
+        return True
+    if isinstance(schema_type, list) and "null" in schema_type:
+        return True
+    for key in ("anyOf", "oneOf"):
+        if any(isinstance(item, dict) and _schema_allows_null(item) for item in schema.get(key) or []):
+            return True
+    return False
+
+
 def _apply_object_defaults(schema: dict, value: dict) -> dict:
     output = dict(value)
     for name, property_schema in (schema.get("properties") or {}).items():
         if name not in output and isinstance(property_schema, dict) and "default" in property_schema:
-            output[name] = property_schema["default"]
+            default = property_schema["default"]
+            if default is not None or _schema_allows_null(property_schema):
+                output[name] = default
         elif name in output:
             output[name] = _apply_defaults(property_schema, output[name])
     return output
