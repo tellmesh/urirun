@@ -815,8 +815,8 @@ def _mesh_routes(mesh: dict) -> list:
     return (mesh or {}).get("routes") or []
 
 
-def _flow_routing_report(flow: dict, mesh: dict, routes: list[dict], *, probe: bool = False) -> dict:
-    routing_mesh = {
+def _build_routing_mesh(mesh: dict, routes: list[dict]) -> dict:
+    return {
         "nodes": (mesh or {}).get("nodes") or [],
         "routes": routes or [],
         "inventories": (
@@ -827,6 +827,9 @@ def _flow_routing_report(flow: dict, mesh: dict, routes: list[dict], *, probe: b
             or {}
         ),
     }
+
+
+def _routing_accept_verdict(flow: dict, routing_mesh: dict, probe: bool) -> dict:
     try:
         verdict = accept_routing_plan(flow.get("steps") or [], routing_mesh, probe=probe)
         report = dict(verdict.get("report") or {})
@@ -845,6 +848,11 @@ def _flow_routing_report(flow: dict, mesh: dict, routes: list[dict], *, probe: b
             "blockedSteps": [],
             "runsOnByStep": {},
         }
+
+
+def _flow_routing_report(flow: dict, mesh: dict, routes: list[dict], *, probe: bool = False) -> dict:
+    routing_mesh = _build_routing_mesh(mesh, routes)
+    return _routing_accept_verdict(flow, routing_mesh, probe)
 
 
 def _routing_timeline(report: dict) -> list[dict]:
@@ -892,7 +900,7 @@ def _routing_block_result(report: dict, envelope: "FlowEnvelope") -> dict:
     }
 
 
-def _apply_routing_targets(result: dict, report: dict) -> None:
+def _build_runs_on_map(report: dict) -> dict:
     runs_on = {
         str(step.get("uri") or ""): step.get("runsOn")
         for step in (report.get("steps") or [])
@@ -901,8 +909,10 @@ def _apply_routing_targets(result: dict, report: dict) -> None:
     for uri, target in (report.get("runsOnByStep") or {}).items():
         if target:
             runs_on[str(uri)] = target
-    if not runs_on:
-        return
+    return runs_on
+
+
+def _update_timeline_targets(result: dict, runs_on: dict) -> None:
     for entry in result.get("timeline") or []:
         uri = str(entry.get("uri") or "")
         if uri in runs_on:
@@ -911,6 +921,13 @@ def _apply_routing_targets(result: dict, report: dict) -> None:
             step_result = (result.get("results") or {}).get(sid)
             if isinstance(step_result, dict):
                 step_result["target"] = runs_on[uri]
+
+
+def _apply_routing_targets(result: dict, report: dict) -> None:
+    runs_on = _build_runs_on_map(report)
+    if not runs_on:
+        return
+    _update_timeline_targets(result, runs_on)
 
 
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
@@ -1000,6 +1017,28 @@ def run_flow_document(document: dict, mesh: dict, *, execute: bool, rollback_on_
                                 dispatch_uri=None)
 
 
+def _env_dispatch_result(env: dict) -> dict:
+    """Convert a urirun run() envelope to the two-tier dispatch result shape."""
+    val = (env.get("result") or {}).get("value") if isinstance(env.get("result"), dict) else None
+    return {"ok": bool(env.get("ok")), "result": val,
+            "error": (env.get("error") or {}).get("message") if not env.get("ok") else None}
+
+
+def _tier2b_dispatch(uri: str, payload: "dict | None", _v2, _u) -> "dict | None":
+    """Tier-2b: check DECORATED_BINDINGS for connector.handler() registrations."""
+    # Tier 2b: DECORATED_BINDINGS — connector.handler() registrations that have no entry point
+    # (e.g. the twin:// connector registered by flow.py at module import time).
+    live_binding = _v2.decorated_bindings()["bindings"].get(uri)
+    if live_binding is None:
+        return None
+    reg3 = _u.compile_registry(_v2.build_binding_document([live_binding]))
+    env = _u.run(uri, reg3, payload=dict(payload or {}),
+                 mode="execute", policy={"allowExecute": True})
+    if (env.get("error") or {}).get("category") == "NOT_FOUND":
+        return None
+    return _env_dispatch_result(env)
+
+
 def _in_process_discovery(uri: str, payload: dict | None = None) -> "dict | None":
     """Tier-2 fallback: resolve *uri* through installed connectors (entry-point scan),
     then through DECORATED_BINDINGS (connector.handler() registrations not in entry points).
@@ -1013,22 +1052,8 @@ def _in_process_discovery(uri: str, payload: dict | None = None) -> "dict | None
         env = _u.run(uri, reg2, payload=dict(payload or {}),
                      mode="execute", policy={"allowExecute": True})
         if (env.get("error") or {}).get("category") != "NOT_FOUND":
-            val = (env.get("result") or {}).get("value") if isinstance(env.get("result"), dict) else None
-            return {"ok": bool(env.get("ok")), "result": val,
-                    "error": (env.get("error") or {}).get("message") if not env.get("ok") else None}
-        # Tier 2b: DECORATED_BINDINGS — connector.handler() registrations that have no entry point
-        # (e.g. the twin:// connector registered by flow.py at module import time).
-        live_binding = _v2.decorated_bindings()["bindings"].get(uri)
-        if live_binding is None:
-            return None
-        reg3 = _u.compile_registry(_v2.build_binding_document([live_binding]))
-        env = _u.run(uri, reg3, payload=dict(payload or {}),
-                     mode="execute", policy={"allowExecute": True})
-        if (env.get("error") or {}).get("category") == "NOT_FOUND":
-            return None
-        val = (env.get("result") or {}).get("value") if isinstance(env.get("result"), dict) else None
-        return {"ok": bool(env.get("ok")), "result": val,
-                "error": (env.get("error") or {}).get("message") if not env.get("ok") else None}
+            return _env_dispatch_result(env)
+        return _tier2b_dispatch(uri, payload, _v2, _u)
     except Exception as _exc:  # noqa: BLE001
         return {"ok": False, "invokedUri": uri,
                 "error": {"message": str(_exc), "category": "INPROCESS_ERROR"}}
