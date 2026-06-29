@@ -76,6 +76,42 @@ PRESETS: dict[str, dict] = {
         # The CDP browser primitive should sit on runtime/node only — no host, no sibling connectors.
         "allow_outward": ("urirun.runtime.", "urirun.node."),
     },
+    "E": {
+        "name": "connectors-toolkit",
+        "package": set(),
+        "package_prefixes": ("urirun.connectors.",),
+        # Connector authoring utilities may depend on the kernel runtime, never host/node.
+        "allow_outward": ("urirun.runtime.",),
+    },
+    "F": {
+        "name": "node-full-namespace",
+        "package": set(),
+        "package_prefixes": ("urirun.node.",),
+        # Intentionally red: node_cli/task_cli/mesh still point at host integration.
+        "allow_outward": ("urirun.runtime.", "urirun.connectors."),
+    },
+    "G": {
+        "name": "flow-subsystem",
+        "package": {
+            "urirun.node.flow",
+            "urirun.node.flow_planner",
+            "urirun.node.flow_thin",
+            "urirun.node.flow_verify",
+            "urirun.node.recovery",
+            "urirun.node.diagnostics",
+        },
+        "package_prefixes": (),
+        # Flow may use kernel/connectors/node substrate; it must not reach host.*.
+        "allow_outward": ("urirun.runtime.", "urirun.connectors.", "urirun.node."),
+    },
+    "H": {
+        "name": "node-substrate",
+        "package": set(),
+        "package_prefixes": ("urirun.node.",),
+        "exclude": {"urirun.node.node_cli", "urirun.node.task_cli", "urirun.node.mesh"},
+        # Pure node substrate may depend down on runtime/connectors, not host.
+        "allow_outward": ("urirun.runtime.", "urirun.connectors."),
+    },
 }
 
 
@@ -177,6 +213,7 @@ def resolve_package(modules: set[str], spec: dict) -> set[str]:
     pkg = set(spec.get("package") or set())
     for prefix in spec.get("package_prefixes") or ():
         pkg |= {m for m in modules if m.startswith(prefix)}
+    pkg -= set(spec.get("exclude") or set())
     return pkg
 
 

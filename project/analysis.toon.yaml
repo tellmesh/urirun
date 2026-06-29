@@ -1,15 +1,21 @@
-# code2llm | 284f 44442L | python:209,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
-# generated in 0.20s
-# CC̅=4.5 | critical:2/2447 | dups:0 | cycles:0
+# code2llm | 286f 47377L | python:211,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
+# generated in 0.16s
+# CC̅=4.5 | critical:8/2537 | dups:0 | cycles:0
 
-HEALTH[2]:
+HEALTH[8]:
   🟡 CC    _try_recall_gate CC=15 (limit:15)
   🟡 CC    _chat_ask_general CC=15 (limit:15)
+  🟡 CC    _preflight_cdp CC=15 (limit:15)
+  🟡 CC    _flow_routing_report CC=17 (limit:15)
+  🟡 CC    _apply_routing_targets CC=16 (limit:15)
+  🟡 CC    _in_process_discovery CC=17 (limit:15)
+  🟡 CC    _flow_scheme_dispatch CC=25 (limit:15)
+  🟡 CC    inprocess_fallback CC=20 (limit:15)
 
 REFACTOR[1]:
-  1. split 2 high-CC methods  (CC>15)
+  1. split 8 high-CC methods  (CC>15)
 
-PIPELINES[860]:
+PIPELINES[875]:
   [1] Src [http]: http
       PURITY: 100% pure
   [2] Src [_attacker_key]: _attacker_key
@@ -30,7 +36,7 @@ PIPELINES[860]:
       PURITY: 100% pure
   [10] Src [main]: main → find_offenders → _iter_py
       PURITY: 100% pure
-  [11] Src [main]: main → lint_fleet → lint_connector → list → ...(3 more)
+  [11] Src [main]: main → lint_fleet → lint_connector → _lint_gather_data → ...(4 more)
       PURITY: 100% pure
   [12] Src [main]: main → audit → discover_modules → module_name → ...(4 more)
       PURITY: 100% pure
@@ -112,8 +118,8 @@ PIPELINES[860]:
       PURITY: 100% pure
 
 LAYERS:
-  scripts/                        CC̄=5.2    ←in:160  →out:2
-  │ extraction_audit           423L  2C   12m  CC=12     ←0
+  scripts/                        CC̄=5.1    ←in:160  →out:2
+  │ extraction_audit           327L  2C   12m  CC=12     ←0
   │ test_pypi_install.sh       281L  0C    2m  CC=0.0    ←35
   │ repin_connectors           176L  0C    7m  CC=11     ←0
   │ lint_connectors            140L  0C    6m  CC=13     ←0
@@ -139,43 +145,47 @@ LAYERS:
   │ gate.mjs                     0L  0C    9m  CC=12     ←0
   │
   adapters/                       CC̄=4.5    ←in:18  →out:12  !! split
-  │ !! dashboard.js              2955L  0C  436m  CC=14     ←42
+  │ !! dashboard.js              2955L  0C  436m  CC=14     ←44
   │ !! chat_orchestrator         2039L  1C   73m  CC=15     ←0
   │ !! v2                        2033L  2C  120m  CC=14     ←5
-  │ !! host_dashboard            1939L  0C  102m  CC=14     ←1
+  │ !! host_dashboard            1973L  0C  107m  CC=14     ←1
   │ !! scanner_bridge            1548L  0C    0m  CC=0.0    ←0
   │ !! document_sync             1422L  0C    0m  CC=0.0    ←0
+  │ !! flow                      1249L  0C   51m  CC=17     ←6
   │ !! object_registry           1048L  0C   51m  CC=14     ←1
   │ !! server                     997L  3C   55m  CC=14     ←3
   │ !! node_cli                   910L  0C   57m  CC=13     ←1
-  │ !! __init__                   766L  1C   53m  CC=14     ←10
+  │ !! __init__                   766L  1C   53m  CC=14     ←11
+  │ !! connector_lint             747L  0C   42m  CC=14     ←1
   │ !! cli                        739L  0C   13m  CC=2      ←1
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! scanner.js                 681L  0C  121m  CC=14     ←0
   │ !! _scan                      659L  0C   34m  CC=14     ←0
+  │ !! _runtime                   630L  1C   35m  CC=13     ←2
   │ !! twin_bridge                624L  0C   31m  CC=12     ←1
-  │ !! _runtime                   610L  1C   30m  CC=13     ←2
+  │ !! manage                     608L  0C   37m  CC=11     ←0
   │ !! client                     558L  1C   35m  CC=12     ←1
   │ !! transport                  540L  0C   24m  CC=14     ←3
   │ !! host_db                    527L  0C   33m  CC=11     ←0
+  │ !! v1                         510L  0C   34m  CC=11     ←3
   │ !! artifacts_admin            501L  0C    0m  CC=0.0    ←0
-  │ v1                         471L  0C   25m  CC=14     ←3
   │ document_metadata          471L  0C    0m  CC=0.0    ←0
   │ service_control            462L  0C   23m  CC=11     ←0
   │ codegen                    438L  0C   19m  CC=14     ←0
   │ connector_scaffold         413L  0C   11m  CC=3      ←0
-  │ reversible                 406L  8C   28m  CC=10     ←3
-  │ twin_store                 401L  3C   45m  CC=9      ←0
+  │ reversible                 406L  8C   28m  CC=10     ←4
+  │ twin_store                 401L  3C   45m  CC=9      ←1
   │ discovery                  379L  0C   30m  CC=14     ←2
   │ task_planner               376L  2C   16m  CC=12     ←0
+  │ preconditions              376L  1C   14m  CC=11     ←0
   │ host_integrations          374L  0C   16m  CC=8      ←0
   │ task_cli                   367L  0C   29m  CC=10     ←0
   │ fs_transfer                362L  0C   15m  CC=14     ←5
   │ scanner_service            342L  0C    0m  CC=0.0    ←0
   │ cdp                        339L  1C   24m  CC=8      ←0
-  │ node_dispatch              315L  0C    7m  CC=14     ←3
   │ worker                     315L  3C   26m  CC=10     ←2
-  │ dashboard_api              309L  0C   27m  CC=14     ←2
+  │ node_dispatch              315L  0C    7m  CC=14     ←3
+  │ dashboard_api              309L  0C   27m  CC=14     ←1
   │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ mesh                       279L  0C    4m  CC=4      ←0
   │ node_types                 265L  0C    8m  CC=8      ←1
@@ -191,7 +201,6 @@ LAYERS:
   │ v2_adopt                   213L  0C   13m  CC=7      ←0
   │ discovery                  202L  0C    9m  CC=9      ←0
   │ compat                     199L  0C    6m  CC=10     ←0
-  │ dispatch                   199L  0C    8m  CC=12     ←1
   │ testing                    189L  0C    9m  CC=9      ←0
   │ dispatch_protocol          184L  0C    8m  CC=10     ←1
   │ keyauth                    182L  0C   16m  CC=6      ←0
@@ -206,11 +215,12 @@ LAYERS:
   │ scanner_net                153L  0C    0m  CC=0.0    ←0
   │ v2_service                 152L  0C    5m  CC=9      ←0
   │ agent                      151L  0C    6m  CC=10     ←0
+  │ daemon                     149L  0C    9m  CC=9      ←0
   │ scheduler                  135L  0C    6m  CC=4      ←0
   │ decision_loop              134L  0C    5m  CC=13     ←1
   │ backend_registry           129L  2C   10m  CC=11     ←0
+  │ !! dispatch                   128L  0C    3m  CC=25     ←1
   │ contracts                  119L  0C    8m  CC=5      ←0
-  │ daemon                     115L  0C    3m  CC=14     ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ _artifacts                 111L  0C    5m  CC=9      ←2
   │ capture_preferences        108L  0C    7m  CC=11     ←0
@@ -222,7 +232,7 @@ LAYERS:
   │ urirun.go                   80L  3C    5m  CC=3      ←0
   │ formatting                  80L  0C    4m  CC=8      ←2
   │ pyproject.toml              79L  0C    0m  CC=0.0    ←0
-  │ _util                       78L  0C    8m  CC=8      ←5
+  │ _util                       78L  0C    8m  CC=8      ←6
   │ __init__                    76L  2C    1m  CC=1      ←0
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
@@ -298,6 +308,7 @@ LAYERS:
   │ hash_connector.rb            8L  0C    0m  CC=0.0    ←0
   │ composer.json                7L  0C    0m  CC=0.0    ←0
   │ contract_export              7L  0C    0m  CC=0.0    ←0
+  │ flow_thin                    7L  0C    0m  CC=0.0    ←0
   │ Program.cs                   7L  0C    0m  CC=0.0    ←0
   │ declarative                  6L  0C    0m  CC=0.0    ←0
   │ routing                      6L  0C    0m  CC=0.0    ←0
@@ -319,12 +330,10 @@ LAYERS:
   │ dispatch_protocol            5L  0C    0m  CC=0.0    ←0
   │ __init__                     5L  0C    0m  CC=0.0    ←0
   │ event_schema                 4L  3C    2m  CC=5      ←1
-  │ manage                       4L  0C   36m  CC=13     ←0
   │ skill                        4L  0C   17m  CC=12     ←1
   │ doctor                       4L  0C   13m  CC=9      ←1
   │ paths                        4L  0C    3m  CC=5      ←4
-  │ episode                      4L  6C   10m  CC=14     ←3
-  │ connector_lint               4L  0C   38m  CC=14     ←1
+  │ episode                      4L  6C   10m  CC=14     ←4
   │ connect_catalog              4L  0C   17m  CC=13     ←0
   │ connector_smoke              4L  0C    3m  CC=6      ←0
   │ connector_contract           4L  1C   11m  CC=4      ←0
@@ -335,6 +344,7 @@ LAYERS:
   │ artifacts_admin              4L  0C    0m  CC=0.0    ←0
   │ scanner_service              4L  0C    0m  CC=0.0    ←0
   │ scanner_bridge               4L  0C    0m  CC=0.0    ←0
+  │ connector_lint               4L  0C    0m  CC=0.0    ←0
   │ backend_registry             4L  0C    0m  CC=0.0    ←0
   │ connector_sdk                4L  0C    0m  CC=0.0    ←0
   │ declarative                  4L  0C    0m  CC=0.0    ←0
@@ -342,6 +352,7 @@ LAYERS:
   │ connector_scaffold           4L  0C    0m  CC=0.0    ←0
   │ _version                     4L  0C    0m  CC=0.0    ←0
   │ config                       4L  0C    0m  CC=0.0    ←0
+  │ manage                       4L  0C    0m  CC=0.0    ←0
   │ keyauth                      4L  0C    0m  CC=0.0    ←0
   │ routing                      4L  0C    0m  CC=0.0    ←0
   │ _util                        4L  0C    0m  CC=0.0    ←0
@@ -354,12 +365,9 @@ LAYERS:
   │ formatting                   4L  0C    0m  CC=0.0    ←0
   │ flow_verify                  4L  0C    0m  CC=0.0    ←0
   │ mesh                         4L  0C    0m  CC=0.0    ←0
-  │ flow_thin                    4L  0C    0m  CC=0.0    ←0
   │ transport                    4L  0C    0m  CC=0.0    ←0
   │ flow_planner                 4L  0C    0m  CC=0.0    ←0
-  │ flow                         4L  0C    0m  CC=0.0    ←0
   │ twin_store                   4L  0C    0m  CC=0.0    ←0
-  │ preconditions                4L  0C    0m  CC=0.0    ←0
   │ .NETCoreApp,Version=v8.0.AssemblyAttributes.cs     4L  0C    0m  CC=0.0    ←0
   │ contract_reversible          2L  0C    0m  CC=0.0    ←0
   │ contract_jsonschema          2L  0C    0m  CC=0.0    ←0
@@ -432,14 +440,14 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                                                 ──                     
   security.mesh-probe                                         1                                                                                                                                                 ──
   CYCLES: none
+  HUB: adapters.python/ (fan-in=8)
   HUB: v1.js/ (fan-in=6)
   HUB: adapters/ (fan-in=18)
   HUB: scripts/ (fan-in=160)
-  HUB: adapters.python/ (fan-in=8)
+  SMELL: adapters.python/ fan-out=162 → split needed
   SMELL: adapters/ fan-out=12 → split needed
   SMELL: examples.matrix/ fan-out=9 → split needed
   SMELL: xlang/ fan-out=8 → split needed
-  SMELL: adapters.python/ fan-out=162 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

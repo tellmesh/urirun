@@ -15,6 +15,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -36,6 +37,7 @@ class Precondition:
 
 
 _REGISTRY: dict[str, Precondition] = {}
+_LEGACY_PROVIDERS: dict[str, list[dict]] = {}
 
 
 def precondition(name: str, *, description: str = "", mode: str = "automatic",
@@ -58,7 +60,19 @@ def precondition(name: str, *, description: str = "", mode: str = "automatic",
     return deco
 
 
-def provider(name: str) -> Callable:
+def clear() -> None:
+    """Clear dynamic preconditions/providers.
+
+    Test and connector compatibility API.  Built-ins are decorators at import
+    time; tests that call clear() intentionally start from an empty registry.
+    """
+    _REGISTRY.clear()
+    _LEGACY_PROVIDERS.clear()
+
+
+def provider(name: str, provider_id: str | None = None, *, check: Callable | None = None,
+             satisfy: Callable | None = None, human_gated: bool = False,
+             hint: str = "", priority: int = 0) -> Callable | None:
     """Attach a satisfy callable to an already-registered precondition.
 
     Usage::
@@ -66,7 +80,29 @@ def provider(name: str) -> Callable:
         @provider("ydotool-daemon-running")
         def _start_ydotool(*, node: str = "host", dispatch=None) -> dict:
             ...
+
+    Back-compat usage::
+
+        provider("portal", "xdg", check=lambda ctx: False, human_gated=True)
     """
+    if provider_id is not None or check is not None or satisfy is not None:
+        rec = {
+            "provider": provider_id or name,
+            "check": check or (lambda ctx: False),
+            "satisfy": satisfy,
+            "humanGated": bool(human_gated),
+            "hint": hint,
+            "priority": int(priority or 0),
+        }
+        _LEGACY_PROVIDERS.setdefault(name, []).append(rec)
+        mode = "human-gated" if human_gated else "automatic"
+        register(name, description=provider_id or name, mode=mode, hint=hint,
+                 probe=lambda rec=rec: bool(rec["check"]({})),
+                 satisfy=(lambda *, node="host", dispatch=None, rec=rec:
+                          (rec["satisfy"]({}) if rec.get("satisfy") else {"ok": False}))
+                 if satisfy is not None else None)
+        return None
+
     def deco(fn: Callable) -> Callable:
         pc = _REGISTRY.get(name)
         if pc is not None:
@@ -75,6 +111,67 @@ def provider(name: str) -> Callable:
                 hint=pc.hint, probe=pc.probe, satisfy_fn=fn, tags=pc.tags)
         return fn
     return deco
+
+
+def _legacy_sorted(name: str) -> list[dict]:
+    return sorted(_LEGACY_PROVIDERS.get(name) or [], key=lambda r: r.get("priority", 0), reverse=True)
+
+
+def status(name: str, ctx: dict | None = None) -> dict:
+    providers = _legacy_sorted(name)
+    if providers:
+        for rec in providers:
+            if bool(rec["check"](ctx or {})):
+                return {"ok": True, "satisfied": True, "provider": rec["provider"]}
+        return {"ok": True, "satisfied": False, "providers": [r["provider"] for r in providers]}
+    r = check(name)
+    return {"ok": "error" not in r, "satisfied": bool(r.get("satisfied")),
+            "reason": r.get("error", "")}
+
+
+def _acquire_dict(name: str, rec: dict | None = None, reason: str = "") -> dict:
+    rec = rec or {}
+    return {
+        "ok": False,
+        "satisfied": False,
+        "reason": reason or "acquire required",
+        "next": {"kind": "acquire"},
+        "acquire": {
+            "precondition": name,
+            "provider": rec.get("provider", ""),
+            "hint": rec.get("hint", ""),
+            "humanGated": bool(rec.get("humanGated")),
+        },
+    }
+
+
+def ensure(name: str, ctx: dict | None = None) -> dict:
+    providers = _legacy_sorted(name)
+    if providers:
+        for rec in providers:
+            if bool(rec["check"](ctx or {})):
+                return {"ok": True, "satisfied": True, "provider": rec["provider"]}
+        rec = providers[0]
+        if rec.get("humanGated"):
+            return _acquire_dict(name, rec, "human-gated")
+        if rec.get("satisfy") is not None:
+            rec["satisfy"](ctx or {})
+            if bool(rec["check"](ctx or {})):
+                return {"ok": True, "satisfied": True, "acquired": True, "provider": rec["provider"]}
+        return _acquire_dict(name, rec, "not satisfied")
+
+    pc = _REGISTRY.get(name)
+    if pc is None:
+        return {"ok": False, "satisfied": False, "reason": f"no provider for {name!r}"}
+    r = check(name)
+    if r.get("satisfied"):
+        return {"ok": True, "satisfied": True, "provider": name}
+    if pc.mode == "human-gated":
+        return _acquire_dict(name, {"provider": name, "hint": pc.hint, "humanGated": True}, "human-gated")
+    sr = satisfy(name)
+    if sr.get("ok") and check(name).get("satisfied"):
+        return {"ok": True, "satisfied": True, "acquired": True, "provider": name}
+    return _acquire_dict(name, {"provider": name, "hint": pc.hint, "humanGated": False}, sr.get("error", "not satisfied"))
 
 
 def register(name: str, *, description: str = "", mode: str = "automatic",
@@ -268,13 +365,69 @@ def need_from_backend_error(msg: str) -> dict | None:
     for name, keywords in _ERROR_PATTERNS:
         if any(k.lower() in lower for k in keywords):
             pc = _REGISTRY.get(name)
-            return {
-                "kind": "acquire",
-                "precondition": name,
-                "mode": pc.mode if pc else "human-gated",
+            human = (pc.mode == "human-gated") if pc else ("grant:" in lower or "permission" in lower)
+            need = _acquire_dict(name, {
+                "provider": name,
                 "hint": (pc.hint if pc else "") or msg[:120],
-            }
+                "humanGated": human,
+            }, "backend precondition")
+            install = re.findall(r"install:\s*([^)]+)", msg, flags=re.IGNORECASE)
+            if install:
+                need["acquire"]["install"] = [part.strip() for part in install[0].split(",") if part.strip()]
+                need["acquire"]["humanGated"] = False
+            return need
+    if "all backends failed" in lower or "no available backend" in lower:
+        need = _acquire_dict("backend-available", {
+            "provider": "backend",
+            "hint": msg[:120],
+            "humanGated": "grant:" in lower or "permission" in lower or "portal" in lower,
+        }, "backend precondition")
+        install = re.findall(r"install:\s*([^)]+)", msg, flags=re.IGNORECASE)
+        if install:
+            need["acquire"]["install"] = [part.strip() for part in install[0].split(",") if part.strip()]
+            need["acquire"]["humanGated"] = False
+        return need
     return None
+
+
+def _uri_ready_check(precondition: str = "", **ctx) -> dict:
+    if not precondition:
+        return {"ok": False, "satisfied": False, "error": "missing precondition"}
+    return status(precondition, ctx)
+
+
+def _uri_ready_ensure(precondition: str = "", **ctx) -> dict:
+    if not precondition:
+        return {"ok": False, "satisfied": False, "error": "missing precondition"}
+    return ensure(precondition, ctx)
+
+
+def _uri_ready_report(**_ctx) -> dict:
+    names = sorted(set(_REGISTRY) | set(_LEGACY_PROVIDERS))
+    return {"ok": True, "preconditions": names}
+
+
+def ready_bindings() -> dict:
+    return {
+        "version": "urirun.bindings.v2",
+        "bindings": {
+            "ready://host/ready/query/check": {
+                "kind": "query",
+                "adapter": "python-function",
+                "callable": "urirun.node.preconditions:_uri_ready_check",
+            },
+            "ready://host/ready/command/ensure": {
+                "kind": "command",
+                "adapter": "python-function",
+                "callable": "urirun.node.preconditions:_uri_ready_ensure",
+            },
+            "ready://host/ready/query/report": {
+                "kind": "query",
+                "adapter": "python-function",
+                "callable": "urirun.node.preconditions:_uri_ready_report",
+            },
+        },
+    }
 
 
 # ────────────────────────────────────────────────────────────────────────────

@@ -93,6 +93,26 @@ def test_execute_flow_attaches_pre_execution_routing_report() -> None:
     assert res["routing"]["runsOnByStep"][uri] == "lenovo"
 
 
+def test_execute_flow_stamps_routing_target_on_results_and_timeline() -> None:
+    uri = "kvm://host/screen/query/capture"
+    flow_doc = {"steps": [{"id": "capture", "uri": uri}]}
+    mesh = {
+        "nodes": [{"name": "lenovo", "url": "http://192.168.188.201:8765"}],
+        "routes": [{"uri": uri, "node": "lenovo"}],
+    }
+
+    def fake_dispatch(_uri, _payload=None):
+        # Simulate a connector that reports its own local/default target in the domain payload.
+        # Execution metadata must still use the router's runsOn target.
+        return {"ok": True, "result": {"value": {"ok": True, "target": "host"}}}
+
+    res = flow.execute_flow(flow_doc, mesh=mesh, registry={}, execute=False, dispatch_uri=fake_dispatch)
+
+    assert res["timeline"][0]["target"] == "lenovo"
+    assert res["results"]["capture"]["target"] == "lenovo"
+    assert res["results"]["capture"]["result"]["value"]["target"] == "host"
+
+
 def test_execute_flow_router_guard_blocks_before_dispatch() -> None:
     uri = "kvm://host/screen/query/capture"
     flow_doc = {"steps": [{"id": "capture", "uri": uri}]}
@@ -131,7 +151,8 @@ def test_execute_flow_routing_target_is_used_for_transport_failure_timeline() ->
     res = flow.execute_flow(flow_doc, mesh=mesh, registry={}, execute=True, dispatch_uri=fake_dispatch)
 
     assert res["ok"] is False
-    assert res["timeline"][0]["target"] == "lenovo"
+    verify_entry = next(e for e in res["timeline"] if e.get("id") == "verify")
+    assert verify_entry["target"] == "lenovo"
 
 
 def test_execute_flow_aborts_on_inner_action_failure(monkeypatch) -> None:

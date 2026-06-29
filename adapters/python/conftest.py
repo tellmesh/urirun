@@ -22,6 +22,19 @@ if os.path.isdir(os.path.join(_PKG, "urirun")):
         for _name in [n for n in list(sys.modules) if n == "urirun" or n.startswith("urirun.")]:
             del sys.modules[_name]
 
+_MONOREPO = os.path.dirname(os.path.dirname(os.path.dirname(_PKG)))
+for _sibling in [
+    "urirun-contract",
+    "urirun-connector-router",
+    "urirun-connector-twin",
+    "urirun-connector-domain-monitor",
+    "urirun-flow",
+    "urirun-widgets",
+]:
+    _path = os.path.join(_MONOREPO, _sibling)
+    if os.path.isdir(_path) and _path not in sys.path:
+        sys.path.insert(1, _path)
+
 
 # Auto-heal the recurring extraction bug where a bundled-fallback `try/except ImportError` traps
 # `from __future__ import annotations` inside the except block (SyntaxError). This runs at conftest

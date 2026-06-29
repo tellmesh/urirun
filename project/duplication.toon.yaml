@@ -1,12 +1,12 @@
-# redup/duplication | 14 groups | 132f 14166L | 2026-06-29
+# redup/duplication | 14 groups | 132f 15749L | 2026-06-29
 
 SUMMARY:
   files_scanned: 132
-  total_lines:   14166
+  total_lines:   15749
   dup_groups:    14
   dup_fragments: 31
   saved_lines:   115
-  scan_ms:       47809
+  scan_ms:       42678
 
 HOTSPOTS[7] (files with most duplication):
   host/host_dashboard.py  dup=63L  groups=4  frags=8  (0.4%)
@@ -23,15 +23,15 @@ DUPLICATES[14] (ranked by impact):
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
   [21ec0af11b527352]   STRU  _free_port_from_old_scanner  L=9 N=3 saved=18 sim=1.00
-      host/host_dashboard.py:1834-1842  (_free_port_from_old_scanner)
-      host/host_dashboard.py:1845-1853  (_free_port_from_old_chat)
-      host/host_dashboard.py:1856-1864  (_free_port_from_old_android_node)
+      host/host_dashboard.py:1868-1876  (_free_port_from_old_scanner)
+      host/host_dashboard.py:1879-1887  (_free_port_from_old_chat)
+      host/host_dashboard.py:1890-1898  (_free_port_from_old_android_node)
   [635b02bad6666184]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
   [F0005]   FUZZ  do_GET  L=11 N=2 saved=11 sim=0.87
-      host/host_dashboard.py:1746-1756  (do_GET)
-      host/host_dashboard.py:1758-1769  (do_POST)
+      host/host_dashboard.py:1780-1790  (do_GET)
+      host/host_dashboard.py:1792-1803  (do_POST)
   [64f8a7860e9316e0]   STRU  _api_checks  L=8 N=2 saved=8 sim=1.00
       host/dashboard_api.py:150-157  (_api_checks)
       host/dashboard_api.py:160-167  (_api_logs)

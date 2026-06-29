@@ -1,7 +1,7 @@
-# code2llm/evolution | 2401 func | 118f | 2026-06-29
-# generated in 0.02s
+# code2llm/evolution | 2491 func | 120f | 2026-06-29
+# generated in 0.01s
 
-NEXT[4] (ranked by impact):
+NEXT[6] (ranked by impact):
   [1] !! SPLIT           adapters/python/urirun/host/dashboard.js
       WHY: 2955L, 0 classes, max CC=14
       EFFORT: ~4h  IMPACT: 41370
@@ -18,6 +18,14 @@ NEXT[4] (ranked by impact):
       WHY: CC=15 exceeds 15
       EFFORT: ~1h  IMPACT: 525
 
+  [5] !! SPLIT-FUNC      _flow_scheme_dispatch  CC=25  fan=16
+      WHY: CC=25 exceeds 15
+      EFFORT: ~1h  IMPACT: 400
+
+  [6] !  SPLIT-FUNC      inprocess_fallback  CC=20  fan=15
+      WHY: CC=20 exceeds 15
+      EFFORT: ~1h  IMPACT: 300
+
 
 RISKS[3]:
   ⚠ Splitting adapters/python/urirun/host/dashboard.js may break 436 import paths
@@ -26,9 +34,9 @@ RISKS[3]:
 
 METRICS-TARGET:
   CC̄:          4.5 → ≤3.1
-  max-CC:      15 → ≤7
-  god-modules: 23 → 0
-  high-CC(≥15): 2 → ≤1
+  max-CC:      25 → ≤12
+  god-modules: 27 → 0
+  high-CC(≥15): 8 → ≤4
   hub-types:   0 → ≤0
 
 PATTERNS (language parser shared logic):

@@ -1,49 +1,49 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.43s
-# nodes: 456 | edges: 500 | modules: 54
+# generated in 0.24s
+# nodes: 460 | edges: 500 | modules: 56
 # CC̄=4.5
 
 HUBS[20]:
   scripts.test_pypi_install.print
     CC=0  in:211  out:0  total:211
   adapters.python.urirun.host.dashboard.list
-    CC=8  in:104  out:4  total:108
+    CC=8  in:106  out:4  total:110
   adapters.python.urirun_node.server.send_json
     CC=1  in:44  out:12  total:56
-  adapters.python.urirun_runtime.v1.main
-    CC=13  in:0  out:44  total:44
   scripts.extraction_audit.print_report
     CC=12  in:1  out:36  total:37
   adapters.python.urirun_node.server.NodeHandler._stream_events
     CC=14  in:0  out:31  total:31
-  adapters.python.urirun_node.server.NodeHandler._handle_deploy
-    CC=11  in:0  out:29  total:29
-  adapters.python.urirun.runtime.errors.info
-    CC=13  in:2  out:27  total:29
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
   adapters.python.urirun_node.server.NodeHandler._handle_run
     CC=14  in:0  out:29  total:29
-  adapters.python.urirun.connectors.connector_lint.verify_connector
+  adapters.python.urirun_node.server.NodeHandler._handle_deploy
+    CC=11  in:0  out:29  total:29
+  adapters.python.urirun_connectors_toolkit.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
-  adapters.python.urirun_node.server.apply_deploy
-    CC=12  in:2  out:25  total:27
-  adapters.python.urirun.connectors.connector_lint.lint_connector
-    CC=9  in:3  out:24  total:27
   adapters.python.urirun_runtime.v2.validate_binding_document
     CC=12  in:3  out:24  total:27
+  adapters.python.urirun_node.server.apply_deploy
+    CC=12  in:2  out:25  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
+  adapters.python.urirun_twin.twin_store.environment_fingerprint
+    CC=9  in:3  out:22  total:25
   adapters.python.urirun.connectors.connect_catalog._cmd_show
     CC=9  in:0  out:25  total:25
-  adapters.python.urirun_twin.twin_store.environment_fingerprint
-    CC=9  in:2  out:22  total:24
+  adapters.python.urirun_runtime.v1._build_v1_parser
+    CC=2  in:1  out:24  total:25
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
-  adapters.python.urirun_runtime.v1.run
-    CC=14  in:1  out:23  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
+  adapters.python.urirun.runtime.errors.problem
+    CC=10  in:0  out:22  total:22
+  adapters.python.urirun_node.server.NodeHandler._handle_enroll
+    CC=11  in:0  out:22  total:22
+  adapters.python.urirun_node.server._serve_opts_merged
+    CC=14  in:1  out:21  total:22
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -98,17 +98,6 @@ MODULES:
     dispatch_execute  CC=2  out:3
     test_execute_cases  CC=4  out:5
     test_failed_dispatch_carries_error  CC=4  out:4
-  adapters.python.urirun.connectors.connector_lint  [33 funcs]
-    _adapter_drift  CC=5  out:7
-    _changed_machine_fields  CC=5  out:1
-    _cli_subcommands  CC=10  out:9
-    _collect_kernel_imports  CC=11  out:4
-    _compute_drift  CC=3  out:2
-    _connector_assignment  CC=13  out:9
-    _connector_call_target  CC=6  out:2
-    _connector_objects  CC=4  out:2
-    _connector_py_files  CC=5  out:4
-    _const_str  CC=3  out:2
   adapters.python.urirun.connectors.connector_smoke  [3 funcs]
     _load  CC=3  out:4
     smoke  CC=6  out:20
@@ -139,17 +128,9 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.manage  [32 funcs]
-    _app_count  CC=5  out:4
-    _augment_local_routes  CC=5  out:7
-    _classify_source  CC=7  out:6
-    _compositor  CC=9  out:11
-    _connector_match  CC=2  out:2
-    _derive_local_routes  CC=8  out:11
-    _gpu_info  CC=9  out:8
-    _install_policy  CC=9  out:15
-    _installed_route_owners  CC=7  out:6
-    _list_installed_connectors  CC=4  out:6
+  adapters.python.urirun.node.flow  [2 funcs]
+    _flow_transport  CC=1  out:8
+    execute_flow  CC=8  out:16
   adapters.python.urirun.node.paths  [3 funcs]
     deploy_dir  CC=5  out:7
     node_state_dir  CC=1  out:3
@@ -165,17 +146,17 @@ MODULES:
     _uri_session_promote  CC=7  out:8
     _uri_session_replay  CC=7  out:10
     _uri_session_start  CC=8  out:11
-  adapters.python.urirun.runtime.errors  [31 funcs]
-    _aggregate  CC=4  out:13
+  adapters.python.urirun.runtime.errors  [14 funcs]
     _append  CC=3  out:13
-    _cmd_bindings  CC=2  out:2
-    _cmd_categories  CC=2  out:2
-    _cmd_info  CC=2  out:3
-    _cmd_recent  CC=2  out:3
-    _cmd_search  CC=2  out:4
-    _cmd_ticket  CC=3  out:4
-    _emit  CC=1  out:2
     _errno_category  CC=6  out:3
+    _load  CC=5  out:7
+    _match_message_rules  CC=4  out:1
+    _normalize_message  CC=2  out:6
+    address  CC=1  out:0
+    category_meta  CC=1  out:1
+    classify  CC=8  out:5
+    error_code  CC=1  out:4
+    help_url  CC=2  out:2
   adapters.python.urirun_connectors_toolkit.backend_registry  [7 funcs]
     missing  CC=5  out:2
     platform_ok  CC=2  out:1
@@ -184,6 +165,17 @@ MODULES:
     have_bin  CC=1  out:1
     have_mod  CC=2  out:1
     registry_report  CC=3  out:4
+  adapters.python.urirun_connectors_toolkit.connector_lint  [39 funcs]
+    _adapter_drift  CC=5  out:7
+    _changed_machine_fields  CC=5  out:1
+    _cli_subcommands  CC=10  out:9
+    _collect_kernel_imports  CC=11  out:4
+    _compute_drift  CC=3  out:2
+    _connector_assignment  CC=13  out:9
+    _connector_call_target  CC=6  out:2
+    _connector_objects  CC=4  out:2
+    _connector_py_files  CC=5  out:4
+    _const_str  CC=3  out:2
   adapters.python.urirun_connectors_toolkit.connector_scaffold  [11 funcs]
     _go_files  CC=1  out:1
     _js_files  CC=1  out:2
@@ -260,6 +252,17 @@ MODULES:
     load_authorized  CC=5  out:7
     sign  CC=2  out:13
     verify  CC=3  out:9
+  adapters.python.urirun_node.manage  [33 funcs]
+    _app_count  CC=5  out:4
+    _augment_local_routes  CC=5  out:7
+    _classify_source  CC=7  out:6
+    _compositor  CC=9  out:11
+    _connector_match  CC=2  out:2
+    _derive_local_routes  CC=8  out:11
+    _gpu_info  CC=9  out:8
+    _install_policy  CC=9  out:15
+    _installed_route_owners  CC=7  out:6
+    _list_installed_connectors  CC=4  out:6
   adapters.python.urirun_node.preconditions  [8 funcs]
     _acquire_item  CC=3  out:1
     _satisfied_by  CC=4  out:1
@@ -296,17 +299,17 @@ MODULES:
     validate_reply  CC=6  out:8
   adapters.python.urirun_runtime.progress  [1 funcs]
     kill  CC=3  out:3
-  adapters.python.urirun_runtime.v1  [21 funcs]
+  adapters.python.urirun_runtime.v1  [32 funcs]
     _binding_pairs  CC=8  out:11
+    _build_run_ctx  CC=1  out:0
+    _build_run_envelope  CC=1  out:2
+    _build_v1_parser  CC=2  out:24
     _env_flags  CC=3  out:5
+    _handle_check  CC=2  out:2
+    _handle_compile  CC=2  out:5
+    _handle_list  CC=2  out:4
+    _handle_run  CC=3  out:4
     _has_placeholders  CC=2  out:3
-    _params_spec  CC=4  out:3
-    _proc_env  CC=3  out:6
-    _run_process  CC=3  out:10
-    _run_process_streaming  CC=7  out:20
-    compile_registry  CC=1  out:2
-    expand_binding  CC=7  out:6
-    expand_bindings  CC=2  out:2
   adapters.python.urirun_runtime.v2  [1 funcs]
     validate_binding_document  CC=12  out:24
   adapters.python.urirun_runtime.v2_service  [4 funcs]
@@ -372,10 +375,10 @@ MODULES:
     find_offenders  CC=6  out:7
     main  CC=3  out:10
   scripts.extraction_audit  [11 funcs]
-    _allowed_down  CC=7  out:3
+    _allowed_down  CC=6  out:3
     _resolve_from  CC=4  out:3
     _selftest  CC=7  out:18
-    audit  CC=8  out:20
+    audit  CC=5  out:13
     classify  CC=10  out:7
     discover_modules  CC=3  out:3
     edges_in_file  CC=9  out:12
@@ -404,6 +407,8 @@ MODULES:
     timed  CC=2  out:5
   security.mesh-probe.probe  [1 funcs]
     record  CC=2  out:2
+  v1.js.urirun-v1  [1 funcs]
+    executor  CC=3  out:1
 
 EDGES:
   security.mesh-probe.probe.record → scripts.test_pypi_install.print
@@ -419,7 +424,7 @@ EDGES:
   scripts.cc_gate.find_offenders → scripts.cc_gate._iter_py
   scripts.cc_gate.main → scripts.cc_gate.find_offenders
   scripts.cc_gate.main → scripts.test_pypi_install.print
-  scripts.lint_connectors.lint_fleet → adapters.python.urirun.connectors.connector_lint.lint_connector
+  scripts.lint_connectors.lint_fleet → adapters.python.urirun_connectors_toolkit.connector_lint.lint_connector
   scripts.lint_connectors.lint_fleet → scripts.lint_connectors.classify
   scripts.lint_connectors._print_fleet_report → scripts.test_pypi_install.print
   scripts.lint_connectors._print_fleet_report → scripts.lint_connectors._flags
