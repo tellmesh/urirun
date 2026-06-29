@@ -575,6 +575,17 @@ class NodeHandler(BaseHTTPRequestHandler):
             return  # _run_target already answered (404/403)
         target_reg, run_policy = target
         run_policy["secretsDisabled"] = not c.allow_secrets
+        mode, payload = self._normalize_run_mode_payload(body)
+        run_id, ctrl = self._create_run_control(body, uri)
+
+        def _run_it():
+            return self._run_uri(uri, target_reg, payload, mode, run_policy, ctrl, body, run_id)
+
+        self._dispatch_run_response(uri, run_id, ctrl, body, mode, _run_it)
+
+    def _normalize_run_mode_payload(self, body: dict) -> tuple:
+        """Normalise mode + payload from the request body. A dry-run node never escalates."""
+        c = self.ctx
         # Normalise the request through the canonical dispatch contract so all transports
         # (HTTP, MCP, gRPC) share identical mode/payload parsing.  Use the node's execute
         # setting as the default when the request omits mode — a dry-run node stays dry-run,
@@ -583,35 +594,47 @@ class NodeHandler(BaseHTTPRequestHandler):
         req = _normalize_request(body, default_mode=node_default)
         # A request may DOWNGRADE to dry-run; a dry-run node never escalates.
         mode = "dry-run" if (req["mode"] == "dry-run" or not c.execute) else "execute"
-        payload = req["payload"]
+        return mode, req["payload"]
+
+    def _create_run_control(self, body: dict, uri: str) -> tuple:
+        """Allocate a RunControl for streaming progress and run:// lifecycle verbs."""
+        c = self.ctx
         # bind a RunControl so an in-process handler (or the subprocess reader) can stream
         # this run live to /events?run=<id> and a run:// cancel can stop it.
         run_id = self.headers.get("X-Urirun-Run-Id") or body.get("runId") or f"run-{c.hub.current_id() + 1}"
         ctrl = progress.RunControl(run_id, lambda ev: c.hub.publish(
             {"event": "progress", "run": run_id, "uri": uri, "at": time.time(), "service": c.state["name"], **ev}))
         c.runs[run_id] = ctrl
+        return run_id, ctrl
 
-        def _run_it():
-            token = progress.bind(ctrl)
-            try:
-                result = v2.run(uri, target_reg, payload=payload, mode=mode, policy=run_policy,
-                                executors=c.pool_executors, confirm=bool(body.get("confirm")))
-            finally:
-                progress.reset(token)
-            if not result.get("ok"):
-                uri_errors.record(result)  # stamp error:// address + record for /errors
-            result["service"] = c.state["name"]
-            result["runId"] = run_id
-            ctrl.result, ctrl.status = result, ("cancelled" if ctrl.cancel.is_set() else "done")
-            self._publish_run(uri, result)
-            return result
+    def _run_uri(self, uri: str, target_reg: dict, payload, mode: str,
+                 run_policy: dict, ctrl, body: dict, run_id: str) -> dict:
+        """Execute a URI via v2.run, record errors, stamp run metadata, and publish."""
+        c = self.ctx
+        token = progress.bind(ctrl)
+        try:
+            result = v2.run(uri, target_reg, payload=payload, mode=mode, policy=run_policy,
+                            executors=c.pool_executors, confirm=bool(body.get("confirm")))
+        finally:
+            progress.reset(token)
+        if not result.get("ok"):
+            uri_errors.record(result)  # stamp error:// address + record for /errors
+        result["service"] = c.state["name"]
+        result["runId"] = run_id
+        ctrl.result, ctrl.status = result, ("cancelled" if ctrl.cancel.is_set() else "done")
+        self._publish_run(uri, result)
+        return result
 
+    def _dispatch_run_response(self, uri: str, run_id: str, ctrl, body: dict,
+                               mode: str, run_it) -> None:
+        """Choose async (202) or sync (200/400) execution path and send the response."""
+        c = self.ctx
         prefer_async = body.get("mode") == "async" or "respond-async" in (self.headers.get("Prefer") or "").lower()
         if prefer_async and mode == "execute":
-            self._respond_async(uri, run_id, ctrl, _run_it)
+            self._respond_async(uri, run_id, ctrl, run_it)
             return
         try:
-            result = _run_it()
+            result = run_it()
         finally:
             c.runs.pop(run_id, None)
         send_json(self, 200 if result.get("ok") else 400, result)
@@ -733,6 +756,56 @@ class NodeHandler(BaseHTTPRequestHandler):
             return True
         return bool(c.key_auth and keyauth.verify_request(self.headers, raw, keyauth.PURPOSE_RUN))
 
+    def _parse_deploy_body(self, raw: bytes):
+        """Parse raw JSON and apply deploy; returns (body, summary) or sends 400 and returns None."""
+        try:
+            body = json.loads(raw.decode("utf-8") or "{}")
+            summary = apply_deploy(self.ctx.state, body)
+            return body, summary
+        except Exception as exc:  # noqa: BLE001
+            send_json(self, 400, {"ok": False, "error": str(exc)})
+            return None
+
+    def _persist_registry(self, summary: dict) -> None:
+        """Persist the served registry to disk so deployed routes survive a restart."""
+        c = self.ctx
+        # write the merged surface back to the file this node loads on startup, so the
+        # deployed routes survive a restart instead of vanishing with the process memory.
+        path = getattr(c, "registry_path", None)
+        try:
+            if not path:
+                raise RuntimeError("node has no registry path to persist to")
+            os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+            reglib.write_json(path, c.state["registry"])
+            summary["persisted"] = path
+        except Exception as exc:  # noqa: BLE001 - deploy still succeeded in memory
+            summary["persistError"] = str(exc)
+
+    def _persist_allow_config(self, summary: dict) -> None:
+        """Persist the allow policy (+ registry path) into the node config file."""
+        c = self.ctx
+        # also persist the allow policy (+ registry path) into the node config, so a bare
+        # `node serve --config …` restart re-applies them without the original --allow flags.
+        cfg_path = getattr(c, "config_path", None)
+        try:
+            cfg = load_node_config(cfg_path)
+            cfg.setdefault("node", {})
+            cfg["node"]["allow"] = list(c.state.get("allow") or [])
+            if summary.get("persisted"):
+                cfg["node"]["registry"] = summary["persisted"]
+            save_node_config(cfg, cfg_path)
+            summary["persistedAllow"] = cfg["node"]["allow"]
+        except Exception as exc:  # noqa: BLE001
+            summary["persistAllowError"] = str(exc)
+
+    def _log_and_respond_deploy(self, summary: dict) -> None:
+        """Log the deploy event to stdout and send the 200 response."""
+        c = self.ctx
+        print(json.dumps({"event": "urirun.node.deployed", "name": c.state["name"],
+                          "routes": summary["routeCount"], "schemes": summary["schemes"],
+                          "persisted": summary.get("persisted")}), flush=True)
+        send_json(self, 200, summary)
+
     def _handle_deploy(self):
         # Remote provisioning over the mesh (no SSH): push a registry (+ optional handler
         # code). OFF unless --admin-token / --key-auth; every call must authenticate.
@@ -744,41 +817,14 @@ class NodeHandler(BaseHTTPRequestHandler):
         if not self._admin_ok(raw):
             send_json(self, 403, {"ok": False, "error": "unauthorized (need X-Urirun-Token or a signature from an enrolled key)"})
             return
-        try:
-            body = json.loads(raw.decode("utf-8") or "{}")
-            summary = apply_deploy(c.state, body)
-        except Exception as exc:  # noqa: BLE001
-            send_json(self, 400, {"ok": False, "error": str(exc)})
+        parsed = self._parse_deploy_body(raw)
+        if parsed is None:
             return
+        body, summary = parsed
         if body.get("persist"):
-            # write the merged surface back to the file this node loads on startup, so the
-            # deployed routes survive a restart instead of vanishing with the process memory.
-            path = getattr(c, "registry_path", None)
-            try:
-                if not path:
-                    raise RuntimeError("node has no registry path to persist to")
-                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-                reglib.write_json(path, c.state["registry"])
-                summary["persisted"] = path
-            except Exception as exc:  # noqa: BLE001 - deploy still succeeded in memory
-                summary["persistError"] = str(exc)
-            # also persist the allow policy (+ registry path) into the node config, so a bare
-            # `node serve --config …` restart re-applies them without the original --allow flags.
-            cfg_path = getattr(c, "config_path", None)
-            try:
-                cfg = load_node_config(cfg_path)
-                cfg.setdefault("node", {})
-                cfg["node"]["allow"] = list(c.state.get("allow") or [])
-                if summary.get("persisted"):
-                    cfg["node"]["registry"] = summary["persisted"]
-                save_node_config(cfg, cfg_path)
-                summary["persistedAllow"] = cfg["node"]["allow"]
-            except Exception as exc:  # noqa: BLE001
-                summary["persistAllowError"] = str(exc)
-        print(json.dumps({"event": "urirun.node.deployed", "name": c.state["name"],
-                          "routes": summary["routeCount"], "schemes": summary["schemes"],
-                          "persisted": summary.get("persisted")}), flush=True)
-        send_json(self, 200, summary)
+            self._persist_registry(summary)
+            self._persist_allow_config(summary)
+        self._log_and_respond_deploy(summary)
 
     def _handle_enroll(self):
         # ssh-copy-id for urirun. TOFU: the first key on an empty authorized_keys claims a
