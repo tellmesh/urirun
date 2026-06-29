@@ -24,8 +24,28 @@ name, schema prefix, Docker labels, and C adapter names are all `urirun`.
 ## Dokumentacja
 
 <!-- docs-nav -->
-📖 **Dokumentacja urirun:** [Architektura](docs/ARCHITECTURE.md) · [Komponenty](docs/COMPONENTS.md) · [URI Objects](docs/URI_OBJECTS.md) · [Łączenie node](docs/NODE_CONNECTIONS.md) · [Dashboard & chat](docs/HOST_DASHBOARD_CHAT.md) · [Host↔Node](docs/HOST_NODE_COMMUNICATION.md) · [Sekrety](docs/SECRETS.md) · [Archiwum dok.](docs/DOCUMENT_ARCHIVE.md) · [Decision Loop](docs/DECISION_LOOP.md) · [Roadmap](docs/REFACTOR_ROADMAP.md) · [Podział paczek](docs/URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](docs/PLANFILE_HOST_INTEGRATION_PLAN.md)
+📖 **Dokumentacja urirun:** [Architektura](docs/ARCHITECTURE.md) · [Komponenty](docs/COMPONENTS.md) · [URI Objects](docs/URI_OBJECTS.md) · [Łączenie node](docs/NODE_CONNECTIONS.md) · [Dashboard & chat](docs/HOST_DASHBOARD_CHAT.md) · [Host↔Node](docs/HOST_NODE_COMMUNICATION.md) · [Sekrety](docs/SECRETS.md) · [Archiwum dok.](docs/DOCUMENT_ARCHIVE.md) · [Decision Loop](docs/DECISION_LOOP.md) · [Autonomia](docs/AUTONOMY_ARCHITECTURE.md) · [Complexity gate](docs/COMPLEXITY_GATE.md) · [Roadmap](docs/REFACTOR_ROADMAP.md) · [Refaktoring 2026-06-29](docs/REFACTOR_STATUS_2026-06-29.md) · [Podział paczek](docs/URIRUN_PACKAGE_SPLIT_PLAN.md) · [Planfile](docs/PLANFILE_HOST_INTEGRATION_PLAN.md)
 <!-- /docs-nav -->
+
+### Dokumentacja według tematu
+
+| Temat | Plik |
+|-------|------|
+| Architektura systemu (hub, node, connector, flow) | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Komponenty — przewodnik operatora (PL) | [docs/COMPONENTS.md](docs/COMPONENTS.md) |
+| URI Objects — node, service, connector, widget, artifact | [docs/URI_OBJECTS.md](docs/URI_OBJECTS.md) |
+| Łączenie node (LAN, API, device, smartphone) | [docs/NODE_CONNECTIONS.md](docs/NODE_CONNECTIONS.md) |
+| Dashboard & chat — cykl życia prompta NL | [docs/HOST_DASHBOARD_CHAT.md](docs/HOST_DASHBOARD_CHAT.md) |
+| Host↔Node — protokół HTTP, auth, deploy | [docs/HOST_NODE_COMMUNICATION.md](docs/HOST_NODE_COMMUNICATION.md) |
+| Sekrety — `secret://`, deny-by-default | [docs/SECRETS.md](docs/SECRETS.md) |
+| Archiwum dokumentów (OCR, dedup, sync) | [docs/DOCUMENT_ARCHIVE.md](docs/DOCUMENT_ARCHIVE.md) |
+| Decision Loop — `intent→flow→result→nextIntent` | [docs/DECISION_LOOP.md](docs/DECISION_LOOP.md) |
+| Autonomia — LLM proposes, kernel accepts/blocks | [docs/AUTONOMY_ARCHITECTURE.md](docs/AUTONOMY_ARCHITECTURE.md) |
+| Bramka CC≤15 (`make complexity`) | [docs/COMPLEXITY_GATE.md](docs/COMPLEXITY_GATE.md) |
+| Refaktoring roadmap (backlog + co już wylądowało) | [docs/REFACTOR_ROADMAP.md](docs/REFACTOR_ROADMAP.md) |
+| Status refaktoringu 2026-06-29 | [docs/REFACTOR_STATUS_2026-06-29.md](docs/REFACTOR_STATUS_2026-06-29.md) |
+| Plan podziału paczek (`urirun-runtime` itp.) | [docs/URIRUN_PACKAGE_SPLIT_PLAN.md](docs/URIRUN_PACKAGE_SPLIT_PLAN.md) |
+| Integracja planfile (tickety, taski) | [docs/PLANFILE_HOST_INTEGRATION_PLAN.md](docs/PLANFILE_HOST_INTEGRATION_PLAN.md) |
 
 ## Goal
 
@@ -98,11 +118,13 @@ Then adapt that descriptor to existing functions, methods, classes, MQTT topics,
   observation -> nextIntent` JSON for autonomous URI work
 - `v1/` - parameter binding (`{name}` from payload/query), string shorthand, Docker adapters, and `env`/`stdin`/`cwd`/`timeout`
 - `v2/` - schema-first command packages (JSON Schema inputs, multi-language decorators, artifact adoption) + MCP/A2A interop for LLM/agent discovery
-- external docs: `https://github.com/if-uri/docs`
-- external examples: `https://github.com/if-uri/examples`
-- connector hub: `https://connect.ifuri.com`
-- host/app integration: `https://github.com/if-uri/app`
-- installer site: `https://get.ifuri.com`
+- `examples/matrix/` - wielojęzykowa siatka URI (Python emit → flow → verify); 10 języków w Docker Compose
+- `examples/node-file-transfer/` - przesyłanie plików między nodami przez `fs://`
+- external docs: [github.com/if-uri/docs](https://github.com/if-uri/docs)
+- external examples: [github.com/if-uri/examples](https://github.com/if-uri/examples)
+- connector hub: [connect.ifuri.com](https://connect.ifuri.com)
+- host/app integration: [github.com/if-uri/app](https://github.com/if-uri/app)
+- installer site: [get.ifuri.com](https://get.ifuri.com) / `curl get.ifuri.com/node.sh | bash`
 - `www/` - PHP project site and documentation viewer using generated urirun logo assets
 - `logo/` - generated SVG logo family for icon, wordmark, horizontal and stacked marks
 - `project/` - generated architecture maps and analysis artifacts, including `map.toon.yaml`
@@ -1019,6 +1041,59 @@ The generated files are local artifacts under `generated/`:
 This keeps the URI registry reproducible: a service can ship a Dockerfile label
 such as `io.tellmesh.urirun.manifest=/app/bindings.json`, and the scanner
 will connect the image artifact to the service's URI contract.
+
+## Przykłady
+
+### W repozytorium
+
+| Przykład | Opis |
+|----------|------|
+| [`examples/matrix/`](examples/matrix/) | Wielojęzykowa siatka URI — Python emit → flow → verify; 10 języków w Docker Compose (`run-matrix.sh`) |
+| [`examples/node-file-transfer/`](examples/node-file-transfer/) | Przesyłanie plików między nodami przez `fs://` |
+| [`v2/spec/`](v2/spec/) | Specyfikacja v2 — JSON Schema, argv/shell template, Docker labels |
+
+### Zewnętrzne
+
+| Przykład | Opis |
+|----------|------|
+| `if-uri/examples/05-generators` | Scaffolding connectorów: JS, TS, PHP, Node.js |
+| `if-uri/examples/06-html_uri_app` | Konsola HTTP z live MCP/A2A discovery |
+| `if-uri/examples/09-docker_uri_flow` | Docker Compose: registry z artefaktów → flow → dispatch |
+
+```bash
+git clone https://github.com/if-uri/examples.git
+cd examples/09-docker_uri_flow
+make registry   # Dockerfile/package/script → registry
+make run        # registry + flow + dispatch
+```
+
+## Refaktoring i jakość kodu
+
+### Bramka CC≤15 (`make complexity`)
+
+Każda funkcja Pythona w adapterze ma CC ≤ 15 egzekwowane przez CI:
+
+```bash
+make complexity                         # bramka CI
+python scripts/cc_gate.py --limit 12    # ostrzejszy próg
+radon cc adapters/python/urirun -n D -s # offenders grade D+
+```
+
+Dokumentacja: [docs/COMPLEXITY_GATE.md](docs/COMPLEXITY_GATE.md)
+
+### Historia refaktoringu
+
+| Etap | Efekt |
+|------|-------|
+| Faza 5 — ekstrakcja runtime | `urirun_runtime`, `urirun_node`, `urirun_twin`, `urirun_scanner`, `urirun_connectors_toolkit` wyodrębnione do osobnych paczek |
+| God Module splits | `__init__.py`, `object_registry.py`, `host_dashboard.py`, `chat_orchestrator.py`, `v2.py` podzielone na moduły prywatne |
+| CC gate — rundki 1–16 | 54 funkcje CC≥13 → 0; max-CC 18→12 |
+| Dedup | `chat_message` × 4 → `_chat_message.py`; `_free_port_from_old_*` × 3 → `_free_port_for_service` |
+| Kontrakty | `contracts.json` walidowany przez Python + JS + Go + Rust |
+| Twin engine | Reversible process engine — każda mutacja ma odwrotność |
+| Diagnostyka | `diagnostics.py` — klasyfikacja błędów + self-heal |
+
+Pełny status: [docs/REFACTOR_STATUS_2026-06-29.md](docs/REFACTOR_STATUS_2026-06-29.md) · [docs/REFACTOR_ROADMAP.md](docs/REFACTOR_ROADMAP.md)
 
 ## License
 
