@@ -54,35 +54,61 @@ def render_argv(template: list[str], payload: dict) -> list[str]:
 # --------------------------------------------------------------------------- #
 # worker loop (runs as `python -m urirun.runtime.worker <module:main>`)
 # --------------------------------------------------------------------------- #
-def _worker_main(cli_ref: str) -> int:
+def _import_cli(cli_ref: str):
+    """Import the connector CLI once and return the callable."""
     module_name, _, func_name = cli_ref.partition(":")
-    cli_main = getattr(importlib.import_module(module_name), func_name or "main")  # import ONCE
+    return getattr(importlib.import_module(module_name), func_name or "main")
+
+
+def _signal_ready() -> None:
+    """Write the ready signal to stdout."""
     sys.stdout.write(json.dumps({"ready": True}) + "\n")
     sys.stdout.flush()
+
+
+def _invoke_cli(cli_main, argv: list) -> tuple:
+    """Run cli_main(argv) with stdout captured; return (exit_code, captured_text)."""
+    buffer = io.StringIO()
+    code = 0
+    with contextlib.redirect_stdout(buffer):
+        try:
+            code = cli_main(argv) or 0
+        except SystemExit as exc:
+            code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 1)
+        except Exception as exc:  # noqa: BLE001 - report, keep the worker alive
+            code = 1
+            print(json.dumps({"ok": False, "error": str(exc)}))
+    return code, buffer.getvalue().strip()
+
+
+def _parse_result(code: int, text: str) -> tuple:
+    """Parse captured CLI output into (ok, result)."""
+    try:
+        result = json.loads(text) if text else {"ok": code == 0}
+    except json.JSONDecodeError:
+        result = {"ok": code == 0, "stdout": text}
+    ok = result.get("ok", code == 0) if isinstance(result, dict) else (code == 0)
+    return bool(ok), result
+
+
+def _write_response(ok: bool, result) -> None:
+    """Write a single JSON response line to stdout."""
+    sys.stdout.write(json.dumps({"ok": ok, "result": result}) + "\n")
+    sys.stdout.flush()
+
+
+def _worker_main(cli_ref: str) -> int:
+    cli_main = _import_cli(cli_ref)
+    _signal_ready()
     for line in sys.stdin:
         line = line.strip()
         if not line:
             continue
         request = json.loads(line)
         argv = request.get("argv") or []
-        buffer = io.StringIO()
-        code = 0
-        with contextlib.redirect_stdout(buffer):
-            try:
-                code = cli_main(argv) or 0
-            except SystemExit as exc:
-                code = exc.code if isinstance(exc.code, int) else (0 if exc.code is None else 1)
-            except Exception as exc:  # noqa: BLE001 - report, keep the worker alive
-                code = 1
-                print(json.dumps({"ok": False, "error": str(exc)}))
-        text = buffer.getvalue().strip()
-        try:
-            result = json.loads(text) if text else {"ok": code == 0}
-        except json.JSONDecodeError:
-            result = {"ok": code == 0, "stdout": text}
-        ok = result.get("ok", code == 0) if isinstance(result, dict) else (code == 0)
-        sys.stdout.write(json.dumps({"ok": bool(ok), "result": result}) + "\n")
-        sys.stdout.flush()
+        code, text = _invoke_cli(cli_main, argv)
+        ok, result = _parse_result(code, text)
+        _write_response(ok, result)
     return 0
 
 
