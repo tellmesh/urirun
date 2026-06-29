@@ -6,6 +6,7 @@
 # without loading the whole node HTTP stack.
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import os
@@ -18,7 +19,7 @@ from typing import Any
 from urirun import result_data, v2_service
 from urirun.node._util import json_write, now_id, slug
 from urirun.node.diagnostics import diagnose, fit_to_environment
-from urirun.node.flow_thin import (  # noqa: F401
+from urirun_flow.flow_thin import (  # noqa: F401
     FlowEnvelope,
     _THIN_GOAL_URI,
     _THIN_PREFLIGHT_URI,
@@ -64,6 +65,7 @@ from urirun.node.routing import (
     safe_route,
     target_nodes,
 )
+from urirun_connector_router.routing import accept_plan as accept_routing_plan
 
 
 def _flow_format(path: str | Path, requested: str | None = None) -> str:
@@ -789,49 +791,159 @@ def _build_thin_plan(steps: list[dict], flow: dict, *, execute: bool,
     return drift_steps + plan + [remember_step]
 
 
+def _default_dispatch_uri(execute: bool, registry: dict):
+    _mode = "execute" if execute else "dry-run"
+    return lambda u, p=None: v2_service.call(u, p or {}, registry or {}, mode=_mode)  # noqa: E731
+
+
+def _make_flow_envelope(flow: dict, envelope: "FlowEnvelope | None") -> "FlowEnvelope":
+    if envelope is not None:
+        return envelope
+    return FlowEnvelope(
+        flow_id=str(flow.get("task", {}).get("id") or ""),
+        goal=flow.get("task") or {},
+    )
+
+
+def _resolve_dispatch(dispatch_uri, memory, flow: dict, registry: dict):
+    if memory is None:
+        return dispatch_uri
+    return _make_memory_dispatch(dispatch_uri, memory, flow, registry)
+
+
+def _mesh_routes(mesh: dict) -> list:
+    return (mesh or {}).get("routes") or []
+
+
+def _flow_routing_report(flow: dict, mesh: dict, routes: list[dict], *, probe: bool = False) -> dict:
+    routing_mesh = {
+        "nodes": (mesh or {}).get("nodes") or [],
+        "routes": routes or [],
+        "inventories": (
+            (mesh or {}).get("inventories")
+            or (mesh or {}).get("inventory")
+            or (mesh or {}).get("envInventories")
+            or (mesh or {}).get("envInventory")
+            or {}
+        ),
+    }
+    try:
+        verdict = accept_routing_plan(flow.get("steps") or [], routing_mesh, probe=probe)
+        report = dict(verdict.get("report") or {})
+        report["accepted"] = bool(verdict.get("accepted"))
+        report["violations"] = list(verdict.get("violations") or [])
+        report["ok"] = bool(verdict.get("accepted"))
+        return report
+    except Exception as exc:  # noqa: BLE001 - diagnostics must not block legacy flow construction
+        return {
+            "ok": False,
+            "accepted": False,
+            "stepCount": len(flow.get("steps") or []),
+            "error": {"type": type(exc).__name__, "message": str(exc)},
+            "violations": [{"kind": "acceptance-error", "message": str(exc)}],
+            "steps": [],
+            "blockedSteps": [],
+            "runsOnByStep": {},
+        }
+
+
+def _routing_timeline(report: dict) -> list[dict]:
+    entries: list[dict] = []
+    for idx, step in enumerate(report.get("steps") or [], start=1):
+        entries.append({
+            "id": f"router:step{idx}",
+            "uri": step.get("uri"),
+            "ok": bool(step.get("ok")),
+            "target": step.get("runsOn") or step.get("uriTarget") or "",
+            "type": "routing",
+            "blockedAt": step.get("blockedAt"),
+            "reversible": True,
+        })
+    return entries
+
+
+def _routing_block_result(report: dict, envelope: "FlowEnvelope") -> dict:
+    blocked = report.get("blockedSteps") or []
+    violations = report.get("violations") or []
+    first = blocked[0] if blocked else {}
+    first_violation = violations[0] if violations else {}
+    message = (
+        f"routing blocked before execution at {first.get('blockedAt')}: {first.get('uri')}"
+        if first else
+        f"plan rejected before execution: {first_violation.get('kind')}"
+        if first_violation else "routing blocked before execution"
+    )
+    error = {
+        "category": "ROUTING_BLOCKED",
+        "type": "RoutingPreflight",
+        "message": message,
+        "severity": "error",
+        "status": 412,
+    }
+    return {
+        "ok": False,
+        "timeline": _routing_timeline(report),
+        "results": {},
+        "error": error,
+        "routing": report,
+        "violations": violations,
+        "next": {"kind": "blocked"},
+        "envelope": dataclasses.asdict(envelope),
+    }
+
+
+def _apply_routing_targets(result: dict, report: dict) -> None:
+    runs_on = {
+        str(step.get("uri") or ""): step.get("runsOn")
+        for step in (report.get("steps") or [])
+        if step.get("runsOn")
+    }
+    for uri, target in (report.get("runsOnByStep") or {}).items():
+        if target:
+            runs_on[str(uri)] = target
+    if not runs_on:
+        return
+    for entry in result.get("timeline") or []:
+        uri = str(entry.get("uri") or "")
+        if uri in runs_on:
+            entry["target"] = runs_on[uri]
+            sid = str(entry.get("id") or "")
+            step_result = (result.get("results") or {}).get(sid)
+            if isinstance(step_result, dict):
+                step_result["target"] = runs_on[uri]
+
+
 def execute_flow(flow: dict, mesh: dict, registry: dict, execute: bool, *, recover: bool = True,
                  max_retries: int = 1, max_wall_clock: float = 180.0, max_remediations: int = 6,
                  rollback_on_failure: bool = True,
                  memory: TwinMemory | None = None,
                  dispatch_uri=None,
-                 envelope: FlowEnvelope | None = None) -> dict:
-    # Thin-driver path: opt-in via envelope= OR auto when dispatch_uri is set.
-    # When dispatch_uri is provided without an explicit envelope, auto-create one
-    # from the flow's task so every dispatched flow goes through the thin driver
-    # (observable events, envelope-aware steps, goal-verify, SAGA rollback).
-    # Callers without dispatch_uri → full orchestrator path with recovery/self-heal.
-    if envelope is None and dispatch_uri is not None:
-        envelope = FlowEnvelope(
-            flow_id=str(flow.get("task", {}).get("id") or ""),
-            goal=flow.get("task") or {},
-        )
-    if envelope is not None and dispatch_uri is not None:
-        old_map = _set_service_map(mesh)
-        try:
-            _dispatch = (
-                _make_memory_dispatch(dispatch_uri, memory, flow, registry)
-                if memory is not None else dispatch_uri
-            )
-            routes = (mesh or {}).get("routes") or []
-            steps = _build_thin_plan(flow.get("steps") or [], flow,
-                                     execute=execute, memory=memory, routes=routes)
-            return _thin_driver(steps, envelope, _dispatch,
-                                registry=registry, execute=execute,
-                                max_retries=max_retries,
-                                max_remediations=max_remediations,
-                                max_wall_clock=max_wall_clock)
-        finally:
-            _restore_service_map(old_map)
+                 envelope: FlowEnvelope | None = None,
+                 router_guard: bool = False) -> dict:
+    # Thin-driver is the sole engine. Callers that don't provide a dispatch_uri
+    # get one backed by v2_service.call, so adapter tests and runtime execution
+    # observe the same retry/acquire/rollback semantics.
+    if dispatch_uri is None:
+        dispatch_uri = _default_dispatch_uri(execute, registry)
+    envelope = _make_flow_envelope(flow, envelope)
     old_map = _set_service_map(mesh)
-    results: dict = {}
-    timeline: list = []
-    recoveries: list = []
     try:
-        return _orchestrate_steps(
-            flow, registry, execute, recover, max_retries, max_wall_clock,
-            max_remediations, rollback_on_failure, memory, dispatch_uri,
-            mesh.get("routes") or [], timeline, results, recoveries,
-        )
+        _dispatch = _resolve_dispatch(dispatch_uri, memory, flow, registry)
+        routes = _mesh_routes(mesh)
+        routing_report = _flow_routing_report(flow, mesh, routes, probe=bool(execute and router_guard))
+        if execute and router_guard and not routing_report.get("ok", True):
+            return _routing_block_result(routing_report, envelope)
+        steps = _build_thin_plan(flow.get("steps") or [], flow,
+                                 execute=execute, memory=memory, routes=routes)
+        result = _thin_driver(steps, envelope, _dispatch,
+                              registry=registry, execute=execute,
+                              max_retries=max_retries,
+                              max_remediations=max_remediations,
+                              max_wall_clock=max_wall_clock)
+        if isinstance(result, dict):
+            result.setdefault("routing", routing_report)
+            _apply_routing_targets(result, routing_report)
+        return result
     finally:
         _restore_service_map(old_map)
 

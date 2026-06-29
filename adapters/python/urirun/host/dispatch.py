@@ -11,6 +11,63 @@ from __future__ import annotations
 _INPROCESS_BINDINGS_GROUP = "urirun.bindings"
 
 
+def _flow_scheme_dispatch(uri: str, payload: dict | None = None) -> dict | None:
+    """Resolve named ``flow://`` episodes/skills from twin memory.
+
+    This is the host-local recall tier.  Returning ``None`` means "not a stored
+    episode/skill" so inprocess_fallback can continue to entry-point connectors
+    that also own flow:// routes, such as domain-monitor or flow-repair.
+    """
+    if not str(uri or "").startswith("flow://"):
+        return None
+    try:
+        from urirun.node.flow import execute_flow
+        from urirun.node.twin_store import durable_memory
+    except Exception as exc:  # noqa: BLE001
+        return {"ok": False, "invokedUri": uri, "error": str(exc)}
+
+    parts = str(uri).split("://", 1)[1].split("/")
+    if len(parts) < 4:
+        return None
+    _target, name, kind, verb = parts[0], parts[1], parts[2], parts[3]
+    if kind not in {"query", "command"}:
+        return None
+    mem = durable_memory()
+
+    skill = mem.recall_skill(name)
+    episode = None
+    flow_doc = None
+    if isinstance(skill, dict):
+        flow_doc = skill.get("flow") if isinstance(skill.get("flow"), dict) else None
+        episode_id = skill.get("episode_id")
+        if episode_id:
+            episode = mem.episode_store.get(episode_id)
+    if episode is None:
+        episode = mem.episode_store.get(name)
+    if flow_doc is None and isinstance(episode, dict):
+        flow_doc = episode.get("plan") if isinstance(episode.get("plan"), dict) else None
+    if flow_doc is None:
+        return None
+
+    steps = list(flow_doc.get("steps") or [])
+    if kind == "query" and verb == "get":
+        out = {
+            "episode_id": (episode or {}).get("episode_id") or (skill or {}).get("episode_id") or name,
+            "steps": steps,
+            "flow": flow_doc,
+        }
+        if isinstance(skill, dict):
+            out["skill"] = name
+        return {"ok": True, "invokedUri": uri, "result": out}
+
+    if kind == "command" and verb == "run":
+        execute = bool((payload or {}).get("execute", True))
+        result = execute_flow({"steps": steps, "task": {"id": name, "source": uri}},
+                              mesh={}, registry={}, execute=execute)
+        return {"ok": bool(result.get("ok")), "invokedUri": uri, "result": result}
+    return None
+
+
 def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
     """Call an installed connector URI in-process via the urirun runtime.
 
@@ -20,6 +77,10 @@ def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
        (e.g. the twin:// connector registered by flow.py at import time).
 
     Returns None when no connector owns the route, or a dict on success or handler failure."""
+    if str(uri or "").startswith("flow://"):
+        flow_result = _flow_scheme_dispatch(uri, payload or {})
+        if flow_result is not None:
+            return flow_result
     try:
         import urirun
         from urirun.runtime import discovery, v2 as _v2
