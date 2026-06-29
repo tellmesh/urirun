@@ -301,6 +301,15 @@ def _timeline_steps_all_ok(timeline: list, fallback: bool, results: dict | None 
     return fallback
 
 
+def _general_path_status_label(execute: bool, steps_all_ok: bool, degraded: bool = False) -> str:
+    """User-facing status for a completed general path."""
+    if not steps_all_ok:
+        return "failed"
+    if degraded:
+        return "degraded"
+    return "ok" if execute else "dry-run"
+
+
 
 
 def _emit_general_chat_message(
@@ -375,7 +384,7 @@ def _general_path_complete(
     # Derive ok from user-facing timeline steps (not from execution.ok which includes
     # post-loop goal-verify/rollback that may fail even when every step succeeded).
     steps_all_ok = _timeline_steps_all_ok(timeline, bool(result.get("ok")), result.get("results") or {})
-    status = ("degraded" if result.get("degraded") else "ok") if steps_all_ok else "failed"
+    status = _general_path_status_label(execute, steps_all_ok, bool(result.get("degraded")))
     content = f"{status}: {len(timeline)} URI step(s)"
     if result.get("recovery"):
         content += f", {len(result.get('recovery') or [])} recovery action(s)"
