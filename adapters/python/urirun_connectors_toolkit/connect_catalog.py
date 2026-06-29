@@ -187,10 +187,8 @@ def _cmd_show(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_install(args: argparse.Namespace) -> int:
-    catalog = fetch_catalog(args.catalog)
-    plan = resolve_install(catalog, args.ids)
-
+def _print_install_plan(plan: dict) -> None:
+    """Print unknown/skipped/bundled entries from the install plan."""
     for entry in plan["unknown"]:
         print(f"unknown connector (not in catalog): {entry}", file=sys.stderr)
     for entry in plan["skipped"]:
@@ -198,27 +196,34 @@ def _cmd_install(args: argparse.Namespace) -> int:
     for entry in plan["bundled"]:
         print(f"{entry}: bundled in urirun core, no pip install needed")
 
-    specs = [item["pipSpec"] for item in plan["pipSpecs"]]
-    if not specs:
-        if args.json:
-            return _emit_json({"ok": not plan["unknown"], "plan": plan, "executed": False})
-        return 1 if plan["unknown"] else 0
 
-    command = pip_install_command(specs)
-    if args.json and not args.execute:
-        return _emit_json({"ok": True, "plan": plan, "executed": False, "command": command})
-
+def _execute_pip_install(plan: dict, args: argparse.Namespace, command: list) -> int:
+    """Run pip install (or dry-run) and return exit code."""
     if not args.execute:
         print("dry-run (pass --execute to install):")
         print(f"  {shlex.join(command)}")
         return 0
-
     for item in plan["pipSpecs"]:
         print(f"installing {item['id']}: {item['pipSpec']}")
     result = subprocess.run(command)
     if args.json:
         return _emit_json({"ok": result.returncode == 0, "plan": plan, "executed": True, "returncode": result.returncode})
     return result.returncode
+
+
+def _cmd_install(args: argparse.Namespace) -> int:
+    catalog = fetch_catalog(args.catalog)
+    plan = resolve_install(catalog, args.ids)
+    _print_install_plan(plan)
+    specs = [item["pipSpec"] for item in plan["pipSpecs"]]
+    if not specs:
+        if args.json:
+            return _emit_json({"ok": not plan["unknown"], "plan": plan, "executed": False})
+        return 1 if plan["unknown"] else 0
+    command = pip_install_command(specs)
+    if args.json and not args.execute:
+        return _emit_json({"ok": True, "plan": plan, "executed": False, "command": command})
+    return _execute_pip_install(plan, args, command)
 
 
 def _cmd_check(args: argparse.Namespace) -> int:

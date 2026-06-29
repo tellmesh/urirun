@@ -7,18 +7,8 @@ if TYPE_CHECKING:
     from urirun_twin.twin_store import TwinMemory
 
 
-def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool = False,
-                 memory: "TwinMemory | None" = None, node: str | None = None) -> dict:
-    """How plausible is acting NOW vs a known-good state — graduated, not the binary 'try and see'.
-    Returns ``{score, level, reason}``: ``score`` in [0,1] (1.0 = controllable, reliable, matches a
-    known-good); ``level`` is ``auto`` (act), ``verify`` (act but CHECK the outcome), or ``hitl``
-    (confirm with a human first). An uncontrollable env or an irreversible action forces ``hitl``;
-    a drifted / unknown / os-unreliable env drops to ``verify``; only a reversible action on a
-    controllable, reliable, known env is ``auto`` — so the further from a known-good state, the
-    more verification/confirmation is demanded instead of a blind attempt."""
-    prof = profile or {}
-    if not prof.get("controllable", True):
-        return {"score": 0.0, "level": "hitl", "reason": "environment cannot drive a UI"}
+def _adjust_plausibility_score(prof: dict, memory: "TwinMemory | None", node: "str | None") -> "tuple[float, list]":
+    """Compute base plausibility score and collect penalty reasons."""
     score, reasons = 1.0, []
     if prof.get("osLevelReliable") is False and prof.get("best") in (None, "atspi", "vision"):
         score -= 0.3
@@ -31,16 +21,35 @@ def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool =
         elif d.get("drifted"):
             score -= 0.4
             reasons.append("environment drifted from known-good")
-    score = max(0.0, min(1.0, score))
+    return max(0.0, min(1.0, score)), reasons
+
+
+def _plausibility_level(score: float, reversible: bool, irreversible: bool, reasons: list) -> "tuple[str, list]":
+    """Determine the action level from score and reversibility flags."""
     if irreversible:
-        level = "hitl"
         reasons.append("irreversible action — human confirmation required")
-    elif score >= 0.9 and reversible:
-        level = "auto"
-    elif score >= 0.5:
-        level = "verify"
-    else:
-        level = "hitl"
+        return "hitl", reasons
+    if score >= 0.9 and reversible:
+        return "auto", reasons
+    if score >= 0.5:
+        return "verify", reasons
+    return "hitl", reasons
+
+
+def plausibility(profile: dict, *, reversible: bool = True, irreversible: bool = False,
+                 memory: "TwinMemory | None" = None, node: str | None = None) -> dict:
+    """How plausible is acting NOW vs a known-good state — graduated, not the binary 'try and see'.
+    Returns ``{score, level, reason}``: ``score`` in [0,1] (1.0 = controllable, reliable, matches a
+    known-good); ``level`` is ``auto`` (act), ``verify`` (act but CHECK the outcome), or ``hitl``
+    (confirm with a human first). An uncontrollable env or an irreversible action forces ``hitl``;
+    a drifted / unknown / os-unreliable env drops to ``verify``; only a reversible action on a
+    controllable, reliable, known env is ``auto`` — so the further from a known-good state, the
+    more verification/confirmation is demanded instead of a blind attempt."""
+    prof = profile or {}
+    if not prof.get("controllable", True):
+        return {"score": 0.0, "level": "hitl", "reason": "environment cannot drive a UI"}
+    score, reasons = _adjust_plausibility_score(prof, memory, node)
+    level, reasons = _plausibility_level(score, reversible, irreversible, reasons)
     return {"score": round(score, 2), "level": level,
             "reason": "; ".join(reasons) or "controllable, reliable, known-good"}
 

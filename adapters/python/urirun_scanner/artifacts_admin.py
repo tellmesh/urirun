@@ -421,19 +421,19 @@ except ImportError:
         return result
 
 
-    def artifacts_dedupe_rows(host_db: "Any", project: str, db: "str | None", payload: dict) -> dict:
-        """Remove duplicate artifact DB rows that point at the same physical output."""
-        limit = int(payload.get("limit") or 10_000)
-        limit = max(1, min(limit, 50_000))
-        delete_rows = payload_bool(payload, "deleteRows", True)
-        pub = public_artifacts(host_db.list_artifacts(db, limit=limit), project)
-        groups: "dict[tuple[str, str], list[dict]]" = {}
+    def _group_artifacts_by_key(pub: "list[dict]") -> "dict":
+        """Group artifacts by dedup key, skipping items with empty key values."""
+        groups: "dict" = {}
         for item in pub:
             key = artifact_dedupe_key(item)
             if not key[1]:
                 continue
             groups.setdefault(key, []).append(item)
+        return groups
 
+
+    def _collect_duplicate_groups(groups: "dict") -> "tuple[list, list]":
+        """Return (duplicate_groups, delete_ids) from pre-grouped artifacts."""
         duplicate_groups: "list[dict]" = []
         delete_ids: "list[str]" = []
         for key, group in groups.items():
@@ -456,7 +456,16 @@ except ImportError:
                 "deleteIds": duplicate_ids,
                 "count": len(group),
             })
+        return duplicate_groups, delete_ids
 
+
+    def artifacts_dedupe_rows(host_db: "Any", project: str, db: "str | None", payload: dict) -> dict:
+        """Remove duplicate artifact DB rows that point at the same physical output."""
+        limit = max(1, min(int(payload.get("limit") or 10_000), 50_000))
+        delete_rows = payload_bool(payload, "deleteRows", True)
+        pub = public_artifacts(host_db.list_artifacts(db, limit=limit), project)
+        groups = _group_artifacts_by_key(pub)
+        duplicate_groups, delete_ids = _collect_duplicate_groups(groups)
         deleted = host_db.delete_artifacts(db, delete_ids) if delete_rows and delete_ids else 0
         result = {
             "ok": True,

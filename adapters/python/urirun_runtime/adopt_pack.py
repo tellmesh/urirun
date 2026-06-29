@@ -122,6 +122,28 @@ def _tool_urirun(pyproject: Path) -> dict:
     return (data.get("tool") or {}).get("urirun") or {}
 
 
+def _pack_entry_points_wanted(candidates: set) -> set:
+    """Return manifest file names wanted from urirun.packs entry points for *candidates*."""
+    from importlib import metadata
+    try:
+        eps = metadata.entry_points(group="urirun.packs")
+    except TypeError:  # pragma: no cover - older API
+        eps = metadata.entry_points().get("urirun.packs", [])  # type: ignore
+    return {ep.value.partition(":")[2] or "manifest.yaml" for ep in eps if ep.name in candidates}
+
+
+def _find_manifest_in_dist(dist: "Any", wanted: set) -> "Path | None":
+    """Search a distribution's file list for a manifest (entry-point names first, then manifest.yaml)."""
+    files = dist.files or []
+    for target in list(wanted) + ["manifest.yaml"]:
+        for f in files:
+            if f.name == Path(target).name or str(f).endswith(target):
+                located = Path(dist.locate_file(f))
+                if located.is_file():
+                    return located
+    return None
+
+
 def installed_manifest_path(package: str) -> Path | None:
     """Locate an installed package's manifest *without importing it* (so a pack's
     own dependencies need not be present to adopt its URI surface). Prefers a
@@ -129,26 +151,15 @@ def installed_manifest_path(package: str) -> Path | None:
     from importlib import metadata
 
     candidates = {package, package.replace("-", "_"), package.replace("_", "-")}
-
-    try:
-        eps = metadata.entry_points(group="urirun.packs")
-    except TypeError:  # pragma: no cover - older API
-        eps = metadata.entry_points().get("urirun.packs", [])  # type: ignore
-    wanted = {ep.value.partition(":")[2] or "manifest.yaml" for ep in eps if ep.name in candidates}
-
+    wanted = _pack_entry_points_wanted(candidates)
     for name in candidates:
         try:
             dist = metadata.distribution(name)
         except metadata.PackageNotFoundError:
             continue
-        files = dist.files or []
-        # entry-point-named manifest first, then any manifest.yaml in the dist
-        for target in list(wanted) + ["manifest.yaml"]:
-            for f in files:
-                if f.name == Path(target).name or str(f).endswith(target):
-                    located = Path(dist.locate_file(f))
-                    if located.is_file():
-                        return located
+        result = _find_manifest_in_dist(dist, wanted)
+        if result is not None:
+            return result
     return None
 
 

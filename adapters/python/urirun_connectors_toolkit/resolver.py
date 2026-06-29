@@ -18,15 +18,30 @@ DEFAULT_ROOTS = ("~/github",)
 _SCHEME_ID_MATCH_SCORE = 50
 
 
-def _schemes_from_manifest(manifest: dict[str, Any]) -> list[str]:
-    schemes = set(str(s) for s in (manifest.get("uriSchemes") or manifest.get("schemes") or []) if s)
+def _schemes_from_routes(manifest: dict[str, Any]) -> set:
+    """Extract URI schemes from the manifest routes list."""
+    schemes: set = set()
     for route in manifest.get("routes") or []:
         uri = route if isinstance(route, str) else route.get("uri", "")
         if "://" in uri:
             schemes.add(uri.split("://", 1)[0])
+    return schemes
+
+
+def _schemes_from_examples(manifest: dict[str, Any]) -> set:
+    """Extract URI schemes from the manifest flowExample list."""
+    schemes: set = set()
     for example in manifest.get("flowExample") or []:
         if isinstance(example, str) and "://" in example:
             schemes.add(example.split("://", 1)[0])
+    return schemes
+
+
+def _schemes_from_manifest(manifest: dict[str, Any]) -> list[str]:
+    base = manifest.get("uriSchemes") or manifest.get("schemes") or []
+    schemes = set(str(s) for s in base if s)
+    schemes |= _schemes_from_routes(manifest)
+    schemes |= _schemes_from_examples(manifest)
     return sorted(schemes)
 
 

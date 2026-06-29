@@ -967,6 +967,56 @@ def _announce_node_started(name: str, host: str, port: int, state: dict, execute
                       "versionStatus": vstatus["status"]}), flush=True)
 
 
+def _build_manage_bindings(manage: bool, name: str) -> "tuple[Any | None, Any | None]":
+    """Return (manage_registry, manage_policy) for node:// self-management, or (None, None)."""
+    if not manage:
+        return None, None
+    from urirun.node import manage as node_manage
+    manage_registry = v2.compile_registry(node_manage.bindings(name))
+    manage_policy = v2.runtime.build_policy(None, [f"node://{name}/**"], None)
+    return manage_registry, manage_policy
+
+
+def _init_pool_executors(pool: bool) -> "Any | None":
+    """Warm worker pool if *pool* is enabled, otherwise return None."""
+    if not pool:
+        return None
+    from urirun.runtime.worker import ConnectorPools
+    return _pool_executors(ConnectorPools())
+
+
+def _build_node_state(name: str, registry: dict, allow: "list | None") -> dict:
+    """Build the mutable node state dict (hot-swapped by POST /deploy)."""
+    return {"name": name, "registry": registry,
+            "routes": routes_from_registry(registry), "allow": list(allow or []),
+            "generation": 1}
+
+
+def _make_enroll_token(key_auth: bool) -> "str | None":
+    """Generate a per-session enrollment PIN when key auth is active and available."""
+    if not key_auth:
+        return None
+    return keyauth.new_enroll_token() if keyauth.available() else None
+
+
+def _build_node_ctx(state: dict, hub: "Any", execute: bool, public_url: str,
+                    deploy_enabled: bool, key_auth: bool, admin_token: "str | None",
+                    allow_secrets: bool, pool_executors: "Any | None",
+                    run_auth_enforced: bool, enroll_token: "str | None",
+                    registry_path: "str | None", config_path: "str | None",
+                    kind: str, runtime: "dict | None", services: "list | None",
+                    manage_registry: "Any | None", manage_policy: "Any | None") -> "NodeContext":
+    """Construct NodeContext from resolved serve parameters."""
+    return NodeContext(state=state, hub=hub, execute=execute, public_url=public_url,
+                       deploy_enabled=deploy_enabled, key_auth=key_auth, admin_token=admin_token,
+                       allow_secrets=allow_secrets, pool_executors=pool_executors,
+                       run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
+                       registry_path=registry_path, config_path=config_path,
+                       kind=kind, runtime=runtime or {"type": "bare"}, services=list(services or []),
+                       manage_registry=manage_registry, manage_policy=manage_policy,
+                       runs={})
+
+
 def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, public_url: str | None = None,
                allow_secrets: bool = False, allow: list[str] | None = None, pool: bool = False,
                admin_token: str | None = None, key_auth: bool = False,
@@ -976,39 +1026,19 @@ def serve_node(name: str, registry: dict, host: str, port: int, execute: bool, p
     public_url = public_url or f"http://{socket.gethostname()}:{port}"
     # /deploy is reachable when a token OR SSH key-auth is configured.
     deploy_enabled = bool(admin_token) or key_auth
-    # node:// self-management routes (pip install into the node's venv, etc.) — served
-    # from a separate registry and ALWAYS admin-gated, never via the open /run path.
-    from urirun.node import manage as node_manage
-    manage_registry = v2.compile_registry(node_manage.bindings(name)) if manage else None
-    manage_policy = v2.runtime.build_policy(None, [f"node://{name}/**"], None) if manage else None
+    manage_registry, manage_policy = _build_manage_bindings(manage, name)
     # require_run_auth needs a credential to check against; ignore it (with a warning
     # below) if neither a token nor key-auth is configured.
     run_auth_enforced = require_run_auth and deploy_enabled
     _warn_unauthenticated_node(name, host, port, execute, run_auth_enforced)
-    # Mutable so POST /deploy can hot-swap what the node serves without a restart.
-    state = {"name": name, "registry": registry,
-             "routes": routes_from_registry(registry), "allow": list(allow or []),
-             "generation": 1}
+    state = _build_node_state(name, registry, allow)
     hub = EventHub()  # live event stream (SSE): run/error/deploy events as URIs
-
-    pool_executors = None
-    if pool:
-        from urirun.runtime.worker import ConnectorPools
-        pool_executors = _pool_executors(ConnectorPools())   # warm workers, reused across requests
-
-    # Out-of-band enrollment PIN: shown (in red) on this node's console at startup; an
-    # operator quotes it to authorize `uri-copy-id`, closing the trust-on-first-use hole
-    # where whoever first reaches the port could enroll as admin. Per-session (regenerated
-    # each restart) and kept only in memory.
-    enroll_token = keyauth.new_enroll_token() if (key_auth and keyauth.available()) else None
-    ctx = NodeContext(state=state, hub=hub, execute=execute, public_url=public_url,
-                      deploy_enabled=deploy_enabled, key_auth=key_auth, admin_token=admin_token,
-                      allow_secrets=allow_secrets, pool_executors=pool_executors,
-                      run_auth_enforced=run_auth_enforced, enroll_token=enroll_token,
-                      registry_path=registry_path, config_path=config_path,
-                      kind=kind, runtime=runtime or {"type": "bare"}, services=list(services or []),
-                      manage_registry=manage_registry, manage_policy=manage_policy,
-                      runs={})  # run id -> progress.RunControl, for streaming/cancel/status
+    pool_executors = _init_pool_executors(pool)
+    enroll_token = _make_enroll_token(key_auth)
+    ctx = _build_node_ctx(state, hub, execute, public_url, deploy_enabled, key_auth, admin_token,
+                          allow_secrets, pool_executors, run_auth_enforced, enroll_token,
+                          registry_path, config_path, kind, runtime, services,
+                          manage_registry, manage_policy)
     server = ThreadingHTTPServer((host, port), NodeHandler)
     server.ctx = ctx  # type: ignore[attr-defined]
     _announce_node_started(name, host, port, state, execute,
