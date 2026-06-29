@@ -586,13 +586,14 @@ def _fetch_planner_environments_for_nodes(
     discovered: dict | None = None,
     *,
     memory: Any = None,
+    prompt: str = "",
 ) -> list:
     """Fetch grounded env/surface contexts for reachable selected nodes (only when executing).
     ``memory`` threads the durable TwinMemory into planner_context so drift guidance is live."""
     execute, registry, discovered = _compat_normalize_args(execute, registry, discovered)
     reachable = _build_reachable_set(discovered)
     ground = [n for n in (selected_nodes or []) if n in reachable]
-    return mesh.fetch_planner_environments(ground, registry, discovered, memory=memory) if (execute and ground) else []
+    return mesh.fetch_planner_environments(ground, registry, discovered, memory=memory, prompt=prompt) if (execute and ground) else []
 
 
 def _find_human_node(discovered: dict) -> tuple[str, str] | tuple[None, None]:
@@ -1269,7 +1270,7 @@ def _chat_ask_general_plan_step(
     """
     try:
         environments = _fetch_planner_environments_for_nodes(
-            mesh, planner_nodes, execute, registry, discovered, memory=twin_memory)
+            mesh, planner_nodes, execute, registry, discovered, memory=twin_memory, prompt=prompt)
         flow, generator = _try_recall_gate(twin_memory, selected_nodes, prompt, _routes, registry)
         if flow is None:
             retrieval = _retrieve_experience_context(twin_memory, selected_nodes, prompt, _routes)
