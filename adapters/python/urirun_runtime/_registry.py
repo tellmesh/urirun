@@ -201,33 +201,35 @@ def flatten_registry_document(document: dict, source: dict | None = None) -> lis
     return entries
 
 
+def _coerce_list(items, default_source: dict) -> list[dict]:
+    return [coerce_route_source(item, default_source) for item in items]
+
+
+def _manifest_from_known_keys(manifest: dict, route_list, default_source: dict) -> list[dict] | None:
+    if isinstance(route_list, list):
+        return _coerce_list(route_list, default_source)
+    entries = manifest.get("entries")
+    if isinstance(entries, list):
+        return _coerce_list(entries, default_source)
+    if {"package", "resource", "operation"}.issubset(manifest.keys()) or manifest.get("uri"):
+        return [coerce_route_source(manifest, default_source)]
+    if isinstance(route_list, dict):
+        return flatten_registry_tree(route_list, default_source)
+    return None
+
+
 def discover_manifest(manifest: dict | list, source: dict | None = None) -> list[dict]:
     default_source = {"type": "manifest", **(source or {})}
 
     if isinstance(manifest, list):
-        return [coerce_route_source(item, default_source) for item in manifest]
-
+        return _coerce_list(manifest, default_source)
     if not isinstance(manifest, dict):
         raise ValueError("Manifest must be a JSON object or array")
-
     if manifest.get("version") == REGISTRY_VERSION:
         return flatten_registry_document(manifest, {"type": "registry", **(source or {})})
 
-    route_list = manifest.get("routes")
-    if isinstance(route_list, list):
-        return [coerce_route_source(item, default_source) for item in route_list]
-
-    entries = manifest.get("entries")
-    if isinstance(entries, list):
-        return [coerce_route_source(item, default_source) for item in entries]
-
-    if {"package", "resource", "operation"}.issubset(manifest.keys()) or manifest.get("uri"):
-        return [coerce_route_source(manifest, default_source)]
-
-    if isinstance(route_list, dict):
-        return flatten_registry_tree(route_list, default_source)
-
-    return flatten_registry_tree(manifest, default_source)
+    result = _manifest_from_known_keys(manifest, manifest.get("routes"), default_source)
+    return result if result is not None else flatten_registry_tree(manifest, default_source)
 
 
 def build_registry_document(
@@ -285,22 +287,11 @@ def _parse_command(value: str) -> list[str]:
     return shlex.split(value)
 
 
-def discover_docker_labels(labels: dict, source: dict | None = None) -> list[dict]:
-    if labels.get("urirun.enabled", "true").lower() not in {"1", "true", "yes", "on"}:
-        return []
-
-    route_uri = labels.get("urirun.uri")
-    package = labels.get("urirun.package")
-    resource = labels.get("urirun.resource")
-    operation = labels.get("urirun.operation")
-    kind = labels.get("urirun.kind") or "http"
-    adapter = labels.get("urirun.adapter") or default_adapter(kind)
+def _docker_labels_config(labels: dict) -> dict:
     config: dict = {}
-
     for key, value in labels.items():
         if key.startswith("urirun.config."):
             config[key.removeprefix("urirun.config.")] = value
-
     for label_key, config_key in {
         "urirun.url": "url",
         "urirun.method": "method",
@@ -309,18 +300,32 @@ def discover_docker_labels(labels: dict, source: dict | None = None) -> list[dic
     }.items():
         if label_key in labels:
             config[config_key] = labels[label_key]
-
     if "urirun.command" in labels:
         config["command"] = _parse_command(labels["urirun.command"])
+    return config
 
-    route_entry = {"kind": kind, "adapter": adapter, "config": config}
-    merged_source = {"type": "docker-labels", **(source or {})}
 
+def _docker_labels_route(labels: dict, route_entry: dict, merged_source: dict) -> list[dict]:
+    route_uri = labels.get("urirun.uri")
     if route_uri:
         return [route_from_uri(route_uri, route_entry, merged_source)]
+    package = labels.get("urirun.package")
+    resource = labels.get("urirun.resource")
+    operation = labels.get("urirun.operation")
     if package and resource and operation:
         return [route_from_parts(package, resource, operation, route_entry, merged_source, labels.get("urirun.target", "_"))]
     raise ValueError("Docker labels require urirun.uri or package/resource/operation")
+
+
+def discover_docker_labels(labels: dict, source: dict | None = None) -> list[dict]:
+    if labels.get("urirun.enabled", "true").lower() not in {"1", "true", "yes", "on"}:
+        return []
+    kind = labels.get("urirun.kind") or "http"
+    adapter = labels.get("urirun.adapter") or default_adapter(kind)
+    config = _docker_labels_config(labels)
+    route_entry = {"kind": kind, "adapter": adapter, "config": config}
+    merged_source = {"type": "docker-labels", **(source or {})}
+    return _docker_labels_route(labels, route_entry, merged_source)
 
 
 def discover_docker_inspect(inspect_data: dict | list) -> list[dict]:

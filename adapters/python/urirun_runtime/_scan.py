@@ -52,19 +52,33 @@ write_json = reglib.write_json
 emit_json = reglib._emit_json
 
 
+def _has_cli_signals(binding: dict) -> bool:
+    return bool(binding.get("command") or binding.get("adapter") == "spawn")
+
+
+def _has_shell_signals(binding: dict) -> bool:
+    return bool(binding.get("template") or binding.get("adapter") == "shell-template")
+
+
+def _has_http_signals(binding: dict) -> bool:
+    return bool(binding.get("url") or binding.get("method") or binding.get("adapter") == "fetch")
+
+
+def _has_mqtt_signals(binding: dict) -> bool:
+    return bool(binding.get("topicPrefix") or binding.get("adapter") == "mqtt-publish")
+
+
 def infer_kind(binding: dict) -> str:
     if binding.get("kind"):
         return binding["kind"]
-    if binding.get("command") or binding.get("adapter") == "spawn":
+    if _has_cli_signals(binding):
         return "cli"
-    if binding.get("template") or binding.get("adapter") == "shell-template":
+    if _has_shell_signals(binding):
         return "shell"
-    if binding.get("url") or binding.get("method") or binding.get("adapter") == "fetch":
+    if _has_http_signals(binding):
         return "http"
-    if binding.get("topicPrefix") or binding.get("adapter") == "mqtt-publish":
+    if _has_mqtt_signals(binding):
         return "mqtt"
-    if binding.get("ref"):
-        return "function"
     return "function"
 
 
@@ -120,27 +134,23 @@ def route_source_to_binding(route_source: dict) -> dict:
     return normalize_binding(binding)
 
 
+def _resolve_bindings_payload(bindings, default_source: dict) -> list[dict]:
+    if isinstance(bindings, dict):
+        return [normalize_binding({"uri": uri, **entry}, default_source) for uri, entry in bindings.items()]
+    return [normalize_binding(item, default_source) for item in bindings]
+
+
 def load_bindings_from_manifest(data, source: dict | None = None) -> list[dict]:
     default_source = {"type": "manifest", **(source or {})}
 
     if isinstance(data, list):
         return [normalize_binding(item, default_source) for item in data]
-
     if not isinstance(data, dict):
         raise ValueError("Binding manifest must be a JSON object or array")
-
     if data.get("version") == BINDINGS_VERSION:
-        bindings = data.get("bindings", [])
-        if isinstance(bindings, dict):
-            return [normalize_binding({"uri": uri, **entry}, default_source) for uri, entry in bindings.items()]
-        return [normalize_binding(item, default_source) for item in bindings]
-
+        return _resolve_bindings_payload(data.get("bindings", []), default_source)
     if "bindings" in data:
-        bindings = data["bindings"]
-        if isinstance(bindings, dict):
-            return [normalize_binding({"uri": uri, **entry}, default_source) for uri, entry in bindings.items()]
-        return [normalize_binding(item, default_source) for item in bindings]
-
+        return _resolve_bindings_payload(data["bindings"], default_source)
     return [route_source_to_binding(route) for route in reglib.discover_manifest(data, default_source)]
 
 
@@ -237,33 +247,39 @@ def scan_package_json(path: Path, root: Path) -> list[dict]:
     return bindings
 
 
-def _read_toml(path: Path) -> dict:
-    if tomllib is not None:
-        with path.open("rb") as f:
-            return tomllib.load(f)
+def _toml_navigate_to(data: dict, parts: list[str]) -> dict:
+    node = data
+    for part in parts:
+        node = node.setdefault(part, {})
+    return node
 
-    # Minimal fallback for Python 3.10 without tomllib. It supports the
+
+def _toml_parse_fallback(text: str) -> dict:
+    # Minimal TOML parser for Python 3.10 without tomllib. Supports the
     # sections used by project discovery and ignores everything else.
     data: dict = {}
     current: list[str] = []
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
+    for raw_line in text.splitlines():
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
         section = re.match(r"^\[(.+)]$", line)
         if section:
             current = [part.strip('"') for part in section.group(1).split(".")]
-            node = data
-            for part in current:
-                node = node.setdefault(part, {})
+            _toml_navigate_to(data, current)
             continue
         if "=" in line and current:
             key, value = [part.strip() for part in line.split("=", 1)]
-            node = data
-            for part in current:
-                node = node.setdefault(part, {})
+            node = _toml_navigate_to(data, current)
             node[key.strip('"')] = value.strip().strip('"')
     return data
+
+
+def _read_toml(path: Path) -> dict:
+    if tomllib is not None:
+        with path.open("rb") as f:
+            return tomllib.load(f)
+    return _toml_parse_fallback(path.read_text(encoding="utf-8"))
 
 
 def scan_pyproject(path: Path, root: Path) -> list[dict]:
