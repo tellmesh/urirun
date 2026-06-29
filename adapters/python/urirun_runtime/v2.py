@@ -23,7 +23,7 @@ import shlex
 import sys
 from importlib import metadata
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, get_type_hints
 
 from jsonschema import Draft202012Validator, exceptions as jsonschema_exceptions
 from pydantic import Field, create_model
@@ -64,12 +64,27 @@ IGNORED_DIRS = {".git", ".hg", ".svn", ".venv", "__pycache__", "build", "dist", 
 DECORATED_BINDINGS: dict[str, dict] = {}
 
 
+def _create_input_model(name: str, module: str, fields: dict[str, tuple[Any, Any]], *, has_var_kw: bool):
+    if name == "nowInput":  # temporary diagnostic, removed after localizing the collection failure
+        print("CREATE_MODEL", name, module, has_var_kw, file=sys.stderr)
+        for _key, (_ann, _default) in fields.items():
+            print(" FIELD", _key, repr(_ann), type(_ann), file=sys.stderr)
+    if has_var_kw:
+        from pydantic import ConfigDict
+        return create_model(name, __config__=ConfigDict(extra="allow"), __module__=module, **fields)
+    return create_model(name, __module__=module, **fields)
+
+
 # --------------------------------------------------------------------------- #
 # Decorators
 # --------------------------------------------------------------------------- #
 def model_from_function(fn: Callable):
     fields: dict[str, tuple[Any, Any]] = {}
     has_var_kw = False
+    try:
+        type_hints = get_type_hints(fn, include_extras=True)
+    except Exception:  # noqa: BLE001 - keep decorator usable with optional/import-time-only annotations
+        type_hints = {}
     for name, param in inspect.signature(fn).parameters.items():
         # **kw / *args are not input fields — a handler with only **kw must NOT yield a schema
         # requiring a property called "kw" (it should accept any payload). self/cls are the
@@ -79,16 +94,17 @@ def model_from_function(fn: Callable):
             continue
         if param.kind is inspect.Parameter.VAR_POSITIONAL or name in ("self", "cls"):
             continue
-        annotation = param.annotation if param.annotation is not inspect.Parameter.empty else Any
+        annotation = type_hints.get(
+            name,
+            param.annotation if param.annotation is not inspect.Parameter.empty else Any,
+        )
         if param.default is inspect.Parameter.empty:
             fields[name] = (annotation, Field(...))
         else:
             fields[name] = (annotation, Field(default=param.default))
     # a **kw handler accepts arbitrary extra keys → the schema must allow additionalProperties.
-    if has_var_kw:
-        from pydantic import ConfigDict
-        return create_model(f"{fn.__name__}Input", __config__=ConfigDict(extra="allow"), **fields)
-    return create_model(f"{fn.__name__}Input", **fields)
+    module = getattr(fn, "__module__", None) or __name__
+    return _create_input_model(f"{fn.__name__}Input", module, fields, has_var_kw=has_var_kw)
 
 
 def _placeholder_kwargs(fn: Callable) -> dict[str, str]:
