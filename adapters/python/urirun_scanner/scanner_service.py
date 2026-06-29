@@ -112,6 +112,7 @@ except ImportError:
         preview_url_fn: "Callable[[str, str], str]",
         chat_message_fn: "Callable[..., dict]",
         add_chat_message_fn: "Callable[[str | None, dict], dict | None]",
+        ensure_android_node_fn: "Callable[[dict], dict] | None" = None,
     ) -> dict:
         payload = payload if isinstance(payload, dict) else {}
         try:
@@ -125,6 +126,15 @@ except ImportError:
         path = root / f"smartphone-node-{digest[:12]}.png"
         reachable_from_phone = not host.startswith("127.")
         service_reachable = _probe_scanner_url(setup_url, timeout=1.5)
+        service_start = None
+        auto_start = str(payload.get("autoStart", "1")).strip().lower() not in {"0", "false", "no", "off"}
+        if not service_reachable and auto_start and ensure_android_node_fn is not None:
+            try:
+                service_start = ensure_android_node_fn({**payload, "port": port, "url": setup_url})
+            except Exception as exc:  # noqa: BLE001
+                service_start = {"ok": False, "error": str(exc)}
+            if isinstance(service_start, dict) and service_start.get("ok"):
+                service_reachable = _probe_scanner_url(setup_url, timeout=2.0)
         meta = {
             "url": setup_url,
             "port": port,
@@ -133,6 +143,8 @@ except ImportError:
             "reachableFromPhone": reachable_from_phone,
             "serviceReachable": service_reachable,
         }
+        if service_start is not None:
+            meta["serviceStart"] = service_start
         uri = f"dashboard://host/qr/smartphone-node/{digest[:16]}"
         preview_url = None
         try:
@@ -145,7 +157,9 @@ except ImportError:
             attachment = None
         content = f"Smartphone node QR ready: {setup_url}"
         if not service_reachable:
-            content += " (start the android-node service: urirun-android-node serve)"
+            content += " (android-node service is not reachable; start it with: urirun-android-node serve)"
+        elif service_start and not service_start.get("alreadyRunning"):
+            content += " (android-node service started)"
         message = chat_message_fn(
             "system", content,
             detail={"uri": uri, "url": setup_url, "selectedTargets": ["service:android-node"], "artifact": artifact, "metadata": meta},
@@ -154,7 +168,7 @@ except ImportError:
         add_chat_message_fn(db, message)
         return {
             "ok": True, "uri": uri, "url": setup_url, "previewUrl": preview_url,
-            "port": port, "reachableFromPhone": reachable_from_phone,
+            "port": port, "reachableFromPhone": reachable_from_phone, "serviceStart": service_start,
             "serviceReachable": service_reachable, "artifact": artifact,
         }
 
