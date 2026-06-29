@@ -886,10 +886,15 @@ def _inprocess_result_value(env: dict, urirun_mod) -> object:
 
 
 def _inprocess_response(env: dict, uri: str, value: object, db: str | None) -> dict:
-    registered = register_tagged_artifact(db, uri=uri, result=value) if db else None
-    ok = bool(env.get("ok"))
     result_val = value if value is not None else env.get("result")
-    err_msg = (env.get("error") or {}).get("message") if not ok else None
+    inner_failed = isinstance(result_val, dict) and result_val.get("ok") is False
+    ok = bool(env.get("ok")) and not inner_failed
+    registered = register_tagged_artifact(db, uri=uri, result=value) if ok and db else None
+    err_msg = None
+    if not ok:
+        err_msg = (env.get("error") or {}).get("message")
+        if err_msg is None and isinstance(result_val, dict):
+            err_msg = result_val.get("error")
     return {"ok": ok, "invokedUri": uri, "result": result_val,
             "artifactClass": _result_artifact_class(value),
             "registeredArtifact": registered, "error": err_msg}

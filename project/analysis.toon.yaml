@@ -1,15 +1,12 @@
-# code2llm | 283f 44101L | python:208,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
-# generated in 0.17s
-# CC̅=4.5 | critical:4/2406 | dups:0 | cycles:0
+# code2llm | 284f 44269L | python:209,json:15,shell:15,yaml:5,javascript:5,txt:4,csharp:4,go:3,yml:2,java:2,typescript:2,perl:2,toml:2,rust:2,php:2,ruby:2,c:1,cpp:1 | 2026-06-29
+# generated in 0.24s
+# CC̅=4.5 | critical:1/2421 | dups:0 | cycles:0
 
-HEALTH[4]:
-  🟡 CC    apply_capture_preferences CC=16 (limit:15)
-  🟡 CC    humanTaskBanner CC=19 (limit:15)
-  🟡 CC    timelineStepFacts CC=25 (limit:15)
-  🟡 CC    _build_remote_path_maps CC=15 (limit:15)
+HEALTH[1]:
+  🟡 CC    _try_recall_gate CC=15 (limit:15)
 
 REFACTOR[1]:
-  1. split 4 high-CC methods  (CC>15)
+  1. split 1 high-CC methods  (CC>15)
 
 PIPELINES[861]:
   [1] Src [http]: http
@@ -96,7 +93,7 @@ PIPELINES[861]:
       PURITY: 100% pure
   [42] Src [connector_install]: connector_install → _classify_source
       PURITY: 100% pure
-  [43] Src [connector_discover]: connector_discover → _scan_local_connectors → _read_connector_manifest → _read_tellmesh_manifest → ...(1 more)
+  [43] Src [connector_discover]: connector_discover → _scan_local_connectors → _read_connector_manifest → _read_tellmesh_manifest
       PURITY: 100% pure
   [44] Src [registry_installed]: registry_installed
       PURITY: 100% pure
@@ -141,10 +138,10 @@ LAYERS:
   │ gate.mjs                     0L  0C    9m  CC=12     ←0
   │
   adapters/                       CC̄=4.5    ←in:18  →out:12  !! split
-  │ !! dashboard.js              2909L  0C  426m  CC=25     ←49
+  │ !! dashboard.js              2955L  0C  436m  CC=14     ←42
   │ !! v2                        2033L  2C  120m  CC=14     ←5
-  │ !! chat_orchestrator         1988L  1C   73m  CC=15     ←0
-  │ !! host_dashboard            1934L  0C  102m  CC=14     ←1
+  │ !! chat_orchestrator         1983L  1C   72m  CC=15     ←0
+  │ !! host_dashboard            1939L  0C  102m  CC=14     ←1
   │ !! scanner_bridge            1548L  0C    0m  CC=0.0    ←0
   │ !! document_sync             1422L  0C    0m  CC=0.0    ←0
   │ !! object_registry           1048L  0C   51m  CC=14     ←1
@@ -153,7 +150,7 @@ LAYERS:
   │ !! __init__                   766L  1C   53m  CC=14     ←10
   │ !! _registry                  718L  0C   43m  CC=14     ←1
   │ !! cli                        716L  0C    7m  CC=1      ←1
-  │ !! scanner.js                 681L  0C  121m  CC=14     ←0
+  │ !! scanner.js                 681L  0C  121m  CC=14     ←1
   │ !! _scan                      659L  0C   34m  CC=14     ←0
   │ !! twin_bridge                624L  0C   31m  CC=12     ←1
   │ !! _runtime                   610L  1C   30m  CC=13     ←2
@@ -169,16 +166,16 @@ LAYERS:
   │ reversible                 406L  8C   28m  CC=10     ←3
   │ twin_store                 401L  3C   45m  CC=9      ←0
   │ discovery                  379L  0C   30m  CC=14     ←2
+  │ task_planner               376L  2C   16m  CC=12     ←0
   │ host_integrations          374L  0C   16m  CC=8      ←0
-  │ task_planner               365L  2C   15m  CC=12     ←0
   │ fs_transfer                362L  0C   15m  CC=14     ←5
   │ task_cli                   346L  0C   25m  CC=12     ←0
   │ scanner_service            342L  0C    0m  CC=0.0    ←0
   │ cdp                        339L  1C   24m  CC=8      ←0
   │ node_dispatch              315L  0C    7m  CC=14     ←3
+  │ dashboard_api              309L  0C   27m  CC=14     ←2
   │ planfile_adapter           290L  1C   27m  CC=9      ←0
   │ worker                     289L  3C   21m  CC=13     ←2
-  │ dashboard_api              288L  0C   25m  CC=14     ←2
   │ mesh                       279L  0C    4m  CC=4      ←0
   │ node_types                 265L  0C    8m  CC=8      ←1
   │ secrets                    263L  1C   18m  CC=9      ←1
@@ -215,8 +212,8 @@ LAYERS:
   │ daemon                     115L  0C    3m  CC=14     ←0
   │ introspect                 112L  0C    4m  CC=9      ←1
   │ _artifacts                 111L  0C    5m  CC=9      ←2
-  │ !! capture_preferences        102L  0C    6m  CC=16     ←0
-  │ experience_retrieval        96L  0C    4m  CC=7      ←0
+  │ capture_preferences        108L  0C    7m  CC=11     ←0
+  │ experience_retrieval       102L  0C    4m  CC=9      ←0
   │ tree                        91L  0C    4m  CC=11     ←0
   │ progress                    89L  1C   11m  CC=3      ←0
   │ connector_sdk               87L  0C    3m  CC=5      ←1
@@ -224,6 +221,7 @@ LAYERS:
   │ urirun.go                   80L  3C    5m  CC=3      ←0
   │ formatting                  80L  0C    4m  CC=8      ←2
   │ pyproject.toml              79L  0C    0m  CC=0.0    ←0
+  │ _util                       78L  0C    8m  CC=8      ←5
   │ __init__                    76L  2C    1m  CC=1      ←0
   │ _version                    76L  0C    5m  CC=5      ←1
   │ Urirun.php                  73L  1C    5m  CC=3      ←0
@@ -322,7 +320,6 @@ LAYERS:
   │ event_schema                 4L  3C    2m  CC=5      ←1
   │ manage                       4L  0C   36m  CC=13     ←0
   │ skill                        4L  0C   17m  CC=12     ←1
-  │ _util                        4L  0C    6m  CC=2      ←5
   │ doctor                       4L  0C   13m  CC=9      ←1
   │ paths                        4L  0C    3m  CC=5      ←4
   │ episode                      4L  6C   10m  CC=14     ←3
@@ -346,6 +343,7 @@ LAYERS:
   │ config                       4L  0C    0m  CC=0.0    ←0
   │ keyauth                      4L  0C    0m  CC=0.0    ←0
   │ routing                      4L  0C    0m  CC=0.0    ←0
+  │ _util                        4L  0C    0m  CC=0.0    ←0
   │ recovery                     4L  0C    0m  CC=0.0    ←0
   │ diagnostics                  4L  0C    0m  CC=0.0    ←0
   │ server                       4L  0C    0m  CC=0.0    ←0
@@ -433,14 +431,14 @@ COUPLING:
         adapters.perl                   ←1                                                                                                                                                 ──                     
   security.mesh-probe                                         1                                                                                                                                                 ──
   CYCLES: none
-  HUB: scripts/ (fan-in=160)
-  HUB: adapters/ (fan-in=18)
   HUB: v1.js/ (fan-in=6)
+  HUB: adapters/ (fan-in=18)
+  HUB: scripts/ (fan-in=160)
   HUB: adapters.python/ (fan-in=8)
-  SMELL: adapters/ fan-out=12 → split needed
-  SMELL: adapters.python/ fan-out=162 → split needed
   SMELL: examples.matrix/ fan-out=9 → split needed
   SMELL: xlang/ fan-out=8 → split needed
+  SMELL: adapters/ fan-out=12 → split needed
+  SMELL: adapters.python/ fan-out=162 → split needed
 
 EXTERNAL:
   validation: run `vallm batch .` → validation.toon

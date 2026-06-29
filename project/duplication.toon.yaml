@@ -1,55 +1,70 @@
-# redup/duplication | 9 groups | 132f 14044L | 2026-06-28
+# redup/duplication | 14 groups | 132f 14076L | 2026-06-29
 
 SUMMARY:
   files_scanned: 132
-  total_lines:   14044
-  dup_groups:    9
-  dup_fragments: 21
-  saved_lines:   90
-  scan_ms:       453
+  total_lines:   14076
+  dup_groups:    14
+  dup_fragments: 31
+  saved_lines:   115
+  scan_ms:       31730
 
 HOTSPOTS[7] (files with most duplication):
-  host/host_dashboard.py  dup=40L  groups=3  frags=6  (0.3%)
-  __init__.py  dup=38L  groups=1  frags=3  (0.3%)
+  host/host_dashboard.py  dup=63L  groups=4  frags=8  (0.4%)
+  __init__.py  dup=48L  groups=2  frags=5  (0.3%)
   host/dashboard_api.py  dup=25L  groups=2  frags=5  (0.2%)
   host/service_control.py  dup=20L  groups=1  frags=2  (0.1%)
+  host/node_cli.py  dup=12L  groups=2  frags=4  (0.1%)
+  host/planfile_adapter.py  dup=12L  groups=2  frags=4  (0.1%)
   host/chat_orchestrator.py  dup=7L  groups=1  frags=1  (0.0%)
-  host/node_cli.py  dup=6L  groups=1  frags=2  (0.0%)
-  host/planfile_adapter.py  dup=6L  groups=1  frags=2  (0.0%)
 
-DUPLICATES[9] (ranked by impact):
-  [a58866334f01e99a] ! STRU  command  L=16 N=3 saved=32 sim=1.00
+DUPLICATES[14] (ranked by impact):
+  [33a60905325bfc13] ! STRU  command  L=16 N=3 saved=32 sim=1.00
       __init__.py:47-62  (command)
       __init__.py:65-69  (shell)
       __init__.py:72-88  (handler)
-  [8d9b83d2bd35fb5d]   STRU  _free_port_from_old_scanner  L=9 N=3 saved=18 sim=1.00
-      host/host_dashboard.py:1829-1837  (_free_port_from_old_scanner)
-      host/host_dashboard.py:1840-1848  (_free_port_from_old_chat)
-      host/host_dashboard.py:1851-1859  (_free_port_from_old_android_node)
-  [19899f9cfc86ca65]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
+  [21ec0af11b527352]   STRU  _free_port_from_old_scanner  L=9 N=3 saved=18 sim=1.00
+      host/host_dashboard.py:1834-1842  (_free_port_from_old_scanner)
+      host/host_dashboard.py:1845-1853  (_free_port_from_old_chat)
+      host/host_dashboard.py:1856-1864  (_free_port_from_old_android_node)
+  [635b02bad6666184]   STRU  is_scanner_process  L=10 N=2 saved=10 sim=1.00
       host/service_control.py:213-222  (is_scanner_process)
       host/service_control.py:236-245  (is_android_node_process)
-  [c0959dfe39e9f547]   STRU  _api_checks  L=8 N=2 saved=8 sim=1.00
-      host/dashboard_api.py:137-144  (_api_checks)
-      host/dashboard_api.py:147-154  (_api_logs)
-  [b6b2d4461c71c62d]   STRU  chat_message  L=7 N=2 saved=7 sim=1.00
-      host/chat_orchestrator.py:74-80  (chat_message)
+  [F0005]   FUZZ  do_GET  L=11 N=2 saved=11 sim=0.87
+      host/host_dashboard.py:1746-1756  (do_GET)
+      host/host_dashboard.py:1758-1769  (do_POST)
+  [64f8a7860e9316e0]   STRU  _api_checks  L=8 N=2 saved=8 sim=1.00
+      host/dashboard_api.py:150-157  (_api_checks)
+      host/dashboard_api.py:160-167  (_api_logs)
+  [2457e38796cc6919]   STRU  chat_message  L=7 N=2 saved=7 sim=1.00
+      host/chat_orchestrator.py:76-82  (chat_message)
       host/host_dashboard.py:372-378  (_chat_message)
   [b7534632e49155f1]   STRU  _host_db  L=3 N=3 saved=6 sim=1.00
       host/dashboard_api.py:29-31  (_host_db)
       host/dashboard_api.py:34-36  (_mesh)
       host/dashboard_api.py:39-41  (_planfile_adapter)
-  [b553f56ee7ce3380]   STRU  _artifact_meta_dict  L=3 N=2 saved=3 sim=1.00
+  [F0004]   FUZZ  command  L=5 N=2 saved=5 sim=0.92
+      __init__.py:466-470  (command)
+      __init__.py:472-476  (shell)
+  [24c306c61f9a64c8]   STRU  _artifact_meta_dict  L=3 N=2 saved=3 sim=1.00
       host/host_dashboard.py:621-623  (_artifact_meta_dict)
-      host/host_dashboard.py:1078-1080  (_uri_action_payload)
-  [540268ba351b0419]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
+      host/host_dashboard.py:1083-1085  (_uri_action_payload)
+  [cd0800c552f36fa8]   STRU  _data_artifact_register  L=3 N=2 saved=3 sim=1.00
       host/node_cli.py:97-99  (_data_artifact_register)
       host/node_cli.py:106-108  (_data_check_add)
-  [82d9f33906e33db9]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
+  [5b8bcc0e7471f982]   STRU  start_ticket  L=3 N=2 saved=3 sim=1.00
       host/planfile_adapter.py:197-199  (start_ticket)
       host/planfile_adapter.py:266-268  (ready_ticket)
+  [F0003]   FUZZ  get_ticket  L=3 N=2 saved=3 sim=0.91
+      host/planfile_adapter.py:187-189  (get_ticket)
+      host/planfile_adapter.py:213-215  (fail_ticket)
+  [F0002]   FUZZ  _node_from_url  L=3 N=2 saved=3 sim=0.90
+      host/node_health.py:215-217  (_node_from_url)
+      host/node_dispatch.py:285-289  (_node_from_url)
+  [F0001]   FUZZ  _host_cmd_nodes  L=3 N=2 saved=3 sim=0.88
+      host/node_cli.py:486-488  (_host_cmd_nodes)
+      host/node_cli.py:491-493  (_host_cmd_routes)
 
-REFACTOR[9] (ranked by priority):
+REFACTOR[14] (ranked by priority):
   [1] ○ extract_function   → utils/command.py
       WHY: 3 occurrences of 16-line block across 1 files — saves 32 lines
       FILES: __init__.py
@@ -59,50 +74,69 @@ REFACTOR[9] (ranked by priority):
   [3] ○ extract_function   → host/utils/is_scanner_process.py
       WHY: 2 occurrences of 10-line block across 1 files — saves 10 lines
       FILES: host/service_control.py
-  [4] ○ extract_function   → host/utils/_api_checks.py
+  [4] ○ extract_class      → host/utils/do_GET.py
+      WHY: 2 occurrences of 11-line block across 1 files — saves 11 lines
+      FILES: host/host_dashboard.py
+  [5] ○ extract_function   → host/utils/_api_checks.py
       WHY: 2 occurrences of 8-line block across 1 files — saves 8 lines
       FILES: host/dashboard_api.py
-  [5] ○ extract_function   → host/utils/chat_message.py
+  [6] ○ extract_function   → host/utils/chat_message.py
       WHY: 2 occurrences of 7-line block across 2 files — saves 7 lines
       FILES: host/chat_orchestrator.py, host/host_dashboard.py
-  [6] ○ extract_function   → host/utils/_host_db.py
+  [7] ○ extract_function   → host/utils/_host_db.py
       WHY: 3 occurrences of 3-line block across 1 files — saves 6 lines
       FILES: host/dashboard_api.py
-  [7] ○ extract_function   → host/utils/_artifact_meta_dict.py
+  [8] ○ extract_class      → utils/command.py
+      WHY: 2 occurrences of 5-line block across 1 files — saves 5 lines
+      FILES: __init__.py
+  [9] ○ extract_function   → host/utils/_artifact_meta_dict.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/host_dashboard.py
-  [8] ○ extract_function   → host/utils/_data_artifact_register.py
+  [10] ○ extract_function   → host/utils/_data_artifact_register.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/node_cli.py
-  [9] ○ extract_function   → host/utils/start_ticket.py
+  [11] ○ extract_function   → host/utils/start_ticket.py
       WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
       FILES: host/planfile_adapter.py
+  [12] ○ extract_function   → host/utils/get_ticket.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: host/planfile_adapter.py
+  [13] ○ extract_function   → host/utils/_node_from_url.py
+      WHY: 2 occurrences of 3-line block across 2 files — saves 3 lines
+      FILES: host/node_dispatch.py, host/node_health.py
+  [14] ○ extract_function   → host/utils/_host_cmd_nodes.py
+      WHY: 2 occurrences of 3-line block across 1 files — saves 3 lines
+      FILES: host/node_cli.py
 
-QUICK_WINS[6] (low risk, high savings — do first):
+QUICK_WINS[7] (low risk, high savings — do first):
   [1] extract_function   saved=32L  → utils/command.py
       FILES: __init__.py
   [2] extract_function   saved=18L  → host/utils/_free_port_from_old_scanner.py
       FILES: host_dashboard.py
+  [4] extract_class      saved=11L  → host/utils/do_GET.py
+      FILES: host_dashboard.py
   [3] extract_function   saved=10L  → host/utils/is_scanner_process.py
       FILES: service_control.py
-  [4] extract_function   saved=8L  → host/utils/_api_checks.py
+  [5] extract_function   saved=8L  → host/utils/_api_checks.py
       FILES: dashboard_api.py
-  [5] extract_function   saved=7L  → host/utils/chat_message.py
+  [6] extract_function   saved=7L  → host/utils/chat_message.py
       FILES: chat_orchestrator.py, host_dashboard.py
-  [6] extract_function   saved=6L  → host/utils/_host_db.py
+  [7] extract_function   saved=6L  → host/utils/_host_db.py
       FILES: dashboard_api.py
 
-EFFORT_ESTIMATE (total ≈ 3.0h):
+EFFORT_ESTIMATE (total ≈ 3.8h):
   medium command                             saved=32L  ~64min
   medium _free_port_from_old_scanner         saved=18L  ~36min
   easy   is_scanner_process                  saved=10L  ~20min
+  easy   do_GET                              saved=11L  ~22min
   easy   _api_checks                         saved=8L  ~16min
   easy   chat_message                        saved=7L  ~14min
   easy   _host_db                            saved=6L  ~12min
+  easy   command                             saved=5L  ~10min
   easy   _artifact_meta_dict                 saved=3L  ~6min
   easy   _data_artifact_register             saved=3L  ~6min
-  easy   start_ticket                        saved=3L  ~6min
+  ... +4 more (~24min)
 
 METRICS-TARGET:
-  dup_groups:  9 → 0
-  saved_lines: 90 lines recoverable
+  dup_groups:  14 → 0
+  saved_lines: 115 lines recoverable

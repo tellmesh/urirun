@@ -238,14 +238,23 @@ def heuristic_plan_chat_request(
 from urirun.node._util import quiet_completion  # noqa: E402,F401
 
 
+def _configured_llm_model(override: str | None = None) -> str | None:
+    for value in (override, os.getenv("URIRUN_LLM_MODEL"), os.getenv("LLM_MODEL")):
+        model = str(value or "").strip()
+        if model:
+            return model
+    return None
+
+
 def llm_plan_chat_request(
     prompt: str,
     *,
     default_sprint: str = "current",
     default_queue: str = "default",
     extra_labels: list[str] | None = None,
+    llm_model: str | None = None,
 ) -> TaskPlanningResult:
-    model = os.getenv("URIRUN_LLM_MODEL") or os.getenv("LLM_MODEL")
+    model = _configured_llm_model(llm_model)
     if not model:
         raise RuntimeError("URIRUN_LLM_MODEL or LLM_MODEL is not set")
 
@@ -290,6 +299,7 @@ def plan_chat_request(
     default_queue: str = "default",
     extra_labels: list[str] | None = None,
     use_llm: bool = True,
+    llm_model: str | None = None,
 ) -> TaskPlanningResult:
     if use_llm:
         try:
@@ -298,6 +308,7 @@ def plan_chat_request(
                 default_sprint=default_sprint,
                 default_queue=default_queue,
                 extra_labels=extra_labels,
+                llm_model=llm_model,
             )
         except Exception as exc:  # noqa: BLE001 - CLI should keep working without LLM.
             plan = heuristic_plan_chat_request(

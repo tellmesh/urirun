@@ -5,17 +5,17 @@
 
 - **Project**: /home/tom/github/if-uri/urirun
 - **Primary Language**: python
-- **Languages**: python: 208, json: 15, shell: 15, yaml: 5, javascript: 5
+- **Languages**: python: 209, json: 15, shell: 15, yaml: 5, javascript: 5
 - **Analysis Mode**: static
-- **Total Functions**: 2406
+- **Total Functions**: 2421
 - **Total Classes**: 59
-- **Modules**: 279
-- **Entry Points**: 1030
+- **Modules**: 280
+- **Entry Points**: 1034
 
 ## Architecture by Module
 
 ### adapters.python.urirun.host.dashboard
-- **Functions**: 589
+- **Functions**: 598
 - **File**: `dashboard.js`
 
 ### adapters.python.urirun.host.scanner
@@ -32,7 +32,7 @@
 - **File**: `host_dashboard.py`
 
 ### adapters.python.urirun.host.chat_orchestrator
-- **Functions**: 73
+- **Functions**: 72
 - **Classes**: 1
 - **File**: `chat_orchestrator.py`
 
@@ -98,10 +98,9 @@
 - **Classes**: 8
 - **File**: `reversible.py`
 
-### adapters.python.urirun.host.planfile_adapter
+### adapters.python.urirun.host.dashboard_api
 - **Functions**: 27
-- **Classes**: 1
-- **File**: `planfile_adapter.py`
+- **File**: `dashboard_api.py`
 
 ## Key Entry Points
 
@@ -186,6 +185,9 @@ refresh. The token bundle lives in the keyring under ``oauth:<provider>``
 Reconnects automatically, replaying missed events via Last-Event-ID.
 - **Calls**: adapters.python.urirun_node.config.host_config_for_args, adapters.python.urirun_node.config.node_url, getattr, getattr, bool, bool, sys.stderr.write, sys.stderr.flush
 
+### adapters.python.urirun.host.chat_orchestrator.chat_ask
+- **Calls**: None.strip, adapters.python.urirun.host.chat_orchestrator._parse_chat_nodes_targets, adapters.python.urirun.host.chat_orchestrator._target_selection_explicit, adapters.python.urirun.host.chat_orchestrator._init_selected_targets, adapters.python.urirun.host.chat_orchestrator._infer_node_targets, adapters.python.urirun.host.screen_capability.selected_nodes_from_targets, bool, bool
+
 ### adapters.python.urirun.host.node_health.node_doctor
 > Run all health probes for a urirun node; return a structured per-class report.
 
@@ -201,9 +203,6 @@ Result shape::
 ### adapters.python.urirun.runtime.errors.problem
 > Project an error envelope to RFC 9457 ``application/problem+json``.
 - **Calls**: dict, adapters.python.urirun.runtime.errors.category_meta, err.get, adapters.python.urirun.runtime.errors.classify, err.get, adapters.python.urirun.runtime.errors.error_code, err.get, err.get
-
-### adapters.python.urirun.host.chat_orchestrator.chat_ask
-- **Calls**: None.strip, adapters.python.urirun.host.chat_orchestrator._parse_chat_nodes_targets, adapters.python.urirun.host.chat_orchestrator._target_selection_explicit, adapters.python.urirun.host.chat_orchestrator._init_selected_targets, adapters.python.urirun.host.chat_orchestrator._infer_node_targets, adapters.python.urirun.host.screen_capability.selected_nodes_from_targets, bool, bool
 
 ### adapters.python.urirun.node.manage.connector_install
 > Install a connector from ANY source into the node's venv:
@@ -429,7 +428,7 @@ Key functions that process and transform data:
 
 ### adapters.c.urirun.urirun_parse
 
-### adapters.python.urirun.node._util._parse_json_option
+### adapters.python.urirun_node._util._parse_json_option
 > Parse an optional JSON CLI argument; return ``default`` when unset.
 - **Output to**: json.loads
 
@@ -605,6 +604,7 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun_runtime.v2.validate_binding_document` - 24 calls
 - `adapters.python.urirun.host.node_cli.watch_command` - 24 calls
 - `adapters.python.urirun.host.object_registry.probe_node_token` - 24 calls
+- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 24 calls
 - `adapters.python.urirun_runtime.v1.run` - 23 calls
 - `adapters.python.urirun.testing.smoke` - 23 calls
 - `adapters.python.urirun.host.node_api.configured_api_headers` - 23 calls
@@ -615,7 +615,6 @@ Functions exposed as public API (no underscore prefix):
 - `adapters.python.urirun.runtime.errors.problem` - 22 calls
 - `adapters.python.urirun_runtime._runtime.run` - 22 calls
 - `adapters.python.urirun.host.host_dashboard.serve` - 22 calls
-- `adapters.python.urirun.host.chat_orchestrator.chat_ask` - 22 calls
 - `adapters.python.urirun.node.manage.connector_install` - 21 calls
 - `adapters.python.urirun.host.host_db.search_records` - 21 calls
 - `adapters.python.urirun.host.dashboard_api.chat_history` - 21 calls

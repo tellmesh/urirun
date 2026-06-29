@@ -62,6 +62,52 @@ def test_make_flow_with_retrieval_falls_back_for_old_mesh_signature():
     assert "retrieval" not in mesh.calls[1]
 
 
+def test_make_flow_with_retrieval_forwards_llm_model_to_new_mesh():
+    class Mesh:
+        def __init__(self):
+            self.kwargs = None
+
+        def make_flow(self, *args, **kwargs):
+            self.kwargs = kwargs
+            return {"steps": []}, {"provider": "test"}
+
+    mesh = Mesh()
+    flow, generator = make_flow_with_retrieval(
+        mesh, "prompt", {"routes": []}, ["host"], False, [], {"episodes": []},
+        llm_model="request/model")
+
+    assert flow == {"steps": []}
+    assert generator == {"provider": "test"}
+    assert mesh.kwargs["retrieval"] == {"episodes": []}
+    assert mesh.kwargs["llm_model"] == "request/model"
+
+
+def test_make_flow_with_retrieval_falls_back_for_old_mesh_without_model_or_retrieval():
+    class Mesh:
+        def __init__(self):
+            self.calls = []
+
+        def make_flow(self, *args, **kwargs):
+            self.calls.append(dict(kwargs))
+            if "llm_model" in kwargs:
+                raise TypeError("unexpected keyword argument 'llm_model'")
+            if "retrieval" in kwargs:
+                raise TypeError("unexpected keyword argument 'retrieval'")
+            return {"steps": []}, {"provider": "test"}
+
+    mesh = Mesh()
+    flow, generator = make_flow_with_retrieval(
+        mesh, "prompt", {"routes": []}, ["host"], False, [], {"episodes": []},
+        llm_model="request/model")
+
+    assert flow == {"steps": []}
+    assert generator == {"provider": "test"}
+    assert "llm_model" in mesh.calls[0]
+    assert "retrieval" in mesh.calls[1]
+    assert "llm_model" not in mesh.calls[-1]
+    assert "retrieval" not in mesh.calls[-1]
+
+
 def test_chat_orchestrator_does_not_define_experience_retrieval_helpers():
     path = Path(__file__).resolve().parents[1] / "urirun" / "host" / "chat_orchestrator.py"
     tree = ast.parse(path.read_text(encoding="utf-8"))

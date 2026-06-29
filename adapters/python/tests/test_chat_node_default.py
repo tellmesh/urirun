@@ -166,7 +166,10 @@ class TestHostDefault(unittest.TestCase):
             )
 
         self.assertTrue(result["ok"])
+        self.assertIs(result["noLlm"], True)
         self.assertIs(captured["router_guard"], True)
+        system = [m for m in messages if m.get("role") == "system"][-1]
+        self.assertIs(system.get("detail", {}).get("noLlm"), True)
 
     def test_capture_preference_applies_only_to_ambiguous_capture(self):
         mem = TwinMemory()
@@ -324,6 +327,17 @@ class TestHostDefault(unittest.TestCase):
         self.assertEqual(result["selectedTargets"], ["host"])
         self.assertEqual(messages[0]["detail"]["resolvedNodes"], [])
         self.assertEqual(messages[0]["detail"]["resolvedTargets"], ["host"])
+
+    def test_chat_ask_records_request_model_in_user_message(self):
+        result, messages = self._chat_ask_selection({
+            "prompt": "zrob zrzut ekranu",
+            "targets": ["host"],
+            "execute": True,
+            "model": "request/model",
+        })
+
+        self.assertEqual(result["selectedTargets"], ["host"])
+        self.assertEqual(messages[0]["detail"]["model"], "request/model")
 
     def test_chat_ask_url_tab_autorun_infers_node_from_prompt_not_stale_url(self):
         payload = {

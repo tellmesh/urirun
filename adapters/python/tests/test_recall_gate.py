@@ -144,6 +144,38 @@ class RecallGateShortCircuitsLLMTests(unittest.TestCase):
         self.assertFalse(flow["steps"][1]["payload"]["required"])
         self.assertEqual(flow["steps"][2]["depends_on"], ["ready"])
 
+    def test_found_recall_can_use_current_routes_to_focus_window_before_capture(self):
+        import urirun.host.chat_orchestrator as CO
+        import urirun.host.dispatch as D
+
+        recalled = {"ok": True, "found": True, "source": "episode", "episode_id": "ep-1", "steps": [
+            {"id": "list_chrome_windows", "uri": "kvm://host/window/query/list",
+             "payload": {"app": "chrome"}, "depends_on": []},
+            {"id": "capture_chrome_screen", "uri": "kvm://host/screen/query/capture",
+             "payload": {"monitor_from": "list_chrome_windows.result.value.selected.monitor"},
+             "depends_on": ["list_chrome_windows"]},
+        ]}
+        routes = [
+            {"uri": "kvm://host/window/query/list"},
+            {"uri": "kvm://host/window/command/focus"},
+            {"uri": "kvm://host/screen/query/capture"},
+        ]
+        d_orig = D.inprocess_fallback
+        D.inprocess_fallback = lambda uri, payload=None: recalled
+        try:
+            mem = type("M", (), {"known_good": lambda self, n: {"fingerprint": "env-x"}})()
+            flow, _gen = CO._try_recall_gate(mem, ["host"], "pokaż zrzut ekranu z chrome", routes, {})
+        finally:
+            D.inprocess_fallback = d_orig
+
+        self.assertEqual([s["id"] for s in flow["steps"]], [
+            "list_chrome_windows",
+            "focus_list_chrome_windows",
+            "capture_chrome_screen",
+        ])
+        self.assertEqual(flow["steps"][1]["uri"], "kvm://host/window/command/focus")
+        self.assertEqual(flow["steps"][2]["depends_on"], ["focus_list_chrome_windows", "list_chrome_windows"])
+
     def test_recall_with_ambiguous_env_enum_does_not_short_circuit_planner(self):
         import urirun.host.chat_orchestrator as CO
         import urirun.host.dispatch as D

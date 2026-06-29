@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 from pathlib import Path
@@ -37,6 +38,20 @@ def json_write(path: str | Path, data: dict) -> None:
     output.write_text(f"{json.dumps(data, indent=2, ensure_ascii=False)}\n", encoding="utf-8")
 
 
+def _default_max_tokens() -> int:
+    raw = os.getenv("URIRUN_LLM_MAX_TOKENS") or os.getenv("LLM_MAX_TOKENS") or "4096"
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return 4096
+    return value if value > 0 else 4096
+
+
+def _should_retry_with_fewer_tokens(exc: BaseException) -> bool:
+    msg = str(exc).lower()
+    return "fewer max_tokens" in msg or "requested up to" in msg
+
+
 def quiet_completion(**kwargs):
     """``litellm.completion`` with its "Provider List" banner kept off stdout, so a host's JSON
     stays the only thing on stdout. litellm prints that banner (and other debug) to stdout on
@@ -49,6 +64,15 @@ def quiet_completion(**kwargs):
 
     import litellm
 
+    defaulted = "max_tokens" not in kwargs and "max_completion_tokens" not in kwargs
+    if defaulted:
+        kwargs = {**kwargs, "max_tokens": _default_max_tokens()}
     litellm.suppress_debug_info = True
     with contextlib.redirect_stdout(sys.stderr):
-        return litellm.completion(**kwargs)
+        try:
+            return litellm.completion(**kwargs)
+        except Exception as exc:
+            current = int(kwargs.get("max_tokens") or 0)
+            if not (defaulted and current > 1024 and _should_retry_with_fewer_tokens(exc)):
+                raise
+            return litellm.completion(**{**kwargs, "max_tokens": 1024})

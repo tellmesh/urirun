@@ -198,6 +198,17 @@ def test_finalize_no_artifact_class_for_untagged():
     assert "artifactClass" not in result
 
 
+def test_inprocess_response_folds_inner_result_failure():
+    result = hd._inprocess_response(
+        {"ok": True, "result": {"value": {"ok": False, "error": "monitor missing"}}},
+        "kvm://x",
+        {"ok": False, "error": "monitor missing"},
+        None,
+    )
+    assert result["ok"] is False
+    assert result["error"] == "monitor missing"
+
+
 # ── alias resolution ─────────────────────────────────────────────────────────
 
 def test_scanner_capture_alias_resolves():

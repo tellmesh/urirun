@@ -66,27 +66,33 @@ def make_flow_with_retrieval(
     no_llm: bool,
     environments: list[dict],
     retrieval: dict,
+    llm_model: str | None = None,
 ) -> tuple:
     """Call ``mesh.make_flow`` with retrieval, tolerating older mesh shims."""
-    try:
-        return mesh.make_flow(
-            prompt,
-            discovered,
-            selected_nodes=planner_nodes,
-            use_llm=not no_llm,
-            environments=environments,
-            retrieval=retrieval,
-        )
-    except TypeError as exc:
-        if "retrieval" not in str(exc):
-            raise
-        return mesh.make_flow(
-            prompt,
-            discovered,
-            selected_nodes=planner_nodes,
-            use_llm=not no_llm,
-            environments=environments,
-        )
+    base_kwargs = {
+        "selected_nodes": planner_nodes,
+        "use_llm": not no_llm,
+        "environments": environments,
+        "retrieval": retrieval,
+    }
+    if llm_model:
+        base_kwargs["llm_model"] = llm_model
+    kwargs = dict(base_kwargs)
+    for _ in range(3):
+        try:
+            return mesh.make_flow(prompt, discovered, **kwargs)
+        except TypeError as exc:
+            text = str(exc)
+            changed = False
+            if "llm_model" in text and "llm_model" in kwargs:
+                kwargs.pop("llm_model", None)
+                changed = True
+            if "retrieval" in text and "retrieval" in kwargs:
+                kwargs.pop("retrieval", None)
+                changed = True
+            if not changed:
+                raise
+    return mesh.make_flow(prompt, discovered, **kwargs)
 
 
 __all__ = [

@@ -72,6 +72,19 @@ def _lan_qr_profile() -> dict:
     return {"base": base, "secureBase": secure}
 
 
+def llm_runtime_config() -> dict:
+    """Return non-secret LLM runtime config used by chat preflight."""
+    source = ""
+    model = ""
+    for name in ("URIRUN_LLM_MODEL", "LLM_MODEL"):
+        value = str(os.environ.get(name) or "").strip()
+        if value:
+            source = name
+            model = value
+            break
+    return {"ok": True, "configured": bool(model), "model": model, "source": source}
+
+
 # ─── chat_history (stateless, only needs host_db + artifacts_admin) ───────────
 
 def chat_history(db: str | None, project: str, limit: int = 80) -> dict:
@@ -175,6 +188,13 @@ def _api_chat_history(
     return 200, chat_history(db, project, limit=int(_first(query, "limit", "80") or 80))
 
 
+def _api_chat_config(
+    project: str, db: str | None, config: str | None,
+    query: dict, node_urls: list[str] | None,
+) -> tuple[int, dict]:
+    return 200, llm_runtime_config()
+
+
 def _api_services_live(
     project: str, db: str | None, config: str | None,
     query: dict, node_urls: list[str] | None,
@@ -229,6 +249,7 @@ _API_ROUTES: dict = {
     "/api/checks": _api_checks,
     "/api/logs": _api_logs,
     "/api/artifacts": _api_artifacts,
+    "/api/chat/config": _api_chat_config,
     "/api/chat/history": _api_chat_history,
     "/api/services/live": _api_services_live,
     "/api/scanner/live": _api_scanner_live,
