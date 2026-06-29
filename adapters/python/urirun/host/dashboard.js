@@ -407,6 +407,7 @@
         <div class="mono">${esc(node.url)}</div>
         <div class="subtle">${(node.routes || []).length} routes${node.error ? ` · ${esc(node.error)}` : ''}</div>
         ${qrDetails(nodeQrTarget(node), `node:${node.name}`, node.kind)}
+        ${delegatedPhoneServicesDetails(node)}
         <details class="node-token-form" onclick="event.stopPropagation()" style="margin-top:6px">
           <summary class="subtle">🔑 Token zarządzania (X-Urirun-Token) · ${node.hasToken ? '✓ ustawiony' : 'brak'}</summary>
           <div class="stack" style="margin-top:6px">
@@ -444,6 +445,30 @@
       const lan = (state.summary && state.summary.lan) || {};
       const base = (secure ? lan.secureBase : lan.base) || serviceBaseFromLocation(8195, secure);
       return base.replace(/\/+$/, '');
+    }
+    function dashboardLanBase() {
+      const lan = (state.summary && state.summary.lan) || {};
+      const explicit = String(lan.dashboardBase || lan.dashboardUrl || '').trim();
+      if (explicit) return explicit.replace(/\/+$/, '');
+      try {
+        const u = new URL(lanBase(false));
+        u.protocol = 'http:';
+        u.port = '8194';
+        return u.toString().replace(/\/+$/, '');
+      } catch (e) {
+        return serviceBaseFromLocation(8194, false).replace(/\/+$/, '');
+      }
+    }
+    function phoneScannerDelegatedUrl() {
+      const params = new URLSearchParams({
+        autostart: '1',
+        auto: '1',
+        best: '1',
+        count: '6',
+        minScore: '45',
+        interval: '3',
+      });
+      return dashboardLanBase() + '/scanner?' + params.toString();
     }
     function lanNeedsSecure(s) { return /camera|webcam|scanner|getusermedia|mediadevices/i.test(String(s || '')); }
     // Build a LAN-openable URL: rebase an absolute http(s) URL onto the LAN host, or append a path.
@@ -483,12 +508,26 @@
         : ((node && node.url) || '');
     }
     // Collapsible QR block reused by node cards and widget cards.
-    function qrDetails(pathOrUrl, label, kind) {
-      const url = lanUrl(pathOrUrl);
+    function qrDetails(pathOrUrl, label, kind, secure) {
+      const url = lanUrl(pathOrUrl, secure);
       return `<details class="qr-block" onclick="event.stopPropagation()" style="margin-top:6px">
         <summary class="subtle">📱 QR (otworz na telefonie)${kind ? ` · ${esc(kind)}` : ''}</summary>
         <div class="qr-wrap"><img class="qr-img" loading="lazy" src="${qrSrc(url)}" alt="QR ${esc(label || url)}">
           <a class="mono qr-link" href="${esc(url)}" target="_blank" rel="noreferrer">${esc(url)}</a></div>
+      </details>`;
+    }
+    function delegatedPhoneServicesDetails(node) {
+      const kind = String((node && node.kind) || '').toLowerCase();
+      if (!['webpage', 'smartphone'].includes(kind)) return '';
+      const url = phoneScannerDelegatedUrl();
+      return `<details class="qr-block delegated-phone-services" onclick="event.stopPropagation()" style="margin-top:6px" open>
+        <summary class="subtle">📱 Usługi hosta na telefonie · phone-scanner</summary>
+        <div class="qr-wrap"><img class="qr-img" loading="lazy" src="${qrSrc(url)}" alt="QR service:phone-scanner">
+          <a class="mono qr-link" href="${esc(url)}" target="_blank" rel="noreferrer">${esc(url)}</a></div>
+        <div class="artifact-actions" style="margin-top:6px">
+          <button type="button" data-contact-action="open-url" data-url="${esc(url)}" data-target="service:phone-scanner" onclick="event.stopPropagation(); window.open(this.dataset.url, '_blank', 'noreferrer')">Open Phone Scanner</button>
+        </div>
+        <div class="subtle">Deleguje hostową usługę <code>service:phone-scanner</code> na ekran telefonu; sam serwis dalej działa na hoście.</div>
       </details>`;
     }
     // Toolbar action: show a QR of the CURRENT view (LAN base + current path) in an overlay.

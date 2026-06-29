@@ -28,3 +28,15 @@ def test_qr_lan_fallback_does_not_hardcode_private_host():
     source = _dashboard_js()
     assert "function serviceBaseFromLocation" in source
     assert "http://192.168.188.212:8195" not in source
+
+
+def test_webpage_node_card_exposes_delegated_phone_scanner_service():
+    source = _dashboard_js()
+    assert "function delegatedPhoneServicesDetails" in source
+    assert "function dashboardLanBase" in source
+    assert "function phoneScannerDelegatedUrl" in source
+    assert "delegatedPhoneServicesDetails(node)" in source
+    assert "service:phone-scanner" in source
+    assert "Usługi hosta na telefonie" in source
+    assert "u.port = '8194'" in source
+    assert "dashboardLanBase() + '/scanner?'" in source
