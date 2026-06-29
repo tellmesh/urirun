@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+import inspect
 from pathlib import Path
 
+from urirun.host import chat_orchestrator as co
 from urirun_connector_router.target_resolution import (
     filter_mesh_for_targets,
     inactive_node_urls,
@@ -81,3 +83,9 @@ def test_chat_orchestrator_does_not_define_target_resolution_helpers():
         assert moved not in defined, f"{moved} must be imported from the router connector, not redefined"
     # The thin host wrapper that injects local entry-point routes is allowed to remain.
     assert "_with_local_host_routes" in defined
+
+
+def test_chat_orchestrator_uses_router_target_diagnosis_for_offline_gate():
+    source = inspect.getsource(co._chat_ask_general_check_offline)
+    assert "_router_diagnose_targets" in source
+    assert "reachable_names" not in source

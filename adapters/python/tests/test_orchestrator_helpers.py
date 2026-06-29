@@ -9,6 +9,7 @@ from urirun.host.chat_orchestrator import (
     _route_targets_active,
     _inactive_node_urls,
     _timeline_steps_all_ok,
+    _general_path_status_label,
     _chat_insert_routing_preview,
     _routing_plan_content,
 )
@@ -145,6 +146,13 @@ def test_timeline_rollup_keeps_plain_data_payload_green():
     results = {"read": {"ok": True, "result": {"value": {"text": "hello"}}}}
 
     assert _timeline_steps_all_ok(timeline, False, results) is True
+
+
+def test_general_path_status_reports_successful_preview_as_dry_run():
+    assert _general_path_status_label(False, True, False) == "dry-run"
+    assert _general_path_status_label(True, True, False) == "ok"
+    assert _general_path_status_label(True, True, True) == "degraded"
+    assert _general_path_status_label(False, False, False) == "failed"
 
 
 # ── _route_targets_active (extracted predicate) ───────────────────────────────

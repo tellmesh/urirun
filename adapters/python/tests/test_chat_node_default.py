@@ -490,10 +490,54 @@ class TestHostDefault(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertTrue(result["humanEscalation"])
         self.assertEqual(result["selectedTargets"], ["node:lenovo"])
+        self.assertEqual(result["remediationClass"], "unreachable")
+        self.assertEqual(result["error"]["type"], "NodeOffline")
+        self.assertEqual(result["twinDiagnosis"]["nodes"][0]["status"], "uri-process-unreachable")
+        self.assertEqual(result["remediation"]["command"], "urirun node serve --name lenovo")
         system = [m for m in messages if m.get("role") == "system"][-1]
         self.assertEqual(system["detail"]["kind"], "human-task")
+        self.assertEqual(system["detail"]["remediationClass"], "unreachable")
         self.assertEqual(system["detail"]["notify"]["sound"], "beep")
         self.assertEqual(system["detail"]["humanTask"]["targetNode"], "lenovo")
+
+    def test_chat_ask_named_missing_node_emits_no_node_url_human_task(self):
+        messages = []
+
+        class FakeMesh:
+            def discover_mesh(self, _config):
+                return {"nodes": [], "routes": [], "serviceMap": {}}
+
+        deps = co.ChatDeps(
+            host_db_fn=MagicMock(),
+            mesh_fn=FakeMesh,
+            host_config_fn=MagicMock(return_value={}),
+            node_alias_map_fn=MagicMock(return_value=ALIAS),
+            add_chat_message_fn=lambda db, msg: messages.append(msg),
+            page_action_enqueue_fn=MagicMock(),
+            ensure_phone_scanner_fn=MagicMock(),
+            sync_documents_fn=MagicMock(),
+        )
+        payload = {
+            "prompt": "jaka jest data na lenovo laptop",
+            "targets": ["host"],
+            "execute": True,
+            "no_llm": True,
+        }
+
+        with patch.object(co, "_chat_insert_twin_preview", lambda *a, **k: None):
+            result = co.chat_ask("proj", "db", None, payload, [], None, None, deps)
+
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["humanEscalation"])
+        self.assertEqual(result["selectedTargets"], ["node:lenovo"])
+        self.assertEqual(result["remediationClass"], "no-node-url")
+        self.assertEqual(result["error"]["type"], "NodeMissing")
+        self.assertEqual(result["twinDiagnosis"]["nodes"][0]["status"], "missing-node-url")
+        self.assertIn("--node-url lenovo=http://<ip>:8765", result["humanTask"]["instruction"])
+        system = [m for m in messages if m.get("role") == "system"][-1]
+        self.assertEqual(system["detail"]["kind"], "human-task")
+        self.assertEqual(system["detail"]["remediationClass"], "no-node-url")
+        self.assertEqual(system["detail"]["notify"]["sound"], "beep")
 
     def test_planner_llm_quota_failure_does_not_emit_no_node_url_human_task(self):
         messages = []
