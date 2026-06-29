@@ -245,6 +245,25 @@ def test_make_dispatch_uri_non_not_found_returned_directly(monkeypatch):
     assert r is transport_error
 
 
+def test_execute_flow_preview_uses_dry_run_dispatch(monkeypatch):
+    """Preview is an effect boundary: execute=False must reach runtime as dry-run."""
+    from urirun.node import flow as _flow_mod
+    calls = []
+
+    def fake_call(uri, payload, reg, mode="execute"):
+        calls.append({"uri": uri, "mode": mode})
+        return {"ok": True, "result": {"value": {"ok": True, "dryRun": mode == "dry-run"}}}
+
+    monkeypatch.setattr(_flow_mod.v2_service, "call", fake_call)
+    uri = "kvm://host/screen/query/capture"
+    result = _flow_mod.execute_flow({"steps": [{"id": "capture", "uri": uri}]},
+                                    mesh={}, registry={}, execute=False)
+
+    assert result["ok"] is True
+    assert calls == [{"uri": uri, "mode": "dry-run"}]
+    assert result["results"]["capture"]["result"]["value"]["dryRun"] is True
+
+
 # ─── _thin_driver uses resolve_step_payload ───────────────────────────────────
 
 def test_thin_driver_resolves_step_payload_from_prior_result(monkeypatch):

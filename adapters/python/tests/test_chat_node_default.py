@@ -473,6 +473,33 @@ class TestHostDefault(unittest.TestCase):
         self.assertEqual(system["detail"]["notify"]["sound"], "beep")
         self.assertEqual(system["detail"]["humanTask"]["targetNode"], "lenovo")
 
+    def test_planner_llm_quota_failure_does_not_emit_no_node_url_human_task(self):
+        messages = []
+        deps = co.ChatDeps(
+            host_db_fn=MagicMock(),
+            mesh_fn=MagicMock(),
+            host_config_fn=MagicMock(return_value={}),
+            node_alias_map_fn=MagicMock(return_value=ALIAS),
+            add_chat_message_fn=lambda db, msg: messages.append(msg),
+            page_action_enqueue_fn=MagicMock(),
+            ensure_phone_scanner_fn=MagicMock(),
+            sync_documents_fn=MagicMock(),
+        )
+        exc = ValueError(
+            "NL flow generated no URI steps. Discovered 225 safe route(s) on node(s) ['host']; "
+            "selected ['host']; planner reason: litellm.APIError: OpenrouterException - "
+            '{"error":{"message":"Key limit exceeded (total limit)","code":403}}'
+        )
+
+        result = co._chat_ask_general_planner_failure(
+            exc, "db", "otwórz edytor tekstu", True, False, [], ["host"], deps)
+
+        self.assertFalse(result["ok"])
+        self.assertNotIn("escalation", result)
+        self.assertIsNone(messages[-1]["detail"]["remediation"])
+        diagnosis = result["timeline"][0]["recovery"]["diagnosis"]
+        self.assertEqual(diagnosis["rule"], "llm-provider-quota")
+
     def test_node_name_in_prompt_keeps_remote(self):
         nodes, targets = self._call(
             "opublikuj post na LinkedIn na lenovo",

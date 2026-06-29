@@ -1,52 +1,52 @@
-# urirun | 2537 func | 131f | 47377L | python | 2026-06-29
+# urirun | 2530 func | 131f | 46625L | python | 2026-06-29
 # generated in 0.00s
 
 HEALTH:
-  CC̄=4.5  critical=293 (limit:10)  dup=2  cycles=0
+  CC̄=4.4  critical=272 (limit:10)  dup=2  cycles=0
 
 ALERTS[20]:
-  !!! high_fan_out     _chat_ask_general = 35 (limit:10)
-  !!! cc_exceeded      _flow_scheme_dispatch = 25 (limit:15)
-  !!! high_fan_out     NodeHandler._handle_run = 25 (limit:10)
   !!! high_fan_out     _build_parser = 25 (limit:10)
   !!! high_fan_out     main = 25 (limit:10)
+  !!! high_fan_out     _chat_ask_general = 25 (limit:10)
   !!! high_fan_out     _add_host_task_subparser = 23 (limit:10)
   !!! high_fan_out     main = 23 (limit:10)
   !!! high_fan_out     _run_streamed = 23 (limit:10)
-  !!! high_fan_out     NodeHandler._handle_deploy = 22 (limit:10)
   !!! high_fan_out     _handler_worker_main = 20 (limit:10)
+  !!  high_fan_out     NodeHandler._stream_events = 19 (limit:10)
+  !!  high_fan_out     _add_connectors_subparser = 19 (limit:10)
+  !!  high_fan_out     _run_process_streaming = 19 (limit:10)
 
 MODULES[286] (top by size):
-  M[adapters/python/urirun/host/dashboard.js] 2955L C:0 F:436 CC↑14 D:44 (javascript)
-  M[adapters/python/urirun/host/chat_orchestrator.py] 2039L C:1 F:73 CC↑15 D:0 (python)
+  M[adapters/python/urirun/host/dashboard.js] 2955L C:0 F:436 CC↑14 D:42 (javascript)
+  M[adapters/python/urirun/host/chat_orchestrator.py] 2097L C:1 F:80 CC↑14 D:0 (python)
   M[adapters/python/urirun_runtime/v2.py] 2033L C:2 F:120 CC↑14 D:5 (python)
   M[adapters/python/urirun/host/host_dashboard.py] 1973L C:0 F:107 CC↑14 D:1 (python)
   M[adapters/python/urirun_scanner/scanner_bridge.py] 1548L C:0 F:0 CC↑0 D:0 (python)
   M[adapters/python/urirun_scanner/document_sync.py] 1422L C:0 F:0 CC↑0 D:0 (python)
   M[planfile.yaml] 1319L C:0 F:0 CC↑0 D:0 (yaml)
-  M[adapters/python/urirun/node/flow.py] 1249L C:0 F:51 CC↑17 D:6 (python)
   M[adapters/python/urirun/host/object_registry.py] 1048L C:0 F:51 CC↑14 D:1 (python)
-  M[adapters/python/urirun_node/server.py] 997L C:3 F:55 CC↑14 D:3 (python)
+  M[adapters/python/urirun_node/server.py] 1043L C:3 F:63 CC↑14 D:3 (python)
   M[adapters/python/urirun/host/node_cli.py] 910L C:0 F:57 CC↑13 D:1 (python)
-  M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:11 (python)
+  M[adapters/python/urirun/__init__.py] 766L C:1 F:53 CC↑14 D:10 (python)
   M[adapters/python/urirun_connectors_toolkit/connector_lint.py] 747L C:0 F:42 CC↑14 D:1 (python)
   M[adapters/python/urirun_runtime/cli.py] 739L C:0 F:13 CC↑2 D:1 (python)
   M[adapters/python/urirun_runtime/_registry.py] 718L C:0 F:43 CC↑14 D:1 (python)
+  M[adapters/python/urirun/host/scanner.js] 681L C:0 F:121 CC↑14 D:0 (javascript)
   LANGS: python:212/shell:15/json:15/javascript:7/yaml:5/csharp:4/txt:4/go:3/c:3/ruby:2/typescript:2/php:2/java:2/rust:2/other:2/toml:2/yml:2/pm:1/perl:1
 
 HOTSPOTS[10]:
-  ★ _chat_ask_general fan=35  // Handle general LLM-to-URI mesh chat requests.
-  ★ NodeHandler._handle_run fan=25  // Orchestrates 25 calls
   ★ _build_parser fan=25  // Orchestrates 25 calls
   ★ main fan=25  // Orchestrates 25 calls
+  ★ _chat_ask_general fan=25  // Handle general LLM-to-URI mesh chat requests.
   ★ _add_host_task_subparser fan=23  // The `host task` tree (planfile ticket lifecycle: plan/bindings/schedule/list/sho
+  ★ main fan=23  // Orchestrates 23 calls
 
 REFACTOR[15]:
-  [1] H/L Split _flow_scheme_dispatch (CC=25)
-  [2] H/H Split god module adapters/python/urirun/node/flow.py (1249L, 0 classes)
-  [3] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (2039L, 1 classes)
-  [4] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
-  [5] H/H Split god module adapters/python/urirun/host/dashboard.js (2955L, 0 classes)
+  [1] H/H Split god module adapters/python/urirun/__init__.py (766L, 1 classes)
+  [2] H/H Split god module adapters/python/urirun/host/chat_orchestrator.py (2097L, 1 classes)
+  [3] H/H Split god module adapters/python/urirun/host/dashboard.js (2955L, 0 classes)
+  [4] H/H Split god module adapters/python/urirun/host/host_dashboard.py (1973L, 0 classes)
+  [5] H/H Split god module adapters/python/urirun/host/object_registry.py (1048L, 0 classes)
 
 EVOLUTION:
-  2026-06-29 CC̄=4.5 crit=293 47377L // Automated analysis
+  2026-06-29 CC̄=4.4 crit=272 46625L // Automated analysis

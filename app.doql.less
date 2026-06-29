@@ -110,7 +110,7 @@ workflow[name="restart-chat"] {
   trigger: manual;
   step-1: run cmd=test -x "$(CHAT_SERVICE)" || { echo "missing $(CHAT_SERVICE); install urirun-service-chat in the venv"; exit 1; };
   step-2: run cmd=mkdir -p "$(LOG_DIR)";
-  step-3: run cmd=setsid "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 < /dev/null &;
+  step-3: run cmd=PYTHONPATH="$(DEV_PYTHONPATH):$${PYTHONPATH:-}" setsid "$(CHAT_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(CHAT_HOST)" --port "$(CHAT_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/chat.log" 2>&1 < /dev/null &;
   step-4: run cmd=for i in $$(seq 1 20); do curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null 2>&1 && break || sleep 0.5; done;
   step-5: run cmd=curl -fsS --max-time 2 "http://$(CHAT_HOST):$(CHAT_PORT)/health" >/dev/null || { echo "chat failed to start; log:"; tail -40 "$(LOG_DIR)/chat.log"; exit 1; };
   step-6: run cmd=echo "chat: http://$(CHAT_HOST):$(CHAT_PORT)/";
@@ -121,7 +121,7 @@ workflow[name="restart-scanner"] {
   trigger: manual;
   step-1: run cmd=test -x "$(SCANNER_SERVICE)" || { echo "missing $(SCANNER_SERVICE); install urirun-service-scanner in the venv"; exit 1; };
   step-2: run cmd=mkdir -p "$(LOG_DIR)";
-  step-3: run cmd=setsid "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 < /dev/null &;
+  step-3: run cmd=PYTHONPATH="$(DEV_PYTHONPATH):$${PYTHONPATH:-}" setsid "$(SCANNER_SERVICE)" restart --project "$(CURDIR)" --db "$(HOST_DB)" --host "$(SCANNER_HOST)" --port "$(SCANNER_PORT)" $(NODE_URL_ARGS) $(FORCE_REPLACE_ARG) >"$(LOG_DIR)/scanner.log" 2>&1 < /dev/null &;
   step-4: run cmd=for i in $$(seq 1 20); do curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null 2>&1 && break || sleep 0.5; done;
   step-5: run cmd=curl -kfsS --max-time 2 "https://127.0.0.1:$(SCANNER_PORT)/api/scanner/live" >/dev/null || { echo "scanner failed to start; log:"; tail -40 "$(LOG_DIR)/scanner.log"; exit 1; };
   step-6: run cmd=echo "scanner: https://$(SCANNER_HOST):$(SCANNER_PORT)/scanner";
@@ -208,6 +208,32 @@ workflow[name="clean"] {
 }
 
 tests {
+  import: .claude/worktrees/agent-a0399c478743caf79/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a0e9f76259d487c94/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a125f552bb991cc01/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a26bbd6b5fd565094/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a355fcdf0034d6b55/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a4af4bb0b0bc74e52/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a4cae63dfd3e82f2a/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a513eb4c0685260a6/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a555612c5c420a446/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-a9a6b6c80216c6d8b/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-aaea4872918ab9410/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-aba8a6512bbdaddc3/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-ac2883b942d10f087/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-ac56434ca36fe18e3/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-aca2d3730b7c75c20/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-acb5dc53933d2880d/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-ad964c3977bac9a8a/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-add8a12ebdfe870be/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-aeac5f10e27f22a14/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/agent-aec649e904565daff/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-adopt-1782729623/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-chat-ask-1782728305/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-ensure-1782728245/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-ensure2-1782729735/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-orchestrator2-cc-1782727595/testql-scenarios/**/*.testql.toon.yaml;
+  import: .claude/worktrees/worktree-precond-cc-1782727504/testql-scenarios/**/*.testql.toon.yaml;
   import: testql-scenarios/**/*.testql.toon.yaml;
 }
 

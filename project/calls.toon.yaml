@@ -1,13 +1,13 @@
 # code2llm call graph | /home/tom/github/if-uri/urirun
-# generated in 0.24s
-# nodes: 460 | edges: 500 | modules: 56
-# CC̄=4.5
+# generated in 0.25s
+# nodes: 461 | edges: 500 | modules: 55
+# CC̄=4.4
 
 HUBS[20]:
   scripts.test_pypi_install.print
     CC=0  in:211  out:0  total:211
   adapters.python.urirun.host.dashboard.list
-    CC=8  in:106  out:4  total:110
+    CC=8  in:104  out:4  total:108
   adapters.python.urirun_node.server.send_json
     CC=1  in:44  out:12  total:56
   scripts.extraction_audit.print_report
@@ -16,10 +16,6 @@ HUBS[20]:
     CC=14  in:0  out:31  total:31
   scripts.transport_swap_proof.main
     CC=5  in:0  out:29  total:29
-  adapters.python.urirun_node.server.NodeHandler._handle_run
-    CC=14  in:0  out:29  total:29
-  adapters.python.urirun_node.server.NodeHandler._handle_deploy
-    CC=11  in:0  out:29  total:29
   adapters.python.urirun_connectors_toolkit.connector_lint.verify_connector
     CC=6  in:1  out:27  total:28
   adapters.python.urirun_runtime.v2.validate_binding_document
@@ -28,22 +24,26 @@ HUBS[20]:
     CC=12  in:2  out:25  total:27
   adapters.python.urirun_connectors_toolkit.resolver.resolve
     CC=12  in:2  out:24  total:26
-  adapters.python.urirun_twin.twin_store.environment_fingerprint
-    CC=9  in:3  out:22  total:25
-  adapters.python.urirun.connectors.connect_catalog._cmd_show
-    CC=9  in:0  out:25  total:25
   adapters.python.urirun_runtime.v1._build_v1_parser
     CC=2  in:1  out:24  total:25
+  adapters.python.urirun.connectors.connect_catalog._cmd_show
+    CC=9  in:0  out:25  total:25
+  adapters.python.urirun_twin.twin_store.environment_fingerprint
+    CC=9  in:2  out:22  total:24
   adapters.python.urirun_connectors_toolkit.resolver.index_local
     CC=12  in:2  out:22  total:24
   adapters.python.urirun_node.server.NodeHandler._get
     CC=12  in:4  out:19  total:23
+  adapters.python.urirun_node.transport.http_json
+    CC=8  in:11  out:11  total:22
   adapters.python.urirun.runtime.errors.problem
     CC=10  in:0  out:22  total:22
-  adapters.python.urirun_node.server.NodeHandler._handle_enroll
-    CC=11  in:0  out:22  total:22
   adapters.python.urirun_node.server._serve_opts_merged
     CC=14  in:1  out:21  total:22
+  adapters.python.urirun_node.server.NodeHandler._handle_enroll
+    CC=11  in:0  out:22  total:22
+  adapters.python.urirun.connectors.connector_smoke.smoke
+    CC=6  in:1  out:20  total:21
 
 MODULES:
   adapters.c.urirun  [4 funcs]
@@ -128,9 +128,6 @@ MODULES:
   adapters.python.urirun.node.event_schema  [2 funcs]
     _step_inverse  CC=5  out:1
     step_category  CC=3  out:1
-  adapters.python.urirun.node.flow  [2 funcs]
-    _flow_transport  CC=1  out:8
-    execute_flow  CC=8  out:16
   adapters.python.urirun.node.paths  [3 funcs]
     deploy_dir  CC=5  out:7
     node_state_dir  CC=1  out:3
@@ -146,10 +143,9 @@ MODULES:
     _uri_session_promote  CC=7  out:8
     _uri_session_replay  CC=7  out:10
     _uri_session_start  CC=8  out:11
-  adapters.python.urirun.runtime.errors  [14 funcs]
+  adapters.python.urirun.runtime.errors  [12 funcs]
     _append  CC=3  out:13
     _errno_category  CC=6  out:3
-    _load  CC=5  out:7
     _match_message_rules  CC=4  out:1
     _normalize_message  CC=2  out:6
     address  CC=1  out:0
@@ -157,6 +153,7 @@ MODULES:
     classify  CC=8  out:5
     error_code  CC=1  out:4
     help_url  CC=2  out:2
+    problem  CC=10  out:22
   adapters.python.urirun_connectors_toolkit.backend_registry  [7 funcs]
     missing  CC=5  out:2
     platform_ok  CC=2  out:1
@@ -263,26 +260,27 @@ MODULES:
     _install_policy  CC=9  out:15
     _installed_route_owners  CC=7  out:6
     _list_installed_connectors  CC=4  out:6
-  adapters.python.urirun_node.preconditions  [8 funcs]
+  adapters.python.urirun_node.preconditions  [9 funcs]
     _acquire_item  CC=3  out:1
     _satisfied_by  CC=4  out:1
+    _try_auto_satisfy  CC=6  out:5
     _uri_ready_check  CC=3  out:3
     _uri_ready_ensure  CC=3  out:4
     _uri_ready_report  CC=1  out:1
-    ensure  CC=12  out:9
+    ensure  CC=8  out:5
     report  CC=4  out:5
     status  CC=5  out:3
-  adapters.python.urirun_node.server  [39 funcs]
+  adapters.python.urirun_node.server  [43 funcs]
     publish  CC=3  out:4
+    _dispatch_run_response  CC=6  out:8
     _get  CC=12  out:19
     _get_errors  CC=8  out:15
     _guarded  CC=3  out:3
     _handle_adopt  CC=9  out:15
-    _handle_deploy  CC=11  out:29
+    _handle_deploy  CC=5  out:9
     _handle_enroll  CC=11  out:22
     _handle_need  CC=9  out:14
-    _handle_run  CC=14  out:29
-    _handle_run_control  CC=8  out:7
+    _handle_run  CC=4  out:9
   adapters.python.urirun_node.transport  [22 funcs]
     _annotate_deploy_allow_compat  CC=11  out:9
     _configured_api_id  CC=8  out:9

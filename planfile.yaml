@@ -1161,19 +1161,6 @@ sprints:
     model_hints:
       planning: balanced
       implementation: balanced
-  - id: ticket-62be83f7
-    name: Fix string-concat issues
-    description: Resolve 1 string-concat issues in adapters/python/urirun/host/chat_orchestrator.py
-    task_type: prefactor
-    priority: medium
-    estimate: 1d
-    files:
-    - adapters/python/urirun/host/chat_orchestrator.py
-    rule_id: string-concat
-    count: 1
-    model_hints:
-      planning: balanced
-      implementation: balanced
   - id: ticket-d43b9f5c
     name: Fix string-concat issues
     description: Resolve 2 string-concat issues in adapters/python/urirun/host/service_control.py
@@ -1314,6 +1301,19 @@ sprints:
     - adapters/python/scripts/heal_future_imports.py
     rule_id: string-concat
     count: 3
+    model_hints:
+      planning: balanced
+      implementation: balanced
+  - id: ticket-ea1d53a1
+    name: Fix unused-imports issues
+    description: Resolve 2 unused-imports issues in adapters/python/scripts/heal_future_imports.py
+    task_type: prefactor
+    priority: medium
+    estimate: 1d
+    files:
+    - adapters/python/scripts/heal_future_imports.py
+    rule_id: unused-imports
+    count: 2
     model_hints:
       planning: balanced
       implementation: balanced

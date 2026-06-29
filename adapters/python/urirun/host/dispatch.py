@@ -91,19 +91,21 @@ def _flow_scheme_dispatch(uri: str, payload: dict | None = None) -> "dict | None
     return None  # unknown verb -> NOT_FOUND
 
 
-def _inprocess_run(uri: str, payload: dict) -> "dict | None":
+def _inprocess_run(uri: str, payload: dict, *, mode: str = "execute") -> "dict | None":
     """Tier 2a+2b: run uri via entry-point discovery, then decorated bindings on NOT_FOUND.
     Returns the raw urirun envelope, or None when no route exists for uri."""
     import urirun
     from urirun.runtime import discovery, v2 as _v2
     registry = discovery.registry_for_uri(uri, _INPROCESS_BINDINGS_GROUP)
-    env = urirun.run(uri, registry, payload=payload, mode="execute", policy={"allowExecute": True})
+    env = urirun.run(uri, registry, payload=payload, mode=mode,
+                     policy={"allowExecute": mode == "execute"})
     if not env.get("ok") and (env.get("error") or {}).get("category") == "NOT_FOUND":
         live_binding = _v2.decorated_bindings()["bindings"].get(uri)
         if live_binding is None:
             return None
         reg2 = urirun.compile_registry(_v2.build_binding_document([live_binding]))
-        env = urirun.run(uri, reg2, payload=payload, mode="execute", policy={"allowExecute": True})
+        env = urirun.run(uri, reg2, payload=payload, mode=mode,
+                         policy={"allowExecute": mode == "execute"})
         if not env.get("ok") and (env.get("error") or {}).get("category") == "NOT_FOUND":
             return None
     return env
@@ -125,7 +127,7 @@ def _env_to_result(uri: str, env: dict) -> dict:
     }
 
 
-def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
+def inprocess_fallback(uri: str, payload: dict | None = None, *, mode: str = "execute") -> dict | None:
     """Call an installed connector URI in-process via the urirun runtime.
 
     Returns None when no connector owns the route (so the caller can raise the
@@ -145,12 +147,20 @@ def inprocess_fallback(uri: str, payload: dict | None = None) -> dict | None:
             return _artifact
         # flow:// miss in skill/episode store — fall through to entry-point dispatch
     try:
-        env = _inprocess_run(uri, dict(payload or {}))
+        env = _inprocess_run(uri, dict(payload or {}), mode=mode)
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "invokedUri": uri, "error": str(exc)}
     if env is None:
         return None
     return _env_to_result(uri, env)
+
+
+def _call_fallback(fallback, uri: str, payload: dict | None, run_mode: str) -> "dict | None":
+    """Call a fallback while preserving the dispatch mode when it supports mode=."""
+    try:
+        return fallback(uri, payload or {}, mode=run_mode)
+    except TypeError:
+        return fallback(uri, payload or {})
 
 
 def _local_scheme_installed(uri: str) -> bool:
@@ -185,13 +195,16 @@ def make_local_dispatch_uri(registry: dict, run_mode: str, fallback=None, local_
     Accepts an optional *fallback* override so callers can inject test stubs."""
     from urirun.runtime import v2_service as _v2
     _fallback = fallback if fallback is not None else inprocess_fallback
+    def _bound_fallback(uri: str, payload: dict | None = None) -> "dict | None":
+        return _call_fallback(_fallback, uri, payload, run_mode)
+
     if local_first:
-        _mesh = _v2.make_dispatch(registry, run_mode, fallback=_fallback)
+        _mesh = _v2.make_dispatch(registry, run_mode, fallback=_bound_fallback)
         def _local_first_dispatch(uri: str, payload: dict | None = None) -> "dict | None":
             if _local_scheme_installed(uri):
-                result = _fallback(uri, payload or {})
+                result = _call_fallback(_fallback, uri, payload, run_mode)
                 if result is not None:
                     return result
             return _mesh(uri, payload)
         return _local_first_dispatch
-    return _v2.make_dispatch(registry, run_mode, fallback=_fallback)
+    return _v2.make_dispatch(registry, run_mode, fallback=_bound_fallback)
