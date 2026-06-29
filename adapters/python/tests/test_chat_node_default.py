@@ -298,6 +298,32 @@ class TestHostDefault(unittest.TestCase):
         self.assertEqual(selection["kind"], "needs-selection")
         self.assertEqual(selection["needsSelection"]["parameter"], "monitor")
 
+    def test_env_enum_resolution_uses_primary_prompt(self):
+        flow = {"steps": [{"id": "cap", "uri": "kvm://host/screen/query/capture", "payload": {}}]}
+        routes = [{
+            "uri": "kvm://host/screen/query/capture",
+            "meta": {"contract": {"domains": {"monitor": {
+                "type": "enum",
+                "domain": "env:monitors.id",
+                "emptyValues": [0, ""],
+                "preference": "screen.capture.default",
+            }}}},
+        }]
+
+        with patch("urirun_flow.flow._build_env_inventory", return_value={
+            "node": "host",
+            "fingerprint": "env-two",
+            "domains": {"env:monitors.id": [
+                {"value": 1, "label": "HDMI-1", "primary": True},
+                {"value": 2, "label": "DP-2", "primary": False},
+            ]},
+        }):
+            selection = co._resolve_env_enum_flow(
+                flow, {}, routes, TwinMemory(), prompt="zrob zrzut monitora glownego")
+
+        self.assertTrue(selection["ok"])
+        self.assertEqual(selection["flow"]["steps"][0]["payload"]["monitor"], 1)
+
     def test_env_domain_invalid_is_reported_as_block_not_empty_selection(self):
         messages = []
         deps = co.ChatDeps(

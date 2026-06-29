@@ -1160,12 +1160,19 @@ def _planner_nodes_for_targets(selected_nodes: list[str], selected_targets: list
     return out
 
 
-def _resolve_env_enum_flow(flow: dict, registry: dict, routes: list[dict], memory: object | None) -> dict:
+def _resolve_env_enum_flow(
+    flow: dict,
+    registry: dict,
+    routes: list[dict],
+    memory: object | None,
+    prompt: str = "",
+) -> dict:
     from urirun_flow.flow import _build_env_inventory  # noqa: PLC0415
     return resolve_flow_env_enums(
         flow,
         routes,
         memory=memory,
+        prompt=prompt,
         inventory_builder=lambda node: _build_env_inventory(node, registry),
     )
 
@@ -1283,7 +1290,7 @@ def _chat_ask_general_plan_step(
                 mesh, prompt, discovered, planner_nodes, no_llm, environments, retrieval,
                 llm_model=llm_model)
         flow = _apply_capture_preferences(flow, twin_memory)
-        selection = _resolve_env_enum_flow(flow, registry, _routes, twin_memory)
+        selection = _resolve_env_enum_flow(flow, registry, _routes, twin_memory, prompt=prompt)
         if not selection.get("ok"):
             early = _chat_ask_general_needs_selection(
                 selection, db, prompt, execute, selected_nodes, selected_targets, deps,
