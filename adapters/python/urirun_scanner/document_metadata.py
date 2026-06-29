@@ -111,10 +111,8 @@ except ImportError:
             fallback.setdefault("connectorError", str(envelope.get("error") or "connector OCR returned no text"))
         return fallback
 
-    def _local_image_ocr_llm(path: str) -> dict | None:
-        """OCR an image with a vision LLM — the final fallback when paddle and tesseract fail."""
-        if not _truthy_env("URIRUN_SCANNER_OCR_LLM_FALLBACK", "1"):
-            return None
+    def _llm_ocr_check_prerequisites(path: str) -> tuple | None:
+        """Return (model, key_ref) when OCR-LLM is configured and the image is present, else None."""
         if not (path and Path(str(path)).is_file()):
             return None
         model = _llm_model(vision=True)
@@ -123,16 +121,24 @@ except ImportError:
         key_ref = _llm_api_key_ref()
         if model.startswith("openrouter/") and not key_ref:
             return None
+        return model, key_ref
+
+    def _llm_ocr_import_complete():
+        """Import and return the LLM complete() callable, or None when unavailable."""
         try:
             from urirun_connector_llm.core import complete  # type: ignore
+            return complete
         except Exception:  # noqa: BLE001
             return None
+
+    def _llm_ocr_call_complete(complete_fn, model: str, key_ref: str, path: str) -> dict | None:
+        """Invoke LLM vision OCR and return a result envelope, or None on failure."""
         prompt = (
             "Przepisz CAŁY tekst z tego paragonu/faktury dokładnie tak jak widać, linia po linii. "
             "Zwróć wyłącznie tekst, bez komentarzy."
         )
         try:
-            res = complete(prompt, model=model, image=str(path), api_key=key_ref, secret_allow=key_ref)
+            res = complete_fn(prompt, model=model, image=str(path), api_key=key_ref, secret_allow=key_ref)
         except Exception:  # noqa: BLE001
             return None
         if not isinstance(res, dict) or not res.get("ok"):
@@ -141,6 +147,19 @@ except ImportError:
         if not text:
             return None
         return {"ok": True, "backend": "llm-vision", "text": text, "chars": len(text), "model": model}
+
+    def _local_image_ocr_llm(path: str) -> dict | None:
+        """OCR an image with a vision LLM — the final fallback when paddle and tesseract fail."""
+        if not _truthy_env("URIRUN_SCANNER_OCR_LLM_FALLBACK", "1"):
+            return None
+        creds = _llm_ocr_check_prerequisites(path)
+        if creds is None:
+            return None
+        complete_fn = _llm_ocr_import_complete()
+        if complete_fn is None:
+            return None
+        model, key_ref = creds
+        return _llm_ocr_call_complete(complete_fn, model, key_ref, path)
 
     def _normalized_document_text(text: str) -> str:
         if _dedup_normalize_text is not None:
@@ -209,6 +228,26 @@ except ImportError:
             return "potwierdzenie"
         return "dokument"
 
+    def _score_contractor_candidate(
+        idx: int, line: str, ignored: "re.Pattern[str]", terminal_noise: "re.Pattern[str]"
+    ) -> int | None:
+        """Score a candidate contractor line; return None when the line should be skipped."""
+        if len(line) < 3 or len(line) > 70 or ignored.search(line):
+            return None
+        if terminal_noise.search(line):
+            return None
+        if not re.search(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]", line):
+            return None
+        digit_ratio = sum(ch.isdigit() for ch in line) / max(1, len(line))
+        if digit_ratio > 0.35:
+            return None
+        score = 100 - idx
+        if re.search(r"\b(sp\.?|s\.a\.|s\.c\.|ltd|gmbh|inc|allegro|amazon|google|openai|microsoft|apple)\b", line, re.I):
+            score += 30
+        if line.upper() == line and len(line) >= 5:
+            score += 8
+        return score
+
     def _parse_contractor(text: str) -> str:
         ignored = re.compile(
             r"^(faktura|paragon|rachunek|invoice|receipt|nip|vat|data|date|razem|suma|total|do zap|sprzedawca|nabywca|lp\.?|ilosc|ilość|cena|kwota|sprzedaz|sprzedaż)\b",
@@ -222,21 +261,9 @@ except ImportError:
         candidates: list[tuple[int, str]] = []
         for idx, raw in enumerate(text.splitlines()[:30]):
             line = re.sub(r"\s+", " ", raw.strip(" \t:-")).strip()
-            if len(line) < 3 or len(line) > 70 or ignored.search(line):
-                continue
-            if terminal_noise.search(line):
-                continue
-            if not re.search(r"[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]", line):
-                continue
-            digit_ratio = sum(ch.isdigit() for ch in line) / max(1, len(line))
-            if digit_ratio > 0.35:
-                continue
-            score = 100 - idx
-            if re.search(r"\b(sp\.?|s\.a\.|s\.c\.|ltd|gmbh|inc|allegro|amazon|google|openai|microsoft|apple)\b", line, re.I):
-                score += 30
-            if line.upper() == line and len(line) >= 5:
-                score += 8
-            candidates.append((score, line))
+            score = _score_contractor_candidate(idx, line, ignored, terminal_noise)
+            if score is not None:
+                candidates.append((score, line))
         if not candidates:
             return "kontrahent-nieznany"
         return max(candidates, key=lambda item: item[0])[1]
@@ -402,26 +429,39 @@ except ImportError:
             return None
         return data if isinstance(data, dict) else None
 
+    def _normalize_doc_type(type_raw: object) -> str:
+        """Return the doc type when it is one of the known LLM doc types, else ''."""
+        doc_type = str(type_raw or "").strip().lower()
+        if doc_type not in _LLM_DOC_TYPES:
+            return ""
+        return doc_type
+
+    def _normalize_doc_date(date_str: str) -> str:
+        """Validate and return the date string, or '' when it does not parse as a real date."""
+        if not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", date_str):
+            return ""
+        try:
+            date.fromisoformat(date_str)
+        except ValueError:
+            return ""
+        return date_str
+
+    def _normalize_doc_amount_currency(amount_raw: object, currency_raw: object) -> tuple[str, str]:
+        """Coerce amount and currency; default currency to PLN when amount is present."""
+        amount = _coerce_amount(amount_raw)
+        currency = re.sub(r"[^A-Za-z]", "", str(currency_raw or "")).upper()[:3]
+        if amount and not currency:
+            currency = "PLN"
+        return amount, currency
+
     def _normalize_llm_doc_fields(data: dict, *, model: str, use_vision: bool) -> dict:
         """Coerce/validate the LLM's raw fields into the canonical document-metadata shape."""
-        doc_type = str(data.get("type") or "").strip().lower()
-        if doc_type not in _LLM_DOC_TYPES:
-            doc_type = ""
-        date_val = str(data.get("date") or "").strip()
-        if not re.fullmatch(r"20\d{2}-\d{2}-\d{2}", date_val):
-            date_val = ""
-        else:
-            try:
-                date.fromisoformat(date_val)
-            except ValueError:
-                date_val = ""
+        doc_type = _normalize_doc_type(data.get("type"))
+        date_val = _normalize_doc_date(str(data.get("date") or "").strip())
         contractor = re.sub(r"\s+", " ", str(data.get("contractor") or "").strip())
         if len(contractor) > 70:
             contractor = contractor[:70].strip()
-        amount = _coerce_amount(data.get("amount"))
-        currency = re.sub(r"[^A-Za-z]", "", str(data.get("currency") or "")).upper()[:3]
-        if amount and not currency:
-            currency = "PLN"
+        amount, currency = _normalize_doc_amount_currency(data.get("amount"), data.get("currency"))
         nip = re.sub(r"\D", "", str(data.get("nip") or ""))
         number = re.sub(r"\s+", " ", str(data.get("number") or "").strip())[:40]
         return {
@@ -436,6 +476,24 @@ except ImportError:
             "mode": "vision" if use_vision else "text",
         }
 
+    def _apply_llm_meta_overrides(meta: dict, llm: dict) -> None:
+        """Merge LLM-extracted fields into the regex-based meta dict in place."""
+        for key in ("type", "contractor", "amount", "currency", "date"):
+            value = str(llm.get(key) or "").strip()
+            if not value:
+                continue
+            if key == "type" and value == "dokument" and meta["type"] != "dokument":
+                continue
+            if key == "contractor" and value.lower() in {"kontrahent-nieznany", "sprzedawca", "sprzedauca"}:
+                continue
+            meta[key] = value
+        for extra in ("nip", "number"):
+            if str(llm.get(extra) or "").strip():
+                meta[extra] = str(llm[extra]).strip()
+        meta["metaSource"] = "llm"
+        meta["llmModel"] = llm.get("model", "")
+        meta["llmMode"] = llm.get("mode", "text")
+
     def _extract_document_metadata(ocr_text: str, *, captured_at: str | None = None,
                                    image_path: str | None = None, use_llm: bool = True) -> dict:
         amount = _parse_amount(ocr_text)
@@ -449,21 +507,7 @@ except ImportError:
         }
         llm = _llm_extract_metadata(ocr_text, captured_at=captured_at, image_path=image_path) if use_llm else None
         if llm:
-            for key in ("type", "contractor", "amount", "currency", "date"):
-                value = str(llm.get(key) or "").strip()
-                if not value:
-                    continue
-                if key == "type" and value == "dokument" and meta["type"] != "dokument":
-                    continue
-                if key == "contractor" and value.lower() in {"kontrahent-nieznany", "sprzedawca", "sprzedauca"}:
-                    continue
-                meta[key] = value
-            for extra in ("nip", "number"):
-                if str(llm.get(extra) or "").strip():
-                    meta[extra] = str(llm[extra]).strip()
-            meta["metaSource"] = "llm"
-            meta["llmModel"] = llm.get("model", "")
-            meta["llmMode"] = llm.get("mode", "text")
+            _apply_llm_meta_overrides(meta, llm)
         return meta
 
     def shutil_which(binary: str) -> str | None:

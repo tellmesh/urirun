@@ -206,19 +206,34 @@ except ImportError:
         return any(bool(item.get("automatic")) for item in (urifix.get("recovery") or []) if isinstance(item, dict))
 
 
-    def _validated_sync_retry_payload(retry: dict, sync_node: str) -> dict | None:
+    def _retry_header_valid(retry: dict) -> bool:
+        """Return True when the retry envelope targets the document-sync URI in execute mode."""
         if str(retry.get("uri") or "") != DOCUMENT_SYNC_URI:
-            return None
+            return False
         if str(retry.get("mode") or "").casefold() != "execute":
+            return False
+        return True
+
+    def _retry_node_url(payload: dict) -> str:
+        """Extract the node_url from a retry payload, trying both snake_case and camelCase keys."""
+        return str(payload.get("node_url") or payload.get("nodeUrl") or "").strip()
+
+    def _retry_node_matches(payload: dict, sync_node: str) -> bool:
+        """Return True when the retry payload's target node is compatible with sync_node."""
+        retry_node = str(payload.get("node") or payload.get("targetNode") or sync_node).strip()
+        if sync_node and retry_node and retry_node != sync_node:
+            return False
+        return True
+
+    def _validated_sync_retry_payload(retry: dict, sync_node: str) -> dict | None:
+        if not _retry_header_valid(retry):
             return None
         retry_payload = retry.get("payload")
         if not isinstance(retry_payload, dict):
             return None
-        node_url = str(retry_payload.get("node_url") or retry_payload.get("nodeUrl") or "").strip()
-        if not node_url:
+        if not _retry_node_url(retry_payload):
             return None
-        retry_node = str(retry_payload.get("node") or retry_payload.get("targetNode") or sync_node).strip()
-        if sync_node and retry_node and retry_node != sync_node:
+        if not _retry_node_matches(retry_payload, sync_node):
             return None
         return dict(retry_payload)
 
@@ -554,27 +569,17 @@ except ImportError:
             item.update({"ok": False, "verified": False, "error": str(exc)})
 
 
-    def sync_documents_to_node(
-        project: str,
-        db: str | None,
-        config: str | None,
-        payload: dict,
-        *,
+    def _run_upload_phase(
+        files: list,
+        params: _SyncParams,
         deps: DocumentSyncDeps,
-        node_urls: list[str] | None = None,
-        token: str | None = None,
-        identity: str | None = None,
-    ) -> dict:
-        params = _parse_sync_params(payload, config, deps, node_urls)
-        files = deps.archive_pdfs(params.source_root)
-
-        preflight, early_report, early_content = _check_preflight(params, files, deps, token, identity)
-        if early_report is not None:
-            return _log_and_chat_report(db, deps, early_report, node=params.node, content=early_content)  # type: ignore[arg-type]
-
+        token: str | None,
+        identity: str | None,
+        failed_reasons: dict,
+    ) -> tuple:
+        """Upload all files; accumulate errors into failed_reasons. Returns (results, uploaded)."""
         results: list[dict] = []
         uploaded = 0
-        failed_reasons: dict[str, int] = {}
         for source in files:
             item = _upload_file(source, params, deps, token, identity)
             if item.get("writeOk"):
@@ -582,7 +587,17 @@ except ImportError:
             elif "error" in item:
                 failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
             results.append(item)
+        return results, uploaded
 
+    def _run_readback_phase(
+        results: list,
+        params: _SyncParams,
+        deps: DocumentSyncDeps,
+        token: str | None,
+        identity: str | None,
+        failed_reasons: dict,
+    ) -> int:
+        """Verify uploads by reading them back; accumulate errors into failed_reasons. Returns copied count."""
         copied = 0
         for item in results:
             if not item.get("writeOk"):
@@ -596,8 +611,20 @@ except ImportError:
                 copied += 1
             elif "error" in item:
                 failed_reasons[item["error"]] = failed_reasons.get(item["error"], 0) + 1
+        return copied
 
-        verification = deps.verification(files, results, params.source_root, params.read_back)
+    def _build_sync_report_and_content(
+        params: _SyncParams,
+        files: list,
+        uploaded: int,
+        copied: int,
+        failed_reasons: dict,
+        verification: dict,
+        preflight: dict | None,
+        results: list,
+        deps: DocumentSyncDeps,
+    ) -> tuple:
+        """Build the sync report dict and the human-readable content string."""
         failed = len(files) - copied
         report = {
             "ok": bool(verification.get("ok")),
@@ -623,6 +650,31 @@ except ImportError:
         top_reason = max(failed_reasons.items(), key=lambda kv: kv[1])[0] if failed_reasons else ""
         reason_suffix = f" ({top_reason})" if top_reason else ""
         content = f"Document sync to {params.node} {status}: {copied}/{len(files)} PDFs -> {params.dest_root}{reason_suffix}"
+        return report, content
+
+    def sync_documents_to_node(
+        project: str,
+        db: str | None,
+        config: str | None,
+        payload: dict,
+        *,
+        deps: DocumentSyncDeps,
+        node_urls: list[str] | None = None,
+        token: str | None = None,
+        identity: str | None = None,
+    ) -> dict:
+        params = _parse_sync_params(payload, config, deps, node_urls)
+        files = deps.archive_pdfs(params.source_root)
+        preflight, early_report, early_content = _check_preflight(params, files, deps, token, identity)
+        if early_report is not None:
+            return _log_and_chat_report(db, deps, early_report, node=params.node, content=early_content)  # type: ignore[arg-type]
+        failed_reasons: dict[str, int] = {}
+        results, uploaded = _run_upload_phase(files, params, deps, token, identity, failed_reasons)
+        copied = _run_readback_phase(results, params, deps, token, identity, failed_reasons)
+        verification = deps.verification(files, results, params.source_root, params.read_back)
+        report, content = _build_sync_report_and_content(
+            params, files, uploaded, copied, failed_reasons, verification, preflight, results, deps
+        )
         return _log_and_chat_report(db, deps, report, node=params.node, content=content)
 
 
@@ -937,37 +989,46 @@ except ImportError:
         return str(value or "").strip().lower() in BLANK_METADATA_MARKERS
 
 
+    def _docid_merge_strategy(
+        old_meta: dict, new_meta: dict, old_weight: float, new_weight: float
+    ) -> tuple:
+        """Merge using the docid library; raises RuntimeError when docid is unavailable."""
+        if _DocidFieldSource is None or _docid_merge_records is None:
+            raise RuntimeError("docid.visual_fingerprint unavailable")
+        result = _docid_merge_records(
+            [
+                _DocidFieldSource(fields={k: old_meta.get(k) for k in MERGE_METADATA_FIELDS},
+                                  weight=max(old_weight, 0.0001), label="archived"),
+                _DocidFieldSource(fields={k: new_meta.get(k) for k in MERGE_METADATA_FIELDS},
+                                  weight=max(new_weight, 0.0001), label="rescan"),
+            ],
+            fields=list(MERGE_METADATA_FIELDS),
+        )
+        merged = dict(new_meta)
+        for key in MERGE_METADATA_FIELDS:
+            value = result["fields"].get(key)
+            if not is_blank_metadata(value):
+                merged[key] = value
+        return merged, list(result.get("filledGaps") or [])
+
+    def _fallback_merge_strategy(old_meta: dict, new_meta: dict) -> tuple:
+        """Pure-Python fallback merge when the docid library is unavailable."""
+        merged = dict(new_meta)
+        filled: list[str] = []
+        for key in MERGE_METADATA_FIELDS:
+            if is_blank_metadata(merged.get(key)) and not is_blank_metadata(old_meta.get(key)):
+                merged[key] = old_meta.get(key)
+                filled.append(key)
+        return merged, filled
+
     def merge_metadata_fields(old_meta: dict | None, new_meta: dict, *,
                               old_weight: float, new_weight: float) -> tuple[dict, list[str]]:
         """Fuse two scans of the same document into one best-of-both record."""
         old_meta = old_meta or {}
         try:
-            if _DocidFieldSource is None or _docid_merge_records is None:
-                raise RuntimeError("docid.visual_fingerprint unavailable")
-
-            result = _docid_merge_records(
-                [
-                    _DocidFieldSource(fields={k: old_meta.get(k) for k in MERGE_METADATA_FIELDS},
-                                      weight=max(old_weight, 0.0001), label="archived"),
-                    _DocidFieldSource(fields={k: new_meta.get(k) for k in MERGE_METADATA_FIELDS},
-                                      weight=max(new_weight, 0.0001), label="rescan"),
-                ],
-                fields=list(MERGE_METADATA_FIELDS),
-            )
-            merged = dict(new_meta)
-            for key in MERGE_METADATA_FIELDS:
-                value = result["fields"].get(key)
-                if not is_blank_metadata(value):
-                    merged[key] = value
-            return merged, list(result.get("filledGaps") or [])
+            return _docid_merge_strategy(old_meta, new_meta, old_weight, new_weight)
         except Exception:  # noqa: BLE001
-            merged = dict(new_meta)
-            filled: list[str] = []
-            for key in MERGE_METADATA_FIELDS:
-                if is_blank_metadata(merged.get(key)) and not is_blank_metadata(old_meta.get(key)):
-                    merged[key] = old_meta.get(key)
-                    filled.append(key)
-            return merged, filled
+            return _fallback_merge_strategy(old_meta, new_meta)
 
 
     def enrich_archived_record(existing: dict, fused: dict, enriched_fields: list[str]) -> None:
