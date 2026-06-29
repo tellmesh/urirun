@@ -108,21 +108,18 @@ def parse_bindings_output(stdout: str | None) -> tuple[int, list[str]]:
 
 
 
-def connector_env_check(payload: dict) -> dict:
-    """Verify a connector installs and registers its urirun.bindings entry points inside a clean
-    Docker image — the 'does it work in a defined environment' smoke. Local folders are bind-mounted
-    read-only; pip/github specs install from the index. --no-deps (default) keeps it fast: entry-point
-    metadata registers without importing heavy deps."""
+def _parse_env_check_payload(payload: dict) -> tuple[str, str, str, bool]:
+    """Normalise and extract the four env-check payload fields."""
     payload = payload if isinstance(payload, dict) else {}
     image = str(payload.get("image") or "python:3.13-slim").strip()
     source = str(payload.get("source") or "pip").strip().lower()
     spec = str(payload.get("spec") or "").strip()
-    no_deps = payload.get("no_deps", True)
-    if not spec:
-        return {"ok": False, "error": "spec is required (package, repo or folder)"}
-    mounts, install_target, error = docker_install_target(source, spec)
-    if error:
-        return error
+    no_deps = bool(payload.get("no_deps", True))
+    return image, source, spec, no_deps
+
+
+def _build_docker_cmd(mounts: list, install_target: str, no_deps: bool, image: str) -> list[str]:
+    """Build the full docker-run command for the env-check smoke test."""
     smoke = ("import importlib.metadata as md; "
              "eps=list(md.entry_points(group='urirun.bindings')); "
              "print('BINDINGS:'+str(len(eps))+':'+','.join(sorted({e.name for e in eps})))")
@@ -131,7 +128,21 @@ def connector_env_check(payload: dict) -> dict:
     setup = "cp -r /conn /build && " if mounts else ""
     build_target = "/build" if mounts else install_target
     inner = setup + "pip install --quiet " + pip_flags + build_target + " && python -c \"" + smoke + "\""
-    cmd = ["docker", "run", "--rm", *mounts, image, "sh", "-lc", inner]
+    return ["docker", "run", "--rm", *mounts, image, "sh", "-lc", inner]
+
+
+def connector_env_check(payload: dict) -> dict:
+    """Verify a connector installs and registers its urirun.bindings entry points inside a clean
+    Docker image — the 'does it work in a defined environment' smoke. Local folders are bind-mounted
+    read-only; pip/github specs install from the index. --no-deps (default) keeps it fast: entry-point
+    metadata registers without importing heavy deps."""
+    image, source, spec, no_deps = _parse_env_check_payload(payload)
+    if not spec:
+        return {"ok": False, "error": "spec is required (package, repo or folder)"}
+    mounts, install_target, error = docker_install_target(source, spec)
+    if error:
+        return error
+    cmd = _build_docker_cmd(mounts, install_target, no_deps, image)
     proc, error = run_docker_check(cmd)
     if error:
         return error
