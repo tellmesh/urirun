@@ -99,6 +99,35 @@ def decision_loop_for_document_sync(prompt: str, *, execute: bool, sync_node: st
     }
 
 
+def _playbook_intent_from_plan(plan: dict) -> dict:
+    """Build a playbook-repair nextIntent from a matched PLAYBOOK plan."""
+    auto_ids = set(plan.get("autoApplicable") or [])
+    remediation = plan.get("remediation") or []
+    automatic = any(bool(a.get("automatic")) for a in remediation if a.get("id") in auto_ids)
+    return {
+        "id": "playbook-repair",
+        "uri": "urifix://host/chain/command/repair",
+        "cause": plan.get("cause"),
+        "rule": plan.get("rule"),
+        "confidence": plan.get("confidence"),
+        "automatic": automatic,
+        "status": "ready" if automatic else "needs-input",
+        "actions": remediation,
+    }
+
+
+def _error_fallback_intent(error: dict) -> dict:
+    """Build a generic repair nextIntent when no PLAYBOOK rule matched."""
+    return {
+        "id": "repair-uri-chain",
+        "uri": "urifix://host/chain/command/repair",
+        "automatic": False,
+        "status": "needs-input",
+        "actions": [],
+        "errorCategory": error.get("category") or "UNKNOWN",
+    }
+
+
 def general_path_next_intent(execution: dict) -> "dict | None":
     """Produce a structured nextIntent from the PLAYBOOK diagnosis in a failed flow.
 
@@ -110,25 +139,5 @@ def general_path_next_intent(execution: dict) -> "dict | None":
     recoveries = execution.get("recovery") or []
     plan = next((r.get("plan") for r in recoveries if isinstance(r.get("plan"), dict)), None)
     if plan:
-        auto_ids = set(plan.get("autoApplicable") or [])
-        remediation = plan.get("remediation") or []
-        automatic = any(bool(a.get("automatic")) for a in remediation if a.get("id") in auto_ids)
-        return {
-            "id": "playbook-repair",
-            "uri": "urifix://host/chain/command/repair",
-            "cause": plan.get("cause"),
-            "rule": plan.get("rule"),
-            "confidence": plan.get("confidence"),
-            "automatic": automatic,
-            "status": "ready" if automatic else "needs-input",
-            "actions": remediation,
-        }
-    error = execution.get("error") or {}
-    return {
-        "id": "repair-uri-chain",
-        "uri": "urifix://host/chain/command/repair",
-        "automatic": False,
-        "status": "needs-input",
-        "actions": [],
-        "errorCategory": error.get("category") or "UNKNOWN",
-    }
+        return _playbook_intent_from_plan(plan)
+    return _error_fallback_intent(execution.get("error") or {})

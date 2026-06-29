@@ -98,6 +98,87 @@ def _sync_ok_and_status(sync_result: dict | None, error: dict | None, execute: b
     return ok, status
 
 
+def _safe_host_config(config: "str | None", node_urls: "list[str] | None", deps: Any) -> "dict | None":
+    """Fetch host config via deps, returning None on any error."""
+    try:
+        return deps.host_config_fn(config, node_urls)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _attempt_sync_retry(
+    project: str,
+    db: "str | None",
+    config: "str | None",
+    retry_payload: dict,
+    node_urls: "list[str] | None",
+    token: "str | None",
+    identity: "str | None",
+    sync_node: str,
+    sync_result: "dict | None",
+    initial_error: dict,
+    result: dict,
+    deps: Any,
+) -> "tuple[dict, dict | None, dict | None, bool]":
+    """Build the retry step, run it, update result fields; return (retry_step, sync_result, error, recovered)."""
+    retry_step = {
+        "id": "sync-documents-to-node.retry",
+        "uri": DOCUMENT_SYNC_URI,
+        "target": retry_payload.get("node") or sync_node,
+        "ok": False,
+        "status": "failed",
+        "recoveredFrom": "sync-documents-to-node",
+        "generatedBy": "urifix://host/chain/command/repair",
+    }
+    recovered = False
+    error: "dict | None" = None
+    try:
+        retry_result = deps.sync_documents_fn(
+            project, db, config, retry_payload, node_urls=node_urls, token=token, identity=identity,
+        )
+        retry_ok = bool(retry_result.get("ok"))
+        sync_result = retry_result
+        retry_step["ok"] = retry_ok
+        retry_step["status"] = "done" if retry_ok else "failed"
+        if retry_ok:
+            recovered = True
+            result["initialError"] = initial_error
+            result["recovered"] = True
+            result["recoveredBy"] = "urifix://host/chain/command/repair"
+        else:
+            error = {
+                "type": "RecoveryError",
+                "message": "document sync retry returned ok=false",
+                "uri": DOCUMENT_SYNC_URI,
+                "initialError": initial_error,
+            }
+    except Exception as exc:  # noqa: BLE001
+        error = {
+            "type": type(exc).__name__,
+            "message": str(exc),
+            "uri": DOCUMENT_SYNC_URI,
+            "initialError": initial_error,
+        }
+    return retry_step, sync_result, error, recovered
+
+
+def _finalize_retry_result(
+    retry_step: dict,
+    sync_result: "dict | None",
+    error: "dict | None",
+    execute: bool,
+    timeline: "list[dict]",
+    result: dict,
+) -> None:
+    """Append the retry step and update result's ok/timeline/results/error fields in place."""
+    timeline.append(retry_step)
+    ok = bool((sync_result or {}).get("ok")) if execute and not error else False
+    result["ok"] = ok
+    result["timeline"] = timeline
+    result["results"] = {"sync-documents-to-node": sync_result} if sync_result else {}
+    result["error"] = error
+
+
 def _apply_urifix_recovery(
     result: dict,
     timeline: list[dict],
@@ -121,11 +202,7 @@ def _apply_urifix_recovery(
 ) -> tuple[dict | None, dict | None, dict | None, bool, bool]:
     """Diagnose a failed sync with urifix and, if possible, auto-retry."""
     initial_error = dict(error)
-    host_config_snapshot = None
-    try:
-        host_config_snapshot = deps.host_config_fn(config, node_urls)
-    except Exception:  # noqa: BLE001
-        pass
+    host_config_snapshot = _safe_host_config(config, node_urls, deps)
     urifix = try_urifix_repair(
         prompt,
         {"nodes": selected_nodes, "targets": selected_targets, "execute": execute, "no_llm": no_llm},
@@ -143,50 +220,11 @@ def _apply_urifix_recovery(
     )
     if not retry_payload:
         return urifix, error, initial_error, False, False
-    retry_step = {
-        "id": "sync-documents-to-node.retry",
-        "uri": DOCUMENT_SYNC_URI,
-        "target": retry_payload.get("node") or sync_node,
-        "ok": False,
-        "status": "failed",
-        "recoveredFrom": "sync-documents-to-node",
-        "generatedBy": "urifix://host/chain/command/repair",
-    }
-    recovered = False
-    try:
-        retry_result = deps.sync_documents_fn(
-            project, db, config, retry_payload, node_urls=node_urls, token=token, identity=identity,
-        )
-        retry_ok = bool(retry_result.get("ok"))
-        sync_result = retry_result
-        retry_step["ok"] = retry_ok
-        retry_step["status"] = "done" if retry_ok else "failed"
-        if retry_ok:
-            recovered = True
-            error = None
-            result["initialError"] = initial_error
-            result["recovered"] = True
-            result["recoveredBy"] = "urifix://host/chain/command/repair"
-        else:
-            error = {
-                "type": "RecoveryError",
-                "message": "document sync retry returned ok=false",
-                "uri": DOCUMENT_SYNC_URI,
-                "initialError": initial_error,
-            }
-    except Exception as exc:  # noqa: BLE001
-        error = {
-            "type": type(exc).__name__,
-            "message": str(exc),
-            "uri": DOCUMENT_SYNC_URI,
-            "initialError": initial_error,
-        }
-    timeline.append(retry_step)
-    ok = bool((sync_result or {}).get("ok")) if execute and not error else False
-    result["ok"] = ok
-    result["timeline"] = timeline
-    result["results"] = {"sync-documents-to-node": sync_result} if sync_result else {}
-    result["error"] = error
+    retry_step, sync_result, error, recovered = _attempt_sync_retry(
+        project, db, config, retry_payload, node_urls, token, identity,
+        sync_node, sync_result, initial_error, result, deps,
+    )
+    _finalize_retry_result(retry_step, sync_result, error, execute, timeline, result)
     return urifix, error, initial_error, recovered, True
 
 

@@ -786,6 +786,55 @@ def _escalate_offline_to_human(
     }
 
 
+def _detect_all_offline(diagnosis: dict) -> "tuple[list[str], bool]":
+    """Return (offline_node_names, all_targeted_offline) from a router diagnosis result."""
+    node_diagnostics = diagnosis.get("nodes") or []
+    offline = [str(n.get("node")) for n in node_diagnostics if not n.get("ok")]
+    all_offline = bool(offline) and not any(n.get("ok") for n in node_diagnostics)
+    return offline, all_offline
+
+
+def _record_offline_human_message(
+    human_result: dict,
+    offline: list[str],
+    prompt: str,
+    execute: bool,
+    no_llm: bool,
+    selected_targets: list[str],
+    db: "str | None",
+    deps: "ChatDeps",
+    diagnosis: dict,
+) -> None:
+    """Record a human-escalation chat message for offline nodes."""
+    task = (human_result.get("humanTask") or {})
+    surface_url = task.get("surfaceUrl") or ""
+    content = (
+        f"node offline: {offline!r} — zadanie dla człowieka: {task.get('title', '')} "
+        f"({surface_url})"
+    )
+    deps.add_chat_message_fn(db, chat_message(
+        "system", content,
+        detail={
+            "kind": "human-task",
+            "prompt": prompt,
+            "execute": execute,
+            "noLlm": no_llm,
+            "ok": False,
+            "humanEscalation": True,
+            "offlineNodes": offline,
+            "remediationClass": human_result.get("remediationClass"),
+            "remediation": human_result.get("remediation"),
+            "twinDiagnosis": human_result.get("twinDiagnosis") or diagnosis,
+            "selectedTargets": selected_targets,
+            "humanTask": task,
+            "next": human_result.get("next"),
+            "notify": human_result.get("notify") or {"sound": "beep", "reason": "human-task"},
+            "timeline": human_result.get("timeline") or [],
+            "error": human_result.get("error"),
+        },
+    ))
+
+
 def _chat_ask_general_check_offline(
     selected_nodes: list[str],
     discovered: dict,
@@ -800,39 +849,12 @@ def _chat_ask_general_check_offline(
     if not selected_nodes:
         return None
     diagnosis = _router_diagnose_targets(selected_nodes, selected_targets, discovered, probe=False)
-    node_diagnostics = diagnosis.get("nodes") or []
-    offline = [str(n.get("node")) for n in node_diagnostics if not n.get("ok")]
-    if not offline or any(n.get("ok") for n in node_diagnostics):
+    offline, all_offline = _detect_all_offline(diagnosis)
+    if not all_offline:
         return None
     human_result = _escalate_offline_to_human(offline, prompt, discovered, execute, diagnosis)
     if human_result:
-        task = (human_result.get("humanTask") or {})
-        surface_url = task.get("surfaceUrl") or ""
-        content = (
-            f"node offline: {offline!r} — zadanie dla człowieka: {task.get('title', '')} "
-            f"({surface_url})"
-        )
-        deps.add_chat_message_fn(db, chat_message(
-            "system", content,
-            detail={
-                "kind": "human-task",
-                "prompt": prompt,
-                "execute": execute,
-                "noLlm": no_llm,
-                "ok": False,
-                "humanEscalation": True,
-                "offlineNodes": offline,
-                "remediationClass": human_result.get("remediationClass"),
-                "remediation": human_result.get("remediation"),
-                "twinDiagnosis": human_result.get("twinDiagnosis") or diagnosis,
-                "selectedTargets": selected_targets,
-                "humanTask": task,
-                "next": human_result.get("next"),
-                "notify": human_result.get("notify") or {"sound": "beep", "reason": "human-task"},
-                "timeline": human_result.get("timeline") or [],
-                "error": human_result.get("error"),
-            },
-        ))
+        _record_offline_human_message(human_result, offline, prompt, execute, no_llm, selected_targets, db, deps, diagnosis)
         human_result["noLlm"] = no_llm
         return human_result
     exc = ValueError(
