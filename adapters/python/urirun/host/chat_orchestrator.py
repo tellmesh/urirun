@@ -1325,6 +1325,21 @@ def _chat_ask_general_check_offline(
     return _chat_ask_general_planner_failure(exc, db, prompt, execute, no_llm, selected_nodes, selected_targets, deps)
 
 
+def _stamp_execution_target(result: dict) -> None:
+    """L11↔L3: stamp the router's ``runsOn`` into each step result as TOP-LEVEL execution
+    metadata, so results / routing / timeline agree on the MACHINE a step ran on. The nested
+    connector payload (``result.target``) is left intact — it is the connector's local view, which
+    can legitimately differ from where the mesh actually routed the call. Without this, a green
+    recall trace can claim two machines for one step (results=host, runsOn=lenovo)."""
+    runs_on = (result.get("routing") or {}).get("runsOnByStep") or {}
+    for sr in (result.get("results") or {}).values():
+        if not isinstance(sr, dict) or sr.get("target") is not None:
+            continue
+        uri = str(sr.get("invokedUri") or sr.get("uri") or "")
+        if runs_on.get(uri):
+            sr["target"] = runs_on[uri]
+
+
 def _chat_ask_general_build_result(
     execution: dict,
     flow: dict,
@@ -1360,6 +1375,7 @@ def _chat_ask_general_build_result(
         "flow": flow,
         **execution,
     }
+    _stamp_execution_target(result)
     if execute and not result.get("verification"):
         from urirun.host.contracts import flow_execution_verification as _flow_exec_verify  # noqa: PLC0415
         result["verification"] = _flow_exec_verify(flow, execution)
