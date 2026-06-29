@@ -123,6 +123,17 @@ def webpage_node_dict(dev: dict, name: str, norm_routes: list) -> dict:
     }
 
 
+def _merge_webpage_device(dev: dict, nodes: list, existing: set) -> None:
+    """Append one relay device entry to the nodes list if it is not already present."""
+    name = dev.get("name") or dev.get("id")
+    if not name or name in existing:
+        return
+    raw_routes = dev.get("routes") or []
+    norm_routes = [r if isinstance(r, dict) else {"uri": str(r)} for r in raw_routes]
+    nodes.append(webpage_node_dict(dev, name, norm_routes))
+    existing.add(name)
+
+
 def merge_live_webpage_nodes(nodes: list) -> None:
     """Append live webpage nodes (browsers/phones that opened the android-node page in webpage
     mode) so they appear in the nodes list automatically — no manual save. They are transient:
@@ -135,13 +146,7 @@ def merge_live_webpage_nodes(nodes: list) -> None:
         return
     existing = {n.get("name") for n in nodes if isinstance(n, dict)}
     for dev in relay.get("devices") or []:
-        name = dev.get("name") or dev.get("id")
-        if not name or name in existing:
-            continue
-        raw_routes = dev.get("routes") or []
-        norm_routes = [r if isinstance(r, dict) else {"uri": str(r)} for r in raw_routes]
-        nodes.append(webpage_node_dict(dev, name, norm_routes))
-        existing.add(name)
+        _merge_webpage_device(dev, nodes, existing)
 
 
 def phone_web_nodes(payload: dict) -> dict:

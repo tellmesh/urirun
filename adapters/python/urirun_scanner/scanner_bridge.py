@@ -1279,18 +1279,9 @@ except ImportError:
         return overlay, overlay_path
 
 
-    def scanner_capture(
-        project: str,
-        db: "str | None",
-        payload: dict,
-        *,
-        deps: ScannerBridgeDeps,
-        archive_fn: "Callable[..., dict]",
-        local_image_ocr_fn: "Callable[..., dict]",
-        extract_document_metadata_fn: "Callable[..., dict]",
-        truthy_env_fn: "Callable[[str, str], Any]",
-        auto_crop_receipt_fn: "Callable[..., dict] | None" = None,
-    ) -> dict:
+    def _scanner_capture_stage_image(payload: dict) -> "tuple[bool, str, bytes, str, str, Path]":
+        """Prune staging, decode incoming image, write to staging dir.
+        Returns (archive, mime, raw, digest, ext, path)."""
         prune_scanner_staging(_scanner_staging_dir)
         mode = str(payload.get("mode") or "").lower()
         archive = not (payload.get("archive") is False or mode in {"candidate", "best-candidate", "analyze", "analysis"})
@@ -1301,6 +1292,21 @@ except ImportError:
         name = f"{_time.strftime('%Y%m%dT%H%M%SZ', _time.gmtime())}-phone-scan-{digest[:12]}{ext}"
         path = root / name
         path.write_bytes(raw)
+        return archive, mime, raw, digest, ext, path
+
+
+    def _scanner_capture_process(
+        path: Path,
+        payload: dict,
+        archive: bool,
+        *,
+        auto_crop_receipt_fn: "Callable[..., dict] | None",
+        local_image_ocr_fn: "Callable[..., dict]",
+        extract_document_metadata_fn: "Callable[..., dict]",
+        truthy_env_fn: "Callable[[str, str], Any]",
+    ) -> "tuple[dict, Path, dict, dict, dict, dict, str]":
+        """Crop, OCR, quality-score and overlay a staged capture image.
+        Returns (crop, display_path, ocr, detected_document, quality, overlay, overlay_path)."""
         _crop_fn = auto_crop_receipt_fn if auto_crop_receipt_fn is not None else auto_crop_receipt
         crop = _crop_fn(path)
         display_path = capture_display_path(crop, path)
@@ -1313,6 +1319,54 @@ except ImportError:
         quality = document_frame_quality(crop, ocr, detected_document, display_path)
         overlay = scanner_crop_overlay(path, crop, quality)
         overlay_path = str(overlay.get("path") or "") if overlay.get("ok") else ""
+        return crop, display_path, ocr, detected_document, quality, overlay, overlay_path
+
+
+    def _capture_try_archive(
+        archive_fn: "Callable[..., dict]",
+        display_path: Path,
+        path: Path,
+        ocr: dict,
+        crop: dict,
+        digest: str,
+        payload: dict,
+        detected_document: dict,
+    ) -> dict:
+        """Attempt to archive the capture; return the document result dict."""
+        try:
+            return archive_fn(
+                display_path=display_path,
+                original_path=path,
+                ocr=ocr,
+                crop=crop,
+                source_sha256=digest,
+                captured_at=payload.get("capturedAt"),
+                metadata=detected_document,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc), "metadata": detected_document}
+
+
+    def scanner_capture(
+        project: str,
+        db: "str | None",
+        payload: dict,
+        *,
+        deps: ScannerBridgeDeps,
+        archive_fn: "Callable[..., dict]",
+        local_image_ocr_fn: "Callable[..., dict]",
+        extract_document_metadata_fn: "Callable[..., dict]",
+        truthy_env_fn: "Callable[[str, str], Any]",
+        auto_crop_receipt_fn: "Callable[..., dict] | None" = None,
+    ) -> dict:
+        archive, mime, raw, digest, ext, path = _scanner_capture_stage_image(payload)
+        crop, display_path, ocr, detected_document, quality, overlay, overlay_path = _scanner_capture_process(
+            path, payload, archive,
+            auto_crop_receipt_fn=auto_crop_receipt_fn,
+            local_image_ocr_fn=local_image_ocr_fn,
+            extract_document_metadata_fn=extract_document_metadata_fn,
+            truthy_env_fn=truthy_env_fn,
+        )
         uri = f"scanner://host/capture/{digest[:16]}"
         document: dict = {"ok": False, "reason": "analysis-only", "metadata": detected_document}
         min_score = float(os.environ.get("URIRUN_PHONE_SCANNER_MIN_SCORE", "45"))
@@ -1322,18 +1376,9 @@ except ImportError:
                 detected_document=detected_document, paths=[path, display_path, overlay_path],
             )
         if archive:
-            try:
-                document = archive_fn(
-                    display_path=display_path,
-                    original_path=path,
-                    ocr=ocr,
-                    crop=crop,
-                    source_sha256=digest,
-                    captured_at=payload.get("capturedAt"),
-                    metadata=detected_document,
-                )
-            except Exception as exc:  # noqa: BLE001
-                document = {"ok": False, "error": str(exc), "metadata": detected_document}
+            document = _capture_try_archive(
+                archive_fn, display_path, path, ocr, crop, digest, payload, detected_document
+            )
         if not archive:
             return capture_candidate_result(
                 project, payload, uri=uri, mime=mime, digest=digest, raw_len=len(raw), path=path,
@@ -1382,6 +1427,47 @@ except ImportError:
         }
 
 
+    def _best_quality_dict(best: dict) -> dict:
+        """Extract the quality sub-dict from a best candidate, returning {} if absent or wrong type."""
+        return best.get("quality") if isinstance(best.get("quality"), dict) else {}
+
+
+    def _best_finish_digest_and_doc(best: dict, original_path: Path) -> "tuple[str, dict]":
+        """Compute the content digest and detected-document for a best candidate."""
+        digest = str(best.get("sha256") or _file_sha256(original_path))
+        detected_document = best.get("detectedDocument") or {}
+        return digest, detected_document
+
+
+    def _best_finish_compute_uri(best: dict, digest: str) -> str:
+        """Return the canonical URI for the best candidate."""
+        return str(best.get("uri") or f"scanner://host/capture/{digest[:16]}")
+
+
+    def _best_finish_try_archive(
+        archive_fn: "Callable[..., dict]",
+        display_path: Path,
+        original_path: Path,
+        ocr: dict,
+        crop: dict,
+        digest: str,
+        best: dict,
+        detected_document: dict,
+    ) -> dict:
+        """Attempt to archive the best candidate frame; return the document result dict."""
+        try:
+            return archive_fn(
+                display_path=display_path,
+                original_path=original_path,
+                ocr=ocr,
+                crop=crop,
+                source_sha256=digest,
+                captured_at=str(best.get("capturedAt") or ""),
+            )
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": str(exc), "metadata": detected_document}
+
+
     def scanner_best_finish(
         project: str,
         db: "str | None",
@@ -1403,7 +1489,7 @@ except ImportError:
         if not isinstance(best, dict):
             return best_finish_store_failure(series_id, series, status="failed",
                                             error="scanner best series has no candidates")
-        quality = best.get("quality") if isinstance(best.get("quality"), dict) else {}
+        quality = _best_quality_dict(best)
         quality_rejected, min_score = best_quality_rejected(payload, quality)
         if quality_rejected:
             return best_finish_store_failure(
@@ -1420,20 +1506,11 @@ except ImportError:
         crop, ocr = best_crop_and_ocr(best)
         ocr = refresh_best_ocr(ocr, original_path, display_path,
                                local_image_ocr=local_image_ocr_fn, truthy_env=truthy_env_fn)
-        digest = str(best.get("sha256") or _file_sha256(original_path))
-        detected_document = best.get("detectedDocument") or {}
-        try:
-            document = archive_fn(
-                display_path=display_path,
-                original_path=original_path,
-                ocr=ocr,
-                crop=crop,
-                source_sha256=digest,
-                captured_at=str(best.get("capturedAt") or ""),
-            )
-        except Exception as exc:  # noqa: BLE001
-            document = {"ok": False, "error": str(exc), "metadata": detected_document}
-        uri = str(best.get("uri") or f"scanner://host/capture/{digest[:16]}")
+        digest, detected_document = _best_finish_digest_and_doc(best, original_path)
+        document = _best_finish_try_archive(
+            archive_fn, display_path, original_path, ocr, crop, digest, best, detected_document
+        )
+        uri = _best_finish_compute_uri(best, digest)
         overlay, overlay_path = ensure_best_overlay(best, crop, quality, original_path)
         meta = {
             "source": "phone-best",
@@ -1485,9 +1562,8 @@ except ImportError:
     _LAST_STAGING_PRUNE: float = 0.0
 
 
-    def staging_keep_paths() -> set[str]:
-        """Resolved paths that pruning must never remove."""
-        keep: set[str] = set()
+    def _staging_keep_from_index(keep: "set[str]") -> None:
+        """Add document-index paths to the keep set; ignores errors if index is unavailable."""
         try:
             for doc in _load_document_index().get("documents", []):
                 if isinstance(doc, dict):
@@ -1496,6 +1572,10 @@ except ImportError:
                             keep.add(str(Path(str(doc[key])).expanduser().resolve()))
         except Exception:  # noqa: BLE001
             pass
+
+
+    def _staging_keep_from_sessions(keep: "set[str]") -> None:
+        """Add active best-session candidate paths to the keep set; ignores errors."""
         try:
             with SCANNER_BEST_LOCK:
                 sessions = list(SCANNER_BEST_SESSIONS.values())
@@ -1507,6 +1587,13 @@ except ImportError:
                                 keep.add(str(Path(str(cand[key])).expanduser().resolve()))
         except Exception:  # noqa: BLE001
             pass
+
+
+    def staging_keep_paths() -> set[str]:
+        """Resolved paths that pruning must never remove."""
+        keep: set[str] = set()
+        _staging_keep_from_index(keep)
+        _staging_keep_from_sessions(keep)
         return keep
 
 
