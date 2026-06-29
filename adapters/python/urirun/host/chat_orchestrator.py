@@ -1323,6 +1323,57 @@ def _escalate_offline_to_human(
     }
 
 
+def _offline_nodes_from_discovered(selected_nodes: list[str], discovered: dict) -> list[str]:
+    """Return selected nodes that are offline.
+
+    Returns an empty list when any selected node is reachable (partial reachability
+    means the flow can still proceed on reachable nodes).
+    """
+    reachable_names = {n.get("name") for n in (discovered.get("nodes") or []) if n.get("reachable")}
+    offline = [n for n in selected_nodes if n not in reachable_names]
+    if reachable_names.intersection(selected_nodes):
+        return []
+    return offline
+
+
+def _record_offline_human_escalation(
+    human_result: dict,
+    offline: list[str],
+    prompt: str,
+    execute: bool,
+    no_llm: bool,
+    selected_targets: list[str],
+    db: str | None,
+    deps: ChatDeps,
+) -> None:
+    """Record a human-task chat message for an offline-node escalation and annotate human_result."""
+    task = (human_result.get("humanTask") or {})
+    surface_url = task.get("surfaceUrl") or ""
+    content = (
+        f"node offline: {offline!r} — zadanie dla człowieka: {task.get('title', '')} "
+        f"({surface_url})"
+    )
+    deps.add_chat_message_fn(db, chat_message(
+        "system", content,
+        detail={
+            "kind": "human-task",
+            "prompt": prompt,
+            "execute": execute,
+            "noLlm": no_llm,
+            "ok": False,
+            "humanEscalation": True,
+            "offlineNodes": offline,
+            "selectedTargets": selected_targets,
+            "humanTask": task,
+            "next": human_result.get("next"),
+            "notify": human_result.get("notify") or {"sound": "beep", "reason": "human-task"},
+            "timeline": human_result.get("timeline") or [],
+            "error": human_result.get("error"),
+        },
+    ))
+    human_result["noLlm"] = no_llm
+
+
 def _chat_ask_general_check_offline(
     selected_nodes: list[str],
     discovered: dict,
@@ -1336,37 +1387,12 @@ def _chat_ask_general_check_offline(
     """Return a planner-failure (or human-escalation) dict when ALL targeted nodes are offline."""
     if not selected_nodes:
         return None
-    reachable_names = {n.get("name") for n in (discovered.get("nodes") or []) if n.get("reachable")}
-    offline = [n for n in selected_nodes if n not in reachable_names]
-    if not offline or reachable_names.intersection(selected_nodes):
+    offline = _offline_nodes_from_discovered(selected_nodes, discovered)
+    if not offline:
         return None
     human_result = _escalate_offline_to_human(offline, prompt, discovered, execute)
     if human_result:
-        task = (human_result.get("humanTask") or {})
-        surface_url = task.get("surfaceUrl") or ""
-        content = (
-            f"node offline: {offline!r} — zadanie dla człowieka: {task.get('title', '')} "
-            f"({surface_url})"
-        )
-        deps.add_chat_message_fn(db, chat_message(
-            "system", content,
-            detail={
-                "kind": "human-task",
-                "prompt": prompt,
-                "execute": execute,
-                "noLlm": no_llm,
-                "ok": False,
-                "humanEscalation": True,
-                "offlineNodes": offline,
-                "selectedTargets": selected_targets,
-                "humanTask": task,
-                "next": human_result.get("next"),
-                "notify": human_result.get("notify") or {"sound": "beep", "reason": "human-task"},
-                "timeline": human_result.get("timeline") or [],
-                "error": human_result.get("error"),
-            },
-        ))
-        human_result["noLlm"] = no_llm
+        _record_offline_human_escalation(human_result, offline, prompt, execute, no_llm, selected_targets, db, deps)
         return human_result
     exc = ValueError(
         f"NL flow generated no URI steps. Discovered 0 safe route(s) on node(s) []; "
