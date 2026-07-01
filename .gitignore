@@ -1,4 +1,3 @@
-.env.example
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -27,7 +26,6 @@ workflows/
 !/.github/workflows/*.yml
 !/.github/workflows/*.yaml
 output/
-.env.example
 __pycache__/
 *.py[codz]
 *$py.class
